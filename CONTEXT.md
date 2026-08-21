@@ -20,6 +20,18 @@ _Avoid_: demo Brokerage Account, test wallet
 The explicit boundary classifying an action and all of its records as either Paper or Live. Paper and Live records are never commingled, even when shown together.
 _Avoid_: mode, account type
 
+**Trust Zone**:
+A workload boundary with its own identity, secret scope, network policy, queues, data permissions, and audit controls. Trust Zones may initially share a physical host, but authority never follows from co-location.
+_Avoid_: server, container name
+
+**Application Administration**:
+Principal-facing control over Market Mate policies, proposals, deployments, alerts, strategies, and operational state through authenticated, authorized workflows. It never implies unrestricted host, cloud-account, secret, or database access.
+_Avoid_: cloud administration, root access, admin panel
+
+**Infrastructure Administration**:
+Separately authenticated control over the cloud account, host, identity and access management, network perimeter, key custody, and privileged recovery. It is not exposed as a general capability through Market Mate.
+_Avoid_: application settings, Principal dashboard
+
 **Execution Venue**:
 The external broker or simulator that accepts orders for an Execution Environment. Paper and Live execution may use different venues.
 _Avoid_: platform, broker API
@@ -52,6 +64,14 @@ _Avoid_: fill, P&L
 An unexpected state in which one or more legs of an Order Plan intended to execute atomically become live without the complete approved package. It invokes immediate options containment and cannot be normalized as a successful spread.
 _Avoid_: partial fill, temporary position
 
+**Option Package**:
+The accounting and lifecycle grouping of the independently recorded option legs arising from one approved multi-leg structure. Package economics, costs, collateral, and performance must equal their attributable leg evidence and never replace it.
+_Avoid_: single option position, net fill, synthetic security
+
+**Collateral Encumbrance**:
+A time-stamped restriction on cash, securities, or buying power imposed for an open exposure or obligation. It constrains order authority but is not a Cash Movement or Ledger Posting unless an actual charge or transfer occurs.
+_Avoid_: cash spent, margin loan, Trading Cost
+
 **Venue Capability Manifest**:
 The versioned, evidence-backed declaration of which instrument, order, data, lifecycle, reconciliation, and operational capabilities a particular Execution Venue, account, environment, and adapter version currently certify.
 _Avoid_: feature list, supported broker
@@ -71,6 +91,14 @@ _Avoid_: session, reset counter
 **Reconciliation Break**:
 An unexplained disagreement among raw venue evidence, Market Mate's normalized ledger, and the venue's current account/position state. It freezes new exposure until resolved or contained.
 _Avoid_: sync error, stale balance
+
+**Reconciliation State**:
+The evidence status of one comparison between ledger history and Custody State: Matched, Expected Timing Difference, Evidence Pending, Explained Adjustment, or Reconciliation Break. A matching aggregate cannot conceal mismatched components.
+_Avoid_: reconciliation passed, sync status, approximate match
+
+**Pending Classification**:
+A temporary balanced-ledger destination for a broker-observed economic amount whose nature is not yet supported by sufficient evidence. It is excluded from P&L and usable capital until resolved by an evidenced Ledger Correction.
+_Avoid_: miscellaneous adjustment, suspense profit, Evidence Pending
 
 **Parity Observation**:
 A versioned comparison of one Order Plan's previewed, simulated, Paper, and Live behavior across acknowledgement, rejection, fill, slippage, fees, buying power, lifecycle timing, and reconciliation. It measures transferability and never grants order authority.
@@ -105,16 +133,104 @@ A specific Execution Venue, account, adapter version, and approved capability sc
 _Avoid_: brokerage, integrated broker
 
 **Capital Ledger**:
-The broker-reconciled, append-only account of every monetary event affecting the Brokerage Account, recorded at currency-minor-unit precision.
+The broker-reconciled, append-only balanced book of every accepted economic event affecting the Brokerage Account. It preserves source precision and never commingles Paper activity.
 _Avoid_: wallet balance, transaction history
 
 **Paper Ledger**:
-The append-only account of simulated monetary and position events in a Paper Account, kept structurally comparable to but strictly separate from the Capital Ledger.
+The append-only balanced book of simulated economic events in a Paper Account, kept structurally comparable to but strictly separate from the Capital Ledger and bounded by its Environment Epoch.
 _Avoid_: test Capital Ledger, fake money
+
+**Ledger Event**:
+An immutable accepted economic fact within exactly one Execution Environment that produces one balanced group of Ledger Postings and links to its source evidence, effective times, and any correction lineage.
+_Avoid_: broker transaction, Venue Event, log entry
+
+**Ledger Posting**:
+One debit or credit assigning an exact amount or instrument quantity to a named ledger account as part of a balanced Ledger Event. A posting has no independent economic meaning outside its group.
+_Avoid_: transaction, cash movement, database row
+
+**Ledger Correction**:
+A linked balanced reversal, replacement, or evidenced adjustment that changes the current accounting interpretation without editing or deleting the original Ledger Event.
+_Avoid_: manual edit, overwrite, make-it-match entry
+
+**Accounting Restatement**:
+A new version of derived positions, lots, P&L, risk, or reports produced after a Ledger Correction or newly accepted evidence. Prior versions and their validity intervals remain auditable.
+_Avoid_: revised history, corrected ledger, current report
+
+**Accounting Policy Version**:
+An immutable version of the account taxonomy, event-to-posting rules, lot selection, fee allocation, basis overlays, reconciliation classifications, and projection rules used to interpret ledger evidence. A new version never silently rewrites prior results.
+_Avoid_: accounting settings, current logic, mutable chart of accounts
+
+**Accounting Invariant**:
+A non-negotiable identity that every accepted ledger state and deterministic replay must satisfy, including balanced events, complete lineage, environment isolation, lot-to-position equality, cash/equity reconciliation, and package-to-leg equality.
+_Avoid_: validation warning, expected discrepancy, accounting test
+
+**Order Commitment**:
+A reversible control-state reservation of buying power, cash, collateral, or instrument quantity for an open Venue Order. It constrains authority but is not a Ledger Posting unless an actual economic charge or execution occurs.
+_Avoid_: cash balance, fill, liability
+
+**Settlement State**:
+The separately tracked status of a contractual cash or instrument obligation, including its execution, trade, contractual-settlement, and actual-settlement times. Settlement does not erase the earlier economic event.
+_Avoid_: order status, fill status, available cash
+
+**Custody State**:
+The Execution Venue's current claim about assets, cash, liabilities, orders, and obligations held for the Brokerage Account at a particular observation time. It is external fact to reconcile, not permission to rewrite ledger history.
+_Avoid_: Capital Ledger, broker truth, current balance
+
+**Basis Pending**:
+The evidence state of an owned lot whose acquisition date, economic cost basis, or tax basis is missing or disputed. It blocks new exposure in the instrument but never prevents necessary risk reduction.
+_Avoid_: zero basis, estimated basis, unreconciled position
+
+**Position Lot**:
+An independently traceable quantity of one instrument created or transformed by a specific execution, exercise, assignment, transfer, reinvestment, corporate action, or correction. Partial disposition preserves the identity of the unconsumed remainder.
+_Avoid_: average position, ticker holding, order
+
+**Management Transfer**:
+A time-stamped change in which Strategy Version or containment authority manages existing exposure without changing its originating strategy, Ledger Events, Position Lots, or lifetime attribution.
+_Avoid_: strategy reassignment, performance reset, new position
+
+**Roll Workflow**:
+A linked workflow containing independently accounted closing and opening executions. It preserves the realized result of the closed exposure and the new basis and risk of the replacement exposure.
+_Avoid_: rolled position, deferred loss, single transaction
+
+**Economic Basis**:
+The actual capital and attributable Trading Costs assigned to a Position Lot for economic performance, independent of tax-only adjustments.
+_Avoid_: purchase price, Tax Basis, market value
+
+**Tax Basis**:
+The separately maintained basis of a Position Lot after applicable tax adjustments, linked to but never substituted for Economic Basis or strategy performance.
+_Avoid_: Economic Basis, broker-reported profit, market value
+
+**Containment Exposure**:
+An actual position or obligation that violates normal initiation policy because of assignment, exercise, broken-package execution, correction, or other lifecycle event. It remains fully recorded and managed only through approved containment and risk-reducing actions.
+_Avoid_: hidden position, approved exception, temporary discrepancy
 
 **Cash Movement**:
 A debit or credit recorded in the Capital Ledger, such as funding, withdrawal, premium, proceeds, commission, fee, dividend, interest, exercise, assignment, or settlement. A Cash Movement is not by itself a profit or loss.
 _Avoid_: gain, loss, transaction
+
+**Capital Contribution**:
+A Cash Movement from the Principal into the Brokerage Account that increases invested capital but is excluded from realized P&L and contribution-adjusted performance.
+_Avoid_: deposit profit, revenue, gain
+
+**Opening Capital Event**:
+The signed inception event that establishes observed cash, positions, obligations, and imported lot evidence when a ledger begins, offset to Principal-contributed capital without inventing prior trading P&L.
+_Avoid_: initial profit, historical backfill, reset balance
+
+**Capital Withdrawal**:
+A Cash Movement from the Brokerage Account to the Principal that decreases invested capital but is excluded from realized P&L and contribution-adjusted performance. Market Mate may observe it but cannot initiate it.
+_Avoid_: trading loss, expense, drawdown
+
+**Realized P&L**:
+The cost-inclusive economic result recognized when an event closes or settles all or part of an exposure under the applicable accounting contract. Funding, transfers, buying-power changes, and price marks are excluded.
+_Avoid_: cash proceeds, account growth, sale price
+
+**Unrealized P&L**:
+A reproducible, time-stamped estimate of the cost-inclusive value change remaining in open exposure under a specified valuation policy. It is derived evidence and never rewrites historical Ledger Postings.
+_Avoid_: guaranteed gain, cash balance, realized P&L
+
+**Trading Cost**:
+A commission, exchange charge, regulatory charge, exercise or assignment fee, or other execution-related amount separately recorded as a Cash Movement and attributed to the economic activity that incurred it.
+_Avoid_: Operating Cost, hidden slippage, trading loss
 
 **Tax Lot**:
 The Capital Ledger unit of tax basis, quantity, acquisition time, holding period, and later adjustments for one acquired position in a security or option; Paper Ledger lots may mirror the shape but are never tax evidence.
@@ -125,7 +241,7 @@ The lot-selection method that uses the particular Tax Lots named in a trade-time
 _Avoid_: best-lot picker, average cost, tax-optimized allocation
 
 **Wash-Sale Adjustment**:
-The append-only basis increase and holding-period tacking applied to replacement Tax Lots when a loss is disallowed because substantially identical stock, securities, or a contract or option to acquire them was bought within the statutory window.
+The append-only record of a wash-sale loss disallowance and, when legally applicable, the resulting basis increase and holding-period tacking on replacement Tax Lots; an IRA or Roth IRA replacement receives no basis add-back.
 _Avoid_: wash-sale ignore, broker 1099-B as final
 
 **Section 1256 Contract**:
@@ -222,6 +338,26 @@ _Avoid_: Core Indicator, proven signal
 Order placement without per-order human approval, but only through the Principal's preset authority and non-bypassable risk boundaries.
 _Avoid_: unattended trading, unrestricted automation
 
+**Authority Grant**:
+A versioned, expiring Principal approval defining which autonomous component may perform which actions, in which environments, strategies, schedules, tools, and capital/risk limits, with required evidence, monitoring, notifications, and rollback. A component cannot approve or broaden its own grant.
+_Avoid_: permission flag, agent trust
+
+**Operational Notification**:
+A non-authoritative message sent to an approved external communication channel, such as Slack, to inform the Principal of a threshold, incident, approval request, or recovery state. It may link to Market Mate but cannot itself approve, reject, resume, or alter trading authority.
+_Avoid_: approval, audit record, command
+
+**Approval Companion**:
+An optional Principal client, such as a native mobile application, that presents server-fetched evidence, sends Operational Notifications, invokes emergency containment, and cryptographically submits a Principal Authorization Decision. It owns no strategy, risk, ledger, execution, or canonical authorization state.
+_Avoid_: mobile trading engine, second backend, biometric approval
+
+**Principal Authorization Decision**:
+The Principal's authenticated, step-up-verified approval or rejection of an exact, immutable proposal within Market Mate, including proposal identity, scope, expiry, evidence, and resulting authority change. A message acknowledgement or external-channel interaction is not a Principal Authorization Decision.
+_Avoid_: Slack approval, notification acknowledgement, button click
+
+**Authenticator Recovery**:
+The containment process that revokes all active sessions and replaces or re-enrolls a suspected compromised Principal authenticator before a fresh authenticated session may be established. It does not preserve pending approvals or prior session authority.
+_Avoid_: password change, session refresh, device trust
+
 **Safety Kernel**:
 The deterministic authority that approves or rejects every order against the current Risk Policy and cannot be modified or bypassed by a Strategy Version.
 _Avoid_: AI risk agent, safety prompt
@@ -241,6 +377,14 @@ _Avoid_: guardrails, configuration
 **Risk State**:
 The account-wide authority state derived by the Safety Kernel from the current Risk Policy, account evidence, and containment conditions; it determines which risk-increasing or risk-reducing actions remain permitted.
 _Avoid_: trading mode, alert level
+
+**Recovery State**:
+A fail-closed operational state entered after restoration, material integrity failure, or suspected host compromise. It permits verification, evidence preservation, broker reconciliation, and approved recovery work but grants no new Live exposure authority.
+_Avoid_: maintenance mode, restored Live, temporary pause
+
+**Live Resumption**:
+The Principal-authorized transition from Recovery State back to Live eligibility after all mandatory automated integrity, notification, Safety Kernel, and broker-reconciliation checks pass. It restores no broader authority than existed before the incident.
+_Avoid_: restart, unpause, acknowledgement
 
 **Drawdown**:
 The decline in broker-reconciled account equity from its contribution-adjusted high-water mark, including realized and unrealized P&L and all trading costs.

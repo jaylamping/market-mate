@@ -90,7 +90,7 @@ A wash sale exists when stock or securities are sold or otherwise disposed of at
 
 Section 1091 expressly includes contracts or options to acquire or sell stock or securities, including cash-settled contracts. [26 U.S.C. §1091](https://uscode.house.gov/view.xhtml?edition=2023&num=0&req=granuleid%3AUSC-2023-title26-section1091)
 
-Publication 550 applies wash-sale rules to losses on contracts and options to acquire or sell stock or securities, and not to commodity futures or foreign currencies. Buying replacement shares inside an IRA or Roth IRA can still create a wash sale; the IRA acquisition does not receive the usual basis add-back. [Publication 550](https://www.irs.gov/publications/p550)
+Publication 550 applies wash-sale rules to losses on contracts and options to acquire or sell stock or securities, and not to commodity futures or foreign currencies. Buying replacement shares inside an IRA or Roth IRA can still create a wash sale; the IRA acquisition does not receive the usual basis add-back. The ledger must therefore record the loss disallowance separately from any replacement-lot basis increase and holding-period tacking. [Publication 550](https://www.irs.gov/publications/p550)
 
 Partial replacement matches purchases against sold shares; only the matched quantity loses the current deduction. [Publication 550](https://www.irs.gov/publications/p550)
 
