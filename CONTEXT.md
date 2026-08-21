@@ -20,6 +20,18 @@ _Avoid_: demo Brokerage Account, test wallet
 The explicit boundary classifying an action and all of its records as either Paper or Live. Paper and Live records are never commingled, even when shown together.
 _Avoid_: mode, account type
 
+**Trust Zone**:
+A workload boundary with its own identity, secret scope, network policy, queues, data permissions, and audit controls. Trust Zones may initially share a physical host, but authority never follows from co-location.
+_Avoid_: server, container name
+
+**Application Administration**:
+Principal-facing control over Market Mate policies, proposals, deployments, alerts, strategies, and operational state through authenticated, authorized workflows. It never implies unrestricted host, cloud-account, secret, or database access.
+_Avoid_: cloud administration, root access, admin panel
+
+**Infrastructure Administration**:
+Separately authenticated control over the cloud account, host, identity and access management, network perimeter, key custody, and privileged recovery. It is not exposed as a general capability through Market Mate.
+_Avoid_: application settings, Principal dashboard
+
 **Execution Venue**:
 The external broker or simulator that accepts orders for an Execution Environment. Paper and Live execution may use different venues.
 _Avoid_: platform, broker API
@@ -206,6 +218,26 @@ _Avoid_: Core Indicator, proven signal
 Order placement without per-order human approval, but only through the Principal's preset authority and non-bypassable risk boundaries.
 _Avoid_: unattended trading, unrestricted automation
 
+**Authority Grant**:
+A versioned, expiring Principal approval defining which autonomous component may perform which actions, in which environments, strategies, schedules, tools, and capital/risk limits, with required evidence, monitoring, notifications, and rollback. A component cannot approve or broaden its own grant.
+_Avoid_: permission flag, agent trust
+
+**Operational Notification**:
+A non-authoritative message sent to an approved external communication channel, such as Slack, to inform the Principal of a threshold, incident, approval request, or recovery state. It may link to Market Mate but cannot itself approve, reject, resume, or alter trading authority.
+_Avoid_: approval, audit record, command
+
+**Approval Companion**:
+An optional Principal client, such as a native mobile application, that presents server-fetched evidence, sends Operational Notifications, invokes emergency containment, and cryptographically submits a Principal Authorization Decision. It owns no strategy, risk, ledger, execution, or canonical authorization state.
+_Avoid_: mobile trading engine, second backend, biometric approval
+
+**Principal Authorization Decision**:
+The Principal's authenticated, step-up-verified approval or rejection of an exact, immutable proposal within Market Mate, including proposal identity, scope, expiry, evidence, and resulting authority change. A message acknowledgement or external-channel interaction is not a Principal Authorization Decision.
+_Avoid_: Slack approval, notification acknowledgement, button click
+
+**Authenticator Recovery**:
+The containment process that revokes all active sessions and replaces or re-enrolls a suspected compromised Principal authenticator before a fresh authenticated session may be established. It does not preserve pending approvals or prior session authority.
+_Avoid_: password change, session refresh, device trust
+
 **Safety Kernel**:
 The deterministic authority that approves or rejects every order against the current Risk Policy and cannot be modified or bypassed by a Strategy Version.
 _Avoid_: AI risk agent, safety prompt
@@ -225,6 +257,14 @@ _Avoid_: guardrails, configuration
 **Risk State**:
 The account-wide authority state derived by the Safety Kernel from the current Risk Policy, account evidence, and containment conditions; it determines which risk-increasing or risk-reducing actions remain permitted.
 _Avoid_: trading mode, alert level
+
+**Recovery State**:
+A fail-closed operational state entered after restoration, material integrity failure, or suspected host compromise. It permits verification, evidence preservation, broker reconciliation, and approved recovery work but grants no new Live exposure authority.
+_Avoid_: maintenance mode, restored Live, temporary pause
+
+**Live Resumption**:
+The Principal-authorized transition from Recovery State back to Live eligibility after all mandatory automated integrity, notification, Safety Kernel, and broker-reconciliation checks pass. It restores no broader authority than existed before the incident.
+_Avoid_: restart, unpause, acknowledgement
 
 **Drawdown**:
 The decline in broker-reconciled account equity from its contribution-adjusted high-water mark, including realized and unrealized P&L and all trading costs.
