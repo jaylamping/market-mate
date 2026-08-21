@@ -232,6 +232,22 @@ _Avoid_: guaranteed gain, cash balance, realized P&L
 A commission, exchange charge, regulatory charge, exercise or assignment fee, or other execution-related amount separately recorded as a Cash Movement and attributed to the economic activity that incurred it.
 _Avoid_: Operating Cost, hidden slippage, trading loss
 
+**Tax Lot**:
+The Capital Ledger unit of tax basis, quantity, acquisition time, holding period, and later adjustments for one acquired position in a security or option; Paper Ledger lots may mirror the shape but are never tax evidence.
+_Avoid_: position, fill, average cost
+
+**Specific Identification**:
+The lot-selection method that uses the particular Tax Lots named in a trade-time instruction and confirmed in writing by the broker; without that identification, FIFO is the default for ordinary stock.
+_Avoid_: best-lot picker, average cost, tax-optimized allocation
+
+**Wash-Sale Adjustment**:
+The append-only record of a wash-sale loss disallowance and, when legally applicable, the resulting basis increase and holding-period tacking on replacement Tax Lots; an IRA or Roth IRA replacement receives no basis add-back.
+_Avoid_: wash-sale ignore, broker 1099-B as final
+
+**Section 1256 Contract**:
+A listed nonequity option or other contract that federal law marks to market and generally splits 60% long-term and 40% short-term; ordinary listed equity options held by a non-dealer individual are not Section 1256 Contracts.
+_Avoid_: all options, index option without classification
+
 **Operating Cost**:
 An expense required to research, host, observe, or operate Market Mate that is funded separately from the Brokerage Account but included in fully loaded performance reporting.
 _Avoid_: trading loss, portfolio fee
