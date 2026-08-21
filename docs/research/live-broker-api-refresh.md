@@ -17,7 +17,7 @@ No candidate is certified for live use from documentation alone. The current sho
 4. **Alpaca as the best developer ergonomics/paper alternate, conditional on product certification.** It has separate paper/live endpoints, static API-key authentication suitable for services, live atomic multi-leg orders, order WebSockets, and detailed financial activity events. Public docs are not sufficiently clear that an individual Trading API account can trade SPX/XSP boxes; basic options data is indicative rather than full OPRA. A live account must also qualify for Level 3.
 5. **Schwab is not presently certifiable from accessible primary API documentation.** Schwab publicly advertises stocks/options, $0.65 option contracts, and thinkorswim paperMoney, but the public evidence reviewed here does not establish that paperMoney is an API sandbox, that the Individual Trader API supports durable unattended OAuth, or that it atomically accepts four-leg boxes. Keep it out of the first proof-of-concept unless Schwab supplies current written/API documentation covering those requirements.
 
-The recommended architecture remains broker-neutral: implement a venue adapter contract, certify Tradier and IBKR first, and allow the paper venue to differ from live. Do not choose a live broker until the broker passes the executable certification suite described below.
+The recommended architecture remains broker-neutral: implement a venue adapter contract, evaluate Tradier and Alpaca first as the Principal's current front-runners, retain IBKR as the specialized box-spread/product-breadth candidate, and allow the paper venue to differ from live. All five candidates receive the same hard gates and weighted evaluation with no scoring preference. Do not choose a live broker until the broker passes the executable certification suite described below.
 
 ## Evidence table
 
@@ -127,12 +127,12 @@ Only after the broker passes those tests should a specific adapter/version be la
 
 ## Recommendation for the decision ticket
 
-Adopt a **two-candidate certification path** rather than selecting a broker now:
+Adopt a **five-candidate, evidence-gated certification path** rather than selecting a broker now. Begin evidence collection with the Principal's current Tradier and Alpaca front-runners, without giving either a scoring preference:
 
 - Certify **Tradier first** for cloud operation, preview/reconciliation, and 2–4-leg mechanics.
-- In parallel at the planning level, seek **IBKR written confirmation** for an individual supported authentication mode compatible with cloud operation and prove box routing/permissions. If daily human authentication remains required, IBKR can still be a human-supervised venue but cannot satisfy the eventual unattended-live destination.
+- Certify **Alpaca** in parallel for cloud authentication, event completeness, individual-account options products, and full-data economics.
+- Seek **IBKR written confirmation** for an individual supported authentication mode compatible with cloud operation and prove box routing/permissions. If daily human authentication remains required, IBKR can still be a human-supervised venue but cannot satisfy the eventual unattended-live destination.
 - Keep **tastytrade** as the fallback if it confirms durable authentication, a provisionable trade-only user, four-leg index boxes, and complete lifecycle events.
-- Use **Alpaca paper** only if its fill limitations are explicitly disclosed in validation; consider Alpaca live if individual SPX/XSP and Level 3 approvals are confirmed. Its event model is attractive, but full OPRA data at $99/month needs economic justification.
 - Defer **Schwab** until primary documentation or approved-app testing closes its API/auth/paper/complex-order unknowns.
 
 This research makes no claim that any broker will approve this account for options or that box spreads will produce a positive return. Approval is individualized, broker rules change, and the $1,000 bankroll may make available boxes economically or operationally unsuitable.

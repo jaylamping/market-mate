@@ -171,7 +171,7 @@ A Paper Execution Venue capability cannot be certified until one versioned bundl
 9. At least two tested expiration cycles plus every lifecycle/corporate-action case the venue supports; unsupported cases are listed rather than synthesized as passes.
 10. A measured paper-versus-live delta report before any strategy relies on paper evidence for Live authorization.
 11. Operator usability record: setup/recovery time, manual steps, incidents, support responses, cost, and failed attempts.
-12. A signed certification result listing each capability as Certified, Supervised Only, Uncertified, or Inapplicable, with an expiry trigger for API, simulator, fee, entitlement, authentication, margin, routing, or lifecycle changes.
+12. A signed certification result listing each capability as Paper Certified, Supervised Only, Uncertified, or Inapplicable, with an expiry trigger for API, simulator, fee, entitlement, authentication, margin, routing, or lifecycle changes. Paper Certified never implies Live Certified.
 
 ## Hard gates and scoring
 

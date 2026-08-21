@@ -1,7 +1,7 @@
 # Sentiment-source policy and authorized ingestion methods
 
 Research date: 2026-08-16
-Scope: a private, cloud-hosted Market Mate instance analyzing a versioned Coverage Universe of approximately 20–30 U.S. securities for research and paper trading, with possible later use in live trading. This report is a source-governance decision, not an investment recommendation or legal opinion.
+Scope at research time: a private, cloud-hosted Market Mate instance analyzing a versioned Coverage Universe of approximately 20–30 U.S. securities for research and paper trading, with possible later use in live trading. The later Coverage Universe decision supersedes that capacity assumption with a target of 40 qualifying system-selected members and a normal ceiling of 50; provider rate, entitlement, and cost certification must test both levels. This report is a source-governance decision, not an investment recommendation or legal opinion.
 
 ## Decision summary
 
@@ -165,7 +165,7 @@ Each adapter needs a token bucket below the provider's stated limit, bounded exp
 | Prompt-injection/security flag | Quarantine payload and all derived outputs; no retry through another model; preserve hash/metadata and alert according to severity. |
 | All sentiment unavailable | Continue price/risk/account safety processing, but no strategy whose evidence contract requires sentiment may open/increase risk. Existing positions remain governed by risk-reducing lifecycle rules, never by fabricated neutral sentiment. |
 
-For the 20–30-name universe, do not continuously search the whole market. Poll or subscribe only to current Coverage Universe members plus mandatory open holdings/obligations. Batch where semantics are equivalent, and record the exact universe version in every query.
+For the current bounded universe, do not continuously search the whole market. Poll or subscribe only to current Coverage Universe members plus mandatory open holdings/obligations. Batch where semantics are equivalent, record the exact universe version in every query, and certify capacity at both the 40-member target and 50-member ceiling.
 
 ## Point-in-time and backtest limitations
 
@@ -180,7 +180,7 @@ For the 20–30-name universe, do not continuously search the whole market. Poll
 
 ## Cost and functionality implications
 
-The low-cost starting combination is SEC + GDELT at no provider fee, followed by a time-boxed Alpha Vantage or Alpaca News certification. That is enough for a 20–30-name universe without committing to broad-market scraping.
+The low-cost starting combination is SEC + GDELT at no provider fee, followed by a time-boxed Alpha Vantage or Alpaca News certification. Its capacity and price must be re-evaluated against the superseding 40-member target and 50-member ceiling without committing to broad-market scraping.
 
 - Alpha Vantage's 25-call daily free cap is operationally tight: one per ticker covers at most 25 names with no retry or supplementary calls. Its $49.99/month entry plan is 5% of the initial $1,000 capital every month, even though operating costs are funded separately; the dashboard must report that drag in strategy economics.
 - X costs scale with returned posts, not just queries. At the current $0.005 per Post read, even a shallow 25-ticker sample can cost roughly $75–$375/month at 20–100 posts per ticker per day, before engineering and compliance. It should not precede evidence that social sentiment adds value.
