@@ -116,6 +116,22 @@ _Avoid_: test Capital Ledger, fake money
 A debit or credit recorded in the Capital Ledger, such as funding, withdrawal, premium, proceeds, commission, fee, dividend, interest, exercise, assignment, or settlement. A Cash Movement is not by itself a profit or loss.
 _Avoid_: gain, loss, transaction
 
+**Tax Lot**:
+The Capital Ledger unit of tax basis, quantity, acquisition time, holding period, and later adjustments for one acquired position in a security or option; Paper Ledger lots may mirror the shape but are never tax evidence.
+_Avoid_: position, fill, average cost
+
+**Specific Identification**:
+The lot-selection method that uses the particular Tax Lots named in a trade-time instruction and confirmed in writing by the broker; without that identification, FIFO is the default for ordinary stock.
+_Avoid_: best-lot picker, average cost, tax-optimized allocation
+
+**Wash-Sale Adjustment**:
+The append-only basis increase and holding-period tacking applied to replacement Tax Lots when a loss is disallowed because substantially identical stock, securities, or a contract or option to acquire them was bought within the statutory window.
+_Avoid_: wash-sale ignore, broker 1099-B as final
+
+**Section 1256 Contract**:
+A listed nonequity option or other contract that federal law marks to market and generally splits 60% long-term and 40% short-term; ordinary listed equity options held by a non-dealer individual are not Section 1256 Contracts.
+_Avoid_: all options, index option without classification
+
 **Operating Cost**:
 An expense required to research, host, observe, or operate Market Mate that is funded separately from the Brokerage Account but included in fully loaded performance reporting.
 _Avoid_: trading loss, portfolio fee
