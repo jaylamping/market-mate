@@ -326,13 +326,109 @@ _Avoid_: stock scan, daily scrape, trading strategy
 The immutable, time-stamped result of a Market Research Cycle for a security or the portfolio, including source lineage, data quality, indicator changes, uncertainty, and comparisons with prior snapshots.
 _Avoid_: research report, agent summary
 
+**Indicator Definition**:
+The immutable versioned meaning of one indicator, including its purpose, inputs, sources, units, calculation, adjustment and time semantics, horizons, freshness, missingness, valid range, and ownership. A semantic change creates a new definition rather than rewriting prior observations.
+_Avoid_: formula, dashboard setting, current calculation
+
+**Indicator Observation**:
+The reproducible value or evidence state produced for one Indicator Definition, security or portfolio scope, and as-of time, with pinned source observations, lineage, calculation version, precision, freshness, and correction status.
+_Avoid_: current value, data point, signal
+
+**Indicator Observation State**:
+The non-interchangeable availability state of an Indicator Observation: Current, Stale, Expired, Missing, Incomplete, Source Disputed, Invalidated, or Not Applicable. Missing, disputed, and invalidated observations never become neutral values.
+_Avoid_: status flag, valid-or-invalid, default value
+
+**Freshness Class**:
+A versioned evidence-timing contract defining when an Indicator Observation is current, stale, expired, incomplete, or awaiting an authoritative update for its operational purpose. An Indicator Definition may impose a stricter limit but cannot silently relax its class.
+_Avoid_: cache TTL, update frequency, recent data
+
 **Core Indicator**:
-A canonical descriptive or risk measure that may appear in a Research Snapshot but does not, by itself, claim predictive value or authorize a trade.
+A canonical descriptive or risk measure that may appear in a Research Snapshot but does not, by itself, claim predictive value or authorize a trade. A separately safety-certified Core Indicator may reduce or deny authority through a deterministic Risk Policy.
 _Avoid_: signal, alpha factor
 
 **Experimental Indicator**:
-A versioned hypothesis about predictive information that may be researched but cannot influence live orders until validated and promoted through a Strategy Version.
+A versioned hypothesis about predictive information, potentially derived from Core Indicators, that may be researched but can influence orders only as an explicitly validated input to a Strategy Version. It never becomes a universally predictive Core Indicator.
 _Avoid_: Core Indicator, proven signal
+
+**Indicator Evidence Stage**:
+The bounded use permitted for an Experimental Indicator: Registered, Data Certified, Research Qualified, Paper Eligible, or Strategy Eligible. Live use derives only from a separately promoted consuming Strategy Version and never from the indicator stage alone.
+_Avoid_: indicator approval, proven feature, live signal
+
+**Release Holdout**:
+A sealed, chronologically latest evidence segment reserved for one promotion decision and accessed only through a controlled Holdout Evaluation. After that decision it becomes ordinary historical evidence and cannot approve later feature or threshold refinements.
+_Avoid_: test set, reusable benchmark, final backtest
+
+**Holdout Evaluation**:
+The logged one-time assessment of an Experiment Registration against a Release Holdout, returning only its preregistered metrics, uncertainty, slices, and gate results. A failed evaluation still consumes the holdout.
+_Avoid_: test query, holdout exploration, final tuning
+
+**Experiment Registration**:
+The immutable preregistered contract for one promotable test, including its hypothesis, rationale, target, horizon, universe, versions, metrics, baseline, planned search, evidence windows, costs, risks, stopping rule, promotion gate, Experiment Family, and testing-budget reservation.
+_Avoid_: experiment note, backtest configuration, result record
+
+**Experiment Family**:
+The multiple-testing group of experiments that share an economic thesis, prediction target, horizon, substantially overlapping evidence, or correlated feature and parameter neighborhood. It cannot be renamed or split after results are known to evade its testing budget.
+_Avoid_: project folder, strategy name, winning trials
+
+**Experiment Trial**:
+One reproducible scheduled or started execution of an Experiment Registration, including successful, null, failed, invalid, aborted, and infrastructure-interrupted outcomes. A result-bearing attempt remains part of the evidence record even when unattractive.
+_Avoid_: successful run, backtest result, discarded attempt
+
+**Exploratory Analysis**:
+Research that may generate hypotheses but cannot support promotion, confidence claims, or testing-budget renewal. Any discovered hypothesis requires a fresh Experiment Registration and untouched or forward evidence.
+_Avoid_: preliminary validation, informal backtest, free trial
+
+**Research Budget**:
+The versioned limits on experiment families, trials, compute, data spending, concurrency, and reserved evidence that bound autonomous research. An agent may propose an expansion, but only a Principal Authorization Decision can activate it.
+_Avoid_: cloud budget, agent discretion, experiment quota
+
+**Testing Budget**:
+The finite statistical error allowance assigned to an Experiment Family or hierarchy, including its confirmatory hypotheses, sequential looks, amendments, and dependence corrections. It is distinct from compute or spending authority and cannot be renewed using the same exhausted evidence.
+_Avoid_: Research Budget, trial count, significance threshold
+
+**Global Testing Ledger**:
+The immutable cross-family record of hypotheses, trials, evidence overlap, testing-budget consumption, holdout access, corrections, and promotion outcomes used to prevent related searches from claiming false independence.
+_Avoid_: experiment dashboard, successful-results list, model registry
+
+**Experiment Lineage**:
+The immutable parent-child path connecting economic theses, indicators, strategy rules, portfolio sizing, execution parameters, amendments, corrections, and promoted versions across every related search. Moving a hypothesis between layers does not reset its Testing Budget or evidence history.
+_Avoid_: experiment folder, model ancestry, strategy version history
+
+**Primary Promotion Metric**:
+The preregistered principal measure and minimum economically meaningful effect that an Experiment Trial must satisfy after multiplicity, costs, uncertainty, and risk constraints. Secondary metrics cannot replace its failure.
+_Avoid_: best metric, headline result, optimization score
+
+**Effective Independent Sample Size**:
+The uncertainty-relevant opportunity count after accounting for shared issuers, events, time periods, positions, legs, evidence clusters, and other dependence. It is reported alongside the larger raw observation count.
+_Avoid_: trade count, row count, sample size
+
+**Experiment Report**:
+The periodic complete account of successful, null, failed, invalid, and stopped Experiment Trials, including costs, Testing Budget consumption, uncertainty, lessons, and linked evidence. It cannot present only promoted results.
+_Avoid_: winners list, research update, promotion PR
+
+**Indicator Deprecation**:
+The immutable retirement state that blocks new consumers while preserving an Indicator Definition, its observations, and its historical decision lineage. Existing consumers must migrate, use a validated fallback, or enter quarantine.
+_Avoid_: indicator deletion, rename, silent replacement
+
+**Indicator Dependency**:
+A declared reliance by an indicator or Strategy Version on specified evidence, classified as Hard when unavailable evidence disables dependent use or Soft when a separately validated degraded path exists. Safety dependencies remain fail-closed unless a Risk Policy defines a more conservative substitute.
+_Avoid_: optional field, default value, fallback source
+
+**Degraded Indicator Path**:
+The separately validated behavior a Strategy Version may use when a Soft Indicator Dependency is unavailable, including its substitution or omission rule, reduced evidence state, and risk limits. It cannot weaken a safety constraint.
+_Avoid_: best effort, last-known-good, silent fallback
+
+**Source Disputed**:
+An evidence state in which approved sources materially disagree or cannot be reconciled under the applicable Indicator Definition. The disagreement remains visible and dependent predictive use is unavailable until resolved or explicitly validated for that state.
+_Avoid_: average value, source error, choose-best-provider
+
+**Decision-Time View**:
+The reconstruction of the evidence, definitions, availability, and corrections actually known when a historical decision occurred. Later knowledge cannot replace it.
+_Avoid_: current history, corrected backtest, reconstructed rationale
+
+**Corrected Research View**:
+The current append-only interpretation of evidence after accepted corrections, linked to the affected historical observations, experiments, and decisions without changing their Decision-Time View.
+_Avoid_: rewritten history, current truth, backfilled decision
 
 **Autonomous Execution**:
 Order placement without per-order human approval, but only through the Principal's preset authority and non-bypassable risk boundaries.
@@ -503,5 +599,37 @@ The Principal-facing web view over Paper and Live historical, current, and plann
 _Avoid_: report, portfolio screen
 
 **Operator Alert**:
-A routed notification that identifies an event requiring the Principal's awareness or action, its severity, environment, deadline, current containment state, and acknowledgement status.
+A Principal-facing alerting workflow rooted in one Alert Event and its evidence, severity, environment, deadline, containment, acknowledgement, deliveries, required action, and resolution.
 _Avoid_: text message, notification
+
+**Alert Event**:
+The canonical immutable record of one condition requiring Principal awareness or action, independent of how many channels attempt to deliver it. It links severity, environment, evidence, deadline, containment, acknowledgement, and resolution.
+_Avoid_: Slack message, SMS, push notification
+
+**Alert Delivery**:
+One channel-specific attempt to communicate an Alert Event, including destination class, attempt time, provider outcome, and delivery evidence. It carries no trading or approval authority.
+_Avoid_: Alert Event, acknowledgement, approval link
+
+**Principal Alert Acknowledgement**:
+The Principal's authenticated confirmation in Market Mate that the exact current version of an Alert Event has been seen. It may reduce repeated delivery but never proves remediation, changes authority, or removes containment.
+_Avoid_: Slack reaction, provider receipt, incident resolution
+
+**Alert Resolution**:
+The evidence-backed state showing that an Alert Event's triggering condition and required remediation have completed. It is distinct from acknowledgement and from any separate Live Resumption decision.
+_Avoid_: alert dismissed, message read, trading resumed
+
+**Alert Severity**:
+The operational urgency assigned to an Alert Event: Critical, Action Required, Warning, or Informational. It is distinct from incident severity and determines routing, acknowledgement, repetition, and escalation.
+_Avoid_: incident SEV, notification channel, model confidence
+
+**Alert Policy Version**:
+An immutable version of severity assignment, channel preference, fallback, acknowledgement deadlines, repetition, correlation, quiet hours, digest, maintenance, containment linkage, and non-bypassable routing minimums.
+_Avoid_: notification settings, mutable preferences, contact list
+
+**Alert Correlation Group**:
+A root-cause grouping that reduces repetitive external delivery while preserving each underlying occurrence and each Execution Environment's independent Alert Event, severity, containment, acknowledgement, and resolution.
+_Avoid_: deduplicated alert, combined Paper/Live incident, suppressed event
+
+**Maintenance Window**:
+A bounded, Principal-approved interval naming the component, environment, expected effects, and rollback in which only specifically predicted noncritical deliveries may be suppressed. Unexpected or Critical conditions remain alertable.
+_Avoid_: alerts off, mute period, quiet hours
