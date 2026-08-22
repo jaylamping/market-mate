@@ -1,6 +1,6 @@
 # Institutional trading-floor functions and high-velocity multi-agent operating patterns
 
-Research date: 2026-08-22  
+Research date: 2026-08-22
 Scope: the Research and qualified Paper stages of the [Incubator Trading Floor Agent Operating Model](https://github.com/jaylamping/market-mate/issues/58). This note informs desk topology, work allocation, review, velocity measurement, and failure containment; it does not authorize Live execution, broker access, policy activation, or spending.
 
 Method: primary sources only. Regulator and exchange material is treated as normative or operational evidence about the control problem. Firm material is treated as a useful description of a function, not as proof that the function causes performance. Original multi-agent papers and first-party agent guidance are treated as workflow evidence, not as evidence that an agent can make an investment decision. Terms such as Research Sandbox, Research Budget, Testing Budget, Research Posture, Velocity Objective, Global Testing Ledger, Safety Kernel, and Authority Grant retain the meanings in the [Market Mate glossary](../../CONTEXT.md).
