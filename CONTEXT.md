@@ -302,9 +302,29 @@ _Avoid_: option symbol, adjusted ticker, current multiplier
 The versioned, provider-neutral authority that relates Issuers, Securities, Exchange Listings, Tradable Instruments, Symbol Aliases, option terms, deliverable versions, and vendor or venue identifiers to their evidence and validity intervals.
 _Avoid_: ticker table, broker symbol list, current universe
 
+**Instrument Mapping**:
+The versioned relationship between one source-, venue-, or broker-native identifier and a canonical Security Master identity for a declared validity interval. Its lifecycle is Proposed, Corroborated, Certified, Suspended, or Retired; only Certified mappings may support orders.
+_Avoid_: ticker match, database join, permanent vendor ID
+
+**Security Master Policy Version**:
+An immutable definition of identifier sources, fact-specific authority, matching and evidence requirements, time semantics, corporate-action behavior, correction handling, certification tests, and restoration gates. Agents may propose a successor with replay evidence but cannot activate it.
+_Avoid_: editable mapping rules, current source priority, agent configuration
+
 **Instrument Identity Break**:
 A material unresolved conflict or gap in the identity, terms, listing, deliverable, or cross-provider mapping of a Tradable Instrument. It prohibits new or increased exposure while preserving unambiguous risk-reducing management of existing obligations.
 _Avoid_: symbol mismatch, warning, manual mapping
+
+**Corporate Action Case**:
+The immutable evidence and lifecycle record for an event that may alter a Security, Exchange Listing, Tradable Instrument, entitlement, quantity, cash flow, basis, or option deliverable. Its state progresses from Rumored, Announced, Terms Pending, Authoritatively Confirmed, Effective, and Broker Reconciled to Final without erasing earlier knowledge states.
+_Avoid_: split adjustment, current corporate action, overwritten instrument
+
+**Identity-Continuous Symbol Change**:
+A change limited to a time-bounded Symbol Alias for which authoritative evidence establishes uninterrupted Security, Exchange Listing, and economic identity across every required provider. Any simultaneous change in class, listing, rights, settlement, or economics is a reorganization instead.
+_Avoid_: rename by matching ticker, new instrument, merger
+
+**Adjusted Option Contract**:
+An existing option contract whose official Option Deliverable Version changed after a corporate action. It remains an actively managed obligation but is exit-only by default until its terms, liquidity, broker support, and lifecycle behavior are separately certified for new exposure.
+_Avoid_: ordinary option, renamed contract, automatically tradeable adjustment
 
 **Investment Universe**:
 The securities and derivatives the system is permitted to consider and trade. The initial intended universe is stocks and listed options.
@@ -474,6 +494,34 @@ _Avoid_: best effort, last-known-good, silent fallback
 An evidence state in which approved sources materially disagree or cannot be reconciled under the applicable Indicator Definition. The disagreement remains visible and dependent predictive use is unavailable until resolved or explicitly validated for that state.
 _Avoid_: average value, source error, choose-best-provider
 
+**Source Event Time**:
+The source-reported instant at which an economic, market, filing, or venue event occurred, preserved with its native precision and distinct from when it was published, received, processed, or made effective.
+_Avoid_: record timestamp, received time, trading date
+
+**Publication Time**:
+The source-reported instant at which it disseminated, posted, filed, or accepted evidence. It does not prove when a provider made the evidence queryable or when Market Mate received it.
+_Avoid_: availability time, receipt time, event time
+
+**Evidence Availability Time**:
+The earliest certified instant at which a particular provider made evidence obtainable under the applicable Data Entitlement. When it cannot be established, it remains unknown rather than being inferred from Publication Time.
+_Avoid_: publication time, backfilled timestamp, assumed availability
+
+**Evidence Receipt Time**:
+The instant Market Mate first received a particular delivery of evidence. It is the conservative knowledge boundary when Evidence Availability Time is unknown and never makes later corrections historically knowable.
+_Avoid_: event time, processed time, provider timestamp
+
+**Effective Time**:
+The instant at which an identity, term, status, entitlement, or Corporate Action Case begins to govern, independent of when it was announced, published, or received.
+_Avoid_: announcement date, knowledge time, settlement date
+
+**Venue Session Calendar**:
+The versioned venue- and product-specific definition of session dates and tradability intervals, including regular and extended hours, auctions, rotations, early closes, holidays, halts, and resumptions in an explicit IANA time zone.
+_Avoid_: weekday schedule, market-open flag, fixed Eastern offset
+
+**Adjusted Market Data View**:
+A derived, versioned interpretation of raw observations under a declared split, dividend, or total-return adjustment policy, Corporate Action Case set, and knowledge boundary. It never overwrites raw observations or silently mixes adjustment regimes.
+_Avoid_: corrected price history, raw market data, universal adjusted close
+
 **Decision-Time View**:
 The reconstruction of the evidence, definitions, availability, and corrections actually known when a historical decision occurred. Later knowledge cannot replace it.
 _Avoid_: current history, corrected backtest, reconstructed rationale
@@ -547,8 +595,48 @@ The decline in broker-reconciled account equity from its contribution-adjusted h
 _Avoid_: realized loss, cash decline
 
 **Position Risk**:
-The conservative, cost-inclusive loss attributed to one position under its approved worst modeled outcome, including option assignment and gap assumptions where applicable.
-_Avoid_: purchase price, position size
+The greatest applicable cost-inclusive loss for a Risk Position among its contractually defined maximum, deterministic stress, conservative liquidation, exercise/assignment and settlement, and broken-protection or lifecycle outcomes. Broker margin and buying-power treatment are separate constraints and cannot reduce it.
+_Avoid_: purchase price, position size, margin requirement
+
+**Risk Position**:
+All economically linked lots and option legs within one Strategy Sleeve and underlying exposure that rely on the same protection or exit thesis. Splitting an idea across orders, lots, expirations, or agents does not create additional Position Risk capacity.
+_Avoid_: broker position row, order, option leg
+
+**Risk Offset Credit**:
+The reduction in a Risk Position's modeled loss recognized only for protection inside the same certified economic package whose identity, enforceability, matching terms, liquidity, execution, and reconciliation remain valid through the stress horizon. Proposed, disputed, cross-strategy, or unavailable protection receives no credit.
+_Avoid_: diversification benefit, correlation hedge, intended protection
+
+**Risk Valuation**:
+The reproducible conservative estimate of a Risk Position's loss under its deterministic adverse execution, market, liquidity, and lifecycle scenarios. It is distinct from current accounting value, forecast probability, broker margin, and reported P&L.
+_Avoid_: position mark, expected loss, margin requirement
+
+**Effective Position Risk Limit**:
+The most restrictive current allowance among the percentage Risk Policy, Strategy Scale Tier, Authority Grant dollar scope, remaining portfolio and cluster capacity, liquidity capacity, and broker collateral constraints.
+_Avoid_: five-percent allowance, target position size, buying power
+
+**Strategy Scale Tier**:
+The evidence- and Principal-approved Position Risk authority currently earned by one Strategy Version: Observation, Restricted Live 1, Restricted Live 2, or Mature Live. Account profits or contributions may increase equity but cannot advance the tier or widen its Authority Grant automatically.
+_Avoid_: account size, strategy confidence, automatic compounding
+
+**Aggregate Standalone Risk**:
+The sum of every Risk Position's standalone Position Risk without diversification credit. It governs the portfolio's normal and absolute aggregate modeled-risk limits even when the individual worst outcomes are not simultaneous.
+_Avoid_: portfolio VaR, net exposure, scenario loss
+
+**Scenario Portfolio Loss**:
+The greatest cost-inclusive loss of the whole portfolio under one coherent deterministic market, liquidity, correlation, and lifecycle scenario. It complements but never replaces Aggregate Standalone Risk.
+_Avoid_: sum of position risks, expected portfolio loss, diversification benefit
+
+**Lifecycle Funding Requirement**:
+The greatest temporary cash, collateral, buying-power, delivery, fee, and settlement capacity required to survive the certified exercise, assignment, expiration, and corporate-action paths of a Risk Position. Passing Position Risk does not imply that this separate requirement passes.
+_Avoid_: maximum loss, margin requirement, premium paid
+
+**Risk Scenario Contract**:
+The immutable versioned set of structural, fixed-grid, empirical, market, liquidity, correlation, execution, and lifecycle scenarios and calculation semantics used to produce Risk Valuation. Historical or learned challengers may add conservatism but cannot remove its structural loss floors.
+_Avoid_: risk model, forecast distribution, current stress settings
+
+**Minimum Executable Unit**:
+The smallest venue-supported quantity of an exact Tradable Instrument or complete atomic package whose executable economics, costs, collateral, lifecycle funding, liquidity, Position Risk, and portfolio effects can be evaluated. If it exceeds any applicable limit, the candidate is ineligible at current equity.
+_Avoid_: minimum order size, cheapest contract, fractional option
 
 **Capital Utilization**:
 The share of broker-reconciled account equity committed as security value, option premium, or collateral. It is distinct from Position Risk and aggregate modeled loss.
