@@ -490,13 +490,33 @@ _Avoid_: autonomous code change, Strategy Version, approved implementation
 The versioned limits on experiment families, trials, compute, data spending, concurrency, and reserved evidence that bound autonomous research. An agent may propose an expansion, but only a Principal Authorization Decision can activate it.
 _Avoid_: cloud budget, agent discretion, experiment quota
 
+**Research Capacity Reservation**:
+A time-bounded allocation of approved agents, tokens, compute, data spending, concurrency, and Principal attention to one identified work item, including its budget lineage and next checkpoint. Actual use is attributed to that work and unused capacity returns to its source budget.
+_Avoid_: queue slot, cost estimate, blanket capacity
+
 **Research Posture**:
 An immutable declaration of how an Incubator assignment searches, challenges, uses its approved research resources, and decides when to stop without changing evidence, risk, or authority gates. Any effect on sizing, entry, management, or exit belongs to a new Strategy Version.
 _Avoid_: agent personality, risk appetite, trading aggression, prompt style
 
 **Velocity Objective**:
-The standing objective to minimize time to reproducible, decision-relevant learning by safely scaling approved agents, concurrency, tokens, compute, data, automation, and spending. It remains subordinate to Research Budget, Testing Budget, entitlements, evidence independence, Principal Operational Budget, and authority controls.
+The standing objective to maximize expected economic value and uncertainty reduction delivered as reproducible decisions per wall-clock time by safely scaling approved agents, concurrency, tokens, compute, data, automation, and spending. It remains subordinate to Research Budget, Testing Budget, entitlements, evidence independence, Principal Operational Budget, and authority controls.
 _Avoid_: trade frequency, unrestricted spending, agent count, move fast and break things
+
+**Control Capacity Reserve**:
+Resource headroom unavailable to Incubator workloads that preserves Safety Kernel, lifecycle, reconciliation, evidence-control, alerting, and Principal Gateway operation during saturation or failure.
+_Avoid_: spare research capacity, idle waste, shared burst pool
+
+**Capacity Expansion Proposal**:
+An immutable Principal Gateway proposal to increase an existing resource envelope, binding the bottleneck, measured evidence, expected velocity and economic gain, incremental and maximum cost, scope, expiry, alternatives, and rollback. It grants no capacity until accepted by a Principal Authorization Decision.
+_Avoid_: automatic budget increase, capacity warning, agent request
+
+**Capacity Trial**:
+A bounded challenger evaluation of an unproven model, provider feature, or compute class against an incumbent using decision latency, reproducibility, rework, independence, and cost. It grants no fleet-wide capacity or new vendor, entitlement, or spending authority.
+_Avoid_: production rollout, free benchmark, automatic upgrade
+
+**Incubator Resource Policy**:
+The immutable versioned rules that translate the Velocity Objective, work priority, approved budgets, expected critical-path benefit, independence, liveness, and Control Capacity Reserve into Research Capacity Reservations, scale changes, and Capacity Expansion Proposals. It never creates data, spending, or trading authority.
+_Avoid_: autoscaling settings, queue configuration, unlimited research mandate
 
 **Testing Budget**:
 The finite statistical error allowance assigned to an Experiment Family or hierarchy, including its confirmatory hypotheses, sequential looks, amendments, and dependence corrections. It is distinct from compute or spending authority and cannot be renewed using the same exhausted evidence.
