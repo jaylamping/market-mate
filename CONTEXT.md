@@ -490,6 +490,14 @@ _Avoid_: autonomous code change, Strategy Version, approved implementation
 The versioned limits on experiment families, trials, compute, data spending, concurrency, and reserved evidence that bound autonomous research. An agent may propose an expansion, but only a Principal Authorization Decision can activate it.
 _Avoid_: cloud budget, agent discretion, experiment quota
 
+**Research Posture**:
+An immutable declaration of how an Incubator assignment searches, challenges, uses its approved research resources, and decides when to stop without changing evidence, risk, or authority gates. Any effect on sizing, entry, management, or exit belongs to a new Strategy Version.
+_Avoid_: agent personality, risk appetite, trading aggression, prompt style
+
+**Velocity Objective**:
+The standing objective to minimize time to reproducible, decision-relevant learning by safely scaling approved agents, concurrency, tokens, compute, data, automation, and spending. It remains subordinate to Research Budget, Testing Budget, entitlements, evidence independence, Principal Operational Budget, and authority controls.
+_Avoid_: trade frequency, unrestricted spending, agent count, move fast and break things
+
 **Testing Budget**:
 The finite statistical error allowance assigned to an Experiment Family or hierarchy, including its confirmatory hypotheses, sequential looks, amendments, and dependence corrections. It is distinct from compute or spending authority and cannot be renewed using the same exhausted evidence.
 _Avoid_: Research Budget, trial count, significance threshold
@@ -658,8 +666,12 @@ _Avoid_: auto-renewal, new promotion, session refresh
 A non-authoritative message sent to an approved external communication channel, such as Slack, to inform the Principal of a threshold, incident, approval request, or recovery state. It may link to Market Mate but cannot itself approve, reject, resume, or alter trading authority.
 _Avoid_: approval, audit record, command
 
+**Principal Gateway**:
+The isolated authority and communication boundary that authenticates the Principal, presents exact immutable proposals and alerts, records proposal-bound Principal Authorization Decisions and emergency restrictions, and exposes approved read-only operational state. It owns no strategy, risk, ledger, execution, or ability to override the Safety Kernel or broaden an Authority Grant.
+_Avoid_: mobile backend, Engine API, admin portal, approval bot
+
 **Approval Companion**:
-An optional Principal client, such as a native mobile application, that presents server-fetched evidence, sends Operational Notifications, invokes emergency containment, and cryptographically submits a Principal Authorization Decision. It owns no strategy, risk, ledger, execution, or canonical authorization state.
+An optional Principal client, such as a native mobile application, that communicates only through the Principal Gateway to present server-fetched evidence, receive Operational Notifications, invoke emergency containment, and cryptographically submit a Principal Authorization Decision. It owns no strategy, risk, ledger, execution, or canonical authorization state.
 _Avoid_: mobile trading engine, second backend, biometric approval
 
 **Principal Authorization Decision**:
