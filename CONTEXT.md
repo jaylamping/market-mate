@@ -44,6 +44,42 @@ _Avoid_: order, signal
 The fully specified, venue-neutral execution plan derived from a Trade Intent, including exact instruments, leg ratios, quantities, net economics, limits, timing, lifecycle handling, required capabilities, and the narrow adaptations an adapter may perform.
 _Avoid_: broker request, strategy idea
 
+**Order Risk Class**:
+The deterministic classification of an Order Plan from its before/after Position Risk, Lifecycle Funding Requirement, protection, and obligations: Risk Increasing when any material measure or obligation rises; Risk Neutral when none rises or weakens; or Risk Reducing only when every approved risk measure falls without creating a new material tail.
+_Avoid_: buy or sell, open or close, order side
+
+**Risk-Reducing Order**:
+An Order Plan classified as Risk Reducing by the Safety Kernel rather than by its side or broker open/close label. It may use a separately certified degraded-liquidity path but cannot proceed through a halt, missing market, uncertain custody, or unbounded economics.
+_Avoid_: sell order, closing order, emergency market order
+
+**Order Admission Policy**:
+The immutable versioned global liquidity, quote-quality, session, atomicity, execution, cost, and market-impact floors an Order Plan must satisfy before submission. A Strategy Version may impose stricter requirements but cannot weaken them.
+_Avoid_: strategy preference, broker validation, editable thresholds
+
+**Admission Quote**:
+The fresh, identity-certified, entitled, two-sided, positive-size, firm and executable market observation used for an Order Admission decision, with its source, native and receipt times, sequence state, session, conditions and displayed size. Indicative, delayed, stale, crossed, locked, halted, auction or otherwise non-executable observations are not Admission Quotes.
+_Avoid_: current price, midpoint, last trade
+
+**Execution Friction**:
+The complete estimated economic drag of entering and later reducing a Risk Position, including bid/ask spread, slippage, market impact, commissions, fees and stressed exit costs. It must fit both Position Risk and conservative expected-edge budgets.
+_Avoid_: commission, spread, actual P&L
+
+**Exit Capacity**:
+The evidence that a Minimum Executable Unit can be reduced under its intended and stressed market, liquidity, package, lifecycle and timing conditions without breaching its Risk Policy. Assumed future liquidity or current entry depth alone is insufficient.
+_Avoid_: current volume, open interest, sell button
+
+**Liquidity State**:
+The deterministic order-admission state of a Tradable Instrument or package: Admission Eligible when every hard gate passes; Admission Degraded when new exposure is blocked but a certified Risk-Reducing Order may remain possible; Unscorable when executable economics cannot be established; Disputed when required evidence conflicts; or Unavailable when no supported executable market exists.
+_Avoid_: liquid or illiquid, volume tier, trading status
+
+**Order Capacity Reservation**:
+The full planned Position Risk, Lifecycle Funding Requirement, cash, collateral, and portfolio capacity held from Risk Approval until every related order, fill, cancel, correction, and unknown state becomes terminal and reconciled. Partial fills or cancel requests do not release it early.
+_Avoid_: buying-power estimate, filled amount, temporary hold
+
+**Atomic Package Unit**:
+The smallest complete multi-leg execution quantity that preserves every approved leg ratio, defined-loss relationship, and package economic limit. A partial fill is acceptable only when it consists exclusively of complete Atomic Package Units.
+_Avoid_: option leg, partial spread, all-or-none order
+
 **Risk Decision**:
 The Safety Kernel's immutable approval or rejection of one exact Order Plan against a specified Risk Policy and broker-reconciled account snapshot. Any economic plan change requires a new Risk Decision.
 _Avoid_: risk score, model approval
@@ -490,6 +526,78 @@ _Avoid_: optional field, default value, fallback source
 The separately validated behavior a Strategy Version may use when a Soft Indicator Dependency is unavailable, including its substitution or omission rule, reduced evidence state, and risk limits. It cannot weaken a safety constraint.
 _Avoid_: best effort, last-known-good, silent fallback
 
+**Evidence Change Type**:
+The canonical classification of a change affecting source evidence: Factual Correction when replacement evidence is supplied; Retraction when evidence remains retainable but is no longer reliable; Rights Restriction or Required Deletion when permitted storage or use narrows; Source Unavailability when future collection stops without disproving prior evidence; or Provenance Dispute when identity, timing, or lineage cannot be certified. Uncertain classification takes the most restrictive plausible treatment.
+_Avoid_: bad data, source update, deletion flag
+
+**Evidence Control Event**:
+The immutable record that an Evidence Change Type has affected identified evidence and initiated containment before correction, rebuilding, or permitted deletion. It preserves the affected lineage and decision impact without itself retaining prohibited source content.
+_Avoid_: cleanup job, row deletion, source alert
+
+**Evidence Dependency Closure**:
+The complete transitive set of normalized observations, Research Snapshots, indicators, embeddings, models, experiments, Strategy Versions, promotion evidence, forecasts, and Decision Records that consumed affected evidence. Ambiguous lineage expands to the smallest enclosing scope proven complete.
+_Avoid_: direct references, affected rows, best-effort impact
+
+**Evidence Change Materiality**:
+The demonstrated impact of an Evidence Change Type on observations, assessments, forecasts, qualification gates, risk decisions, or historical conclusions. No Impact requires deterministic proof that none changed; unknown impact is Material, while a Required Deletion applies regardless of economic impact.
+_Avoid_: important update, small correction, judgment call
+
+**Entitlement Artifact Matrix**:
+The Data Entitlement classification of permitted access, transformation, retention, correction, and deletion for each artifact class derived from a source, including raw content, normalized fields, aggregates, summaries, features, embeddings, prompts, model artifacts, hashes, logs, caches, replicas, exports, and backups. An unspecified artifact class is not permitted evidence.
+_Avoid_: source license, derived-data exception, general API rights
+
+**Evidence Purge State**:
+The non-interchangeable deletion state of affected evidence: Requested, Contained and Unavailable for Use, Active Stores Purged, Backup Expiration Pending, Verified Fully Purged, or Purge Failed or Disputed. Containment ends permitted use; only the applicable verified terminal state establishes deletion completion.
+_Avoid_: deleted flag, missing row, cleanup complete
+
+**Replay Availability State**:
+The current ability to reconstruct an artifact or decision from evidence that remains legally and operationally available: Reproducible, Reproducible with Corrected Evidence, Degraded Replay, or Replay Unavailable. It never changes the historical Decision-Time View.
+_Avoid_: valid decision, reproducibility passed, data missing
+
+**Non-Content Audit Envelope**:
+The maximum contractually permitted metadata that may survive deletion of source evidence, potentially including the Evidence Change Type and time, governing entitlement version, affected internal lineage, decision references, containment actions, Evidence Purge State, and Replay Availability State. It excludes content, reconstructable derivatives, and hashes unless their retention is explicitly permitted.
+_Avoid_: deletion archive, redacted content, evidence copy
+
+**Evidence Deletion Manifest**:
+The immutable Evidence Control Event inventory of every affected canonical record, object version, vector, cache, replica, log, export, derived artifact, and backup, together with its controller, applicable deadline, Evidence Purge State, attempt history, and permitted completion proof. A deletion request or current-query miss is not completion evidence.
+_Avoid_: cleanup list, delete response, retention report
+
+**Evidence Revalidation**:
+The deterministic rebuilding and qualification of corrected or cleanly retained evidence and every affected derivative through new versioned artifacts and preregistered trials. It never rewrites invalidated trials, restores their Testing Budget, or automatically restores Live authority.
+_Avoid_: rerun, refresh model, clear quarantine
+
+**Source Compliance Incident**:
+An Evidence Control Event requiring immediate Principal escalation because it affects a Live order, open position, Live Strategy Authority Grant, deletion deadline, purge verification, or restoration of prohibited evidence. Research-only No Impact corrections remain visible without becoming incidents.
+_Avoid_: data warning, source alert, research update
+
+**Source Correction Coverage**:
+The certified ability to discover an Approved Source's revisions, retractions, deletions, and sequence gaps through its strongest supported compliance stream, revision or removal interface, sequence feed, and periodic inventory reconciliation. Inadequate or disputed coverage prevents strategy-grade use.
+_Avoid_: update polling, source freshness, webhook configured
+
+**Managed Evidence Export**:
+An entitlement-permitted, logged, expiring copy whose exact contents, destination, controller, and deletion obligations remain inside the Evidence Dependency Closure and Evidence Deletion Manifest. Evidence that cannot remain locatable and purgeable is not exportable.
+_Avoid_: download, report file, data extract
+
+**Evidence Integrity Certification**:
+The demonstrated ability to contain, correct, purge, restore, and revalidate affected evidence across canonical stores, derived indexes, caches, replicas, exports, models, and backups without resurrecting prohibited use. Daily integrity checks, weekly Paper drills, monthly recertification, and material-change recertification provide distinct evidence.
+_Avoid_: deletion test, backup test, compliance checkbox
+
+**Evidence Tombstone Barrier**:
+The canonical prohibition checked before ingest, replay, restoration, cache fill, index construction, or other renewed availability of contained or deleted evidence. A late copy remains rejected; legitimately republished evidence enters as a newly entitled version linked to, but never clearing, the prior tombstone.
+_Avoid_: deleted-ID list, duplicate filter, restore cleanup
+
+**Purge Completion Evidence**:
+The contract-appropriate proof that an Evidence Deletion Manifest target reached its asserted Evidence Purge State, using deterministic verification for controlled systems and provider operation evidence plus follow-up verification for managed systems. Request acceptance alone is not completion.
+_Avoid_: success response, missing search result, provider promise
+
+**Evaluation Restatement**:
+The appended recalculation of a previously published research, forecast, experiment, or model evaluation after corrected evidence, showing the changed inputs, metrics, uncertainty, and conclusions without overwriting the as-issued evaluation. When permitted evidence no longer supports recalculation, the evaluation becomes invalidated and Replay Unavailable.
+_Avoid_: corrected score, updated backtest, replaced result
+
+**Source Offboarding**:
+The controlled termination of an Approved Source or Data Entitlement, including collection shutdown, dependent-use containment, final artifact inventory, permitted export or deletion, credential and job revocation, backup-expiration tracking, and preservation of only the permitted Non-Content Audit Envelope.
+_Avoid_: cancel subscription, delete API key, disable source
+
 **Source Disputed**:
 An evidence state in which approved sources materially disagree or cannot be reconciled under the applicable Indicator Definition. The disagreement remains visible and dependent predictive use is unavailable until resolved or explicitly validated for that state.
 _Avoid_: average value, source error, choose-best-provider
@@ -901,3 +1009,35 @@ _Avoid_: deduplicated alert, combined Paper/Live incident, suppressed event
 **Maintenance Window**:
 A bounded, Principal-approved interval naming the component, environment, expected effects, and rollback in which only specifically predicted noncritical deliveries may be suppressed. Unexpected or Critical conditions remain alertable.
 _Avoid_: alerts off, mute period, quiet hours
+
+**Stage Applicability Matrix**:
+The authoritative mapping of each control and service to Local Research, Local Paper, Cloud Paper, Restricted Live, and Autonomous Live as required, prohibited, deferred, or inherited, with its Trust Zone, authority, evidence, owner, failure scope, and recovery gate. A later-stage control cannot block an earlier stage where it provides no safety benefit.
+_Avoid_: one universal readiness checklist, Live controls everywhere
+
+**Planning Claim**:
+A time-bounded advisory reservation of one planning item that records the claimant, expected artifact, working branch or worktree when applicable, next checkpoint, and latest observable activity. It is audited after 24 hours of inactivity and retained only when live work or a usable artifact is verified.
+_Avoid_: permanent assignment, ownership lock
+
+**Decision Liveness Record**:
+The operational record for blocked planning work: exact blocked scope, hazard, dependency, owner, next action or evidence, checkpoint or expiry, escalation path, and safe work that may continue. A timeout escalates but never grants authority or converts a failed gate into a pass.
+_Avoid_: blocked label, waiting for safety
+
+**Safety Control Case**:
+The versioned justification for one safety control, including its hazard, applicable stage and scope, enforcement action, evidence, owner, recovery path, expected benefit, false-positive and Principal-attention burden, Operating Cost, dependencies, review cadence, and merge or retirement criteria.
+_Avoid_: safety best practice, permanent control by default
+
+**Principal Operational Budget**:
+The bounded amount of noncritical proposal volume, review time, certification work, and alert load Market Mate may impose on the Principal before discretionary affected work queues or pauses. Critical incidents and containment are not suppressed by this budget, and expanding it requires authenticated Principal approval.
+_Avoid_: approval quota that suppresses emergencies, unlimited review burden
+
+**Certification Lease**:
+A scoped, expiring certification for one capability whose renewal evidence starts before expiry, may reuse unchanged automated evidence, and remains independently revocable even when presented in a bundled Principal review. Expiry disables only dependent scope and never passes automatically.
+_Avoid_: monthly global recertification, silent grace period
+
+**Emergency Restriction**:
+A temporary scope-narrowing state activated only by an already-approved deterministic trigger. It records the policy, hazard, scope, start, review deadline, and release evidence; reaching the deadline escalates and preserves containment rather than automatically loosening it.
+_Avoid_: agent-created policy activation, automatic timeout release
+
+**Economic Evaluation Family**:
+A genuinely independent strategy-review path for economics, robustness, and benchmark value. Reviewers sharing a model, dataset, implementation, or evaluator failure path count as one family when mixture-of-experts consensus is computed.
+_Avoid_: agent count, model-name count, correlated vote
