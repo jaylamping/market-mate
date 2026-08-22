@@ -252,6 +252,18 @@ _Avoid_: all options, index option without classification
 An expense required to research, host, observe, or operate Market Mate that is funded separately from the Brokerage Account but included in fully loaded performance reporting.
 _Avoid_: trading loss, portfolio fee
 
+**Operating Cost Envelope**:
+The Principal-approved prospective cash-spending authority for Market Mate, expressed as stage targets, category soft caps, an aggregate monthly hard ceiling, a first-year ceiling, and escalation thresholds. It excludes Trading Capital and imputed development labor; unused category capacity may move within the aggregate ceiling, while any new vendor, annual commitment, upgrade, exceptional acquisition, or ceiling increase requires fresh Principal approval.
+_Avoid_: trading budget, expense estimate, automatic spending authority
+
+**Portfolio Performance**:
+The contribution-adjusted economic performance of Trading Capital after Trading Costs, execution friction, interest, exercise, assignment, and settlement effects, but before separately funded Operating Costs.
+_Avoid_: account balance, fully loaded economics, gross return
+
+**Fully Loaded Experiment Economics**:
+Portfolio Performance reduced by every actual cash Operating Cost for the same reporting period, with development effort reported separately as time rather than imputed expense.
+_Avoid_: strategy return, portfolio P&L, hidden infrastructure cost
+
 **Capability-Adjusted Cost**:
 The complete recurring and usage-based cost of an Execution Venue relative to the certified capabilities Market Mate will actually use, including commissions, exchange and regulatory fees, market data, infrastructure burden, and expected execution friction.
 _Avoid_: commission rate, cheapest broker
@@ -261,6 +273,38 @@ The human and engineering effort required to safely operate an Execution Venue, 
 _Avoid_: developer experience, ease of use
 
 ## Trading and control
+
+**Issuer**:
+The legal entity whose obligations or ownership interests give rise to one or more Securities. An Issuer is not interchangeable with any ticker, share class, listing, or option underlying.
+_Avoid_: company ticker, stock, instrument
+
+**Security**:
+A distinct class of financial rights associated with an Issuer, such as one class of common stock or an ADR, independent of where or under which symbol it is listed.
+_Avoid_: issuer, ticker, exchange listing
+
+**Exchange Listing**:
+The time-bounded admission of one Security to trading on a particular venue, with its own listing identity, symbol history, currency, status, and lifecycle.
+_Avoid_: stock, ticker, issuer
+
+**Tradable Instrument**:
+The exact, immutable economic object an Order Plan may reference, such as a specific Exchange Listing or listed option contract. Trade eligibility requires a certified mapping from every venue or data-provider identifier to this identity.
+_Avoid_: ticker, company, vendor symbol
+
+**Symbol Alias**:
+A display or vendor symbol associated with an Issuer, Security, Exchange Listing, or Tradable Instrument only for a declared source and validity interval. Symbol changes add aliases; later reuse by an unrelated object never reuses identity.
+_Avoid_: canonical identifier, permanent ticker, instrument key
+
+**Option Deliverable Version**:
+The immutable, effective-dated terms defining what one option contract unit delivers, including underlying or cash components, quantities, multiplier, settlement, and official adjustment evidence. A changed deliverable creates a new version without rewriting the contract's prior terms.
+_Avoid_: option symbol, adjusted ticker, current multiplier
+
+**Security Master**:
+The versioned, provider-neutral authority that relates Issuers, Securities, Exchange Listings, Tradable Instruments, Symbol Aliases, option terms, deliverable versions, and vendor or venue identifiers to their evidence and validity intervals.
+_Avoid_: ticker table, broker symbol list, current universe
+
+**Instrument Identity Break**:
+A material unresolved conflict or gap in the identity, terms, listing, deliverable, or cross-provider mapping of a Tradable Instrument. It prohibits new or increased exposure while preserving unambiguous risk-reducing management of existing obligations.
+_Avoid_: symbol mismatch, warning, manual mapping
 
 **Investment Universe**:
 The securities and derivatives the system is permitted to consider and trade. The initial intended universe is stocks and listed options.
@@ -378,6 +422,14 @@ _Avoid_: successful run, backtest result, discarded attempt
 Research that may generate hypotheses but cannot support promotion, confidence claims, or testing-budget renewal. Any discovered hypothesis requires a fresh Experiment Registration and untouched or forward evidence.
 _Avoid_: preliminary validation, informal backtest, free trial
 
+**Research Sandbox**:
+An isolated, non-authoritative environment in which agents may read approved unprivileged evidence, create disposable working files, append constrained experiment results, and prepare reviewable proposals. It has no broker credentials or ability to deploy, merge, alter canonical evidence or policy, or write to Paper or Live services.
+_Avoid_: development server, Paper environment, safe production
+
+**Research Code Proposal**:
+Agent-authored executable code offered for review from a Research Sandbox. It grants no runtime or deployment authority; any merge, dependency change, deployment, or broader write capability requires a proposal-bound Principal Authorization Decision.
+_Avoid_: autonomous code change, Strategy Version, approved implementation
+
 **Research Budget**:
 The versioned limits on experiment families, trials, compute, data spending, concurrency, and reserved evidence that bound autonomous research. An agent may propose an expansion, but only a Principal Authorization Decision can activate it.
 _Avoid_: cloud budget, agent discretion, experiment quota
@@ -438,6 +490,14 @@ _Avoid_: unattended trading, unrestricted automation
 A versioned, expiring Principal approval defining which autonomous component may perform which actions, in which environments, strategies, schedules, tools, and capital/risk limits, with required evidence, monitoring, notifications, and rollback. A component cannot approve or broaden its own grant.
 _Avoid_: permission flag, agent trust
 
+**Live Strategy Authority Grant**:
+An Authority Grant binding one exact Live Eligible Strategy Version to its environment, venue, Strategy Sleeve, instruments, capabilities, schedule, capital and risk limits, Preauthorized Strategy Fallback, and earliest applicable expiry. Initially it expires no later than 30 calendar days and immediately on required certification expiry or evidence invalidation.
+_Avoid_: strategy approval, permanent authorization, deployment status
+
+**Live Authority Renewal**:
+The Principal's authenticated approval to continue an unchanged Live Strategy Authority Grant after fresh automated evidence, compatibility, certification, and reconciliation checks pass. It never rebuilds evidence, widens scope, or cures an invalidated gate.
+_Avoid_: auto-renewal, new promotion, session refresh
+
 **Operational Notification**:
 A non-authoritative message sent to an approved external communication channel, such as Slack, to inform the Principal of a threshold, incident, approval request, or recovery state. It may link to Market Mate but cannot itself approve, reject, resume, or alter trading authority.
 _Avoid_: approval, audit record, command
@@ -494,25 +554,145 @@ _Avoid_: purchase price, position size
 The share of broker-reconciled account equity committed as security value, option premium, or collateral. It is distinct from Position Risk and aggregate modeled loss.
 _Avoid_: exposure, invested percentage
 
+**Draft Strategy Proposal**:
+A mutable, non-authoritative strategy design that may be revised during research but cannot enter Paper or Live execution. Freezing its complete behavior and dependencies creates a Strategy Version.
+_Avoid_: Strategy Version, experimental live rule, draft deployment
+
 **Strategy Version**:
-A fixed, reviewable version of the rules that generate trade candidates and determine their sizing, entry, management, and exit.
-_Avoid_: algorithm update, bot behavior
+An immutable, content-addressed version of the complete declarative rules and pinned dependencies that generate trade candidates and determine sizing, entry, management, and exit. Changing any behavior or dependency creates a new Strategy Version.
+_Avoid_: algorithm update, bot behavior, mutable strategy
+
+**Strategy Lifecycle State**:
+The non-interchangeable governance state of a strategy: Draft Strategy Proposal, Frozen Strategy Version, Research Qualified, Paper Authorized, Live Eligible, Live Authorized, Quarantined, Wind-Down, or Retired. Evidence qualification and execution authority remain separate; no state transition rewrites the Strategy Version.
+_Avoid_: deployment stage, environment flag, confidence level
+
+**Paper Authorized**:
+A Strategy Lifecycle State permitting a Strategy Version to operate only in its approved Paper scope after deterministic evidence, safety, and resource gates pass. It grants no Live eligibility or authority.
+_Avoid_: paper tested, Live Eligible, simulation mode
+
+**Live Eligible**:
+A Strategy Lifecycle State showing that a Strategy Version has passed every required evidence, risk, compliance, and operational gate for a Live proposal but has no Live trading authority until the Principal grants it.
+_Avoid_: Live Authorized, approved strategy, ready-to-trade
+
+**Live Authorized**:
+A Strategy Lifecycle State in which an authenticated Principal Authorization Decision and current Authority Grant permit an exact Live Eligible Strategy Version to act within a bounded environment, capital, instrument, capability, and time scope.
+_Avoid_: Live Eligible, generally approved, production strategy
+
+**Hard Promotion Gate**:
+A non-bypassable compliance, risk, reproducibility, entitlement, leakage, or authority condition that every evaluator must pass before a Strategy Version can advance. Neither evaluator consensus nor the Principal can convert a failed gate into a pass.
+_Avoid_: reviewer opinion, weighted vote, warning
+
+**Evaluator Independence**:
+The degree to which promotion evaluators use genuinely distinct model, implementation, evidence, and reasoning paths. Evaluators with a materially shared failure path count as one vote, and every dissent remains visible.
+_Avoid_: agent count, model name count, unanimous text
+
+**Strategy Promotion Review**:
+The evidence-bound review that first enforces every Hard Promotion Gate, then requires complete reproducibility/provenance/leakage, risk/execution/lifecycle, and economics/robustness/benchmark review with at least two genuinely independent supporting evaluation paths and no material unresolved dissent. Dissent yields Needs More Evidence rather than majority override.
+_Avoid_: majority vote, agent approval, promotion score
+
+**Strategy Registry**:
+The append-only catalog of immutable Strategy Versions, their lifecycle transitions, lineage, pinned dependencies, Promotion Bundles, review outcomes, authority history, quarantine, rollback, supersession, and retirement. Registry admission grants no execution authority.
+_Avoid_: strategy repository, deployed strategies, winners list
+
+**Strategy Lineage**:
+The immutable family relationship among Strategy Versions that implement the same economic strategy thesis. Multiple versions may run in separate Paper sleeves, but initially only one version in a lineage may open new Live exposure in one Brokerage Account.
+_Avoid_: Experiment Family, deployment branch, strategy name
+
+**Strategy Change Class**:
+The revalidation scope assigned to a proposed change: Non-Behavioral for append-only annotation or correction without a new version; Mechanical Compatibility for unchanged economics requiring a new version, targeted validation, and complete regression/safety checks; or Economic Behavior for any model, evidence, threshold, universe, instrument, sizing, trade, cost, risk, or fallback change requiring a new version and full promotion evidence. Uncertainty defaults to Economic Behavior.
+_Avoid_: patch size, semantic version number, reviewer discretion
+
+**Strategy Evidence PR**:
+The reviewable proposal linking a Strategy Version to its complete preregistration, trials, failures, reproducibility manifest, Promotion Bundle, independent reviews, and Paper findings. Agents may maintain a draft, but a Live promotion becomes mergeable only after every gate passes and the Principal approves the exact Promotion Bundle; merge alone never grants authority.
+_Avoid_: deployment PR, Live approval, code review only
+
+**Promotion Rejection**:
+The Principal's recorded refusal of an exact Promotion Bundle, including the reason and notification cooldown. It grants no authority, does not rewrite evidence, and cannot repeatedly re-request approval without a Principal request, materially new evidence, or expiry of the defined cooldown.
+_Avoid_: failed strategy, quarantine, dismissed alert
+
+**Principal Strategy Containment**:
+The Principal's always-available authority-reducing action to revoke a Strategy Version's grant, quarantine it, reject renewal, or request Strategy Wind-Down. It cannot waive failed evidence, skip lifecycle obligations, force an unsafe action, or broaden authority.
+_Avoid_: manual override, forced pass, discretionary trade
+
+**Strategy Transition Record**:
+The signed, append-only, idempotent record that atomically identifies one Strategy Version lifecycle transition, its prior and resulting states, evidence, gates, authority, actor, time, and linked artifacts. Partial updates in dependent systems never imply that the transition succeeded.
+_Avoid_: status update, deployment event, database flag
+
+**Strategy State Divergence**:
+An incident in which required registry, evidence, PR, deployment, or authority surfaces disagree about a Strategy Lifecycle State. The effective state becomes the most restrictive consistently supported state, and affected promotion or new exposure remains frozen until reconciliation.
+_Avoid_: eventual consistency, stale UI, assume success
+
+**Strategy Sleeve**:
+The ledger and risk-attribution scope that assigns each economic allocation, intent, order, fill, cost, position contribution, and outcome to one Strategy Version while remaining subordinate to aggregate portfolio controls.
+_Avoid_: brokerage subaccount, ticker position, agent wallet
+
+**Portfolio Intent Resolution**:
+The deterministic pre-order process that compares simultaneous Strategy Sleeve intents and may conservatively net or reject conflicts without inventing a new economic trade, self-crossing, or silently transferring position ownership between strategies.
+_Avoid_: strategy vote, order merge, portfolio optimization
+
+**Cross-Strategy Intent Conflict**:
+A condition in which separate Strategy Sleeves request opposing or economically overlapping actions that cannot be executed without hidden interference or counterfactual attribution. Initially, opposing intents are rejected; internal crossing is prohibited.
+_Avoid_: natural hedge, free netting, internal fill
+
+**Aggregated Strategy Order**:
+One venue order combining identical same-direction intents only after each Strategy Sleeve's allocation is fixed. Resulting fills, fees, slippage, cash, positions, and outcomes are apportioned deterministically from that pre-submission allocation.
+_Avoid_: net order, shared position, post-fill allocation
+
+**Strategy Dependency Invalidation**:
+The event raised when a pinned model, indicator, source, instrument definition, policy, or venue capability becomes unusable or materially corrected. It quarantines affected use unless an already validated degraded path applies; substitution requires a new Strategy Version and proportionate evidence.
+_Avoid_: automatic upgrade, dependency refresh, latest-version migration
 
 **Strategy Quarantine**:
 A state that prohibits a Strategy Version from initiating new exposure after its evidence, calibration, data quality, or live behavior violates an approved threshold.
 _Avoid_: pause, poor performance
 
+**Strategy Rollback**:
+An audited authority transition from one Strategy Version to a prior version that independently remains compatible, certified, and eligible under current evidence and policies. Rollback never rewrites either version or bypasses a fresh authority check.
+_Avoid_: undo deployment, restore old code, automatic downgrade
+
+**Preauthorized Strategy Fallback**:
+An exact prior Strategy Version and tighter-or-equal authority scope named in the current Authority Grant for automatic rollback after fresh compatibility, certification, reconciliation, and non-increasing-risk checks pass. Without it, quarantine remains contained until the Principal decides.
+_Avoid_: last known good, automatic version selection, emergency override
+
+**Strategy Supersession**:
+The immutable relationship declaring that a newer Strategy Version replaces an older one for future consideration. It grants no authority, performs no automatic migration, and does not erase the older version's evidence or history.
+_Avoid_: rollout, upgrade, overwrite
+
+**Strategy Retirement**:
+The permanent terminal state that prevents a Strategy Version from receiving new authority while preserving its evidence, decisions, and lineage. Returning the economic idea requires a new Strategy Version and new evidence.
+_Avoid_: pause, quarantine, delete strategy
+
+**Strategy Wind-Down**:
+An exit-only Strategy Lifecycle State that blocks new exposure while the Strategy Version completes its pinned order, position, assignment, settlement, reconciliation, and ledger obligations. Retirement cannot become final until every obligation is closed.
+_Avoid_: retired strategy, liquidation command, quarantine
+
+**Strategy Factory Cycle**:
+The weekly bounded process that reviews daily evidence and registered questions, deduplicates against lineage, and prioritizes candidate generation by information value, safety relevance, independence, uncertainty reduction, applicability, and cost rather than preliminary profit. Immediate evidence may trigger quarantine or registration but not production retuning.
+_Avoid_: daily retraining, profit leaderboard, unlimited search
+
 **Performance Objective**:
 The versioned, net-of-cost criteria used to judge Market Mate against cash/no-trade and a contemporaneous S&P 500 total-return benchmark without implying guaranteed outperformance.
 _Avoid_: profit target, average market return
 
+**Model Version**:
+An immutable, content-addressed predictive or descriptive model with pinned inputs, training evidence, parameters, calibration, validation, and runtime contract. It may produce evidence or forecasts but cannot size, authorize, or execute a trade by itself.
+_Avoid_: Strategy Version, live strategy, model deployment
+
 **Earnings-Direction Model**:
-A Strategy Version that produces a calibrated probability that a security will move up or down after a specified earnings event, and may inform whether an option position may remain open through that event.
+A Model Version that produces a calibrated probability that a security will move up or down after a specified earnings event. A separately validated Strategy Version may consume it when deciding whether and how an option position may remain open through that event.
 _Avoid_: earnings prediction, sentiment score
 
 **Approved Source**:
 A publisher, feed, or public-data endpoint whose content the Principal has authorized for collection and whose terms permit the system's intended access, retention, and analysis.
 _Avoid_: website, scraper target
+
+**Data Entitlement**:
+The written, account- and plan-specific permission governing how Market Mate may access, automate, process, retain, replay, derive from, display, correct, delete, and terminate use of a source's data. Ambiguous or unsupported rights permit sandbox inspection only and cannot support strategy evidence.
+_Avoid_: API key, subscription, public availability
+
+**Promotion-Grade Market Data**:
+Point-in-time market data whose coverage, timing, bid/ask fidelity, lineage, retention rights, capacity, and correction behavior are certified for the exact strategy evidence it supports. Delayed, indicative, IEX-only, last-trade-only, midpoint-only, or rights-ambiguous data may aid development but cannot establish Paper economics or Live eligibility.
+_Avoid_: available quote, broker feed, real-time-looking data
 
 **Source Registry**:
 The closed, versioned authority listing every source and the exact access, purpose, transformation, retention, display, deletion, rate, cost, and account scope currently permitted. Only an active entry may supply strategy evidence.
