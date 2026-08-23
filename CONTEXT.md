@@ -866,6 +866,70 @@ _Avoid_: file write, agent merge, database permission, mutable correction
 The immediate revocation of an Assignment Run and its capabilities after stale scope, budget breach, lost entitlement, gate violation, contamination, or other invalidating condition, with affected outputs and dependency descendants quarantined by lineage. Audit evidence is preserved, unused capacity is released, unrelated work continues, and recovery requires an explicit clean run or assignment.
 _Avoid_: process kill, retry, global shutdown, evidence deletion
 
+**Incubator Containment Scope**:
+The smallest proven-complete failure boundary identified as an assignment or run, artifact dependency closure, Alpha Pod or Strategy Thesis, model, provider, source, runtime, Strategy Sleeve, Paper Account, scheduler, or entire Incubator. Uncertain identity, lineage, or independence expands the scope until containment completeness is demonstrated.
+_Avoid_: incident severity, affected agent, global shutdown, guessed blast radius
+
+**Incubator Failure Class**:
+The non-exclusive classification of an incident as Resource Runaway, Evidence or Context Contamination, Correlated Reasoning Failure, Provider or Platform Failure, Scheduler or Queue Failure, Paper-State Uncertainty, Identity or Authority Failure, or Principal Unavailable. Unknown classification receives the most restrictive plausible response.
+_Avoid_: error code, root cause, alert type, agent failure
+
+**Incubator Circuit Breaker**:
+An idempotent scope-specific authority-reducing action selected from Work Lease throttle or revocation, Assignment Fence, dependency-closure quarantine, source, model, provider, or runtime isolation, Alpha Market suspension with validated scheduler fallback, Paper Containment Grant, or whole-Incubator pause. Circuit breakers preserve evidence and never create capability, budget, or authority.
+_Avoid_: kill switch, retry policy, evidence deletion, manager intervention
+
+**Safe Continuation Proof**:
+The machine-checkable demonstration that an assignment's identity, evidence, provider, runtime, budget, scheduler, and Paper dependencies are disjoint from an active Incubator Containment Scope. Proven-independent work continues; uncertainty expands containment rather than assuming separation.
+_Avoid_: unaffected label, best effort, global recovery, agent assertion
+
+**Managerless Incident Control**:
+The separation in which Sentinel determines mandatory control restrictions and Engine executes fencing, dependency propagation, fallback scheduling, evidence preservation, and routing without an Incubator incident manager. Incubator assignments may diagnose and propose recovery evidence but cannot declare containment, restore capability, or approve their own work.
+_Avoid_: incident commander agent, risk manager, self-recovery, committee approval
+
+**Incubator Degraded Mode**:
+An explicit Engine operating state selected from Provider Isolated, Evidence Read Only, Scheduler Fallback, Research Continuity, Paper Containment Only, or Incubator Paused, binding its trigger, allowed and prohibited operations, affected scope, expiry, and required recovery evidence. Degradation narrows capability and never weakens Sentinel controls.
+_Avoid_: partial outage, safe mode, feature flag, reduced monitoring
+
+**Provider Failover Run**:
+A new Assignment Run using only a prequalified replacement model or data provider with pinned replacement dependencies, fresh Provider State, and recomputed Evaluator Independence Groups. Provider outputs are never presumed equivalent, and absent a qualified alternative the dependent work remains Blocked while proven-disjoint work continues.
+_Avoid_: retry on another model, provider fallback, equivalent API, independence preservation
+
+**Scheduler Fallback Mode**:
+The Incubator Degraded Mode that restores the last-known-good Scheduler Metric Contract, stops new Alpha Shots and Capacity Expansion Proposals, pauses Mutation work at admitted checkpoints, and prioritizes containment, reconciliation, independent validation, and completion of safe in-flight artifacts. Alpha Market admission resumes only after scheduler recovery proof, without manual task assignment.
+_Avoid_: FIFO queue, manager allocation, backup scheduler experiment, normal operation
+
+**Paper-State Uncertainty**:
+An Incubator Failure Class in which any unresolved Paper order, position, Paper Ledger, reservation, or lifecycle state blocks new simulated exposure, preserves capacity reservations, activates Paper Containment Only, and requires reconciliation of every dependent Strategy Sleeve. Timeout never converts unknown state into flat, cancelled, or harmless.
+_Avoid_: stale Paper data, simulator error, assumed cancellation, temporary mismatch
+
+**Principal-Unavailable Mode**:
+The bounded continuation of proven-independent Research and Paper work inside existing unexpired grants and budgets while new Principal decisions queue and expiries narrow rather than renew authority. Material incidents still trigger Gateway notification attempts, but unavailable Principal attention grants no approval and does not stop otherwise safe Research.
+_Avoid_: emergency approval, global pause, silent renewal, Principal delegation
+
+**Recovery Evidence Bundle**:
+The immutable proof required to restore contained scope, binding failure class and Incubator Containment Scope, complete dependency closure, trigger and causal evidence, affected versions and credentials, preserved artifacts, correction, clean rebuild, reconciliation, negative tests, budget accounting, residual uncertainty, rollback path, and independent verification. Service responsiveness alone is not recovery.
+_Avoid_: incident report, health check, restart log, agent assurance
+
+**Exact Retry**:
+A new Assignment Run of unchanged work permitted only after evidence shows its transient failure cause is cleared, preserving every prior attempt and result. Changed evidence, model, provider, code, configuration, or economic behavior requires the applicable new artifact, assignment, or Strategy Version.
+_Avoid_: rerun, hidden attempt, changed-input retry, resume
+
+**Service Rollback**:
+The restoration of a pinned last-known-good service version without deleting, validating, or reclassifying artifacts produced during the failed interval. A rollback narrows operational uncertainty but does not itself prove recovery or clear contamination.
+_Avoid_: undo, evidence restore, successful deployment, incident resolution
+
+**Staged Scope Restoration**:
+The return of recovered capacity through ten, twenty-five, fifty, and one-hundred-percent stages after the Recovery Evidence Bundle passes Sentinel gates and independent checks at each checkpoint. Recurrence immediately returns the scope to its prior contained state and preserves new forensic evidence.
+_Avoid_: gradual rollout, automatic retry, capacity scaling, probation
+
+**Data-Loss Recovery**:
+The restoration of data only after entitlement, Evidence Tombstone Barrier, identity, hash, sequence, Evidence Availability Time, lineage, and dependency-rebuild verification. Unverifiable gaps remain Missing or Contained, and recovery never recreates deleted evidence or turns absence into a neutral value.
+_Avoid_: backup restore, data reload, gap fill, recovered evidence
+
+**Autonomous Scope Restoration**:
+The Engine restoration of affected Research or Paper scope after exact Sentinel recovery gates pass inside existing resource and authority envelopes. Gateway is required only for new spending, entitlement, infrastructure, policy, authority, or a specifically mandated material-incident acknowledgement.
+_Avoid_: self-approval, Live recovery, Principal bypass, automatic policy change
+
 **Strategy Freeze Candidate**:
 A non-authoritative request to transform one Draft Strategy Proposal into a complete immutable Strategy Version by deterministically pinning every rule and dependency, validating completeness, and calculating its content identity. Only the controlled freezing service may create the registry object, and freezing grants no Paper or Live authority.
 _Avoid_: Strategy Version, deployment request, agent-created registry entry, promotion
