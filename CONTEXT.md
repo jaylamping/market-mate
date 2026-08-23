@@ -8,6 +8,42 @@ Market Mate is an autonomous, self-directed trading system for a single individu
 The individual who owns the brokerage account, supplies capital, and sets the system's authority and risk boundaries.
 _Avoid_: customer, client, account owner
 
+**Incubator**:
+The autonomous non-authoritative sphere whose exclusive purpose is to discover, test, challenge, and refine durable economic edge and expected net profit as quickly, efficiently, and reliably as possible across Research and qualified Paper work. It may propose strategies and resource expansion but owns no risk, compliance, evidence-entitlement, lifecycle, execution-authority, or Live control.
+_Avoid_: trading authority, safety organization, general agent platform, Paper account
+
+**Incubator Charter**:
+The Principal-owned versioned invariant that binds every Incubator assignment to the Incubator Profit Mandate and permanently excludes managers, supervisors, desk heads, risk, compliance, entitlement certification, accounting, lifecycle authority, system safety, security, platform reliability, and control enforcement from Incubator Desk topology. Engine rejects nonconforming assignments, Sentinel denies prohibited capabilities, and only an exact Principal Authorization Decision may replace the charter with a new version.
+_Avoid_: culture statement, agent prompt, desk policy, mission suggestion
+
+**Profit Contribution Hypothesis**:
+The immutable assignment claim explaining how its work could increase durable after-cost expected profit, improve capital or execution efficiency, discover economic edge, or rapidly falsify unprofitable work, with a metric, cost envelope, and stopping rule. Every Incubator Agent Assignment requires one, but it is a resource-allocation premise rather than evidence that profit exists.
+_Avoid_: profit promise, strategy thesis, KPI label, raw Paper P&L
+
+**Alpha Shot**:
+A cheap, time-bounded, aggressively parallel Research Assignment that tests one Profit Contribution Hypothesis inside existing Research and Testing Budgets while preserving its result and failure lineage. Engine may launch many Alpha Shots, prune weak branches quickly, and scale survivors, but volume never creates evidence, independence, or authority.
+_Avoid_: trade, free experiment, unregistered trial, agent idea
+
+**Incubator Mutation**:
+An intentional bounded deviation in hypothesis, method, model, Research Posture, Desk Role composition, collaboration pattern, or Presentation Persona used to preserve variation and escape premature convergence. It may create duplication, conflict, eccentricity, and failed work inside approved research capacity, but it cannot conceal lineage, results, contamination, cost, or dissent; weaken evidence; or obtain authority.
+_Avoid_: control failure, hidden experiment, policy exception, random trade
+
+**Mutation Capacity Reserve**:
+The twenty percent of approved Incubator discovery capacity reserved for wildcard Alpha Shots that may intentionally duplicate work, cross ordinary desk routes, use unusual models or postures, recombine unrelated theses, or pursue low-consensus ideas. It remains inside Research and Testing Budgets and cannot consume protected independent-evaluation or Control Capacity Reserve.
+_Avoid_: spare capacity, untracked experiments, chaos budget, authority exception
+
+**Incubator Evolution Loop**:
+The high-velocity cycle in which Engine generates many Alpha Shots and Incubator Mutations, preserves every result, independently challenges survivors, reproduces durable economic edge, and reallocates approved capacity toward stronger descendants while retaining bounded mutation. Selection is based on reproducible after-cost economics rather than conformity, activity, charisma, or raw Paper profit.
+_Avoid_: agent popularity, genetic trading algorithm, winner cloning, survival bias
+
+**Sentinel**:
+The separately isolated deterministic control sphere that owns and enforces the Principal's immutable versioned risk, compliance, evidence-entitlement, lifecycle, accounting, order-admission, and authority rules at every applicable stage. It does not search for profit, negotiate with Incubator outputs, or permit Engine, Gateway, the Principal, or an agent coalition to bypass a failed control.
+_Avoid_: risk desk, AI reviewer, Engine policy, manual override
+
+**Engine**:
+The orchestration sphere that admits and schedules assignments, allocates approved capacity, coordinates typed handoffs and lifecycle services, maintains liveness, and routes exact decisions among Incubator, Sentinel, and Principal Gateway. It may accelerate work and invoke controls but cannot alter economic evidence, override Sentinel, or manufacture spending or trading authority.
+_Avoid_: super-agent, Safety Kernel, Principal Gateway, strategy authority
+
 **Brokerage Account**:
 The Principal's live account at a regulated broker, which holds real cash and securities and is the sole source of live order execution.
 _Avoid_: wallet, exchange account
@@ -479,8 +515,32 @@ Research that may generate hypotheses but cannot support promotion, confidence c
 _Avoid_: preliminary validation, informal backtest, free trial
 
 **Desk Role**:
-The single bounded function an Incubator Agent Assignment performs: Thesis and Research, Evidence and Data, Strategy and Portfolio, Paper Execution and Operations, Risk and Safety, Evaluation and Challenge, or Control Tower and Operations. It defines responsibility and permitted output types, not identity, seniority, independence, or authority.
+The single bounded profit function an Incubator Agent Assignment performs within an Incubator Desk: Market Intelligence and Thesis, Quantitative Research and Experimentation, Data and Feature Research, Strategy Incubation, Portfolio and Capital Efficiency, Execution Edge and Paper Trading, or Economic Evaluation and Challenge. It is a lightweight routing and accountability tag, not an exclusive organizational home, identity, seniority, independence claim, control function, or authority.
 _Avoid_: agent personality, job title, permission set, organizational rank
+
+**Incubator Desk**:
+A persistent logical lane for routing and measuring one profit-producing function while Engine elastically creates, combines, and retires its assignments around economic opportunities. It is not a department, permanent agent pool, control organization, budget owner, or authority boundary.
+_Avoid_: team, hierarchy, risk desk, agent cluster
+
+**Managerless Incubator**:
+The non-hierarchical operating invariant that prohibits manager, supervisor, desk-head, approval-chain, performance-policing, and work-assignment agent roles inside the Incubator. Exact assignments own artifacts, agents compete or collaborate directly, and Engine performs deterministic scheduling and routing without goals, discretion, status, or authority resembling a manager.
+_Avoid_: flat management, AI supervisor, desk lead, Engine manager
+
+**Alpha Pod**:
+A temporary Engine-composed bundle of separately admitted Incubator Agent Assignments drawn from any profit desks to compete or collaborate on one Profit Contribution Hypothesis. It dissolves when the hypothesis fails, graduates, stalls, or reaches its stopping rule, and pod membership carries no shared identity, capability, memory, or evaluator independence.
+_Avoid_: permanent team, agent coalition, shared authority, desk
+
+**Incubator Separation of Duty**:
+The narrow non-combination rule that keeps proposer separate from economic evaluator, model builder from model validator, experiment designer from Holdout Evaluation, and a strategy author from the operator evaluating that exact Paper version, while every Incubator role remains separate from Sentinel, Engine, and Principal Gateway control functions. Other Desk Role overlap and mutation are permitted when separately assigned and economically useful.
+_Avoid_: organizational chart, universal role isolation, independent agent names, control desk
+
+**Incubator Artifact Graph**:
+The asynchronous dependency graph through which typed outputs become inputs to new assignments without a fixed departmental pipeline, allowing any profit desk to launch Alpha Shots or request Alpha Pods. Engine progressively adds only the economically useful capabilities a surviving idea needs, while promotion readiness derives from applicable artifacts, independent evaluation, and external Sentinel gates rather than ceremonial desk traversal.
+_Avoid_: workflow approval chain, organizational handoff, project plan, manager queue
+
+**Sphere Escalation Route**:
+The non-managerial routing rule that sends economic uncertainty to Incubator competition and challenge, resource contention or stalled work to Engine, control failure to Sentinel, and new spending, authority, or policy scope to Principal Gateway. Sentinel rejection causes proposal adaptation or abandonment rather than negotiation around the control.
+_Avoid_: escalation to manager, agent appeal, majority override, Principal chat
 
 **Strategy Thesis**:
 A versioned economic hypothesis explaining why, where, and under which conditions a potentially exploitable behavior may exist, used to organize related research and strategy lineage without specifying complete trading behavior or granting execution authority.
@@ -543,7 +603,7 @@ The typed acceptance of a proposed durable learning only after binding its canon
 _Avoid_: save chat, agent learning, evidence promotion, wiki edit
 
 **Incubator Agent Assignment**:
-An immutable, expiring unit of work binding one objective, Desk Role, primary Strategy Thesis, Research Posture version, workload identity, permitted evidence, allowed actions and outputs, resource reservations, Execution Environment, stopping rule, and lineage. A worker may receive multiple separate assignments, but an assignment cannot combine proposer and evaluator duties in one promotion chain.
+An immutable, expiring unit of work binding one objective, Profit Contribution Hypothesis, Desk Role, primary Strategy Thesis, Research Posture version, workload identity, permitted evidence, allowed actions and outputs, resource reservations, Execution Environment, stopping rule, and lineage. A worker may receive multiple separate assignments, but an assignment cannot combine proposer and evaluator duties in one promotion chain.
 _Avoid_: persistent agent identity, job description, prompt, authority grant
 
 **Assignment Run**:
@@ -638,8 +698,12 @@ _Avoid_: agent leaderboard, raw P&L, token efficiency, popularity
 Non-authoritative presentation metadata that gives an Incubator worker a stable name, tone, vocabulary, and UI identity without changing evidence selection, conclusions, confidence, resources, behavior, or authority.
 _Avoid_: Research Posture, agent identity, evaluator independence, decision logic
 
+**Incubator Profit Mandate**:
+The Incubator's exclusive objective to maximize durable expected net profit and economically useful uncertainty reduction per wall-clock time, capital opportunity, and research cost by aggressively scaling profitable discovery within externally enforced Sentinel controls and approved resource envelopes. Raw Paper profit, activity, agent count, or willingness to take more risk cannot substitute for reproducible after-cost economic edge.
+_Avoid_: safety mandate, unrestricted risk-taking, raw P&L, trade frequency
+
 **Velocity Objective**:
-The standing objective to maximize expected economic value and uncertainty reduction delivered as reproducible decisions per wall-clock time by safely scaling approved agents, concurrency, tokens, compute, data, automation, and spending. It remains subordinate to Research Budget, Testing Budget, entitlements, evidence independence, Principal Operational Budget, and authority controls.
+The Incubator operating objective to maximize expected net profit and economically useful uncertainty reduction delivered as reproducible decisions per wall-clock time by aggressively scaling approved agents, concurrency, tokens, compute, data, automation, and spending. Its resource envelope and every evidence, entitlement, independence, budget, and authority constraint are enforced externally by Engine and Sentinel rather than treated as Incubator Desk objectives.
 _Avoid_: trade frequency, unrestricted spending, agent count, move fast and break things
 
 **Control Capacity Reserve**:
