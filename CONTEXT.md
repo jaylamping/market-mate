@@ -538,6 +538,30 @@ _Avoid_: organizational chart, universal role isolation, independent agent names
 The asynchronous dependency graph through which typed outputs become inputs to new assignments without a fixed departmental pipeline, allowing any profit desk to launch Alpha Shots or request Alpha Pods. Engine progressively adds only the economically useful capabilities a surviving idea needs, while promotion readiness derives from applicable artifacts, independent evaluation, and external Sentinel gates rather than ceremonial desk traversal.
 _Avoid_: workflow approval chain, organizational handoff, project plan, manager queue
 
+**Work Opportunity**:
+A typed non-exclusive invitation for Incubator work that binds a Profit Contribution Hypothesis, expected economic or information value, estimated cost and duration, dependencies, required artifacts, stopping rule, duplication intent, and opportunity-decay horizon. Any assignment may publish one, and Engine admits conforming opportunities automatically within existing policy and budgets without a managerial approval.
+_Avoid_: assigned task, ticket, strategy approval, agent idea
+
+**Alpha Market**:
+The managerless continuous market in which Work Opportunities compete for Research Capacity Reservations and agents compete through assignment plans, economic results, and independent methods rather than status or persuasion. Engine clears the market deterministically while preserving the stochastic Mutation Capacity Reserve.
+_Avoid_: manager queue, agent leaderboard, voting system, brokerage market
+
+**Work Auction**:
+The deterministic Engine allocation of capacity among eligible Work Opportunities using declared profit contribution, information gain, cost, opportunity decay, critical-path impact, novelty, independent failure paths, and queue age. It grants an expiring Work Lease rather than ownership and cannot change budgets, gates, or authority.
+_Avoid_: manager prioritization, agent bidding war, approval meeting, capital auction
+
+**Work Lease**:
+An expiring non-exclusive right for one assignment to attempt a Work Opportunity within an exact capacity reservation, checkpoint cadence, and stopping rule. Silence, staleness, blocking, fencing, cancellation, or terminal completion releases it automatically, while multiple leases require an explicit Intentional Duplication Class.
+_Avoid_: task ownership, permanent claim, authority grant, queue reservation
+
+**Opening Swarm**:
+The default immediate fan-out for a cheap high-upside Work Opportunity into two Aggressive Explorer assignments with materially different methods, one Extreme Frontier Incubator Mutation, and one Skeptical Reviewer attack. Expensive work begins with one cheap aggressive scout and earns the broader swarm only after its first survival checkpoint.
+_Avoid_: review committee, agent team, mandatory four votes, evaluator independence
+
+**Intentional Duplication Class**:
+The declared economic purpose for parallel work on one opportunity: Competitive Race, Independent Reproduction, Adversarial Attack, Mutation, or Continuity Backup, with expected incremental value and shared failure paths. Unlabeled duplication is merged, stopped, or reclassified explicitly, and every result remains recorded.
+_Avoid_: accidental duplicate, multiple agents, independent vote, wasted work
+
 **Sphere Escalation Route**:
 The non-managerial routing rule that sends economic uncertainty to Incubator competition and challenge, resource contention or stalled work to Engine, control failure to Sentinel, and new spending, authority, or policy scope to Principal Gateway. Sentinel rejection causes proposal adaptation or abandonment rather than negotiation around the control.
 _Avoid_: escalation to manager, agent appeal, majority override, Principal chat
