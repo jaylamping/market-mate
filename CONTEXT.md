@@ -642,6 +642,26 @@ _Avoid_: slow research, failed hypothesis, high token use, agent disagreement
 The rule that ordinary competition, failure, stalls, cancellations, queue pressure, and resource reallocation remain internal unless the Principal requests detail, while Gateway interrupts only for exact budget, spending, entitlement, policy, or authority decisions and material incidents. Nonurgent proposals are bundled within the Principal Operational Budget.
 _Avoid_: executive reporting, manager escalation, agent notification, silent incident
 
+**Incubator Control Room**:
+The Principal-facing operational console for Research and qualified Paper whose canonical hierarchy is the Opportunity Book, Economic Artifact Tape, and separate rails for exact Principal decisions, Engine pressure, Sentinel outcomes, incidents, and Paper versions. It favors dense inspectable function over promotional storytelling; floor topology is secondary drill-down, and the console carries no command or authority itself.
+_Avoid_: marketing dashboard, agent chat room, trading-floor visualization, manager cockpit
+
+**Opportunity Book**:
+The Incubator Control Room projection of the Alpha Market organized by Work Opportunity and ranked economic state, exposing stage, liveness, Expected Profit Distribution, resource and time cost, Work Lease competition, dissent, lineage, and latest admitted artifact. It ranks opportunities rather than agents or desks and drills into exact evidence.
+_Avoid_: agent leaderboard, task list, security watchlist, desk performance table
+
+**Economic Artifact Tape**:
+The chronological append-only Incubator Control Room projection of canonical artifacts that materially change economic or control state, each paired with its exact type, lineage, and concrete effect. Agent messages, tool activity, heartbeats, and token volume never become tape events merely because they occurred.
+_Avoid_: activity feed, agent chat, status stream, verbose execution transcript
+
+**Principal Decision Rail**:
+The strictly separated Incubator Control Room projection of exact Principal Gateway proposals and material alerts that cross the Principal Attention Boundary, including scope, evidence, expiry, and immutable authority effect. Ordinary Incubator competition, failures, stalls, and reallocations never enter the rail.
+_Avoid_: approval inbox, manager escalation queue, notification feed, agent request list
+
+**Control Room Disclosure Policy**:
+The visibility contract that makes admitted artifacts, material dissent, validated economics, budgets, queue pressure, incidents, Sentinel results, and exact Paper versions inspectable; summarizes topology and worker presentation; and withholds raw messages, tokens, tool traces, and model-inference streams from ordinary views while preserving authorized forensic access. Projection never mutates or substitutes for canonical records.
+_Avoid_: transparency toggle, debug mode, executive summary, raw trace dashboard
+
 **Net Validated Profit Velocity**:
 The Incubator north-star measure of independently reproduced, portfolio-incremental expected after-cost profit added per wall-clock time after subtracting research spending and Principal-attention cost. Realized Live net profit is the ultimate lagging outcome, but raw Paper profit, uncalibrated forecasts, duplicated strategy variants, and unreproduced claims contribute nothing.
 _Avoid_: research throughput, raw P&L, Sharpe ratio, agent productivity
