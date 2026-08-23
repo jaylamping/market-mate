@@ -1579,8 +1579,16 @@ The terminal determination that every Action Attempt has a reconciled venue stat
 _Avoid_: order terminal, filled, strategy complete, evaluation complete
 
 **Outcome Evaluation Completion**:
-The independent state that remains Pending until every preregistered evaluation horizon and applicable lifecycle obligation has an Outcome Attribution, then becomes Complete without changing Execution Completion or the original Decision-Time View.
+The independent state that remains Pending until every preregistered evaluation horizon and applicable lifecycle obligation has an Outcome Attribution, then becomes Complete or Outcome Indeterminate without changing Execution Completion or the original Decision-Time View.
 _Avoid_: execution status, realized P&L available, record closed, forecast settled
+
+**Outcome Indeterminate**:
+The terminal Outcome Evaluation Completion state in which one or more preregistered horizons cannot be reconstructed or resolved, binding the exact missing evidence, failure or timeout, affected scope, and evidence known before failure. It is never converted to zero, neutral, failure, or success and contributes no positive promotion evidence by itself.
+_Avoid_: inconclusive result, missing return, neutral outcome, failed strategy
+
+**Indeterminate Outcome Retry**:
+A new linked Research or Paper evaluation permitted when preserved pre-failure evidence leaves the Outcome Indeterminate economically promising relative to retry cost and its failure scope is understood and contained. The original remains indeterminate; exact repeats preserve full lineage, changed methods require fresh preregistration and Testing Budget, and any renewed Live action requires a new Decision Record and current authority rather than automatic replay.
+_Avoid_: resume, backfilled outcome, retry until success, automatic retrade
 
 **Decision History Projection**:
 The compact rebuildable historical projection of Decision Records, forecasts, baselines, dispositions, Action Outcomes, Outcome Attributions, evidence status, redactions, versions, and integrity references used for fast Principal review and authorized Incubator retrieval. It is non-authoritative, never exported automatically, and reaches an Incubator assignment only as read-only Canonical Evidence through a Retrieved Context Envelope rather than mutable database authority.
@@ -1594,6 +1602,10 @@ _Avoid_: one row per agent, one row per strategy, mutable summary, portfolio agg
 The read-only retrieval available to an Incubator Agent Assignment for admitted non-restricted Decision History Projection rows within its evidence and time scope, recorded in its Retrieved Context Envelope. Blinded evaluation, sealed holdouts, entitlements, contamination containment, and assignment boundaries override broad historical access.
 _Avoid_: direct database access, shared agent memory, unrestricted history, evaluator context
 
+**Decision History Use Class**:
+The non-interchangeable purpose of a Decision History Access as Exploratory Retrieval or Confirmatory Cohort. Exploration may generate hypotheses from eligible history, while a promotion-bearing claim requires a preregistered point-in-time cohort, complete results, multiplicity controls, and Testing Budget and cannot elevate cherry-picked rows into evidence.
+_Avoid_: query mode, historical evidence, agent analysis, backtest filter
+
 **Decision Projection Watermark**:
 The projection evidence binding the latest included canonical event position and time, generation time, validity interval, projection version, and rebuild state. A stale, rebuilding, or broken projection may support labelled forensics but cannot be represented to a Principal or assignment as current evidence.
 _Avoid_: last updated time, cache age, freshness badge, current row
@@ -1601,6 +1613,18 @@ _Avoid_: last updated time, cache age, freshness badge, current row
 **Decision History Export**:
 An explicit on-demand reproducible rendering of a selected Decision History Projection as machine-readable or human-readable evidence, binding its query, environment, time range, projection and policy versions, redactions, integrity hash, and requester. No schedule, agent session, or completed decision creates an export automatically.
 _Avoid_: nightly export, automatic report, database dump, agent scratch file
+
+**Decision History Export Grant**:
+An exact expiring authorization for a Principal or bounded non-Incubator service to produce and deliver one Decision History Export, binding requester, purpose, query, destination, format, redaction, entitlement, retention, and deletion scope. Internal Incubator analysis uses Decision History Access rather than exporting files.
+_Avoid_: download permission, agent export, report access, standing data extract
+
+**Decision Admission Identity**:
+The deterministic identity of a Decision Subject across initiator, Strategy Sleeve, Execution Environment, exact economic content, evidence snapshot, and authority scope. Exact duplicate admission resolves to the existing Decision Record, another unchanged execution becomes an Action Attempt, and the same identity with different content is fenced as an integrity failure.
+_Avoid_: request ID, idempotency key, strategy name, duplicate order
+
+**Explicit No-Action Decision**:
+A Decision Subject recording that an admitted proposal or scheduled strategy, lifecycle, risk, or authority obligation was evaluated and intentionally produced no action, with evidence, alternatives, gates, and expiry. Ordinary market silence, absence of a candidate, or an unevaluated schedule creates no Decision Record.
+_Avoid_: no signal, idle strategy, heartbeat, empty scan
 
 **Decision Record Redaction**:
 An explicit policy-bound substitution for information that cannot appear in a Decision Record Projection, binding its category, reason, governing policy or entitlement, permitted substitute, and authorized forensic route when one exists. Credentials and cryptographic secrets never enter the record; restricted source content and private traces cannot be silently omitted or presented as complete evidence.
