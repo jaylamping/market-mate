@@ -602,6 +602,66 @@ _Avoid_: slow research, failed hypothesis, high token use, agent disagreement
 The rule that ordinary competition, failure, stalls, cancellations, queue pressure, and resource reallocation remain internal unless the Principal requests detail, while Gateway interrupts only for exact budget, spending, entitlement, policy, or authority decisions and material incidents. Nonurgent proposals are bundled within the Principal Operational Budget.
 _Avoid_: executive reporting, manager escalation, agent notification, silent incident
 
+**Net Validated Profit Velocity**:
+The Incubator north-star measure of independently reproduced, portfolio-incremental expected after-cost profit added per wall-clock time after subtracting research spending and Principal-attention cost. Realized Live net profit is the ultimate lagging outcome, but raw Paper profit, uncalibrated forecasts, duplicated strategy variants, and unreproduced claims contribute nothing.
+_Avoid_: research throughput, raw P&L, Sharpe ratio, agent productivity
+
+**Incremental Profit Contribution**:
+The non-duplicative expected net profit one artifact, Work Opportunity, Strategy Thesis, or Strategy Version adds after execution friction, interaction with the existing portfolio, capital and capacity opportunity cost, uncertainty, and correlated descendants. Total expected profit is maximized first; resource efficiency informs allocation but cannot make a zero-profit result valuable.
+_Avoid_: gross return, standalone backtest, efficiency score, strategy P&L
+
+**Economic Attribution Lineage**:
+The dependency-based allocation of incremental economic value across Work Opportunities, Strategy Theses, admitted artifacts, methods, models, and Research Posture versions rather than persistent agent personalities. Shared contributions remain visible, but correlated descendants, duplicate artifacts, desks, and agents cannot each claim the same expected profit.
+_Avoid_: agent credit, desk revenue, winner attribution, performance review
+
+**Comparable Work Cohort**:
+The matched evaluation set for allocation methods, models, and postures with equivalent work class, market regime, evidence stage, horizon, cost band, and opportunity-decay profile. Valid comparisons use randomized or paired Capacity Trials instead of global agent leaderboards.
+_Avoid_: all-agent ranking, historical average, desk comparison, cherry-picked peers
+
+**Forbidden Success Proxy**:
+An operational observation that may diagnose the floor but cannot stand alone as success: agent count, tokens, output volume, trial count, utilization, self-reported confidence, win rate, raw Paper P&L, or promotion count. Scheduler optimization and resource proposals cannot use one as a substitute for Net Validated Profit Velocity.
+_Avoid_: KPI target, productivity score, activity metric, vanity metric
+
+**Velocity Diagnostic Layer**:
+One of four non-substitutable explanations beneath Net Validated Profit Velocity: Profit measures incremental after-cost portfolio contribution; Velocity measures time to test, falsification, reproduction, freeze, and Paper qualification; Reliability measures reproducibility, holdout survival, independence, invalidation, and rework; Cost and Friction measures resolved-hypothesis cost, queue and blocked time, duplication, utilization, and Principal attention. The layers remain visible separately and never become an opaque composite score.
+_Avoid_: balanced scorecard, productivity index, desk KPI, alternate north star
+
+**Expected Profit Distribution**:
+The calibrated distribution supporting an Incremental Profit Contribution, including probability of positive net contribution, uncertainty interval, evidence stage, and sensitivity to execution costs, portfolio overlap, and other preregistered economic assumptions. Point estimates and agent confidence language carry no scheduler value.
+_Avoid_: expected return, confidence score, price target, best case
+
+**Verified Falsification Value**:
+The independently supported economic value of killing or narrowing a legitimately funded Work Opportunity, capped by the preregistered remaining research cost, opportunity cost, or expected portfolio loss demonstrably avoided. A failed Alpha Shot earns no value merely for producing a negative result.
+_Avoid_: failure credit, research activity, saved budget claim, kill count
+
+**Marginal Capacity Tranche**:
+A geometric increment of Incubator resources added at an admitted checkpoint only while its conservative marginal Incremental Profit Contribution exceeds its full cost and the value of displaced work. Engine stops or reverses scaling at diminishing returns, while high-uncertainty exploration remains available through the Mutation Capacity Reserve.
+_Avoid_: headcount increase, autoscaling step, utilization target, budget expansion
+
+**Scheduler Metric Contract**:
+The immutable visible version of metric definitions, comparison design, allocation logic, and anti-gaming checks used by Engine, binding preregistration, complete attempt and failure history, Global Testing Ledger effects, independent reproduction, and sealed holdouts. Metric or logic changes create a new version and cannot rescore historical decisions as if the new rule had applied.
+_Avoid_: hidden ranking formula, manager judgment, editable KPI, agent reward policy
+
+**Velocity Measurement Windows**:
+The simultaneous clocks used to evaluate Incubator work: full elapsed time from Work Opportunity admission including queue and blocked time, separately reported active execution time, and rolling twenty-four-hour operational, seven-day allocation, thirty-day Comparable Work Cohort, ninety-day portfolio, and full-history evidence views. Every comparison remains segmented by market regime and evidence stage.
+_Avoid_: runtime, recent average, selected period, time-to-completion
+
+**Hypothesis Resolution**:
+The terminal economic determination that a Strategy Thesis was independently falsified, independently reproduced and advanced, or economically dominated by a documented alternative. Completed, Cancelled, Expired, Blocked, and Needs More Evidence work does not count as resolved.
+_Avoid_: finished task, experiment result, decision by timeout, promoted idea
+
+**Capacity Selection Threshold**:
+The calibrated normal-allocation rule that scales a Marginal Capacity Tranche at an eighty-percent or greater probability of beating its full cost and best displaced work, holds and gathers information between twenty and eighty percent, and preempts below twenty percent or when a stopping rule fires. Mutation Capacity Reserve work is exempt from these selection thresholds but not from its budget, lineage, or stopping rules.
+_Avoid_: confidence score, utilization threshold, manager judgment, profit guarantee
+
+**Profitable Backlog Expansion Trigger**:
+The automatic creation of a bundled Capacity Expansion Proposal when economically eligible backlog remains after every superior internal reallocation and an external tranche has at least an eighty-percent calibrated probability of positive net value. Utilization alone never qualifies, time-sensitive value may trigger an immediate proposal, and ordinary demand is bundled within the Principal Attention Boundary.
+_Avoid_: full queue, autoscaling, spend alert, agent request
+
+**Scheduler Challenger Trial**:
+A ten-percent Capacity Trial of a new Scheduler Metric Contract against its incumbent in Comparable Work Cohorts, promoted at an eighty-percent probability of improved Net Validated Profit Velocity and rolled back at an eighty-percent probability of harm. Any gate, lineage, contamination, independence, spending, or authority violation causes immediate rollback regardless of profit.
+_Avoid_: scheduler deployment, A/B agent test, metric experiment, automatic policy change
+
 **Sphere Escalation Route**:
 The non-managerial routing rule that sends economic uncertainty to Incubator competition and challenge, resource contention or stalled work to Engine, control failure to Sentinel, and new spending, authority, or policy scope to Principal Gateway. Sentinel rejection causes proposal adaptation or abandonment rather than negotiation around the control.
 _Avoid_: escalation to manager, agent appeal, majority override, Principal chat
@@ -767,7 +827,7 @@ The Incubator's exclusive objective to maximize durable expected net profit and 
 _Avoid_: safety mandate, unrestricted risk-taking, raw P&L, trade frequency
 
 **Velocity Objective**:
-The Incubator operating objective to maximize expected net profit and economically useful uncertainty reduction delivered as reproducible decisions per wall-clock time by aggressively scaling approved agents, concurrency, tokens, compute, data, automation, and spending. Its resource envelope and every evidence, entitlement, independence, budget, and authority constraint are enforced externally by Engine and Sentinel rather than treated as Incubator Desk objectives.
+The Incubator operating objective to maximize Net Validated Profit Velocity by aggressively scaling approved agents, concurrency, tokens, compute, data, automation, and spending. Its resource envelope and every evidence, entitlement, independence, budget, and authority constraint are enforced externally by Engine and Sentinel rather than treated as Incubator Desk objectives.
 _Avoid_: trade frequency, unrestricted spending, agent count, move fast and break things
 
 **Control Capacity Reserve**:
