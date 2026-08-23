@@ -1510,13 +1510,57 @@ _Avoid_: data feed, dataset
 A required review point that a Strategy Version must pass before it may progress from backtesting to paper trading or live execution.
 _Avoid_: launch check, approval step
 
+**Decision Subject**:
+An exact admitted proposal, mandatory lifecycle or containment action, or explicit scheduled decision not to act that could affect money, exposure, custody, lifecycle, authority, or containment and therefore requires a Decision Record. Raw research ideas, unadmitted candidates, agent messages, and monitoring observations are not Decision Subjects.
+_Avoid_: trade signal, agent idea, every model output, activity event
+
 **Decision Record**:
-The immutable explanation of a planned, attempted, completed, rejected, or abandoned action, linked to its Execution Environment, evidence, Strategy Version, Risk Policy, forecast, approvals, orders, and resulting ledger events.
-_Avoid_: log message, agent thoughts
+The append-only aggregate rooted in the immutable decision-time evidence envelope created when a Decision Subject is admitted, binding its Execution Environment, initiator, Strategy Version when applicable, evidence, assumptions, alternatives, forecast applicability, Expected P&L, Risk Policy and Safety Kernel results, authority, Action Attempts, terminal outcome, and linked ledger effects. Rejection, cancellation, replacement, abandonment, and an explicit scheduled decision not to act remain records rather than disappearing.
+_Avoid_: log message, agent thoughts, mutable explanation, order history
+
+**Action Attempt**:
+One immutable attempt to carry out an unchanged Decision Subject, with its own identity, timing, inputs, allowed execution adaptations, Order Plans, Venue Events, costs, and Execution Result. A mechanical retry or in-plan replacement creates another attempt under the same Decision Record, while changed economics, sizing, instruments, assumptions, evidence, or authority require a new linked Decision Record.
+_Avoid_: retry counter, overwritten order, Decision Record, broker request
+
+**Decision Disposition**:
+The non-interchangeable governance state of a Decision Subject: Admitted, Authorized, Rejected, Withdrawn, Expired, or Superseded. It never substitutes for Action Outcome or a venue's order state.
+_Avoid_: status, execution result, order state, lifecycle event
+
+**Action Outcome**:
+The non-interchangeable result state of a Decision Subject across its Action Attempts: Not Attempted, Working, Partially Completed, Completed, Cancelled, Failed, or Unknown and Contained. It remains separate from Decision Disposition and links to exact Venue Events, Execution Results, and ledger effects.
+_Avoid_: decision status, broker status, success flag, fill state
+
+**Evidence-Backed Decision Explanation**:
+The structured graph of exact canonical claims, Research Snapshots, source observations, calculations, artifact hashes, versions, policies, and times that supports a Decision Record while preserving unknown and conflicting evidence explicitly. Natural-language summaries are non-authoritative projections, and private chain-of-thought is never evidence.
+_Avoid_: model rationale, confidence prose, agent reasoning, generated justification
+
+**Decision Baseline Set**:
+The frozen decision-time comparison of an economically motivated Decision Subject against both No Action and the best permitted executable alternative, with each baseline's assumptions, feasibility, and evidence. An unavailable baseline is explicit and cannot be replaced by a favorable straw man.
+_Avoid_: benchmark return, alternatives considered text, hindsight comparison
 
 **Expected P&L**:
-A time-stamped, cost-inclusive estimate of an action's possible profit-and-loss distribution over a defined horizon, including downside, assumptions, uncertainty, and model version. It is a forecast, not a promise.
-_Avoid_: expected profit, guaranteed return
+A frozen time-stamped, cost-inclusive distribution of an action's possible profit and loss over a defined horizon, including maximum modeled loss, uncertainty, key sensitivities, assumptions, model version, and its Decision Baseline Set. It is a forecast rather than a promise and actual outcomes never rewrite it.
+_Avoid_: expected profit, guaranteed return, price target, single-point gain
+
+**Forecast Applicability State**:
+The Decision Record classification of an Expected P&L as Required or Not Applicable with an exact reason. Risk-increasing or economically motivated actions require the forecast; mandatory containment, reconciliation, or lifecycle actions may be Not Applicable but still disclose their objective, known tradeoffs, and evidence.
+_Avoid_: missing forecast, zero expected profit, forecast waived, safety benefit estimate
+
+**Decision Record Projection**:
+The functional Principal view that summarizes a Decision Record's environment, subject, state, Expected P&L range, maximum modeled loss, and decisive gate result on the Economic Artifact Tape, with exact evidence available by drill-down. Secrets, private reasoning, raw traces, and source-restricted content remain redacted or authorized-forensic only, and the projection never replaces the canonical record.
+_Avoid_: narrative card, marketing explanation, raw debug trace, approval pitch
+
+**Decision Evidence Status**:
+The current classification of a Decision Record's supporting evidence as Current, Superseded, Invalidated, Disputed, or Replay Unavailable, with exact affected dependency scope and Evidence Change linkage. It changes only through appended evidence-control facts and never rewrites the Decision-Time View.
+_Avoid_: decision validity, corrected forecast, stale badge, current truth
+
+**Corrected Decision View**:
+The current counterfactual reconstruction of a Decision Record under accepted corrected evidence, including changed calculations, gates, forecast, and whether the decision would differ, while preserving the original Decision-Time View unchanged. It is analysis of later knowledge rather than a retroactive decision or performance claim.
+_Avoid_: revised Decision Record, corrected rationale, backfilled forecast, rewritten history
+
+**Decision Record Redaction**:
+An explicit policy-bound substitution for information that cannot appear in a Decision Record Projection, binding its category, reason, governing policy or entitlement, permitted substitute, and authorized forensic route when one exists. Credentials and cryptographic secrets never enter the record; restricted source content and private traces cannot be silently omitted or presented as complete evidence.
+_Avoid_: hidden field, blank value, secret storage, discretionary omission
 
 **Audit Dashboard**:
 The Principal-facing web view over Paper and Live historical, current, and planned actions, their separate ledgers, positions, forecasts, outcomes, and Decision Records.
