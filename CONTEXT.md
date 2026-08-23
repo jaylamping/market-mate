@@ -8,6 +8,42 @@ Market Mate is an autonomous, self-directed trading system for a single individu
 The individual who owns the brokerage account, supplies capital, and sets the system's authority and risk boundaries.
 _Avoid_: customer, client, account owner
 
+**Incubator**:
+The autonomous non-authoritative sphere whose exclusive purpose is to discover, test, challenge, and refine durable economic edge and expected net profit as quickly, efficiently, and reliably as possible across Research and qualified Paper work. It may propose strategies and resource expansion but owns no risk, compliance, evidence-entitlement, lifecycle, execution-authority, or Live control.
+_Avoid_: trading authority, safety organization, general agent platform, Paper account
+
+**Incubator Charter**:
+The Principal-owned versioned invariant that binds every Incubator assignment to the Incubator Profit Mandate and permanently excludes managers, supervisors, desk heads, risk, compliance, entitlement certification, accounting, lifecycle authority, system safety, security, platform reliability, and control enforcement from Incubator Desk topology. Engine rejects nonconforming assignments, Sentinel denies prohibited capabilities, and only an exact Principal Authorization Decision may replace the charter with a new version.
+_Avoid_: culture statement, agent prompt, desk policy, mission suggestion
+
+**Profit Contribution Hypothesis**:
+The immutable assignment claim explaining how its work could increase durable after-cost expected profit, improve capital or execution efficiency, discover economic edge, or rapidly falsify unprofitable work, with a metric, cost envelope, and stopping rule. Every Incubator Agent Assignment requires one, but it is a resource-allocation premise rather than evidence that profit exists.
+_Avoid_: profit promise, strategy thesis, KPI label, raw Paper P&L
+
+**Alpha Shot**:
+A cheap, time-bounded, aggressively parallel Research Assignment that tests one Profit Contribution Hypothesis inside existing Research and Testing Budgets while preserving its result and failure lineage. Engine may launch many Alpha Shots, prune weak branches quickly, and scale survivors, but volume never creates evidence, independence, or authority.
+_Avoid_: trade, free experiment, unregistered trial, agent idea
+
+**Incubator Mutation**:
+An intentional bounded deviation in hypothesis, method, model, Research Posture, Desk Role composition, collaboration pattern, or Presentation Persona used to preserve variation and escape premature convergence. It may create duplication, conflict, eccentricity, and failed work inside approved research capacity, but it cannot conceal lineage, results, contamination, cost, or dissent; weaken evidence; or obtain authority.
+_Avoid_: control failure, hidden experiment, policy exception, random trade
+
+**Mutation Capacity Reserve**:
+The twenty percent of approved Incubator discovery capacity reserved for wildcard Alpha Shots that may intentionally duplicate work, cross ordinary desk routes, use unusual models or postures, recombine unrelated theses, or pursue low-consensus ideas. It remains inside Research and Testing Budgets and cannot consume protected independent-evaluation or Control Capacity Reserve.
+_Avoid_: spare capacity, untracked experiments, chaos budget, authority exception
+
+**Incubator Evolution Loop**:
+The high-velocity cycle in which Engine generates many Alpha Shots and Incubator Mutations, preserves every result, independently challenges survivors, reproduces durable economic edge, and reallocates approved capacity toward stronger descendants while retaining bounded mutation. Selection is based on reproducible after-cost economics rather than conformity, activity, charisma, or raw Paper profit.
+_Avoid_: agent popularity, genetic trading algorithm, winner cloning, survival bias
+
+**Sentinel**:
+The separately isolated deterministic control sphere that owns and enforces the Principal's immutable versioned risk, compliance, evidence-entitlement, lifecycle, accounting, order-admission, and authority rules at every applicable stage. It does not search for profit, negotiate with Incubator outputs, or permit Engine, Gateway, the Principal, or an agent coalition to bypass a failed control.
+_Avoid_: risk desk, AI reviewer, Engine policy, manual override
+
+**Engine**:
+The orchestration sphere that admits and schedules assignments, allocates approved capacity, coordinates typed handoffs and lifecycle services, maintains liveness, and routes exact decisions among Incubator, Sentinel, and Principal Gateway. It may accelerate work and invoke controls but cannot alter economic evidence, override Sentinel, or manufacture spending or trading authority.
+_Avoid_: super-agent, Safety Kernel, Principal Gateway, strategy authority
+
 **Brokerage Account**:
 The Principal's live account at a regulated broker, which holds real cash and securities and is the sole source of live order execution.
 _Avoid_: wallet, exchange account
@@ -478,6 +514,446 @@ _Avoid_: successful run, backtest result, discarded attempt
 Research that may generate hypotheses but cannot support promotion, confidence claims, or testing-budget renewal. Any discovered hypothesis requires a fresh Experiment Registration and untouched or forward evidence.
 _Avoid_: preliminary validation, informal backtest, free trial
 
+**Desk Role**:
+The single bounded profit function an Incubator Agent Assignment performs within an Incubator Desk: Market Intelligence and Thesis, Quantitative Research and Experimentation, Data and Feature Research, Strategy Incubation, Portfolio and Capital Efficiency, Execution Edge and Paper Trading, or Economic Evaluation and Challenge. It is a lightweight routing and accountability tag, not an exclusive organizational home, identity, seniority, independence claim, control function, or authority.
+_Avoid_: agent personality, job title, permission set, organizational rank
+
+**Incubator Desk**:
+A persistent logical lane for routing and measuring one profit-producing function while Engine elastically creates, combines, and retires its assignments around economic opportunities. It is not a department, permanent agent pool, control organization, budget owner, or authority boundary.
+_Avoid_: team, hierarchy, risk desk, agent cluster
+
+**Managerless Incubator**:
+The non-hierarchical operating invariant that prohibits manager, supervisor, desk-head, approval-chain, performance-policing, and work-assignment agent roles inside the Incubator. Exact assignments own artifacts, agents compete or collaborate directly, and Engine performs deterministic scheduling and routing without goals, discretion, status, or authority resembling a manager.
+_Avoid_: flat management, AI supervisor, desk lead, Engine manager
+
+**Alpha Pod**:
+A temporary Engine-composed bundle of separately admitted Incubator Agent Assignments drawn from any profit desks to compete or collaborate on one Profit Contribution Hypothesis. It dissolves when the hypothesis fails, graduates, stalls, or reaches its stopping rule, and pod membership carries no shared identity, capability, memory, or evaluator independence.
+_Avoid_: permanent team, agent coalition, shared authority, desk
+
+**Incubator Separation of Duty**:
+The narrow non-combination rule that keeps proposer separate from economic evaluator, model builder from model validator, experiment designer from Holdout Evaluation, and a strategy author from the operator evaluating that exact Paper version, while every Incubator role remains separate from Sentinel, Engine, and Principal Gateway control functions. Other Desk Role overlap and mutation are permitted when separately assigned and economically useful.
+_Avoid_: organizational chart, universal role isolation, independent agent names, control desk
+
+**Incubator Artifact Graph**:
+The asynchronous dependency graph through which typed outputs become inputs to new assignments without a fixed departmental pipeline, allowing any profit desk to launch Alpha Shots or request Alpha Pods. Engine progressively adds only the economically useful capabilities a surviving idea needs, while promotion readiness derives from applicable artifacts, independent evaluation, and external Sentinel gates rather than ceremonial desk traversal.
+_Avoid_: workflow approval chain, organizational handoff, project plan, manager queue
+
+**Work Opportunity**:
+A typed non-exclusive invitation for Incubator work that binds a Profit Contribution Hypothesis, expected economic or information value, estimated cost and duration, dependencies, required artifacts, stopping rule, duplication intent, and opportunity-decay horizon. Any assignment may publish one, and Engine admits conforming opportunities automatically within existing policy and budgets without a managerial approval.
+_Avoid_: assigned task, ticket, strategy approval, agent idea
+
+**Alpha Market**:
+The managerless continuous market in which Work Opportunities compete for Research Capacity Reservations and agents compete through assignment plans, economic results, and independent methods rather than status or persuasion. Engine clears the market deterministically while preserving the stochastic Mutation Capacity Reserve.
+_Avoid_: manager queue, agent leaderboard, voting system, brokerage market
+
+**Work Auction**:
+The deterministic Engine allocation of capacity among eligible Work Opportunities using declared profit contribution, information gain, cost, opportunity decay, critical-path impact, novelty, independent failure paths, and queue age. It grants an expiring Work Lease rather than ownership and cannot change budgets, gates, or authority.
+_Avoid_: manager prioritization, agent bidding war, approval meeting, capital auction
+
+**Work Lease**:
+An expiring non-exclusive right for one assignment to attempt a Work Opportunity within an exact capacity reservation, checkpoint cadence, and stopping rule. Silence, staleness, blocking, fencing, cancellation, or terminal completion releases it automatically, while multiple leases require an explicit Intentional Duplication Class.
+_Avoid_: task ownership, permanent claim, authority grant, queue reservation
+
+**Opening Swarm**:
+The default immediate fan-out for a cheap high-upside Work Opportunity into two Aggressive Explorer assignments with materially different methods, one Extreme Frontier Incubator Mutation, and one Skeptical Reviewer attack. Expensive work begins with one cheap aggressive scout and earns the broader swarm only after its first survival checkpoint.
+_Avoid_: review committee, agent team, mandatory four votes, evaluator independence
+
+**Intentional Duplication Class**:
+The declared economic purpose for parallel work on one opportunity: Competitive Race, Independent Reproduction, Adversarial Attack, Mutation, or Continuity Backup, with expected incremental value and shared failure paths. Unlabeled duplication is merged, stopped, or reclassified explicitly, and every result remains recorded.
+_Avoid_: accidental duplicate, multiple agents, independent vote, wasted work
+
+**Artifact Collaboration**:
+The direct collaboration of separately identified assignments through typed partial artifacts, subscriptions, and Assignment Handoffs without shared Scratch State, budgets, credentials, capability, or collective identity. Alpha Pod membership never obscures which assignment produced each contribution or which failure paths remain shared.
+_Avoid_: shared agent session, team memory, pooled authority, group authorship
+
+**Hypothesis Arena**:
+An Engine-funded comparison that preserves conflicting Strategy Thesis lineages, gives them equal access to applicable admitted evidence, and preregisters tests intended to distinguish them. Its result is A Survives, B Survives, Both Remain Viable, Neither Survives, or Needs More Evidence rather than negotiated compromise or majority preference.
+_Avoid_: debate winner, consensus meeting, merged thesis, agent vote
+
+**Survivor Capacity Stage**:
+The progressively larger allocation earned by a Work Opportunity as it passes exact economic and evidence checkpoints: Seed, Swarm, Independent Reproduction, Strategy Incubation, then Paper Qualification. Engine advances stages automatically, weak branches release unused capacity immediately, and no stage itself grants evidence status or authority.
+_Avoid_: project phase, manager promotion, funding round, Strategy Lifecycle State
+
+**Kill Claim**:
+A typed falsification artifact any assignment may publish against a Work Opportunity, binding the alleged fatal defect, evidence, affected scope, expected value and cost of resolution, and proposed discriminating test. A material cheap claim receives rapid adversarial capacity, but the claimant cannot cancel, quarantine, or change the target's state directly.
+_Avoid_: veto, negative opinion, agent attack, Sentinel rejection
+
+**Evidence Arena Docket**:
+The immutable review object for one serious economic claim, binding its exact requested outcome, artifacts, Strategy Thesis or Strategy Version, baseline, Expected Profit Distribution, complete attempt and failure history, Evidence Lineage Manifest, Testing Budget state, and applicable gates. Debate cannot change the target; any material amendment creates a new docket.
+_Avoid_: discussion thread, review meeting, mutable proposal, agent pitch
+
+**Economic Review Lane**:
+A separately assigned Evidence Arena function: Advocate, Skeptical Challenger, Adversarial Red Team, Independent Reproducer, material Model Validator, or Portfolio Interaction Reviewer. Promotion requires at least two supporting Evaluator Independence Groups across applicable lanes, while Sentinel remains an external deterministic control rather than a participant.
+_Avoid_: reviewer vote, committee seat, agent persona, Sentinel review
+
+**Blinded Evaluation Pass**:
+The sealed first assessment in which an independent evaluator receives only the Evidence Arena Docket and canonical artifacts without advocate rhetoric, other conclusions, agent identities, or vote-like summaries. Findings become immutable before cross-examination, rebuttal, and any targeted independent recheck.
+_Avoid_: anonymous vote, secret evidence, peer discussion, model ensemble
+
+**Economic Evidence Burden**:
+The asymmetric rule that an advocate must demonstrate reproducible positive Incremental Profit Contribution, while a challenger may block advancement by proving one material defect without offering a replacement strategy. Missing positive evidence yields Needs More Evidence; material falsification yields Economically Rejected or Quarantined when contamination is involved.
+_Avoid_: equal debate burden, presumed profitability, challenger strategy, majority confidence
+
+**Evidence Arena Outcome**:
+The sole typed route from an Evidence Arena: Advance, Conditional Research Continuation, Needs More Evidence, Economically Rejected, Quarantined, or Sentinel Denied. Advance requires every applicable gate, at least two supporting Evaluator Independence Groups, and no unresolved material dissent; no vote, tie-breaker, manager, or Principal preference can manufacture it.
+_Avoid_: approval score, consensus, review complete, recommendation
+
+**Arena Exchange**:
+The fixed Evidence Arena sequence: freeze the docket; seal independent Blinded Evaluation Passes; run skeptical and adversarial cross-examination in parallel; permit one evidence-bearing advocate rebuttal and one challenger response; perform one targeted independent recheck; then route the deterministic outcome. Any material change to strategy, metric, evidence, or dependency creates a new docket rather than another exchange.
+_Avoid_: open debate, review thread, iterative persuasion, committee meeting
+
+**Material Economic Dissent**:
+A preserved challenge that could credibly change the primary economic metric, benchmark superiority, reproducibility, portfolio interaction, cost assumption, evidence validity, Evaluator Independence, or an applicable gate, binding the disputed claim, evidence, estimated impact, and discriminating test or reason none can exist. Vague objection remains visible but cannot block advancement.
+_Avoid_: disagreement, minority vote, negative opinion, risk veto
+
+**Arena Rebuttal Limit**:
+The one advocate rebuttal and one challenger response permitted after blinded findings, where only new evidence or a specific lineage correction carries weight and rhetoric, repetition, confidence language, or agent count does not. Unresolved Material Economic Dissent becomes new evidence work rather than continued argument or managerial escalation.
+_Avoid_: debate rounds, final word, response deadline, consensus building
+
+**Arena Review Clock**:
+The maximum ordinary Evidence Arena duration of two hours for Seed or Swarm, twelve hours for Independent Reproduction, twenty-four hours for Strategy Incubation, and forty-eight hours for Paper Qualification, further capped at twenty-five percent of remaining opportunity half-life. Timeout never passes a claim and instead routes the economically appropriate non-advancement outcome.
+_Avoid_: meeting duration, automatic approval timer, experiment deadline, review estimate
+
+**Conditional Research Continuation**:
+An Evidence Arena Outcome binding one unresolved claim, required experiment or artifact, budget, responsible assignments, permitted Research scope, deadline, and automatic terminal route. It cannot freeze a Strategy Version, enter Paper, consume a Release Holdout again, or imply provisional authority.
+_Avoid_: conditional approval, temporary pass, Paper trial, extension request
+
+**Work Opportunity State**:
+The non-interchangeable managerless state of a Work Opportunity: Eligible, Leased, Running, Blocked, Suspended, Completed, Falsified, Cancelled, Expired, or Fenced. Suspension requires an admitted checkpoint, cancellation preserves partial artifacts and reason, retries create new Assignment Runs, and an unattractive result cannot be retried away.
+_Avoid_: task status, agent availability, Strategy Lifecycle State, progress label
+
+**Artifact Liveness**:
+The rule that an assignment demonstrates progress only by admitting a new typed artifact, resolving a declared dependency, or reaching a preregistered checkpoint; messages, tokens, tool calls, and heartbeats alone do not count. A missed checkpoint becomes Blocked when a named external dependency exists or Suspended otherwise, and continuation starts from the last admitted checkpoint.
+_Avoid_: agent heartbeat, activity log, token output, status message
+
+**Capacity Preemption**:
+The non-punitive Engine suspension of the lowest marginal-value Incubator work at an admitted checkpoint during resource contention, using expected profit contribution per remaining time, opportunity decay, critical-path impact, and replacement cost. Independent challenge and the normal Mutation Capacity Reserve remain protected, and preemption creates no agent reputation effect.
+_Avoid_: manager reprioritization, cancellation, failure, agent demotion
+
+**Market-Event Burst**:
+A temporary Engine scheduling state for a material time-sensitive market event that may direct up to eighty percent of discretionary Incubator capacity to decaying opportunities while preserving ten percent for independent challenge and ten percent for off-consensus mutation and background discovery. It changes no budget, evidence standard, Testing Budget, Sentinel control, or authority.
+_Avoid_: emergency trading authority, budget override, all-hands meeting, event strategy
+
+**Runaway Work Pattern**:
+Nonproductive loops, output spam, dependency cycles, uncontrolled duplicate cascades, unbounded child fan-out, or abnormal token, compute, or spending velocity that trigger immediate Assignment Fence rather than managerial intervention. Partial artifacts and forensic state remain preserved, unused capacity returns to the Alpha Market, and unrelated work continues.
+_Avoid_: slow research, failed hypothesis, high token use, agent disagreement
+
+**Principal Attention Boundary**:
+The rule that ordinary competition, failure, stalls, cancellations, queue pressure, and resource reallocation remain internal unless the Principal requests detail, while Gateway interrupts only for exact budget, spending, entitlement, policy, or authority decisions and material incidents. Nonurgent proposals are bundled within the Principal Operational Budget.
+_Avoid_: executive reporting, manager escalation, agent notification, silent incident
+
+**Incubator Control Room**:
+The Principal-facing operational console for Research and qualified Paper whose canonical hierarchy is the Opportunity Book, Economic Artifact Tape, and separate rails for exact Principal decisions, Engine pressure, Sentinel outcomes, incidents, and Paper versions. It favors dense inspectable function over promotional storytelling; floor topology is secondary drill-down, and the console carries no command or authority itself.
+_Avoid_: marketing dashboard, agent chat room, trading-floor visualization, manager cockpit
+
+**Opportunity Book**:
+The Incubator Control Room projection of the Alpha Market organized by Work Opportunity and ranked economic state, exposing stage, liveness, Expected Profit Distribution, resource and time cost, Work Lease competition, dissent, lineage, and latest admitted artifact. It ranks opportunities rather than agents or desks and drills into exact evidence.
+_Avoid_: agent leaderboard, task list, security watchlist, desk performance table
+
+**Economic Artifact Tape**:
+The chronological append-only Incubator Control Room projection of canonical artifacts that materially change economic or control state, each paired with its exact type, lineage, and concrete effect. Agent messages, tool activity, heartbeats, and token volume never become tape events merely because they occurred.
+_Avoid_: activity feed, agent chat, status stream, verbose execution transcript
+
+**Principal Decision Rail**:
+The strictly separated Incubator Control Room projection of exact Principal Gateway proposals and material alerts that cross the Principal Attention Boundary, including scope, evidence, expiry, and immutable authority effect. Ordinary Incubator competition, failures, stalls, and reallocations never enter the rail.
+_Avoid_: approval inbox, manager escalation queue, notification feed, agent request list
+
+**Control Room Disclosure Policy**:
+The visibility contract that makes admitted artifacts, material dissent, validated economics, budgets, queue pressure, incidents, Sentinel results, and exact Paper versions inspectable; summarizes topology and worker presentation; and withholds raw messages, tokens, tool traces, and model-inference streams from ordinary views while preserving authorized forensic access. Projection never mutates or substitutes for canonical records.
+_Avoid_: transparency toggle, debug mode, executive summary, raw trace dashboard
+
+**Net Validated Profit Velocity**:
+The Incubator north-star measure of independently reproduced, portfolio-incremental expected after-cost profit added per wall-clock time after subtracting research spending and Principal-attention cost. Realized Live net profit is the ultimate lagging outcome, but raw Paper profit, uncalibrated forecasts, duplicated strategy variants, and unreproduced claims contribute nothing.
+_Avoid_: research throughput, raw P&L, Sharpe ratio, agent productivity
+
+**Incremental Profit Contribution**:
+The non-duplicative expected net profit one artifact, Work Opportunity, Strategy Thesis, or Strategy Version adds after execution friction, interaction with the existing portfolio, capital and capacity opportunity cost, uncertainty, and correlated descendants. Total expected profit is maximized first; resource efficiency informs allocation but cannot make a zero-profit result valuable.
+_Avoid_: gross return, standalone backtest, efficiency score, strategy P&L
+
+**Economic Attribution Lineage**:
+The dependency-based allocation of incremental economic value across Work Opportunities, Strategy Theses, admitted artifacts, methods, models, and Research Posture versions rather than persistent agent personalities. Shared contributions remain visible, but correlated descendants, duplicate artifacts, desks, and agents cannot each claim the same expected profit.
+_Avoid_: agent credit, desk revenue, winner attribution, performance review
+
+**Comparable Work Cohort**:
+The matched evaluation set for allocation methods, models, and postures with equivalent work class, market regime, evidence stage, horizon, cost band, and opportunity-decay profile. Valid comparisons use randomized or paired Capacity Trials instead of global agent leaderboards.
+_Avoid_: all-agent ranking, historical average, desk comparison, cherry-picked peers
+
+**Forbidden Success Proxy**:
+An operational observation that may diagnose the floor but cannot stand alone as success: agent count, tokens, output volume, trial count, utilization, self-reported confidence, win rate, raw Paper P&L, or promotion count. Scheduler optimization and resource proposals cannot use one as a substitute for Net Validated Profit Velocity.
+_Avoid_: KPI target, productivity score, activity metric, vanity metric
+
+**Velocity Diagnostic Layer**:
+One of four non-substitutable explanations beneath Net Validated Profit Velocity: Profit measures incremental after-cost portfolio contribution; Velocity measures time to test, falsification, reproduction, freeze, and Paper qualification; Reliability measures reproducibility, holdout survival, independence, invalidation, and rework; Cost and Friction measures resolved-hypothesis cost, queue and blocked time, duplication, utilization, and Principal attention. The layers remain visible separately and never become an opaque composite score.
+_Avoid_: balanced scorecard, productivity index, desk KPI, alternate north star
+
+**Expected Profit Distribution**:
+The calibrated distribution supporting an Incremental Profit Contribution, including probability of positive net contribution, uncertainty interval, evidence stage, and sensitivity to execution costs, portfolio overlap, and other preregistered economic assumptions. Point estimates and agent confidence language carry no scheduler value.
+_Avoid_: expected return, confidence score, price target, best case
+
+**Verified Falsification Value**:
+The independently supported economic value of killing or narrowing a legitimately funded Work Opportunity, capped by the preregistered remaining research cost, opportunity cost, or expected portfolio loss demonstrably avoided. A failed Alpha Shot earns no value merely for producing a negative result.
+_Avoid_: failure credit, research activity, saved budget claim, kill count
+
+**Marginal Capacity Tranche**:
+A geometric increment of Incubator resources added at an admitted checkpoint only while its conservative marginal Incremental Profit Contribution exceeds its full cost and the value of displaced work. Engine stops or reverses scaling at diminishing returns, while high-uncertainty exploration remains available through the Mutation Capacity Reserve.
+_Avoid_: headcount increase, autoscaling step, utilization target, budget expansion
+
+**Scheduler Metric Contract**:
+The immutable visible version of metric definitions, comparison design, allocation logic, and anti-gaming checks used by Engine, binding preregistration, complete attempt and failure history, Global Testing Ledger effects, independent reproduction, and sealed holdouts. Metric or logic changes create a new version and cannot rescore historical decisions as if the new rule had applied.
+_Avoid_: hidden ranking formula, manager judgment, editable KPI, agent reward policy
+
+**Velocity Measurement Windows**:
+The simultaneous clocks used to evaluate Incubator work: full elapsed time from Work Opportunity admission including queue and blocked time, separately reported active execution time, and rolling twenty-four-hour operational, seven-day allocation, thirty-day Comparable Work Cohort, ninety-day portfolio, and full-history evidence views. Every comparison remains segmented by market regime and evidence stage.
+_Avoid_: runtime, recent average, selected period, time-to-completion
+
+**Hypothesis Resolution**:
+The terminal economic determination that a Strategy Thesis was independently falsified, independently reproduced and advanced, or economically dominated by a documented alternative. Completed, Cancelled, Expired, Blocked, and Needs More Evidence work does not count as resolved.
+_Avoid_: finished task, experiment result, decision by timeout, promoted idea
+
+**Capacity Selection Threshold**:
+The calibrated normal-allocation rule that scales a Marginal Capacity Tranche at an eighty-percent or greater probability of beating its full cost and best displaced work, holds and gathers information between twenty and eighty percent, and preempts below twenty percent or when a stopping rule fires. Mutation Capacity Reserve work is exempt from these selection thresholds but not from its budget, lineage, or stopping rules.
+_Avoid_: confidence score, utilization threshold, manager judgment, profit guarantee
+
+**Profitable Backlog Expansion Trigger**:
+The automatic creation of a bundled Capacity Expansion Proposal when economically eligible backlog remains after every superior internal reallocation and an external tranche has at least an eighty-percent calibrated probability of positive net value. Utilization alone never qualifies, time-sensitive value may trigger an immediate proposal, and ordinary demand is bundled within the Principal Attention Boundary.
+_Avoid_: full queue, autoscaling, spend alert, agent request
+
+**Scheduler Challenger Trial**:
+A ten-percent Capacity Trial of a new Scheduler Metric Contract against its incumbent in Comparable Work Cohorts, promoted at an eighty-percent probability of improved Net Validated Profit Velocity and rolled back at an eighty-percent probability of harm. Any gate, lineage, contamination, independence, spending, or authority violation causes immediate rollback regardless of profit.
+_Avoid_: scheduler deployment, A/B agent test, metric experiment, automatic policy change
+
+**Sphere Escalation Route**:
+The non-managerial routing rule that sends economic uncertainty to Incubator competition and challenge, resource contention or stalled work to Engine, control failure to Sentinel, and new spending, authority, or policy scope to Principal Gateway. Sentinel rejection causes proposal adaptation or abandonment rather than negotiation around the control.
+_Avoid_: escalation to manager, agent appeal, majority override, Principal chat
+
+**Strategy Thesis**:
+A versioned economic hypothesis explaining why, where, and under which conditions a potentially exploitable behavior may exist, used to organize related research and strategy lineage without specifying complete trading behavior or granting execution authority.
+_Avoid_: Strategy Version, trade idea, ticker opinion, guaranteed edge
+
+**Agent Provenance Chain**:
+The immutable identity path binding a reusable worker instance, Incubator Agent Assignment, Assignment Run, provider session, every model inference and tool call, and each produced artifact with their versions, configurations, inputs, and times. Presentation Persona is cosmetic, and no identity in the chain accumulates authority, reputation, or independence across assignments.
+_Avoid_: agent name, conversation ID, audit log, evaluator identity
+
+**Agent Memory Class**:
+The mandatory trust and retention classification of every agent-accessible item as Canonical Evidence, Institutional Memory, Role Memory, Task Memory, Scratch State, or Provider State. Unclassified information is unavailable, and changing class requires explicit typed admission rather than copying context.
+_Avoid_: vector namespace, chat history, trusted context, knowledge base
+
+**Canonical Evidence**:
+An immutable versioned artifact accepted through Canonical Artifact Admission with source, availability, receipt, transformation, entitlement, and dependency lineage sufficient for its declared evidence stage. Approved assignments may reuse it broadly, but acceptance does not make it universally valid, current, or strategy-grade.
+_Avoid_: trusted data, shared file, retrieved context, Institutional Memory
+
+**Institutional Memory**:
+A curated durable procedure, resolved learning, or operating explanation that cites its canonical sources and may be broadly reused for velocity but cannot itself establish an economic or promotion claim. Admission, correction, expiry, and supersession remain versioned.
+_Avoid_: Canonical Evidence, chat summary, folklore, hidden prompt
+
+**Role Memory**:
+Versioned Desk Role instructions, methods, checklists, and known failure patterns shared across eligible assignments without carrying task conclusions, private scratch state, authority, or evaluator independence.
+_Avoid_: role prompt, agent personality, task memory, policy grant
+
+**Task Memory**:
+Assignment-scoped context derived from explicitly admitted inputs and outputs and shareable only through artifact references or an Assignment Handoff. It is not inherited by a retry, child, or later assignment unless that new assignment identifies the admitted material.
+_Avoid_: conversation history, shared agent memory, Canonical Evidence, durable learning
+
+**Scratch State**:
+Disposable run-local computation and notes that cannot support a durable claim or cross an assignment boundary until transformed into a typed artifact and admitted. Termination or fencing may discard it after required forensic retention.
+_Avoid_: Task Memory, experiment result, evidence cache, hidden durable state
+
+**Provider State**:
+External model or session memory treated as untrusted, noncanonical, and assignment-isolated, with fresh sessions and memory disabled where supported. Provider, model version, configuration, instructions, tools, retrieval inputs, and response identity remain recorded, and materially shared provider state creates a shared evaluator failure path.
+_Avoid_: Institutional Memory, model knowledge, agent memory, independent context
+
+**Memory Retention Policy**:
+The versioned class-specific rules that retain Canonical Evidence and admitted artifacts through their entitlement, dependency, evidence, strategy, audit, and legal lifecycles; preserve referenced Institutional and Role Memory versions until explicit supersession or expiry; keep terminal Task Memory for an initial ninety-day reproduction window; purge successful-run Scratch State at completion; and retain failed or fenced forensic scratch snapshots encrypted for thirty days. Provider retention is disabled where supported, and only permitted content required for reproducibility plus its provenance metadata may be retained locally.
+_Avoid_: log retention, keep everything, provider default, backup policy
+
+**Agent Provenance Audit**:
+The automated verification of identity, memory classification, lineage completeness, retention, credentials, contamination, reproducibility, and evaluator independence through continuous admission checks, daily orphan and unclassified-context scans, weekly reproducibility and dependency-closure samples, monthly expiry and independence review, and immediate material-event audits.
+_Avoid_: annual review, manual agent inspection, compliance report, model evaluation
+
+**Retrieved Context Envelope**:
+The immutable record of one retrieval, binding its query, requesting assignment, source and index versions, filters, artifact and chunk identities, rankings, retrieval time, and entitlement state. Retrieval changes accessibility but never upgrades the trust or evidence stage of the returned material.
+_Avoid_: context window, search results, trusted retrieval, evidence bundle
+
+**Evidence Lineage Manifest**:
+The machine-checkable dependency record for one durable artifact, binding exact upstream artifacts, transformations, code and model versions, environment, Agent Provenance Chain, temporal boundaries, entitlements, testing-ledger effects, and known downstream consumers. Prose citations and hyperlinks may explain lineage but cannot replace it.
+_Avoid_: bibliography, data lineage diagram, artifact metadata, reproducibility note
+
+**Context Contamination State**:
+The scope-specific status of context or an artifact as Unassessed, Qualified for Scope, Suspected Contaminated, Confirmed Contaminated, Contained, or Revalidated. Leakage, future information, unentitled data, hidden cross-task memory, prompt injection, invalid sources, or shared provider state triggers containment across the Evidence Dependency Closure; invalidated trials and evaluations remain recorded and their Testing Budget is not restored.
+_Avoid_: clean flag, trusted context, deleted result, harmless prompt injection
+
+**Institutional Memory Admission**:
+The typed acceptance of a proposed durable learning only after binding its canonical sources, applicable scope, preserved dissent, Context Contamination State, owner, freshness or expiry, and supersession rules. Engine may admit qualifying non-authoritative learnings without Principal review, but repetition or admission never converts Institutional Memory into evidence.
+_Avoid_: save chat, agent learning, evidence promotion, wiki edit
+
+**Incubator Agent Assignment**:
+An immutable, expiring unit of work binding one objective, Profit Contribution Hypothesis, Desk Role, primary Strategy Thesis, Research Posture version, workload identity, permitted evidence, allowed actions and outputs, resource reservations, Execution Environment, stopping rule, and lineage. A worker may receive multiple separate assignments, but an assignment cannot combine proposer and evaluator duties in one promotion chain.
+_Avoid_: persistent agent identity, job description, prompt, authority grant
+
+**Assignment Run**:
+One admitted execution attempt of an unchanged Incubator Agent Assignment, recorded as Running, Blocked, Completed, Failed, Cancelled, Expired, or Fenced with its own identity, timing, inputs, outputs, costs, and terminal reason. An exact retry creates a new run, while a changed objective, evidence scope, posture, budget, capability, or output contract requires a new assignment.
+_Avoid_: assignment, agent session, overwritten retry, successful attempt
+
+**Child Assignment**:
+An Incubator Agent Assignment proposed from another assignment and admitted independently by Engine within approved policy and the parent reservation, with its own identity, posture, budget lineage, expiry, and Effective Assignment Capability. Parentage carries work lineage but never permissions or authority.
+_Avoid_: subagent session, delegated authority, inherited role, shared budget
+
+**Effective Assignment Capability**:
+The strict intersection of an Incubator Agent Assignment, worker capability, Trust Zone, Execution Environment, budget, entitlement, and governing policy. Engine may create assignments autonomously inside that intersection, but neither Engine nor an agent may use assignment creation or delegation to expand authority.
+_Avoid_: role permission, inherited authority, agent discretion, Principal delegation
+
+**Assignment Capability Credential**:
+A short-lived non-composable credential binding one assignment, run, workload identity, Trust Zone, Execution Environment, exact operation and resource scope, budget lineage, and expiry. Every receiving service recomputes authorization, multiple credentials cannot be unioned, and Incubator identities remain unable to reach Live services at network, identity, credential, and application-policy layers.
+_Avoid_: API key, agent token, delegated authority, ambient credential
+
+**Research Assignment**:
+An Incubator Agent Assignment that may read approved evidence, conduct registered Research Sandbox trials, append immutable results, reproduce and challenge work, and prepare indicator, model, code, and Draft Strategy Proposals. It cannot alter canonical evidence, merge, deploy, change lifecycle state, access broker credentials, or write to Paper or Live services.
+_Avoid_: autonomous developer, Paper worker, strategy authority, unrestricted research
+
+**Paper Execution Assignment**:
+An Incubator Agent Assignment that may operate, observe, reconcile, and contain one exact Paper Authorized Strategy Version within its approved Paper scope and return findings to Research as evidence. It cannot modify the running Strategy Version, promote it, create Live eligibility, or receive Live authority.
+_Avoid_: paper researcher, simulated Live authority, mutable strategy runner, broker agent
+
+**Paper Qualification Bundle**:
+The immutable Incubator handoff for one exact Strategy Version, binding preregistrations, complete trial and failure history, models and Evidence Lineage Manifests, Evidence Arena dockets and outcomes, Evaluator Independence Manifests, Expected Profit Distribution, execution assumptions, portfolio interactions, requested Paper scope, and containment plan. It presents the economic case but grants no certification, lifecycle state, or authority.
+_Avoid_: Promotion Bundle, Paper approval, strategy report, deployment package
+
+**Paper Admission Route**:
+The deterministic path in which Engine checks Paper Qualification Bundle completeness, Sentinel applies every evidence, entitlement, safety, accounting, lifecycle, and scope gate, and the Engine transition service records Paper Authorized only after every applicable result passes. No Incubator assignment, evaluator coalition, vote, manager, or Principal preference performs the transition.
+_Avoid_: paper review, agent approval, automatic deployment, Sentinel debate
+
+**Paper Operation Grant**:
+An expiring non-transitive authorization binding one Paper Authorized Strategy Version, Paper Account and Environment Epoch, Strategy Sleeve, simulated-capital envelope, instruments, venue and adapter capabilities, pinned dependencies, duration, concurrency, and lifecycle handler. Any economic or dependency change requires a new Strategy Version and grant, and no Paper grant can become Live authority.
+_Avoid_: Paper Authorized, Live grant, agent permission, simulator configuration
+
+**Paper State Custody**:
+The durable ownership by the Paper Ledger and lifecycle service of every open simulated position, order, obligation, and reconciliation state across Paper Execution Assignment expiry, failure, fencing, or replacement. Operators receive expiring operational assignments, while continuity workers assume exact service state without inherited hidden memory or authority.
+_Avoid_: agent portfolio, strategy wallet, operator ownership, task state
+
+**Paper Intent Conflict**:
+The deterministic classification of simultaneous Strategy Sleeve intents as Compatible, Overlapping Same Direction, Opposing, Lifecycle Conflict, or Unscorable before consolidated action. Unscorable intents stop, Opposing intents are never internally crossed or treated as zero risk, and overlap cannot double-count profit, liquidity, diversification, or evidence.
+_Avoid_: net order, strategy disagreement, offsetting risk, internal cross
+
+**Paper Portfolio Selection**:
+The managerless deterministic selection of compatible intents for scarce Paper capital or instrument capacity using portfolio-incremental Net Validated Profit Velocity after full costs and overlap, subject to Sentinel controls. Losing intents may continue in explicitly isolated counterfactual sleeves when economically useful but consume no consolidated capacity and create no portfolio-qualified evidence.
+_Avoid_: portfolio manager, agent vote, strategy ranking, capital authority
+
+**Paper Conservative Aggregation**:
+The Paper admission rule that sums standalone risk, lifecycle funding, cash, collateral, liquidity demand, execution friction, and correlated exposure without diversification credit unless Sentinel applies an explicitly certified aggregation rule. Incubator diversification research cannot grant its own portfolio capacity.
+_Avoid_: net exposure, simulated diversification, strategy offsets, portfolio model
+
+**Paper Containment Grant**:
+The restricted non-expanding authority used after Paper Operation Grant expiry or strategy quarantine to stop new exposure while the lifecycle service manages existing simulated obligations to terminal reconciliation. State remains tied to the originating Strategy Version and Strategy Sleeve and cannot be reassigned or silently removed from evidence.
+_Avoid_: Paper Operation Grant, emergency strategy, position transfer, forced close
+
+**Paper Evidence Mode**:
+The mandatory non-interchangeable label on every Paper observation: Consolidated Eligible, Isolated Counterfactual, Suppressed by Conflict, or Containment Only. Results from different modes remain separately attributable and cannot be blended into a favorable performance history.
+_Avoid_: Paper status, strategy result, execution mode, backtest type
+
+**Paper Evidence Package**:
+The immutable terminal record of one Paper run, binding its exact Paper Operation Grant and versions, Environment Epoch, accepted and rejected intents, complete Paper Ledger, Strategy Sleeve attribution, execution friction and deviations, conflicts, lifecycle events, outages, fences, containment, counterfactual observations, and reconciliation. Missing or uncertain Paper state prevents qualification rather than becoming neutral evidence.
+_Avoid_: Paper report, Promotion Bundle, performance summary, trade log
+
+**Exact-Version Paper Evidence**:
+The rule that a Paper Evidence Package qualifies only the exact Strategy Version, pinned dependencies, scope, venue assumptions, and portfolio context that produced it. Material change creates a new Strategy Version and Strategy Sleeve; prior evidence may remain linked but cannot certify changed behavior.
+_Avoid_: strategy track record, similar version, reusable Paper proof, inherited evidence
+
+**Standalone and Portfolio Proof**:
+The paired Paper finding that establishes both the candidate Strategy Sleeve's own economics and its incremental effect inside the consolidated Paper portfolio. Profit attributable to another sleeve's hedge, subsidy, capital, or favorable netting cannot support the candidate.
+_Avoid_: portfolio P&L, sleeve return, diversification benefit, strategy contribution estimate
+
+**Paper-to-Live Evidence Boundary**:
+The rule that a Paper Evidence Package may enter a later Promotion Bundle but can never create Live eligibility, Live authority, broker credentials, or an Authority Grant through duration, profitability, evaluator support, or automatic lifecycle completion. Every future Live proposal requires its separate gates and exact Principal Authorization Decision.
+_Avoid_: paper graduation, automatic promotion, shadow Live, implied authorization
+
+**Autonomous Paper Activation**:
+The Engine transition and Paper Operation Grant creation that occur without Principal review when a complete bundle passes Sentinel inside an already approved Paper resource, entitlement, infrastructure, policy, and authority envelope. Any broader scope routes through Principal Gateway, and Paper findings never create Live eligibility or authority.
+_Avoid_: autonomous Live, implied approval, paper toggle, Principal bypass
+
+**Assignment Handoff**:
+An immutable transfer envelope binding source and destination assignments, artifact hashes, evidence snapshot and lineage, contamination state, dissent, unresolved assumptions, resource use, remaining work, and expiry. The receiving assignment recomputes its own Effective Assignment Capability because permissions and authority never travel through a handoff.
+_Avoid_: chat message, authority delegation, shared memory, copied prompt
+
+**Cross-Agent Message**:
+Assignment-attributed untrusted Task Memory used for ephemeral coordination that cannot transfer a durable claim, instruction authority, permission, or evidence state. Only schema-valid artifact references and Assignment Handoffs cross assignment boundaries, and quoted external content remains inert data rather than executable instruction.
+_Avoid_: Assignment Handoff, trusted instruction, shared memory, agent delegation
+
+**Canonical Artifact Admission**:
+The typed service boundary that schema-validates and appends an assignment output to a canonical store without granting the producing agent mutable access. Corrections create linked superseding records rather than rewriting accepted evidence, models, experiments, strategies, or decisions.
+_Avoid_: file write, agent merge, database permission, mutable correction
+
+**Assignment Fence**:
+The immediate revocation of an Assignment Run and its capabilities after stale scope, budget breach, lost entitlement, gate violation, contamination, or other invalidating condition, with affected outputs and dependency descendants quarantined by lineage. Audit evidence is preserved, unused capacity is released, unrelated work continues, and recovery requires an explicit clean run or assignment.
+_Avoid_: process kill, retry, global shutdown, evidence deletion
+
+**Incubator Containment Scope**:
+The smallest proven-complete failure boundary identified as an assignment or run, artifact dependency closure, Alpha Pod or Strategy Thesis, model, provider, source, runtime, Strategy Sleeve, Paper Account, scheduler, or entire Incubator. Uncertain identity, lineage, or independence expands the scope until containment completeness is demonstrated.
+_Avoid_: incident severity, affected agent, global shutdown, guessed blast radius
+
+**Incubator Failure Class**:
+The non-exclusive classification of an incident as Resource Runaway, Evidence or Context Contamination, Correlated Reasoning Failure, Provider or Platform Failure, Scheduler or Queue Failure, Paper-State Uncertainty, Identity or Authority Failure, or Principal Unavailable. Unknown classification receives the most restrictive plausible response.
+_Avoid_: error code, root cause, alert type, agent failure
+
+**Incubator Circuit Breaker**:
+An idempotent scope-specific authority-reducing action selected from Work Lease throttle or revocation, Assignment Fence, dependency-closure quarantine, source, model, provider, or runtime isolation, Alpha Market suspension with validated scheduler fallback, Paper Containment Grant, or whole-Incubator pause. Circuit breakers preserve evidence and never create capability, budget, or authority.
+_Avoid_: kill switch, retry policy, evidence deletion, manager intervention
+
+**Safe Continuation Proof**:
+The machine-checkable demonstration that an assignment's identity, evidence, provider, runtime, budget, scheduler, and Paper dependencies are disjoint from an active Incubator Containment Scope. Proven-independent work continues; uncertainty expands containment rather than assuming separation.
+_Avoid_: unaffected label, best effort, global recovery, agent assertion
+
+**Managerless Incident Control**:
+The separation in which Sentinel determines mandatory control restrictions and Engine executes fencing, dependency propagation, fallback scheduling, evidence preservation, and routing without an Incubator incident manager. Incubator assignments may diagnose and propose recovery evidence but cannot declare containment, restore capability, or approve their own work.
+_Avoid_: incident commander agent, risk manager, self-recovery, committee approval
+
+**Incubator Degraded Mode**:
+An explicit Engine operating state selected from Provider Isolated, Evidence Read Only, Scheduler Fallback, Research Continuity, Paper Containment Only, or Incubator Paused, binding its trigger, allowed and prohibited operations, affected scope, expiry, and required recovery evidence. Degradation narrows capability and never weakens Sentinel controls.
+_Avoid_: partial outage, safe mode, feature flag, reduced monitoring
+
+**Provider Failover Run**:
+A new Assignment Run using only a prequalified replacement model or data provider with pinned replacement dependencies, fresh Provider State, and recomputed Evaluator Independence Groups. Provider outputs are never presumed equivalent, and absent a qualified alternative the dependent work remains Blocked while proven-disjoint work continues.
+_Avoid_: retry on another model, provider fallback, equivalent API, independence preservation
+
+**Scheduler Fallback Mode**:
+The Incubator Degraded Mode that restores the last-known-good Scheduler Metric Contract, stops new Alpha Shots and Capacity Expansion Proposals, pauses Mutation work at admitted checkpoints, and prioritizes containment, reconciliation, independent validation, and completion of safe in-flight artifacts. Alpha Market admission resumes only after scheduler recovery proof, without manual task assignment.
+_Avoid_: FIFO queue, manager allocation, backup scheduler experiment, normal operation
+
+**Paper-State Uncertainty**:
+An Incubator Failure Class in which any unresolved Paper order, position, Paper Ledger, reservation, or lifecycle state blocks new simulated exposure, preserves capacity reservations, activates Paper Containment Only, and requires reconciliation of every dependent Strategy Sleeve. Timeout never converts unknown state into flat, cancelled, or harmless.
+_Avoid_: stale Paper data, simulator error, assumed cancellation, temporary mismatch
+
+**Principal-Unavailable Mode**:
+The bounded continuation of proven-independent Research and Paper work inside existing unexpired grants and budgets while new Principal decisions queue and expiries narrow rather than renew authority. Material incidents still trigger Gateway notification attempts, but unavailable Principal attention grants no approval and does not stop otherwise safe Research.
+_Avoid_: emergency approval, global pause, silent renewal, Principal delegation
+
+**Recovery Evidence Bundle**:
+The immutable proof required to restore contained scope, binding failure class and Incubator Containment Scope, complete dependency closure, trigger and causal evidence, affected versions and credentials, preserved artifacts, correction, clean rebuild, reconciliation, negative tests, budget accounting, residual uncertainty, rollback path, and independent verification. Service responsiveness alone is not recovery.
+_Avoid_: incident report, health check, restart log, agent assurance
+
+**Exact Retry**:
+A new Assignment Run of unchanged work permitted only after evidence shows its transient failure cause is cleared, preserving every prior attempt and result. Changed evidence, model, provider, code, configuration, or economic behavior requires the applicable new artifact, assignment, or Strategy Version.
+_Avoid_: rerun, hidden attempt, changed-input retry, resume
+
+**Service Rollback**:
+The restoration of a pinned last-known-good service version without deleting, validating, or reclassifying artifacts produced during the failed interval. A rollback narrows operational uncertainty but does not itself prove recovery or clear contamination.
+_Avoid_: undo, evidence restore, successful deployment, incident resolution
+
+**Staged Scope Restoration**:
+The return of recovered capacity through ten, twenty-five, fifty, and one-hundred-percent stages after the Recovery Evidence Bundle passes Sentinel gates and independent checks at each checkpoint. Recurrence immediately returns the scope to its prior contained state and preserves new forensic evidence.
+_Avoid_: gradual rollout, automatic retry, capacity scaling, probation
+
+**Data-Loss Recovery**:
+The restoration of data only after entitlement, Evidence Tombstone Barrier, identity, hash, sequence, Evidence Availability Time, lineage, and dependency-rebuild verification. Unverifiable gaps remain Missing or Contained, and recovery never recreates deleted evidence or turns absence into a neutral value.
+_Avoid_: backup restore, data reload, gap fill, recovered evidence
+
+**Autonomous Scope Restoration**:
+The Engine restoration of affected Research or Paper scope after exact Sentinel recovery gates pass inside existing resource and authority envelopes. Gateway is required only for new spending, entitlement, infrastructure, policy, authority, or a specifically mandated material-incident acknowledgement.
+_Avoid_: self-approval, Live recovery, Principal bypass, automatic policy change
+
+**Strategy Freeze Candidate**:
+A non-authoritative request to transform one Draft Strategy Proposal into a complete immutable Strategy Version by deterministically pinning every rule and dependency, validating completeness, and calculating its content identity. Only the controlled freezing service may create the registry object, and freezing grants no Paper or Live authority.
+_Avoid_: Strategy Version, deployment request, agent-created registry entry, promotion
+
 **Research Sandbox**:
 An isolated, non-authoritative environment in which agents may read approved unprivileged evidence, create disposable working files, append constrained experiment results, and prepare reviewable proposals. It has no broker credentials or ability to deploy, merge, alter canonical evidence or policy, or write to Paper or Live services.
 _Avoid_: development server, Paper environment, safe production
@@ -489,6 +965,66 @@ _Avoid_: autonomous code change, Strategy Version, approved implementation
 **Research Budget**:
 The versioned limits on experiment families, trials, compute, data spending, concurrency, and reserved evidence that bound autonomous research. An agent may propose an expansion, but only a Principal Authorization Decision can activate it.
 _Avoid_: cloud budget, agent discretion, experiment quota
+
+**Research Capacity Reservation**:
+A time-bounded allocation of approved agents, tokens, compute, data spending, concurrency, and Principal attention to one identified work item, including its budget lineage and next checkpoint. Actual use is attributed to that work and unused capacity returns to its source budget.
+_Avoid_: queue slot, cost estimate, blanket capacity
+
+**Research Posture**:
+An immutable versioned parameter vector bound to one Incubator assignment over search breadth, novelty tolerance, contrarianism, disconfirmation intensity, fan-out, depth, pruning speed, resource-request appetite, escalation sensitivity, and communication detail. It governs research behavior without changing evidence, risk, spending, or authority gates; any effect on traded universe, prediction target, horizon, entry, exit, sizing, portfolio construction, execution, or live treatment belongs to a new Strategy Version; a different posture requires a separately identified assignment, and posture diversity never establishes Evaluator Independence.
+_Avoid_: agent personality, risk appetite, trading aggression, prompt style
+
+**Research Posture Profile**:
+A named canonical Research Posture vector selected from Passive Observer, Conservative Verifier, Balanced Investigator, Aggressive Explorer, Extreme Frontier, Skeptical Reviewer, or Adversarial Red Team. Each name resolves to one immutable versioned vector rather than subjective agent discretion or presentation style.
+_Avoid_: personality label, prompt preset, model identity, Desk Role
+
+**Aggressive Research Posture**:
+An Incubator Research Posture that spends approved research capacity rapidly on broader, more novel, contrarian, and highly parallel investigation while pruning weak branches quickly and escalating promising work. Its aggression applies only to research behavior and never changes evidence, promotion, risk, spending, or trading authority.
+_Avoid_: risk appetite, larger positions, lower evidence threshold, unlimited resources
+
+**Research Posture Allocation**:
+The Engine's logged distribution of Research Capacity Reservations across posture families, defaulting discovery work to 70% aggressive or extreme exploration, 20% skeptical or adversarial challenge, and 10% balanced or conservative verification. Passive Observer receives no standing capacity, and every promotion-bound thesis still requires aggressive generation, adversarial challenge, and an independently qualified evaluator.
+_Avoid_: fixed headcount, authority allocation, evaluator independence, permanent staffing
+
+**Passive Observer**:
+A trigger-driven Research Posture used for change detection, prerequisite waiting, anomaly monitoring, and no-action control comparisons without standing Incubator capacity or responsibility for primary alpha generation.
+_Avoid_: default researcher, approval role, idle agent, human Principal
+
+**Research Posture Trial**:
+An Engine-run comparison of a new immutable posture vector against canonical profiles within matched task classes and at most ten percent of already approved Incubator capacity. It grants no new spending, entitlement, evidence, or trading authority; a gate or authority violation suspends it immediately, while a profile materially dominated after thirty comparable assignments is retired unless it retains a proven specialist niche.
+_Avoid_: Strategy Trial, unrestricted tuning, Principal approval bypass, live experiment
+
+**Research Posture Performance**:
+The matched-task record of economic information gain, useful-hypothesis yield, challenge survival, reproducibility, wall-clock latency, resource and Principal-attention cost, duplication, and rework used to retain, specialize, or retire a Research Posture Profile. Simulated profit alone is not a sufficient posture score.
+_Avoid_: agent leaderboard, raw P&L, token efficiency, popularity
+
+**Presentation Persona**:
+Non-authoritative presentation metadata that gives an Incubator worker a stable name, tone, vocabulary, and UI identity without changing evidence selection, conclusions, confidence, resources, behavior, or authority.
+_Avoid_: Research Posture, agent identity, evaluator independence, decision logic
+
+**Incubator Profit Mandate**:
+The Incubator's exclusive objective to maximize durable expected net profit and economically useful uncertainty reduction per wall-clock time, capital opportunity, and research cost by aggressively scaling profitable discovery within externally enforced Sentinel controls and approved resource envelopes. Raw Paper profit, activity, agent count, or willingness to take more risk cannot substitute for reproducible after-cost economic edge.
+_Avoid_: safety mandate, unrestricted risk-taking, raw P&L, trade frequency
+
+**Velocity Objective**:
+The Incubator operating objective to maximize Net Validated Profit Velocity by aggressively scaling approved agents, concurrency, tokens, compute, data, automation, and spending. Its resource envelope and every evidence, entitlement, independence, budget, and authority constraint are enforced externally by Engine and Sentinel rather than treated as Incubator Desk objectives.
+_Avoid_: trade frequency, unrestricted spending, agent count, move fast and break things
+
+**Control Capacity Reserve**:
+Resource headroom unavailable to Incubator workloads that preserves Safety Kernel, lifecycle, reconciliation, evidence-control, alerting, and Principal Gateway operation during saturation or failure.
+_Avoid_: spare research capacity, idle waste, shared burst pool
+
+**Capacity Expansion Proposal**:
+An immutable Principal Gateway proposal to increase an existing resource envelope, binding the bottleneck, measured evidence, expected velocity and economic gain, incremental and maximum cost, scope, expiry, alternatives, and rollback. It grants no capacity until accepted by a Principal Authorization Decision.
+_Avoid_: automatic budget increase, capacity warning, agent request
+
+**Capacity Trial**:
+A bounded challenger evaluation of an unproven model, provider feature, or compute class against an incumbent using decision latency, reproducibility, rework, independence, and cost. It grants no fleet-wide capacity or new vendor, entitlement, or spending authority.
+_Avoid_: production rollout, free benchmark, automatic upgrade
+
+**Incubator Resource Policy**:
+The immutable versioned rules that translate the Velocity Objective, work priority, approved budgets, expected critical-path benefit, independence, liveness, and Control Capacity Reserve into Research Capacity Reservations, scale changes, and Capacity Expansion Proposals. It never creates data, spending, or trading authority.
+_Avoid_: autoscaling settings, queue configuration, unlimited research mandate
 
 **Testing Budget**:
 The finite statistical error allowance assigned to an Experiment Family or hierarchy, including its confirmatory hypotheses, sequential looks, amendments, and dependence corrections. It is distinct from compute or spending authority and cannot be renewed using the same exhausted evidence.
@@ -563,7 +1099,7 @@ The immutable Evidence Control Event inventory of every affected canonical recor
 _Avoid_: cleanup list, delete response, retention report
 
 **Evidence Revalidation**:
-The deterministic rebuilding and qualification of corrected or cleanly retained evidence and every affected derivative through new versioned artifacts and preregistered trials. It never rewrites invalidated trials, restores their Testing Budget, or automatically restores Live authority.
+The deterministic rebuilding and qualification of corrected or cleanly retained evidence and every affected derivative through new versioned artifacts, preregistered trials, fresh evaluations, and recomputed Evaluator Independence Groups. Contaminated context is never cleaned in place, prior artifacts remain preserved as invalidated evidence, and revalidation never restores their Testing Budget or automatically restores Paper or Live authority.
 _Avoid_: rerun, refresh model, clear quarantine
 
 **Source Compliance Incident**:
@@ -658,8 +1194,12 @@ _Avoid_: auto-renewal, new promotion, session refresh
 A non-authoritative message sent to an approved external communication channel, such as Slack, to inform the Principal of a threshold, incident, approval request, or recovery state. It may link to Market Mate but cannot itself approve, reject, resume, or alter trading authority.
 _Avoid_: approval, audit record, command
 
+**Principal Gateway**:
+The isolated authority and communication boundary that authenticates the Principal, presents exact immutable proposals and alerts, records proposal-bound Principal Authorization Decisions and emergency restrictions, and exposes approved read-only operational state. It owns no strategy, risk, ledger, execution, or ability to override the Safety Kernel or broaden an Authority Grant.
+_Avoid_: mobile backend, Engine API, admin portal, approval bot
+
 **Approval Companion**:
-An optional Principal client, such as a native mobile application, that presents server-fetched evidence, sends Operational Notifications, invokes emergency containment, and cryptographically submits a Principal Authorization Decision. It owns no strategy, risk, ledger, execution, or canonical authorization state.
+An optional Principal client, such as a native mobile application, that communicates only through the Principal Gateway to present server-fetched evidence, receive Operational Notifications, invoke emergency containment, and cryptographically submit a Principal Authorization Decision. It owns no strategy, risk, ledger, execution, or canonical authorization state.
 _Avoid_: mobile trading engine, second backend, biometric approval
 
 **Principal Authorization Decision**:
@@ -759,7 +1299,7 @@ An immutable, content-addressed version of the complete declarative rules and pi
 _Avoid_: algorithm update, bot behavior, mutable strategy
 
 **Strategy Lifecycle State**:
-The non-interchangeable governance state of a strategy: Draft Strategy Proposal, Frozen Strategy Version, Research Qualified, Paper Authorized, Live Eligible, Live Authorized, Quarantined, Wind-Down, or Retired. Evidence qualification and execution authority remain separate; no state transition rewrites the Strategy Version.
+The non-interchangeable governance state of a strategy: Draft Strategy Proposal, Frozen Strategy Version, Research Qualified, Paper Authorized, Live Eligible, Live Authorized, Quarantined, Wind-Down, or Retired. Evidence qualification and execution authority remain separate; only the deterministic Engine-controlled transition service may enforce gates and change state, no agent or coalition may direct a transition, and any authority-bearing transition must bind its required Principal Authorization Decision.
 _Avoid_: deployment stage, environment flag, confidence level
 
 **Paper Authorized**:
@@ -782,8 +1322,16 @@ _Avoid_: reviewer opinion, weighted vote, warning
 The degree to which promotion evaluators use genuinely distinct model, implementation, evidence, and reasoning paths. Evaluators with a materially shared failure path count as one vote, and every dissent remains visible.
 _Avoid_: agent count, model name count, unanimous text
 
+**Evaluator Independence Group**:
+The equivalence class of evaluator assignments that share any material model, implementation, evidence, prompt or reasoning scaffold, provider state, or other failure path and therefore count as one review path. Clones, children, retries, and uniquely named agents retain distinct provenance but do not create independence by multiplication.
+_Avoid_: reviewer team, provider count, agent identity, vote bloc
+
+**Evaluator Independence Manifest**:
+The machine-checkable declaration of an evaluator assignment's model and provider, implementation, evaluation code, evidence acquisition and transformation, reasoning scaffold, Provider State, operator lineage, contamination dependencies, and material shared failure paths. Unknown independence or any common dependency capable of making multiple evaluators pass incorrectly collapses them into one Evaluator Independence Group.
+_Avoid_: diversity score, model list, reviewer biography, self-attestation
+
 **Strategy Promotion Review**:
-The evidence-bound review that first enforces every Hard Promotion Gate, then requires complete reproducibility/provenance/leakage, risk/execution/lifecycle, and economics/robustness/benchmark review with at least two genuinely independent supporting evaluation paths and no material unresolved dissent. Dissent yields Needs More Evidence rather than majority override.
+The evidence-bound review that first enforces every Hard Promotion Gate, then requires complete reproducibility/provenance/leakage, risk/execution/lifecycle, and economics/robustness/benchmark review with at least two supporting Evaluator Independence Groups and no material unresolved dissent. Each group counts once regardless of agent count, correlated fan-out adds no promotion vote, and dissent yields Needs More Evidence rather than majority override.
 _Avoid_: majority vote, agent approval, promotion score
 
 **Strategy Registry**:
@@ -819,7 +1367,7 @@ An incident in which required registry, evidence, PR, deployment, or authority s
 _Avoid_: eventual consistency, stale UI, assume success
 
 **Strategy Sleeve**:
-The ledger and risk-attribution scope that assigns each economic allocation, intent, order, fill, cost, position contribution, and outcome to one Strategy Version while remaining subordinate to aggregate portfolio controls.
+The immutable ledger, evidence, and risk-attribution scope that assigns every economic allocation, intent, order, fill, cost, position contribution, forecast, and outcome to one Strategy Version while remaining subordinate to aggregate portfolio controls. Paper Account netting or consolidated execution never erases sleeve economics or failure history.
 _Avoid_: brokerage subaccount, ticker position, agent wallet
 
 **Portfolio Intent Resolution**:
@@ -962,13 +1510,129 @@ _Avoid_: data feed, dataset
 A required review point that a Strategy Version must pass before it may progress from backtesting to paper trading or live execution.
 _Avoid_: launch check, approval step
 
+**Decision Subject**:
+An exact admitted proposal, mandatory lifecycle or containment action, or explicit scheduled decision not to act that could affect money, exposure, custody, lifecycle, authority, or containment and therefore requires a Decision Record. Raw research ideas, unadmitted candidates, agent messages, and monitoring observations are not Decision Subjects.
+_Avoid_: trade signal, agent idea, every model output, activity event
+
 **Decision Record**:
-The immutable explanation of a planned, attempted, completed, rejected, or abandoned action, linked to its Execution Environment, evidence, Strategy Version, Risk Policy, forecast, approvals, orders, and resulting ledger events.
-_Avoid_: log message, agent thoughts
+The append-only aggregate rooted in the immutable decision-time evidence envelope created when a Decision Subject is admitted, binding its Execution Environment, initiator, Strategy Version when applicable, evidence, assumptions, alternatives, forecast applicability, Expected P&L, Risk Policy and Safety Kernel results, authority, Action Attempts, terminal outcome, and linked ledger effects. Rejection, cancellation, replacement, abandonment, and an explicit scheduled decision not to act remain records rather than disappearing.
+_Avoid_: log message, agent thoughts, mutable explanation, order history
+
+**Action Attempt**:
+One immutable attempt to carry out an unchanged Decision Subject, with its own identity, timing, inputs, allowed execution adaptations, Order Plans, Venue Events, costs, and Execution Result. A mechanical retry or in-plan replacement creates another attempt under the same Decision Record, while changed economics, sizing, instruments, assumptions, evidence, or authority require a new linked Decision Record.
+_Avoid_: retry counter, overwritten order, Decision Record, broker request
+
+**Decision Disposition**:
+The non-interchangeable governance state of a Decision Subject: Admitted, Authorized, Rejected, Withdrawn, Expired, or Superseded. It never substitutes for Action Outcome or a venue's order state.
+_Avoid_: status, execution result, order state, lifecycle event
+
+**Action Outcome**:
+The non-interchangeable result state of a Decision Subject across its Action Attempts: Not Attempted, Working, Partially Completed, Completed, Cancelled, Failed, or Unknown and Contained. Completed requires Execution Completion; the outcome remains separate from Decision Disposition and links to exact Venue Events, Execution Results, and ledger effects.
+_Avoid_: decision status, broker status, success flag, fill state
+
+**Decision Group**:
+The non-authoritative linkage among separately admitted Decision Records that implement one coordinated portfolio, rebalance, hedge, or multi-strategy choice while preserving each record's Strategy Sleeve, economics, authority, attempts, and outcome. One atomic multi-leg package remains one Decision Record, while unrelated or opposing decisions cannot be hidden inside a group.
+_Avoid_: batch Decision Record, portfolio order, netted strategy decision, shared authority
+
+**Decision Record Completeness State**:
+The non-interchangeable evidence state of a Decision Record as Complete, Emergency Minimum, Enrichment Pending, or Broken. Risk-increasing execution requires Complete; only preauthorized risk-reducing, containment, reconciliation, or lifecycle action may begin from a durably captured Emergency Minimum and must proceed to enrichment and reconciliation without weakening the original evidence boundary.
+_Avoid_: validation status, optional fields, best-effort record, execution readiness
+
+**Emergency Decision Record**:
+The independently durable minimum Decision Record permitted before a preauthorized risk-reducing, containment, reconciliation, or lifecycle action when the normal record path is unavailable, binding the subject, environment, authority, trigger, evidence references, intended effect, time, and recovery obligation. It never permits risk-increasing action or becomes a silent substitute for a Complete record.
+_Avoid_: deferred logging, emergency bypass, partial audit, after-the-fact rationale
+
+**Evidence-Backed Decision Explanation**:
+The structured graph of exact canonical claims, Research Snapshots, source observations, calculations, artifact hashes, versions, policies, and times that supports a Decision Record while preserving unknown and conflicting evidence explicitly. Natural-language summaries are non-authoritative projections, and private chain-of-thought is never evidence.
+_Avoid_: model rationale, confidence prose, agent reasoning, generated justification
+
+**Decision Baseline Set**:
+The frozen decision-time comparison of an economically motivated Decision Subject against both No Action and the best permitted executable alternative, with each baseline's assumptions, feasibility, and evidence. An unavailable baseline is explicit and cannot be replaced by a favorable straw man.
+_Avoid_: benchmark return, alternatives considered text, hindsight comparison
 
 **Expected P&L**:
-A time-stamped, cost-inclusive estimate of an action's possible profit-and-loss distribution over a defined horizon, including downside, assumptions, uncertainty, and model version. It is a forecast, not a promise.
-_Avoid_: expected profit, guaranteed return
+A frozen time-stamped, cost-inclusive distribution of an action's possible profit and loss over a defined horizon, including maximum modeled loss, uncertainty, key sensitivities, assumptions, model version, and its Decision Baseline Set. It is a forecast rather than a promise and actual outcomes never rewrite it.
+_Avoid_: expected profit, guaranteed return, price target, single-point gain
+
+**Forecast Applicability State**:
+The Decision Record classification of an Expected P&L as Required or Not Applicable with an exact reason. Risk-increasing or economically motivated actions require the forecast; mandatory containment, reconciliation, or lifecycle actions may be Not Applicable but still disclose their objective, known tradeoffs, and evidence.
+_Avoid_: missing forecast, zero expected profit, forecast waived, safety benefit estimate
+
+**Decision Record Projection**:
+The functional Principal view that summarizes a Decision Record's environment, subject, state, Expected P&L range, maximum modeled loss, and decisive gate result on the Economic Artifact Tape, with exact evidence available by drill-down. Secrets, private reasoning, raw traces, and source-restricted content remain redacted or authorized-forensic only, and the projection never replaces the canonical record.
+_Avoid_: narrative card, marketing explanation, raw debug trace, approval pitch
+
+**Decision Evidence Status**:
+The current classification of a Decision Record's supporting evidence as Current, Superseded, Invalidated, Disputed, or Replay Unavailable, with exact affected dependency scope and Evidence Change linkage. It changes only through appended evidence-control facts and never rewrites the Decision-Time View.
+_Avoid_: decision validity, corrected forecast, stale badge, current truth
+
+**Corrected Decision View**:
+The current counterfactual reconstruction of a Decision Record under accepted corrected evidence, including changed calculations, gates, forecast, and whether the decision would differ, while preserving the original Decision-Time View unchanged. It is analysis of later knowledge rather than a retroactive decision or performance claim.
+_Avoid_: revised Decision Record, corrected rationale, backfilled forecast, rewritten history
+
+**Outcome Attribution**:
+The append-only comparison of a Decision Record's frozen Expected P&L with observed results at every preregistered horizon and terminal lifecycle event, separating price movement, execution quality, Trading Costs, carry, option lifecycle effects, slippage, and allocated Operating Costs. Causal contributions and counterfactual effects remain explicitly estimated and cannot be presented as proven merely because outcomes correlate with the decision.
+_Avoid_: realized P&L, strategy credit, forecast overwrite, causal proof
+
+**Execution Completion**:
+The terminal determination that every Action Attempt has a reconciled venue state, its Execution Result is durable, and all resulting ledger, position, reservation, and lifecycle effects are accounted for or explicitly contained. It does not imply that every Outcome Attribution horizon has matured.
+_Avoid_: order terminal, filled, strategy complete, evaluation complete
+
+**Outcome Evaluation Completion**:
+The independent state that remains Pending until every preregistered evaluation horizon and applicable lifecycle obligation has an Outcome Attribution, then becomes Complete or Outcome Indeterminate without changing Execution Completion or the original Decision-Time View.
+_Avoid_: execution status, realized P&L available, record closed, forecast settled
+
+**Outcome Indeterminate**:
+The terminal Outcome Evaluation Completion state in which one or more preregistered horizons cannot be reconstructed or resolved, binding the exact missing evidence, failure or timeout, affected scope, and evidence known before failure. It is never converted to zero, neutral, failure, or success and contributes no positive promotion evidence by itself.
+_Avoid_: inconclusive result, missing return, neutral outcome, failed strategy
+
+**Indeterminate Outcome Retry**:
+A new linked Research or Paper evaluation permitted when preserved pre-failure evidence leaves the Outcome Indeterminate economically promising relative to retry cost and its failure scope is understood and contained. The original remains indeterminate; exact repeats preserve full lineage, changed methods require fresh preregistration and Testing Budget, and any renewed Live action requires a new Decision Record and current authority rather than automatic replay.
+_Avoid_: resume, backfilled outcome, retry until success, automatic retrade
+
+**Decision History Projection**:
+The compact rebuildable historical projection of Decision Records, forecasts, baselines, dispositions, Action Outcomes, Outcome Attributions, evidence status, redactions, versions, and integrity references used for fast Principal review and authorized Incubator retrieval. It is non-authoritative, never exported automatically, and reaches an Incubator assignment only as read-only Canonical Evidence through a Retrieved Context Envelope rather than mutable database authority.
+_Avoid_: canonical history table, agent memory, Decision Record archive, automatic report
+
+**Decision History Grain**:
+The stable identity of one collapsed Decision History Projection row as Decision Record by preregistered evaluation horizon by Execution Environment by projection version. Attempts, legs, forecasts, costs, gates, and outcomes may be summarized into that row only while their exact artifact identities remain linked and separately inspectable.
+_Avoid_: one row per agent, one row per strategy, mutable summary, portfolio aggregate
+
+**Decision History Access**:
+The read-only retrieval available to an Incubator Agent Assignment for admitted non-restricted Decision History Projection rows within its evidence and time scope, recorded in its Retrieved Context Envelope. Blinded evaluation, sealed holdouts, entitlements, contamination containment, and assignment boundaries override broad historical access.
+_Avoid_: direct database access, shared agent memory, unrestricted history, evaluator context
+
+**Decision History Use Class**:
+The non-interchangeable purpose of a Decision History Access as Exploratory Retrieval or Confirmatory Cohort. Exploration may generate hypotheses from eligible history, while a promotion-bearing claim requires a preregistered point-in-time cohort, complete results, multiplicity controls, and Testing Budget and cannot elevate cherry-picked rows into evidence.
+_Avoid_: query mode, historical evidence, agent analysis, backtest filter
+
+**Decision Projection Watermark**:
+The projection evidence binding the latest included canonical event position and time, generation time, validity interval, projection version, and rebuild state. A stale, rebuilding, or broken projection may support labelled forensics but cannot be represented to a Principal or assignment as current evidence.
+_Avoid_: last updated time, cache age, freshness badge, current row
+
+**Decision History Export**:
+An explicit on-demand reproducible rendering of a selected Decision History Projection as machine-readable or human-readable evidence, binding its query, environment, time range, projection and policy versions, redactions, integrity hash, and requester. No schedule, agent session, or completed decision creates an export automatically.
+_Avoid_: nightly export, automatic report, database dump, agent scratch file
+
+**Decision History Export Grant**:
+An exact expiring authorization for a Principal or bounded non-Incubator service to produce and deliver one Decision History Export, binding requester, purpose, query, destination, format, redaction, entitlement, retention, and deletion scope. Internal Incubator analysis uses Decision History Access rather than exporting files.
+_Avoid_: download permission, agent export, report access, standing data extract
+
+**Decision Admission Identity**:
+The deterministic identity of a Decision Subject across initiator, Strategy Sleeve, Execution Environment, exact economic content, evidence snapshot, and authority scope. Exact duplicate admission resolves to the existing Decision Record, another unchanged execution becomes an Action Attempt, and the same identity with different content is fenced as an integrity failure.
+_Avoid_: request ID, idempotency key, strategy name, duplicate order
+
+**Explicit No-Action Decision**:
+A Decision Subject recording that an admitted proposal or scheduled strategy, lifecycle, risk, or authority obligation was evaluated and intentionally produced no action, with evidence, alternatives, gates, and expiry. Ordinary market silence, absence of a candidate, or an unevaluated schedule creates no Decision Record.
+_Avoid_: no signal, idle strategy, heartbeat, empty scan
+
+**Decision Record Redaction**:
+An explicit policy-bound substitution for information that cannot appear in a Decision Record Projection, binding its category, reason, governing policy or entitlement, permitted substitute, and authorized forensic route when one exists. Credentials and cryptographic secrets never enter the record; restricted source content and private traces cannot be silently omitted or presented as complete evidence.
+_Avoid_: hidden field, blank value, secret storage, discretionary omission
+
+**Decision Record Retention**:
+The preservation of Decision Record economic, authority, lifecycle, outcome, redaction, and integrity facts for the experiment lifetime and at least seven years after closure, extended where ledger, property, incident, or legal evidence requires. Source-restricted content may follow its certified correction or deletion contract without erasing independently owned decision facts or the permitted Non-Content Audit Envelope.
+_Avoid_: automatic export, permanent source retention, log retention, dashboard history
 
 **Audit Dashboard**:
 The Principal-facing web view over Paper and Live historical, current, and planned actions, their separate ledgers, positions, forecasts, outcomes, and Decision Records.
