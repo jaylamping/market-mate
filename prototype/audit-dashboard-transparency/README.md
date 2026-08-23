@@ -14,7 +14,7 @@ python3 -m http.server 4174
 
 Open [http://localhost:4174/prototype/audit-dashboard-transparency/?variant=A](http://localhost:4174/prototype/audit-dashboard-transparency/?variant=A).
 
-- `A` — Command Ledger: dense audit tape and exception rail
+- `A` — Command Ledger: functional left-rail views ordered Home/Dashboard, Live Trading, Paper Trading, Incubator, Decision Records, Research, proposals, blocked work, and alerts
 - `B` — Principal Brief: mobile-first decisions and system truth
 - `C` — Twin Environments: read-only Paper/Live comparison
 

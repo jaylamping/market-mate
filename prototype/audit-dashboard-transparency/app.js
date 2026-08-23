@@ -4,6 +4,7 @@
 const state = {
   asOf: "23 AUG 2026 · 09:47:18 CT",
   selectedEnvironment: "LIVE",
+  commandView: "overview",
   selectedDecision: "DR-L-01842",
   emergencyState: "PARTIAL",
   risk: {
@@ -261,6 +262,102 @@ const state = {
     backlog: "0 breached proposal SLAs",
     cost: "$184 / $250 monthly ceiling",
   },
+  incubator: {
+    asOf: "09:47:12 CT · usage ledger UL-20260823-0947",
+    velocity: "+$418 expected annual net / validated day",
+    resources: [
+      { label: "Active trials", value: "4", detail: "3 running · 1 linked retry" },
+      { label: "Agent assignments", value: "38 / 64", detail: "59% approved research capacity" },
+      { label: "Model tokens today", value: "28.6M / 45M", detail: "64% daily Engine envelope" },
+      { label: "Usage spend today", value: "$116.34 / $180", detail: "model + compute + data" },
+      { label: "Mutation reserve", value: "12 / 13 slots", detail: "20% capacity preserved" },
+    ],
+    trials: [
+      {
+        id: "TR-244",
+        name: "SPY spread evidence-gap retry",
+        lineage: "DR-P-08839 → RETRY-01 · exact method",
+        stage: "PAPER REPLAY",
+        state: "RUNNING · 61%",
+        contribution: "+$21 expected annual net",
+        agents: "8 assignments · 3 failure paths",
+        models: "gpt-5.6-luna + sim-overlay-19.3",
+        usage: "3.8M tokens · 1.2M simulated events",
+        spend: "$18.42 / $30 lease cap",
+        testing: "Existing family · 2 of 5 sequential looks",
+        next: "Terminal evidence checkpoint · 10:02 CT",
+        stop: "Stop if replay gap recurs or P(net +) < 55%",
+        tone: "indeterminate",
+      },
+      {
+        id: "TR-241",
+        name: "Opening-auction refill asymmetry",
+        lineage: "WO-301 · Alpha Pod AP-88",
+        stage: "INDEPENDENT REPRODUCTION",
+        state: "RUNNING · 74%",
+        contribution: "+$146 expected annual net",
+        agents: "12 assignments · 4 failure paths",
+        models: "gpt-5.6-sol + challenger-reasoner-02",
+        usage: "9.4M tokens · 2.8M quote events",
+        spend: "$41.86 / $60 lease cap",
+        testing: "Arena HA-044 · holdout sealed",
+        next: "Adversarial cost shock · 10:12 CT",
+        stop: "Stop below $0 after 1.7× median spread",
+        tone: "good",
+      },
+      {
+        id: "TR-238",
+        name: "IWM regime-conditioned reversal",
+        lineage: "WO-296 · experiment family EF-71",
+        stage: "FEATURE ABLATION",
+        state: "RUNNING · 43%",
+        contribution: "+$84 expected annual net",
+        agents: "9 assignments · 3 failure paths",
+        models: "gpt-5.6-sol + gpt-5.6-luna",
+        usage: "7.1M tokens · 842k observations",
+        spend: "$29.10 / $48 lease cap",
+        testing: "31% Testing Budget consumed",
+        next: "Remove volatility regime feature · 10:26 CT",
+        stop: "Stop if incremental contribution < $35",
+        tone: "info",
+      },
+      {
+        id: "TR-229",
+        name: "QQQ calendar event-window exit",
+        lineage: "SV-027.5 · Paper grant PG-768",
+        stage: "PAPER FORWARD TEST",
+        state: "RUNNING · DAY 18 / 30",
+        contribution: "+$167 expected annual net",
+        agents: "7 assignments · 3 failure paths",
+        models: "gpt-5.6-luna + sim-overlay-19.3",
+        usage: "5.6M tokens · 4,102 venue events",
+        spend: "$26.96 / $42 lease cap",
+        testing: "Confirmatory cohort · no extra looks",
+        next: "Market-close horizon · 15:15 CT",
+        stop: "Stop on parity break or cost-adjusted edge < $0",
+        tone: "good",
+      },
+    ],
+    queue: [
+      { rank: "01", id: "WO-307", name: "SPY evidence-gap retry challenger", stage: "CHEAP SCOUT", value: "+$38 incremental", cost: "$8–$14", start: "10:02 CT after TR-244", lease: "4 candidate plans" },
+      { rank: "02", id: "WO-312", name: "Cross-sector opening breadth decay", stage: "OPENING SWARM", value: "+$91 incremental", cost: "$22–$40", start: "10:18 CT capacity forecast", lease: "3 candidate plans" },
+      { rank: "03", id: "WO-309", name: "Index-option surface lag after macro shock", stage: "INDEPENDENT REPRO", value: "+$76 incremental", cost: "$31–$55", start: "Blocked on OPRA history tier", lease: "2 plans · 1 blocked" },
+      { rank: "04", id: "WO-315", name: "Wildcard close-auction imbalance mutation", stage: "MUTATION RESERVE", value: "+$29 exploratory", cost: "$6 hard stop", start: "10:30 CT reserved slot", lease: "1 Extreme plan" },
+    ],
+    models: [
+      { provider: "OpenAI API · simulated link", model: "gpt-5.6-sol", purpose: "Thesis synthesis + independent reproduction", assignments: "11", requests: "6,442", usage: "12.8M tokens", cost: "$58.14", reliability: "99.2% · p95 8.4s", last: "09:47:06" },
+      { provider: "OpenAI API · simulated link", model: "gpt-5.6-luna", purpose: "Aggressive scouts + Paper replay", assignments: "19", requests: "18,214", usage: "15.2M tokens", cost: "$27.91", reliability: "98.7% · p95 2.1s", last: "09:47:11" },
+      { provider: "Provider B · simulated link", model: "challenger-reasoner-02", purpose: "Independent adversarial challenge", assignments: "4", requests: "1,186", usage: "3.1M tokens", cost: "$17.08", reliability: "97.9% · p95 6.7s", last: "09:46:58" },
+      { provider: "Local deterministic runtime", model: "sim-overlay-19.3", purpose: "Conservative Paper execution overlay", assignments: "4", requests: "2.4M events", usage: "6.8 compute-hours", cost: "$4.19", reliability: "1 timeout · degraded", last: "09:46:44" },
+    ],
+    providers: [
+      { provider: "OpenAI API · simulated link", class: "MODEL", state: "CURRENT", consumed: "28.0M tokens today", envelope: "64% of 45M daily", cost: "$86.05 today", last: "09:47:11", note: "Provider memory disabled; assignment-isolated sessions" },
+      { provider: "Provider B · simulated link", class: "MODEL CHALLENGER", state: "CURRENT", consumed: "3.1M tokens today", envelope: "31% of 10M trial cap", cost: "$17.08 today", last: "09:46:58", note: "Capacity Trial only; no fleet-wide authority" },
+      { provider: "Certified market data · simulated link", class: "SIP + OPRA", state: "CURRENT", consumed: "9.8M quotes today", envelope: "61% daily request envelope", cost: "$64 monthly", last: "09:47:09", note: "Point-in-time entitlement current" },
+      { provider: "Authorized news · simulated link", class: "GDELT", state: "CURRENT", consumed: "18,442 documents", envelope: "36% rate envelope", cost: "$0 usage", last: "09:15:00", note: "One unrelated source family quarantined" },
+      { provider: "Qualified Paper venue · simulated link", class: "PAPER EXECUTION", state: "DEGRADED", consumed: "8,841 venue events", envelope: "No volume breach", cost: "Included", last: "09:46:44", note: "One outcome payload timeout; linked retry active" },
+    ],
+  },
   emergencyStates: {
     PENDING: "Request durably accepted; broker and ledger confirmation still pending.",
     CONFIRMED: "Broker, ledger, reservations, and Risk State all confirm containment.",
@@ -381,8 +478,9 @@ function proposalRows(limit = state.proposals.length) {
     </article>`).join("");
 }
 
-function blockedRows(limit = state.blocked.length) {
-  return state.blocked.slice(0, limit).map((item) => `
+function blockedRows(limit = state.blocked.length, filter = null) {
+  const items = filter ? state.blocked.filter(filter) : state.blocked;
+  return items.slice(0, limit).map((item) => `
     <details class="blocked-row">
       <summary>
         <span><b>${item.id}</b>${envLabel(item.scope.split(" · ")[0])}</span>
@@ -402,8 +500,9 @@ function blockedRows(limit = state.blocked.length) {
     </details>`).join("");
 }
 
-function alertsList(limit = state.alerts.length) {
-  return state.alerts.slice(0, limit).map((alert) => `
+function alertsList(limit = state.alerts.length, filter = null) {
+  const alerts = filter ? state.alerts.filter(filter) : state.alerts;
+  return alerts.slice(0, limit).map((alert) => `
     <article class="alert-row severity-${alert.severity.toLowerCase()}">
       <div><span>${alert.severity}</span>${envLabel(alert.environment)}</div>
       <strong>${alert.title}</strong>
@@ -436,12 +535,24 @@ function operatingBudget() {
     </div>`;
 }
 
-function commandSidebar(active = "Audit tape") {
+const commandViews = [
+  { id: "overview", label: "Home / Dashboard", meta: "system + money" },
+  { id: "live", label: "Live Trading", meta: "real money" },
+  { id: "paper", label: "Paper Trading", meta: "simulated only" },
+  { id: "incubator", label: "Incubator", meta: "trials + usage" },
+  { id: "records", label: "Decision Records", meta: "all environments" },
+  { id: "research", label: "Research Evidence", meta: "point in time" },
+  { id: "proposals", label: "Proposals", meta: `${state.proposals.length} exact` },
+  { id: "blocked", label: "Blocked Work", meta: `${state.blocked.length} scopes` },
+  { id: "alerts", label: "Alerts", meta: "1 unacknowledged" },
+];
+
+function commandSidebar(active = state.commandView) {
   return `
     <aside class="command-sidebar">
       <a class="brand brand-sidebar" href="?variant=A"><span class="brand-mark">MM</span><span>MARKET MATE<small>AUDIT CONTROL</small></span></a>
-      <nav aria-label="Audit sections">
-        ${["System truth", "Audit tape", "Decision records", "Ledgers", "Research", "Proposals", "Blocked work", "Alerts", "Emergency"].map((item, index) => `<button type="button" class="side-nav-button ${item === active ? "is-active" : ""}" data-toast="${item} is represented on this single prototype route."><span>${String(index + 1).padStart(2, "0")}</span>${item}</button>`).join("")}
+      <nav aria-label="Control room views">
+        ${commandViews.map((view, index) => `<button type="button" class="side-nav-button ${view.id === active ? "is-active" : ""}" data-command-view="${view.id}" aria-pressed="${view.id === active}"><span>${String(index + 1).padStart(2, "0")}</span><strong>${view.label}</strong><small>${view.meta}</small></button>`).join("")}
       </nav>
       <div class="sidebar-foot">
         ${envLabel("LIVE")}
@@ -452,47 +563,186 @@ function commandSidebar(active = "Audit tape") {
     </aside>`;
 }
 
-function VariantA() {
+function paperTradeGlance() {
+  const paperTrades = state.decisions.filter((decision) => decision.environment === "PAPER").slice(0, 3);
+  const paperIsActive = state.selectedEnvironment === "PAPER";
+  return `
+    <aside class="paper-glance" aria-label="Paper trades at a glance">
+      <header class="paper-glance-summary">
+        <div>${envLabel("PAPER")}<span>READ-ONLY GLANCE</span></div>
+        <strong>${state.accounts.PAPER.equity}<small>equity</small></strong>
+        <strong>${state.accounts.PAPER.pnl}<small>net P&amp;L</small></strong>
+        <p>Simulation is never evidence of Live portability.</p>
+        <button type="button" data-environment="PAPER" ${paperIsActive ? "disabled" : ""}>${paperIsActive ? "Paper tape active" : "Open full Paper tape"}</button>
+      </header>
+      <div class="paper-glance-trades">
+        ${paperTrades.map((decision) => `
+          <button type="button" class="paper-glance-trade tone-edge-${decision.tone}" data-decision="${decision.id}">
+            <span><time>${decision.time}</time><b>${decision.id}</b>${statusPill(decision.outcome, decision.tone)}</span>
+            <strong>${decision.subject}</strong>
+            <dl>
+              <div><dt>Expected</dt><dd>${decision.expected}</dd></div>
+              <div><dt>Observed</dt><dd>${decision.observed}</dd></div>
+            </dl>
+          </button>`).join("")}
+      </div>
+    </aside>`;
+}
+
+const commandViewTitles = {
+  overview: { eyebrow: "PRINCIPAL / DASHBOARD", title: "System truth before activity.", meta: "Projection WM-8841 · rebuild current" },
+  incubator: { eyebrow: "INCUBATOR / PROFIT VELOCITY", title: "Trials, queue, models, and usage.", meta: "Aggregate telemetry · no raw prompts or traces" },
+  paper: { eyebrow: "PAPER / SIMULATED MONEY", title: "Paper trading and trial outcomes.", meta: "No real cash or securities" },
+  live: { eyebrow: "LIVE / REAL MONEY", title: "Live trading and authoritative Risk State.", meta: "Controls restate Live beside every action" },
+  records: { eyebrow: "AUDIT / DECISION HISTORY", title: "Every admitted decision and attempt.", meta: "Point-in-time projection WM-8841" },
+  research: { eyebrow: "RESEARCH / CANONICAL EVIDENCE", title: "Coverage and frozen Research Snapshots.", meta: "Source rights and corrections preserved" },
+  proposals: { eyebrow: "GATEWAY / PRINCIPAL AUTHORITY", title: "Exact proposals and authority effects.", meta: "Server-authoritative result required" },
+  blocked: { eyebrow: "ENGINE / PROCESS LIVENESS", title: "Blocked scopes and safe continuations.", meta: "Global blocks require account-wide facts" },
+  alerts: { eyebrow: "GATEWAY / OPERATOR ALERTS", title: "Delivery, acknowledgement, and escalation.", meta: "Containment never waits for acknowledgement" },
+};
+
+function commandPageHeader(view) {
+  const heading = commandViewTitles[view] || commandViewTitles.overview;
+  return `
+    <header class="command-header">
+      <div><span class="eyebrow">${heading.eyebrow}</span><h1>${heading.title}</h1></div>
+      <div><strong>${state.asOf}</strong><small>${heading.meta}</small></div>
+    </header>`;
+}
+
+function overviewCommandView() {
   const env = state.selectedEnvironment;
   return `
+    ${globalTruthBar()}
+    <section class="command-section">
+      <div class="section-title"><div><span>ACCOUNT TRUTH</span><h2>${env} economic state</h2></div>${environmentTabs()}</div>
+      ${accountMetrics(env)}
+      ${paperTradeGlance()}
+    </section>
+    <div class="command-grid">
+      <section class="command-section ledger-panel">
+        <div class="section-title"><div><span>ECONOMIC ARTIFACT TAPE</span><h2>${env} actions and decisions</h2></div><button type="button" class="text-button" data-command-view="records">All records</button></div>
+        ${decisionsTable(env)}
+      </section>
+      <aside class="command-section proposal-panel">
+        <div class="section-title"><div><span>SERVER-AUTHORITATIVE GRAPH</span><h2>Proposal inbox</h2></div><b>${state.proposals.length}</b></div>
+        ${proposalRows(2)}
+      </aside>
+      <section class="command-section blocked-panel">
+        <div class="section-title"><div><span>PROCESS LIVENESS</span><h2>Blocked work queue</h2></div><b>${state.blocked.length} exact scopes</b></div>
+        ${blockedRows()}
+      </section>
+      <section class="command-section research-panel">
+        <div class="section-title"><div><span>POINT-IN-TIME INPUTS</span><h2>Coverage and research</h2></div><button type="button" class="text-button" data-command-view="research">Full evidence view</button></div>
+        ${coverageTable()}
+      </section>
+      <section class="command-section alert-panel">
+        <div class="section-title"><div><span>OPERATOR ALERTS</span><h2>Delivery and acknowledgement</h2></div><b>1 needs action</b></div>
+        ${alertsList()}
+      </section>
+      <section class="command-section budget-panel">
+        <div class="section-title"><div><span>PRINCIPAL OPERATIONAL BUDGET</span><h2>Human throughput</h2></div><b>No breached limits</b></div>
+        ${operatingBudget()}
+      </section>
+    </div>`;
+}
+
+function incubatorResourceStrip() {
+  return `<div class="incubator-resource-strip">${state.incubator.resources.map((resource) => `<article><span>${resource.label}</span><strong>${resource.value}</strong><small>${resource.detail}</small></article>`).join("")}</div>`;
+}
+
+function incubatorTrialsTable() {
+  return `
+    <div class="data-table-wrap"><table class="incubator-trial-table"><thead><tr><th>Trial / stage</th><th>Economic state</th><th>Assignments / models</th><th>Usage / spend</th><th>Next checkpoint</th></tr></thead><tbody>
+      ${state.incubator.trials.map((trial) => `<tr class="tone-row-${trial.tone}"><td><button type="button" class="trial-link" data-incubator-trial="${trial.id}">${trial.id}</button><strong>${trial.name}</strong><small>${trial.stage} · ${trial.state}</small></td><td><strong>${trial.contribution}</strong><small>${trial.testing}</small></td><td><strong>${trial.agents}</strong><small>${trial.models}</small></td><td><strong>${trial.usage}</strong><small>${trial.spend}</small></td><td><strong>${trial.next}</strong><small>${trial.stop}</small></td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+
+function incubatorQueue() {
+  return `<div class="incubator-queue">${state.incubator.queue.map((item) => `<article><span><b>${item.rank}</b>${item.id}</span><strong>${item.name}</strong><small>${item.stage}</small><dl><div><dt>Value</dt><dd>${item.value}</dd></div><div><dt>Cost</dt><dd>${item.cost}</dd></div><div><dt>Start</dt><dd>${item.start}</dd></div><div><dt>Competition</dt><dd>${item.lease}</dd></div></dl></article>`).join("")}</div>`;
+}
+
+function modelUsageTable() {
+  return `
+    <div class="data-table-wrap"><table class="usage-table"><thead><tr><th>Provider / model</th><th>Economic role</th><th>Assignments</th><th>Requests</th><th>Usage</th><th>Cost</th><th>Reliability / last use</th></tr></thead><tbody>
+      ${state.incubator.models.map((model) => `<tr><td><strong>${model.model}</strong><small>${model.provider}</small></td><td>${model.purpose}</td><td>${model.assignments}</td><td>${model.requests}</td><td>${model.usage}</td><td><strong>${model.cost}</strong></td><td>${model.reliability}<small>${model.last}</small></td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+
+function providerUsageTable() {
+  return `
+    <div class="data-table-wrap"><table class="usage-table provider-table"><thead><tr><th>Linked provider</th><th>Class / state</th><th>Consumed</th><th>Envelope</th><th>Cost</th><th>Last use</th><th>Boundary</th></tr></thead><tbody>
+      ${state.incubator.providers.map((provider) => `<tr><td><strong>${provider.provider}</strong></td><td>${provider.class}<small>${provider.state}</small></td><td>${provider.consumed}</td><td>${provider.envelope}</td><td><strong>${provider.cost}</strong></td><td>${provider.last}</td><td>${provider.note}</td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+
+function incubatorCommandView() {
+  return `
+    <section class="incubator-disclosure">
+      <div><span>MANAGERLESS · RESEARCH + QUALIFIED PAPER ONLY</span><strong>${state.incubator.velocity}</strong><small>Net Validated Profit Velocity · ${state.incubator.asOf}</small></div>
+      <p>Engine schedules approved capacity. Incubator assignments pursue expected net profit. Sentinel and Gateway remain external. Aggregate usage is visible; prompts, responses, secrets, and private reasoning are not.</p>
+    </section>
+    ${incubatorResourceStrip()}
+    <div class="incubator-command-grid">
+      <section class="command-section incubator-trials-panel"><div class="section-title"><div><span>ACTIVE EXPERIMENT LINEAGE</span><h2>Trials running now</h2></div><b>${state.incubator.trials.length} trials</b></div>${incubatorTrialsTable()}</section>
+      <aside class="command-section incubator-queue-panel"><div class="section-title"><div><span>ALPHA MARKET</span><h2>Up next</h2></div><b>ranked by economic state</b></div>${incubatorQueue()}</aside>
+      <section class="command-section incubator-model-panel"><div class="section-title"><div><span>AGGREGATE MODEL USAGE</span><h2>Models in use</h2></div><b>No prompt or response content</b></div>${modelUsageTable()}</section>
+      <section class="command-section incubator-provider-panel"><div class="section-title"><div><span>RESOURCE + PROVIDER LEDGER</span><h2>Provider consumption</h2></div><b>Prototype links are simulated</b></div>${providerUsageTable()}</section>
+    </div>`;
+}
+
+function environmentOverview(environment) {
+  const isLive = environment === "LIVE";
+  return `
+    ${isLive ? globalTruthBar() : `<section class="environment-page-banner paper-page-banner">${envLabel("PAPER")}<div><strong>${state.risk.PAPER.state}</strong><p>${state.risk.PAPER.detail}</p></div><small>${state.risk.PAPER.lastReconciled} · ${state.risk.PAPER.epoch}</small></section>`}
+    <section class="command-section"><div class="section-title"><div><span>${environment} ACCOUNT TRUTH</span><h2>${environment} money and exposure</h2></div><b>${isLive ? "REAL MONEY" : "SIMULATED MONEY"}</b></div>${accountMetrics(environment)}</section>
+    <div class="environment-view-grid">
+      <section class="command-section"><div class="section-title"><div><span>DECISION RECORDS</span><h2>${environment} actions</h2></div><b>${state.decisions.filter((decision) => decision.environment === environment).length}</b></div>${decisionsTable(environment)}</section>
+      <section class="command-section"><div class="section-title"><div><span>EXACT BLOCKED SCOPE</span><h2>${environment} liveness</h2></div><b>Safe work remains explicit</b></div>${blockedRows(state.blocked.length, (item) => item.scope.startsWith(environment)) || `<p class="empty-state">No ${environment} work is currently blocked.</p>`}</section>
+      ${isLive ? `<section class="command-section environment-alerts"><div class="section-title"><div><span>LIVE ALERTS</span><h2>Delivery and acknowledgement</h2></div><button type="button" class="primary-danger" data-emergency="freeze">Open Live emergency controls</button></div>${alertsList(state.alerts.length, (alert) => alert.environment === "LIVE")}</section>` : `<section class="command-section paper-contract-panel"><div class="section-title"><div><span>SIMULATION CONTRACT</span><h2>What Paper cannot prove</h2></div><b>No Live authority</b></div><p>Paper outcomes remain separate from Live money, credentials, ledgers, orders, and authority. Favorable simulation does not establish portability; exact strategy, venue parity, independent evidence, Sentinel gates, and Principal authorization still apply.</p></section>`}
+    </div>`;
+}
+
+function recordsCommandView() {
+  return `<section class="command-section full-view-panel"><div class="section-title"><div><span>COLLAPSED HISTORY PROJECTION</span><h2>All Decision Records</h2></div><b>Paper and Live remain textual</b></div>${decisionsTable()}<p class="projection-note">One projected row per Decision Record × evaluation horizon × Execution Environment × projection version. Exact attempts, evidence, costs, and corrections remain linked; export is on demand only.</p></section>`;
+}
+
+function researchCommandView() {
+  return `<section class="command-section full-view-panel"><div class="section-title"><div><span>DAILY MARKET RESEARCH CYCLE</span><h2>Coverage Universe and Research Snapshot</h2></div><b>${state.research.id}</b></div>${coverageTable()}<section class="research-boundary-note"><strong>Evidence boundary</strong><p>Source observations remain untrusted until normalized and admitted. Corrections append evidence-status changes; licensed content may be redacted or purged without erasing independently owned decision facts.</p></section></section>`;
+}
+
+function proposalsCommandView() {
+  return `<section class="command-section full-view-panel"><div class="section-title"><div><span>ONE SERVER-AUTHORITATIVE GRAPH</span><h2>Principal proposal inbox</h2></div><b>${state.proposals.length} roots or children</b></div><div class="full-proposal-grid">${proposalRows()}</div></section>`;
+}
+
+function blockedCommandView() {
+  return `<section class="command-section full-view-panel"><div class="section-title"><div><span>DECISION LIVENESS RECORDS</span><h2>Blocked Work Queue</h2></div><b>${state.blocked.length} exact scopes</b></div>${blockedRows()}<p class="projection-note">A global block must expose the account-wide integrity fact that justifies it. Independent Research, Paper, reconciliation, lifecycle, and validated risk reduction continue unless separately affected.</p></section>`;
+}
+
+function alertsCommandView() {
+  return `<section class="command-section full-view-panel"><div class="section-title"><div><span>MULTI-CHANNEL DELIVERY</span><h2>Operator alerts</h2></div><b>Containment never waits</b></div>${alertsList()}<div class="alert-budget">${operatingBudget()}</div></section>`;
+}
+
+function renderCommandView(view) {
+  if (view === "incubator") return incubatorCommandView();
+  if (view === "paper") return environmentOverview("PAPER");
+  if (view === "live") return environmentOverview("LIVE");
+  if (view === "records") return recordsCommandView();
+  if (view === "research") return researchCommandView();
+  if (view === "proposals") return proposalsCommandView();
+  if (view === "blocked") return blockedCommandView();
+  if (view === "alerts") return alertsCommandView();
+  return overviewCommandView();
+}
+
+function VariantA() {
+  const view = state.commandView;
+  return `
     <div class="variant variant-a">
-      ${commandSidebar()}
+      ${commandSidebar(view)}
       <main id="prototype-main" class="command-main" tabindex="-1">
-        <header class="command-header">
-          <div><span class="eyebrow">PRINCIPAL / AUDIT TAPE</span><h1>System truth before activity.</h1></div>
-          <div><strong>${state.asOf}</strong><small>Projection WM-8841 · rebuild current</small></div>
-        </header>
-        ${globalTruthBar()}
-        <section class="command-section">
-          <div class="section-title"><div><span>ACCOUNT TRUTH</span><h2>${env} economic state</h2></div>${environmentTabs()}</div>
-          ${accountMetrics(env)}
-        </section>
-        <div class="command-grid">
-          <section class="command-section ledger-panel">
-            <div class="section-title"><div><span>ECONOMIC ARTIFACT TAPE</span><h2>${env} actions and decisions</h2></div><button type="button" class="text-button" data-toast="Filters are simulated; exact record drill-down is active.">Filter tape</button></div>
-            ${decisionsTable(env)}
-          </section>
-          <aside class="command-section proposal-panel">
-            <div class="section-title"><div><span>SERVER-AUTHORITATIVE GRAPH</span><h2>Proposal inbox</h2></div><b>${state.proposals.length}</b></div>
-            ${proposalRows(2)}
-          </aside>
-          <section class="command-section blocked-panel">
-            <div class="section-title"><div><span>PROCESS LIVENESS</span><h2>Blocked work queue</h2></div><b>${state.blocked.length} exact scopes</b></div>
-            ${blockedRows()}
-          </section>
-          <section class="command-section research-panel">
-            <div class="section-title"><div><span>POINT-IN-TIME INPUTS</span><h2>Coverage and research</h2></div><button type="button" class="text-button" data-toast="Raw licensed payload inspection would require entitlement.">Evidence graph</button></div>
-            ${coverageTable()}
-          </section>
-          <section class="command-section alert-panel">
-            <div class="section-title"><div><span>OPERATOR ALERTS</span><h2>Delivery and acknowledgement</h2></div><b>1 needs action</b></div>
-            ${alertsList()}
-          </section>
-          <section class="command-section budget-panel">
-            <div class="section-title"><div><span>PRINCIPAL OPERATIONAL BUDGET</span><h2>Human throughput</h2></div><b>No breached limits</b></div>
-            ${operatingBudget()}
-          </section>
-        </div>
+        ${commandPageHeader(view)}
+        ${renderCommandView(view)}
       </main>
     </div>`;
 }
@@ -731,6 +981,24 @@ function openDecision(id) {
   );
 }
 
+function openIncubatorTrial(id) {
+  const trial = state.incubator.trials.find((item) => item.id === id);
+  openDialog(`
+    <header class="dialog-header">
+      <div>${envLabel(trial.stage.includes("PAPER") ? "PAPER" : "RESEARCH")}<span>INCUBATOR TRIAL · ${trial.id}</span><h2>${trial.name}</h2><small>${trial.lineage}</small></div>
+      <button type="button" class="icon-close" data-close-dialog aria-label="Close Incubator trial">×</button>
+    </header>
+    <section class="dialog-state-line">${statusPill(trial.stage, trial.tone)}${statusPill(trial.state, trial.tone)}</section>
+    <div class="dialog-columns">
+      <section><h3>Economics and lineage</h3><dl class="detail-list"><div><dt>Expected contribution</dt><dd>${trial.contribution}</dd></div><div><dt>Experiment lineage</dt><dd>${trial.lineage}</dd></div><div><dt>Testing status</dt><dd>${trial.testing}</dd></div><div><dt>Stopping rule</dt><dd>${trial.stop}</dd></div></dl></section>
+      <section><h3>Assignments and resources</h3><dl class="detail-list"><div><dt>Assignments</dt><dd>${trial.agents}</dd></div><div><dt>Models</dt><dd>${trial.models}</dd></div><div><dt>Aggregate usage</dt><dd>${trial.usage}</dd></div><div><dt>Lease spend</dt><dd>${trial.spend}</dd></div></dl></section>
+    </div>
+    <section class="trial-next-checkpoint"><span>NEXT ECONOMIC CHECKPOINT</span><strong>${trial.next}</strong><p>Engine may continue, stop, or reallocate only under the existing Work Lease and Incubator Resource Policy. This view grants no spending, execution, or Live authority.</p></section>
+    <footer class="dialog-footer"><span>Aggregate usage only · no prompts, responses, secrets, or private reasoning</span><button type="button" class="secondary" data-close-dialog>Close</button></footer>`,
+    `Incubator trial ${id}`,
+  );
+}
+
 function openProposal(id) {
   const proposal = state.proposals.find((item) => item.id === id);
   const actionable = !proposal.status.includes("SUPERSEDED");
@@ -827,12 +1095,31 @@ function acknowledgeAlert(id) {
   announce(`${alert.id} acknowledged in simulated state. Containment did not wait for acknowledgement.`);
 }
 
+function setCommandView(view) {
+  if (!commandViews.some((item) => item.id === view)) return;
+  state.commandView = view;
+  const url = new URL(window.location.href);
+  url.searchParams.set("variant", "A");
+  url.searchParams.set("view", view);
+  window.history.replaceState({}, "", url);
+  render();
+  $("#prototype-main")?.focus();
+  announce(`${commandViews.find((item) => item.id === view).label} view opened.`);
+}
+
+function syncCommandViewFromUrl() {
+  const requested = new URLSearchParams(window.location.search).get("view");
+  if (commandViews.some((item) => item.id === requested)) state.commandView = requested;
+}
+
 function bindEvents() {
   $$('[data-cycle]').forEach((button) => button.addEventListener("click", () => cycleVariant(Number(button.dataset.cycle))));
   $$('[data-decision]').forEach((button) => button.addEventListener("click", () => openDecision(button.dataset.decision)));
+  $$('[data-incubator-trial]').forEach((button) => button.addEventListener("click", () => openIncubatorTrial(button.dataset.incubatorTrial)));
   $$('[data-proposal]').forEach((button) => button.addEventListener("click", () => openProposal(button.dataset.proposal)));
   $$('[data-emergency]').forEach((button) => button.addEventListener("click", () => openEmergency(button.dataset.emergency)));
   $$('[data-alert]').forEach((button) => button.addEventListener("click", () => acknowledgeAlert(button.dataset.alert)));
+  $$('[data-command-view]').forEach((button) => button.addEventListener("click", () => setCommandView(button.dataset.commandView)));
   $$('[data-environment]').forEach((button) => button.addEventListener("click", () => {
     state.selectedEnvironment = button.dataset.environment;
     render();
@@ -840,11 +1127,7 @@ function bindEvents() {
   }));
   $$('[data-environment-jump]').forEach((button) => button.addEventListener("click", () => {
     state.selectedEnvironment = button.dataset.environmentJump;
-    const url = new URL(window.location.href);
-    url.searchParams.set("variant", "A");
-    window.history.replaceState({}, "", url);
-    render();
-    announce(`Command Ledger opened for ${state.selectedEnvironment}.`);
+    setCommandView(state.selectedEnvironment.toLowerCase());
   }));
   $$('[data-toast]').forEach((button) => button.addEventListener("click", () => showToast(button.dataset.toast)));
 }
@@ -856,5 +1139,6 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "ArrowRight") cycleVariant(1);
 });
 
-window.addEventListener("popstate", render);
+window.addEventListener("popstate", () => { syncCommandViewFromUrl(); render(); });
+syncCommandViewFromUrl();
 render();
