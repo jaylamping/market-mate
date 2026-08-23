@@ -455,12 +455,68 @@ A Coverage Stage for a security whose position has closed but whose settlement, 
 _Avoid_: removed holding, archive
 
 **Market Research Cycle**:
-A scheduled process, run at least once per trading day, that refreshes point-in-time evidence for the Coverage Universe across approved market, fundamental, event, options, sentiment, macroeconomic, liquidity, and portfolio-risk dimensions.
+A point-in-time evidence process that publishes one authoritative post-close cycle each trading day, a pre-open delta before new exposure, and event-driven deltas for material evidence or risk changes. A missed cycle creates an explicit stale interval rather than a silent catch-up.
 _Avoid_: stock scan, daily scrape, trading strategy
 
 **Research Snapshot**:
-The immutable, time-stamped result of a Market Research Cycle for a security or the portfolio, including source lineage, data quality, indicator changes, uncertainty, and comparisons with prior snapshots.
+An immutable, time-stamped security- or portfolio-scoped result of a Market Research Cycle, including source lineage, data quality, applicable observation states, indicator changes, uncertainty, and comparison with prior snapshots. Degraded snapshots remain visible while dependent capabilities are blocked at their proven scope.
 _Avoid_: research report, agent summary
+
+**Research Cycle Manifest**:
+The immutable cycle-level index binding every expected Research Snapshot, its completion and evidence state, shared market or portfolio evidence, stale intervals, anomalies, and superseding deltas. Late or corrected evidence creates a linked manifest and snapshots rather than overwriting the original cycle.
+_Avoid_: batch status, completion flag, mutable daily report
+
+**Research Evidence Obligation**:
+The versioned requirement stating which evidence dimensions and observation states are mandatory, conditional, or Not Applicable for a Coverage Stage, Coverage Capability, held obligation, strategy dependency, and decision purpose. Not Applicable requires a proved contract rule and cannot substitute for missing evidence.
+_Avoid_: required field, universal data checklist, default value
+
+**Research Evidence Profile**:
+The versioned set of Research Evidence Obligations applicable to one Coverage Stage, Coverage Capability, held obligation, or portfolio scope. Universal security evidence, options evidence, holding evidence, and portfolio evidence remain distinct profiles rather than one lowest-common-denominator checklist.
+_Avoid_: research template, ticker checklist, optional fields
+
+**Research Cycle Deadline**:
+The evidence-availability objective for a Market Research Cycle: the authoritative post-close cycle publishes within ninety minutes, the pre-open delta publishes at least thirty minutes before regular-market open, and certified event streams target five-minute ingestion with a fifteen-minute maximum polling interval. A missed deadline creates a visible stale interval and blocks only dependent new exposure.
+_Avoid_: job timeout, best-effort schedule, silent catch-up
+
+**Research Cycle State**:
+The terminal publication state of a Research Cycle Manifest: Complete, Degraded Complete, Incomplete, or Failed. Degraded Complete permits only dependency-compatible downstream use; unresolved or untrustworthy scopes never inherit the status of completed scopes.
+_Avoid_: success flag, batch done, partial success
+
+**Research Evidence Delta**:
+The structured comparison between an immutable Research Snapshot and its prior authoritative snapshot, covering evidence additions, removals, corrections, expiry, observation-state changes, material indicator and catalyst changes, portfolio interactions, and newly blocked or restored dependencies. Generated prose may summarize the delta but is never authoritative evidence.
+_Avoid_: daily summary, change narrative, agent interpretation
+
+**Research Evidence Family**:
+A canonical dimension of point-in-time research evidence: identity and corporate action; price, volume, trend and momentum; realized and implied volatility; fundamentals, valuation, earnings and estimates; options structure; macroeconomic and regime conditions; news and sentiment; liquidity; or correlation and portfolio exposure. Each family has its own Research Evidence Obligations and Freshness Classes.
+_Avoid_: data category, feature group, universal freshness rule
+
+**Regime Evidence Distribution**:
+The versioned portfolio-level evidence over multiple plausible market regimes, including the supporting rates, inflation, growth, credit, volatility, breadth, liquidity, sector, and cross-asset observations. It preserves uncertainty and disagreement rather than assigning one authoritative regime label.
+_Avoid_: current regime, market label, model consensus
+
+**Certified Evidence Substitution**:
+The explicit replacement of an unavailable evidence source by a pre-certified source for the same evidence class and entitlement scope, with preserved lineage, compatibility checks, and a new Research Snapshot. A substitute never silently inherits another source's authority, reliability, timing, or historical semantics.
+_Avoid_: provider fallback, equivalent feed, silent failover
+
+**Research Capacity Containment**:
+The dependency-scoped response when authorized agents, models, provider calls, tokens, compute, or spending cannot satisfy the Research Evidence floor: consume permitted burst capacity, propose an exact envelope expansion, then preserve Mandatory Holdings and the highest-fitness members while demoting lower-priority discretionary coverage. Evidence quality and completeness states are never weakened to fit capacity.
+_Avoid_: partial scan, best-effort coverage, quality downgrade
+
+**Research Reproducibility Envelope**:
+The immutable versions, source observations, Evidence Availability Times, entitlements, identities, calendars, definitions, policies, models, dependencies, and declared randomness required to reproduce a Research Snapshot or state why replay is limited. An Incubator-derived Experimental Indicator remains a separate artifact linked to this envelope rather than becoming canonical snapshot evidence.
+_Avoid_: run configuration, agent context, reproducible enough
+
+**Research Orchestration Graph**:
+The Engine-owned dependency graph that routes shared evidence, parallel evidence-family work, security snapshots, portfolio aggregation, manifest publication, and read-only Incubator admission. It carries typed work and permits disjoint scopes to continue without creating managerial authority for any agent.
+_Avoid_: research manager, agent hierarchy, daily job
+
+**Research Computation Attempt**:
+One preserved execution of an unchanged research computation, including its timing, inputs, versions, provider, resource use, outcome, and failure state. Bounded mechanical retries and promising indeterminate reruns create new attempts, while changed inputs or methods create a new linked computation.
+_Avoid_: retry counter, overwritten run, successful result
+
+**Research Cycle Telemetry**:
+The aggregate operational projection of cycle scopes, queue and terminal states, deadlines, stale intervals, evidence-family blockers, provider and model usage, tokens, compute, requests, spending, retries, substitutions, and affected dependencies. It exposes canonical artifacts and resource use without prompts, responses, secrets, or private reasoning.
+_Avoid_: agent trace, model transcript, job log
 
 **Indicator Definition**:
 The immutable versioned meaning of one indicator, including its purpose, inputs, sources, units, calculation, adjustment and time semantics, horizons, freshness, missingness, valid range, and ownership. A semantic change creates a new definition rather than rewriting prior observations.
@@ -1457,6 +1513,10 @@ _Avoid_: scraper, mood score, stock rating
 **Sentiment Assessment**:
 A security-, horizon-, source-family-, and theme-specific distribution over positive, neutral, and negative expressed attitude, accompanied by confidence, coverage, disagreement, freshness, and provenance. It is not a probability of a market-price outcome.
 _Avoid_: bullish probability, stock direction score
+
+**Sentiment Research Parity**:
+The rule that every Coverage Universe member receives authorized sentiment collection and Incubator research access on equal standing with other applicable evidence dimensions. Raw observations are retained as evidence, but only independently informative, deduplicated clusters may increase confidence; unavailable sentiment blocks only declared dependents.
+_Avoid_: optional sentiment, sentiment quota, social-volume confidence
 
 **Sentiment Balance**:
 A derived −100 to +100 summary of a Sentiment Assessment's positive-versus-negative evidence. It is a display and comparison aid, not a probability or trading threshold.
