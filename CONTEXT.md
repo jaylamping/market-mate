@@ -562,6 +562,46 @@ _Avoid_: review committee, agent team, mandatory four votes, evaluator independe
 The declared economic purpose for parallel work on one opportunity: Competitive Race, Independent Reproduction, Adversarial Attack, Mutation, or Continuity Backup, with expected incremental value and shared failure paths. Unlabeled duplication is merged, stopped, or reclassified explicitly, and every result remains recorded.
 _Avoid_: accidental duplicate, multiple agents, independent vote, wasted work
 
+**Artifact Collaboration**:
+The direct collaboration of separately identified assignments through typed partial artifacts, subscriptions, and Assignment Handoffs without shared Scratch State, budgets, credentials, capability, or collective identity. Alpha Pod membership never obscures which assignment produced each contribution or which failure paths remain shared.
+_Avoid_: shared agent session, team memory, pooled authority, group authorship
+
+**Hypothesis Arena**:
+An Engine-funded comparison that preserves conflicting Strategy Thesis lineages, gives them equal access to applicable admitted evidence, and preregisters tests intended to distinguish them. Its result is A Survives, B Survives, Both Remain Viable, Neither Survives, or Needs More Evidence rather than negotiated compromise or majority preference.
+_Avoid_: debate winner, consensus meeting, merged thesis, agent vote
+
+**Survivor Capacity Stage**:
+The progressively larger allocation earned by a Work Opportunity as it passes exact economic and evidence checkpoints: Seed, Swarm, Independent Reproduction, Strategy Incubation, then Paper Qualification. Engine advances stages automatically, weak branches release unused capacity immediately, and no stage itself grants evidence status or authority.
+_Avoid_: project phase, manager promotion, funding round, Strategy Lifecycle State
+
+**Kill Claim**:
+A typed falsification artifact any assignment may publish against a Work Opportunity, binding the alleged fatal defect, evidence, affected scope, expected value and cost of resolution, and proposed discriminating test. A material cheap claim receives rapid adversarial capacity, but the claimant cannot cancel, quarantine, or change the target's state directly.
+_Avoid_: veto, negative opinion, agent attack, Sentinel rejection
+
+**Work Opportunity State**:
+The non-interchangeable managerless state of a Work Opportunity: Eligible, Leased, Running, Blocked, Suspended, Completed, Falsified, Cancelled, Expired, or Fenced. Suspension requires an admitted checkpoint, cancellation preserves partial artifacts and reason, retries create new Assignment Runs, and an unattractive result cannot be retried away.
+_Avoid_: task status, agent availability, Strategy Lifecycle State, progress label
+
+**Artifact Liveness**:
+The rule that an assignment demonstrates progress only by admitting a new typed artifact, resolving a declared dependency, or reaching a preregistered checkpoint; messages, tokens, tool calls, and heartbeats alone do not count. A missed checkpoint becomes Blocked when a named external dependency exists or Suspended otherwise, and continuation starts from the last admitted checkpoint.
+_Avoid_: agent heartbeat, activity log, token output, status message
+
+**Capacity Preemption**:
+The non-punitive Engine suspension of the lowest marginal-value Incubator work at an admitted checkpoint during resource contention, using expected profit contribution per remaining time, opportunity decay, critical-path impact, and replacement cost. Independent challenge and the normal Mutation Capacity Reserve remain protected, and preemption creates no agent reputation effect.
+_Avoid_: manager reprioritization, cancellation, failure, agent demotion
+
+**Market-Event Burst**:
+A temporary Engine scheduling state for a material time-sensitive market event that may direct up to eighty percent of discretionary Incubator capacity to decaying opportunities while preserving ten percent for independent challenge and ten percent for off-consensus mutation and background discovery. It changes no budget, evidence standard, Testing Budget, Sentinel control, or authority.
+_Avoid_: emergency trading authority, budget override, all-hands meeting, event strategy
+
+**Runaway Work Pattern**:
+Nonproductive loops, output spam, dependency cycles, uncontrolled duplicate cascades, unbounded child fan-out, or abnormal token, compute, or spending velocity that trigger immediate Assignment Fence rather than managerial intervention. Partial artifacts and forensic state remain preserved, unused capacity returns to the Alpha Market, and unrelated work continues.
+_Avoid_: slow research, failed hypothesis, high token use, agent disagreement
+
+**Principal Attention Boundary**:
+The rule that ordinary competition, failure, stalls, cancellations, queue pressure, and resource reallocation remain internal unless the Principal requests detail, while Gateway interrupts only for exact budget, spending, entitlement, policy, or authority decisions and material incidents. Nonurgent proposals are bundled within the Principal Operational Budget.
+_Avoid_: executive reporting, manager escalation, agent notification, silent incident
+
 **Sphere Escalation Route**:
 The non-managerial routing rule that sends economic uncertainty to Incubator competition and challenge, resource contention or stalled work to Engine, control failure to Sentinel, and new spending, authority, or policy scope to Principal Gateway. Sentinel rejection causes proposal adaptation or abandonment rather than negotiation around the control.
 _Avoid_: escalation to manager, agent appeal, majority override, Principal chat
