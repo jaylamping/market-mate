@@ -478,6 +478,58 @@ _Avoid_: successful run, backtest result, discarded attempt
 Research that may generate hypotheses but cannot support promotion, confidence claims, or testing-budget renewal. Any discovered hypothesis requires a fresh Experiment Registration and untouched or forward evidence.
 _Avoid_: preliminary validation, informal backtest, free trial
 
+**Desk Role**:
+The single bounded function an Incubator Agent Assignment performs: Thesis and Research, Evidence and Data, Strategy and Portfolio, Paper Execution and Operations, Risk and Safety, Evaluation and Challenge, or Control Tower and Operations. It defines responsibility and permitted output types, not identity, seniority, independence, or authority.
+_Avoid_: agent personality, job title, permission set, organizational rank
+
+**Strategy Thesis**:
+A versioned economic hypothesis explaining why, where, and under which conditions a potentially exploitable behavior may exist, used to organize related research and strategy lineage without specifying complete trading behavior or granting execution authority.
+_Avoid_: Strategy Version, trade idea, ticker opinion, guaranteed edge
+
+**Incubator Agent Assignment**:
+An immutable, expiring unit of work binding one objective, Desk Role, primary Strategy Thesis, Research Posture version, workload identity, permitted evidence, allowed actions and outputs, resource reservations, Execution Environment, stopping rule, and lineage. A worker may receive multiple separate assignments, but an assignment cannot combine proposer and evaluator duties in one promotion chain.
+_Avoid_: persistent agent identity, job description, prompt, authority grant
+
+**Assignment Run**:
+One admitted execution attempt of an unchanged Incubator Agent Assignment, recorded as Running, Blocked, Completed, Failed, Cancelled, Expired, or Fenced with its own identity, timing, inputs, outputs, costs, and terminal reason. An exact retry creates a new run, while a changed objective, evidence scope, posture, budget, capability, or output contract requires a new assignment.
+_Avoid_: assignment, agent session, overwritten retry, successful attempt
+
+**Child Assignment**:
+An Incubator Agent Assignment proposed from another assignment and admitted independently by Engine within approved policy and the parent reservation, with its own identity, posture, budget lineage, expiry, and Effective Assignment Capability. Parentage carries work lineage but never permissions or authority.
+_Avoid_: subagent session, delegated authority, inherited role, shared budget
+
+**Effective Assignment Capability**:
+The strict intersection of an Incubator Agent Assignment, worker capability, Trust Zone, Execution Environment, budget, entitlement, and governing policy. Engine may create assignments autonomously inside that intersection, but neither Engine nor an agent may use assignment creation or delegation to expand authority.
+_Avoid_: role permission, inherited authority, agent discretion, Principal delegation
+
+**Assignment Capability Credential**:
+A short-lived non-composable credential binding one assignment, run, workload identity, Trust Zone, Execution Environment, exact operation and resource scope, budget lineage, and expiry. Every receiving service recomputes authorization, multiple credentials cannot be unioned, and Incubator identities remain unable to reach Live services at network, identity, credential, and application-policy layers.
+_Avoid_: API key, agent token, delegated authority, ambient credential
+
+**Research Assignment**:
+An Incubator Agent Assignment that may read approved evidence, conduct registered Research Sandbox trials, append immutable results, reproduce and challenge work, and prepare indicator, model, code, and Draft Strategy Proposals. It cannot alter canonical evidence, merge, deploy, change lifecycle state, access broker credentials, or write to Paper or Live services.
+_Avoid_: autonomous developer, Paper worker, strategy authority, unrestricted research
+
+**Paper Execution Assignment**:
+An Incubator Agent Assignment that may operate, observe, reconcile, and contain one exact Paper Authorized Strategy Version within its approved Paper scope and return findings to Research as evidence. It cannot modify the running Strategy Version, promote it, create Live eligibility, or receive Live authority.
+_Avoid_: paper researcher, simulated Live authority, mutable strategy runner, broker agent
+
+**Assignment Handoff**:
+An immutable transfer envelope binding source and destination assignments, artifact hashes, evidence snapshot and lineage, contamination state, dissent, unresolved assumptions, resource use, remaining work, and expiry. The receiving assignment recomputes its own Effective Assignment Capability because permissions and authority never travel through a handoff.
+_Avoid_: chat message, authority delegation, shared memory, copied prompt
+
+**Canonical Artifact Admission**:
+The typed service boundary that schema-validates and appends an assignment output to a canonical store without granting the producing agent mutable access. Corrections create linked superseding records rather than rewriting accepted evidence, models, experiments, strategies, or decisions.
+_Avoid_: file write, agent merge, database permission, mutable correction
+
+**Assignment Fence**:
+The immediate revocation of an Assignment Run and its capabilities after stale scope, budget breach, lost entitlement, gate violation, contamination, or other invalidating condition, with affected outputs and dependency descendants quarantined by lineage. Audit evidence is preserved, unused capacity is released, unrelated work continues, and recovery requires an explicit clean run or assignment.
+_Avoid_: process kill, retry, global shutdown, evidence deletion
+
+**Strategy Freeze Candidate**:
+A non-authoritative request to transform one Draft Strategy Proposal into a complete immutable Strategy Version by deterministically pinning every rule and dependency, validating completeness, and calculating its content identity. Only the controlled freezing service may create the registry object, and freezing grants no Paper or Live authority.
+_Avoid_: Strategy Version, deployment request, agent-created registry entry, promotion
+
 **Research Sandbox**:
 An isolated, non-authoritative environment in which agents may read approved unprivileged evidence, create disposable working files, append constrained experiment results, and prepare reviewable proposals. It has no broker credentials or ability to deploy, merge, alter canonical evidence or policy, or write to Paper or Live services.
 _Avoid_: development server, Paper environment, safe production
@@ -819,7 +871,7 @@ An immutable, content-addressed version of the complete declarative rules and pi
 _Avoid_: algorithm update, bot behavior, mutable strategy
 
 **Strategy Lifecycle State**:
-The non-interchangeable governance state of a strategy: Draft Strategy Proposal, Frozen Strategy Version, Research Qualified, Paper Authorized, Live Eligible, Live Authorized, Quarantined, Wind-Down, or Retired. Evidence qualification and execution authority remain separate; no state transition rewrites the Strategy Version.
+The non-interchangeable governance state of a strategy: Draft Strategy Proposal, Frozen Strategy Version, Research Qualified, Paper Authorized, Live Eligible, Live Authorized, Quarantined, Wind-Down, or Retired. Evidence qualification and execution authority remain separate; only the deterministic Engine-controlled transition service may enforce gates and change state, no agent or coalition may direct a transition, and any authority-bearing transition must bind its required Principal Authorization Decision.
 _Avoid_: deployment stage, environment flag, confidence level
 
 **Paper Authorized**:
