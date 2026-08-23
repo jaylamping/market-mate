@@ -1530,6 +1530,18 @@ _Avoid_: status, execution result, order state, lifecycle event
 The non-interchangeable result state of a Decision Subject across its Action Attempts: Not Attempted, Working, Partially Completed, Completed, Cancelled, Failed, or Unknown and Contained. It remains separate from Decision Disposition and links to exact Venue Events, Execution Results, and ledger effects.
 _Avoid_: decision status, broker status, success flag, fill state
 
+**Decision Group**:
+The non-authoritative linkage among separately admitted Decision Records that implement one coordinated portfolio, rebalance, hedge, or multi-strategy choice while preserving each record's Strategy Sleeve, economics, authority, attempts, and outcome. One atomic multi-leg package remains one Decision Record, while unrelated or opposing decisions cannot be hidden inside a group.
+_Avoid_: batch Decision Record, portfolio order, netted strategy decision, shared authority
+
+**Decision Record Completeness State**:
+The non-interchangeable evidence state of a Decision Record as Complete, Emergency Minimum, Enrichment Pending, or Broken. Risk-increasing execution requires Complete; only preauthorized risk-reducing, containment, reconciliation, or lifecycle action may begin from a durably captured Emergency Minimum and must proceed to enrichment and reconciliation without weakening the original evidence boundary.
+_Avoid_: validation status, optional fields, best-effort record, execution readiness
+
+**Emergency Decision Record**:
+The independently durable minimum Decision Record permitted before a preauthorized risk-reducing, containment, reconciliation, or lifecycle action when the normal record path is unavailable, binding the subject, environment, authority, trigger, evidence references, intended effect, time, and recovery obligation. It never permits risk-increasing action or becomes a silent substitute for a Complete record.
+_Avoid_: deferred logging, emergency bypass, partial audit, after-the-fact rationale
+
 **Evidence-Backed Decision Explanation**:
 The structured graph of exact canonical claims, Research Snapshots, source observations, calculations, artifact hashes, versions, policies, and times that supports a Decision Record while preserving unknown and conflicting evidence explicitly. Natural-language summaries are non-authoritative projections, and private chain-of-thought is never evidence.
 _Avoid_: model rationale, confidence prose, agent reasoning, generated justification
@@ -1557,6 +1569,18 @@ _Avoid_: decision validity, corrected forecast, stale badge, current truth
 **Corrected Decision View**:
 The current counterfactual reconstruction of a Decision Record under accepted corrected evidence, including changed calculations, gates, forecast, and whether the decision would differ, while preserving the original Decision-Time View unchanged. It is analysis of later knowledge rather than a retroactive decision or performance claim.
 _Avoid_: revised Decision Record, corrected rationale, backfilled forecast, rewritten history
+
+**Outcome Attribution**:
+The append-only comparison of a Decision Record's frozen Expected P&L with observed results at every preregistered horizon and terminal lifecycle event, separating price movement, execution quality, Trading Costs, carry, option lifecycle effects, slippage, and allocated Operating Costs. Causal contributions and counterfactual effects remain explicitly estimated and cannot be presented as proven merely because outcomes correlate with the decision.
+_Avoid_: realized P&L, strategy credit, forecast overwrite, causal proof
+
+**Decision History Projection**:
+The compact rebuildable historical projection of Decision Records, forecasts, baselines, dispositions, Action Outcomes, Outcome Attributions, evidence status, redactions, versions, and integrity references used for fast Principal review and authorized Incubator retrieval. It is non-authoritative, never exported automatically, and reaches an Incubator assignment only as read-only Canonical Evidence through a Retrieved Context Envelope rather than mutable database authority.
+_Avoid_: canonical history table, agent memory, Decision Record archive, automatic report
+
+**Decision History Export**:
+An explicit on-demand reproducible rendering of a selected Decision History Projection as machine-readable or human-readable evidence, binding its query, environment, time range, projection and policy versions, redactions, integrity hash, and requester. No schedule, agent session, or completed decision creates an export automatically.
+_Avoid_: nightly export, automatic report, database dump, agent scratch file
 
 **Decision Record Redaction**:
 An explicit policy-bound substitution for information that cannot appear in a Decision Record Projection, binding its category, reason, governing policy or entitlement, permitted substitute, and authorized forensic route when one exists. Credentials and cryptographic secrets never enter the record; restricted source content and private traces cannot be silently omitted or presented as complete evidence.
