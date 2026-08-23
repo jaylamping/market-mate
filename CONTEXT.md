@@ -495,8 +495,36 @@ A time-bounded allocation of approved agents, tokens, compute, data spending, co
 _Avoid_: queue slot, cost estimate, blanket capacity
 
 **Research Posture**:
-An immutable declaration of how an Incubator assignment searches, challenges, uses its approved research resources, and decides when to stop without changing evidence, risk, or authority gates. Any effect on sizing, entry, management, or exit belongs to a new Strategy Version.
+An immutable versioned parameter vector bound to one Incubator assignment over search breadth, novelty tolerance, contrarianism, disconfirmation intensity, fan-out, depth, pruning speed, resource-request appetite, escalation sensitivity, and communication detail. It governs research behavior without changing evidence, risk, spending, or authority gates; any effect on traded universe, prediction target, horizon, entry, exit, sizing, portfolio construction, execution, or live treatment belongs to a new Strategy Version; a different posture requires a separately identified assignment, and posture diversity never establishes Evaluator Independence.
 _Avoid_: agent personality, risk appetite, trading aggression, prompt style
+
+**Research Posture Profile**:
+A named canonical Research Posture vector selected from Passive Observer, Conservative Verifier, Balanced Investigator, Aggressive Explorer, Extreme Frontier, Skeptical Reviewer, or Adversarial Red Team. Each name resolves to one immutable versioned vector rather than subjective agent discretion or presentation style.
+_Avoid_: personality label, prompt preset, model identity, Desk Role
+
+**Aggressive Research Posture**:
+An Incubator Research Posture that spends approved research capacity rapidly on broader, more novel, contrarian, and highly parallel investigation while pruning weak branches quickly and escalating promising work. Its aggression applies only to research behavior and never changes evidence, promotion, risk, spending, or trading authority.
+_Avoid_: risk appetite, larger positions, lower evidence threshold, unlimited resources
+
+**Research Posture Allocation**:
+The Engine's logged distribution of Research Capacity Reservations across posture families, defaulting discovery work to 70% aggressive or extreme exploration, 20% skeptical or adversarial challenge, and 10% balanced or conservative verification. Passive Observer receives no standing capacity, and every promotion-bound thesis still requires aggressive generation, adversarial challenge, and an independently qualified evaluator.
+_Avoid_: fixed headcount, authority allocation, evaluator independence, permanent staffing
+
+**Passive Observer**:
+A trigger-driven Research Posture used for change detection, prerequisite waiting, anomaly monitoring, and no-action control comparisons without standing Incubator capacity or responsibility for primary alpha generation.
+_Avoid_: default researcher, approval role, idle agent, human Principal
+
+**Research Posture Trial**:
+An Engine-run comparison of a new immutable posture vector against canonical profiles within matched task classes and at most ten percent of already approved Incubator capacity. It grants no new spending, entitlement, evidence, or trading authority; a gate or authority violation suspends it immediately, while a profile materially dominated after thirty comparable assignments is retired unless it retains a proven specialist niche.
+_Avoid_: Strategy Trial, unrestricted tuning, Principal approval bypass, live experiment
+
+**Research Posture Performance**:
+The matched-task record of economic information gain, useful-hypothesis yield, challenge survival, reproducibility, wall-clock latency, resource and Principal-attention cost, duplication, and rework used to retain, specialize, or retire a Research Posture Profile. Simulated profit alone is not a sufficient posture score.
+_Avoid_: agent leaderboard, raw P&L, token efficiency, popularity
+
+**Presentation Persona**:
+Non-authoritative presentation metadata that gives an Incubator worker a stable name, tone, vocabulary, and UI identity without changing evidence selection, conclusions, confidence, resources, behavior, or authority.
+_Avoid_: Research Posture, agent identity, evaluator independence, decision logic
 
 **Velocity Objective**:
 The standing objective to maximize expected economic value and uncertainty reduction delivered as reproducible decisions per wall-clock time by safely scaling approved agents, concurrency, tokens, compute, data, automation, and spending. It remains subordinate to Research Budget, Testing Budget, entitlements, evidence independence, Principal Operational Budget, and authority controls.
