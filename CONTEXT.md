@@ -486,6 +486,62 @@ _Avoid_: agent personality, job title, permission set, organizational rank
 A versioned economic hypothesis explaining why, where, and under which conditions a potentially exploitable behavior may exist, used to organize related research and strategy lineage without specifying complete trading behavior or granting execution authority.
 _Avoid_: Strategy Version, trade idea, ticker opinion, guaranteed edge
 
+**Agent Provenance Chain**:
+The immutable identity path binding a reusable worker instance, Incubator Agent Assignment, Assignment Run, provider session, every model inference and tool call, and each produced artifact with their versions, configurations, inputs, and times. Presentation Persona is cosmetic, and no identity in the chain accumulates authority, reputation, or independence across assignments.
+_Avoid_: agent name, conversation ID, audit log, evaluator identity
+
+**Agent Memory Class**:
+The mandatory trust and retention classification of every agent-accessible item as Canonical Evidence, Institutional Memory, Role Memory, Task Memory, Scratch State, or Provider State. Unclassified information is unavailable, and changing class requires explicit typed admission rather than copying context.
+_Avoid_: vector namespace, chat history, trusted context, knowledge base
+
+**Canonical Evidence**:
+An immutable versioned artifact accepted through Canonical Artifact Admission with source, availability, receipt, transformation, entitlement, and dependency lineage sufficient for its declared evidence stage. Approved assignments may reuse it broadly, but acceptance does not make it universally valid, current, or strategy-grade.
+_Avoid_: trusted data, shared file, retrieved context, Institutional Memory
+
+**Institutional Memory**:
+A curated durable procedure, resolved learning, or operating explanation that cites its canonical sources and may be broadly reused for velocity but cannot itself establish an economic or promotion claim. Admission, correction, expiry, and supersession remain versioned.
+_Avoid_: Canonical Evidence, chat summary, folklore, hidden prompt
+
+**Role Memory**:
+Versioned Desk Role instructions, methods, checklists, and known failure patterns shared across eligible assignments without carrying task conclusions, private scratch state, authority, or evaluator independence.
+_Avoid_: role prompt, agent personality, task memory, policy grant
+
+**Task Memory**:
+Assignment-scoped context derived from explicitly admitted inputs and outputs and shareable only through artifact references or an Assignment Handoff. It is not inherited by a retry, child, or later assignment unless that new assignment identifies the admitted material.
+_Avoid_: conversation history, shared agent memory, Canonical Evidence, durable learning
+
+**Scratch State**:
+Disposable run-local computation and notes that cannot support a durable claim or cross an assignment boundary until transformed into a typed artifact and admitted. Termination or fencing may discard it after required forensic retention.
+_Avoid_: Task Memory, experiment result, evidence cache, hidden durable state
+
+**Provider State**:
+External model or session memory treated as untrusted, noncanonical, and assignment-isolated, with fresh sessions and memory disabled where supported. Provider, model version, configuration, instructions, tools, retrieval inputs, and response identity remain recorded, and materially shared provider state creates a shared evaluator failure path.
+_Avoid_: Institutional Memory, model knowledge, agent memory, independent context
+
+**Memory Retention Policy**:
+The versioned class-specific rules that retain Canonical Evidence and admitted artifacts through their entitlement, dependency, evidence, strategy, audit, and legal lifecycles; preserve referenced Institutional and Role Memory versions until explicit supersession or expiry; keep terminal Task Memory for an initial ninety-day reproduction window; purge successful-run Scratch State at completion; and retain failed or fenced forensic scratch snapshots encrypted for thirty days. Provider retention is disabled where supported, and only permitted content required for reproducibility plus its provenance metadata may be retained locally.
+_Avoid_: log retention, keep everything, provider default, backup policy
+
+**Agent Provenance Audit**:
+The automated verification of identity, memory classification, lineage completeness, retention, credentials, contamination, reproducibility, and evaluator independence through continuous admission checks, daily orphan and unclassified-context scans, weekly reproducibility and dependency-closure samples, monthly expiry and independence review, and immediate material-event audits.
+_Avoid_: annual review, manual agent inspection, compliance report, model evaluation
+
+**Retrieved Context Envelope**:
+The immutable record of one retrieval, binding its query, requesting assignment, source and index versions, filters, artifact and chunk identities, rankings, retrieval time, and entitlement state. Retrieval changes accessibility but never upgrades the trust or evidence stage of the returned material.
+_Avoid_: context window, search results, trusted retrieval, evidence bundle
+
+**Evidence Lineage Manifest**:
+The machine-checkable dependency record for one durable artifact, binding exact upstream artifacts, transformations, code and model versions, environment, Agent Provenance Chain, temporal boundaries, entitlements, testing-ledger effects, and known downstream consumers. Prose citations and hyperlinks may explain lineage but cannot replace it.
+_Avoid_: bibliography, data lineage diagram, artifact metadata, reproducibility note
+
+**Context Contamination State**:
+The scope-specific status of context or an artifact as Unassessed, Qualified for Scope, Suspected Contaminated, Confirmed Contaminated, Contained, or Revalidated. Leakage, future information, unentitled data, hidden cross-task memory, prompt injection, invalid sources, or shared provider state triggers containment across the Evidence Dependency Closure; invalidated trials and evaluations remain recorded and their Testing Budget is not restored.
+_Avoid_: clean flag, trusted context, deleted result, harmless prompt injection
+
+**Institutional Memory Admission**:
+The typed acceptance of a proposed durable learning only after binding its canonical sources, applicable scope, preserved dissent, Context Contamination State, owner, freshness or expiry, and supersession rules. Engine may admit qualifying non-authoritative learnings without Principal review, but repetition or admission never converts Institutional Memory into evidence.
+_Avoid_: save chat, agent learning, evidence promotion, wiki edit
+
 **Incubator Agent Assignment**:
 An immutable, expiring unit of work binding one objective, Desk Role, primary Strategy Thesis, Research Posture version, workload identity, permitted evidence, allowed actions and outputs, resource reservations, Execution Environment, stopping rule, and lineage. A worker may receive multiple separate assignments, but an assignment cannot combine proposer and evaluator duties in one promotion chain.
 _Avoid_: persistent agent identity, job description, prompt, authority grant
@@ -517,6 +573,10 @@ _Avoid_: paper researcher, simulated Live authority, mutable strategy runner, br
 **Assignment Handoff**:
 An immutable transfer envelope binding source and destination assignments, artifact hashes, evidence snapshot and lineage, contamination state, dissent, unresolved assumptions, resource use, remaining work, and expiry. The receiving assignment recomputes its own Effective Assignment Capability because permissions and authority never travel through a handoff.
 _Avoid_: chat message, authority delegation, shared memory, copied prompt
+
+**Cross-Agent Message**:
+Assignment-attributed untrusted Task Memory used for ephemeral coordination that cannot transfer a durable claim, instruction authority, permission, or evidence state. Only schema-valid artifact references and Assignment Handoffs cross assignment boundaries, and quoted external content remains inert data rather than executable instruction.
+_Avoid_: Assignment Handoff, trusted instruction, shared memory, agent delegation
 
 **Canonical Artifact Admission**:
 The typed service boundary that schema-validates and appends an assignment output to a canonical store without granting the producing agent mutable access. Corrections create linked superseding records rather than rewriting accepted evidence, models, experiments, strategies, or decisions.
@@ -671,7 +731,7 @@ The immutable Evidence Control Event inventory of every affected canonical recor
 _Avoid_: cleanup list, delete response, retention report
 
 **Evidence Revalidation**:
-The deterministic rebuilding and qualification of corrected or cleanly retained evidence and every affected derivative through new versioned artifacts and preregistered trials. It never rewrites invalidated trials, restores their Testing Budget, or automatically restores Live authority.
+The deterministic rebuilding and qualification of corrected or cleanly retained evidence and every affected derivative through new versioned artifacts, preregistered trials, fresh evaluations, and recomputed Evaluator Independence Groups. Contaminated context is never cleaned in place, prior artifacts remain preserved as invalidated evidence, and revalidation never restores their Testing Budget or automatically restores Paper or Live authority.
 _Avoid_: rerun, refresh model, clear quarantine
 
 **Source Compliance Incident**:
@@ -894,8 +954,16 @@ _Avoid_: reviewer opinion, weighted vote, warning
 The degree to which promotion evaluators use genuinely distinct model, implementation, evidence, and reasoning paths. Evaluators with a materially shared failure path count as one vote, and every dissent remains visible.
 _Avoid_: agent count, model name count, unanimous text
 
+**Evaluator Independence Group**:
+The equivalence class of evaluator assignments that share any material model, implementation, evidence, prompt or reasoning scaffold, provider state, or other failure path and therefore count as one review path. Clones, children, retries, and uniquely named agents retain distinct provenance but do not create independence by multiplication.
+_Avoid_: reviewer team, provider count, agent identity, vote bloc
+
+**Evaluator Independence Manifest**:
+The machine-checkable declaration of an evaluator assignment's model and provider, implementation, evaluation code, evidence acquisition and transformation, reasoning scaffold, Provider State, operator lineage, contamination dependencies, and material shared failure paths. Unknown independence or any common dependency capable of making multiple evaluators pass incorrectly collapses them into one Evaluator Independence Group.
+_Avoid_: diversity score, model list, reviewer biography, self-attestation
+
 **Strategy Promotion Review**:
-The evidence-bound review that first enforces every Hard Promotion Gate, then requires complete reproducibility/provenance/leakage, risk/execution/lifecycle, and economics/robustness/benchmark review with at least two genuinely independent supporting evaluation paths and no material unresolved dissent. Dissent yields Needs More Evidence rather than majority override.
+The evidence-bound review that first enforces every Hard Promotion Gate, then requires complete reproducibility/provenance/leakage, risk/execution/lifecycle, and economics/robustness/benchmark review with at least two supporting Evaluator Independence Groups and no material unresolved dissent. Each group counts once regardless of agent count, correlated fan-out adds no promotion vote, and dissent yields Needs More Evidence rather than majority override.
 _Avoid_: majority vote, agent approval, promotion score
 
 **Strategy Registry**:
