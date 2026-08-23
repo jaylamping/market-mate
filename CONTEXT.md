@@ -578,6 +578,46 @@ _Avoid_: project phase, manager promotion, funding round, Strategy Lifecycle Sta
 A typed falsification artifact any assignment may publish against a Work Opportunity, binding the alleged fatal defect, evidence, affected scope, expected value and cost of resolution, and proposed discriminating test. A material cheap claim receives rapid adversarial capacity, but the claimant cannot cancel, quarantine, or change the target's state directly.
 _Avoid_: veto, negative opinion, agent attack, Sentinel rejection
 
+**Evidence Arena Docket**:
+The immutable review object for one serious economic claim, binding its exact requested outcome, artifacts, Strategy Thesis or Strategy Version, baseline, Expected Profit Distribution, complete attempt and failure history, Evidence Lineage Manifest, Testing Budget state, and applicable gates. Debate cannot change the target; any material amendment creates a new docket.
+_Avoid_: discussion thread, review meeting, mutable proposal, agent pitch
+
+**Economic Review Lane**:
+A separately assigned Evidence Arena function: Advocate, Skeptical Challenger, Adversarial Red Team, Independent Reproducer, material Model Validator, or Portfolio Interaction Reviewer. Promotion requires at least two supporting Evaluator Independence Groups across applicable lanes, while Sentinel remains an external deterministic control rather than a participant.
+_Avoid_: reviewer vote, committee seat, agent persona, Sentinel review
+
+**Blinded Evaluation Pass**:
+The sealed first assessment in which an independent evaluator receives only the Evidence Arena Docket and canonical artifacts without advocate rhetoric, other conclusions, agent identities, or vote-like summaries. Findings become immutable before cross-examination, rebuttal, and any targeted independent recheck.
+_Avoid_: anonymous vote, secret evidence, peer discussion, model ensemble
+
+**Economic Evidence Burden**:
+The asymmetric rule that an advocate must demonstrate reproducible positive Incremental Profit Contribution, while a challenger may block advancement by proving one material defect without offering a replacement strategy. Missing positive evidence yields Needs More Evidence; material falsification yields Economically Rejected or Quarantined when contamination is involved.
+_Avoid_: equal debate burden, presumed profitability, challenger strategy, majority confidence
+
+**Evidence Arena Outcome**:
+The sole typed route from an Evidence Arena: Advance, Conditional Research Continuation, Needs More Evidence, Economically Rejected, Quarantined, or Sentinel Denied. Advance requires every applicable gate, at least two supporting Evaluator Independence Groups, and no unresolved material dissent; no vote, tie-breaker, manager, or Principal preference can manufacture it.
+_Avoid_: approval score, consensus, review complete, recommendation
+
+**Arena Exchange**:
+The fixed Evidence Arena sequence: freeze the docket; seal independent Blinded Evaluation Passes; run skeptical and adversarial cross-examination in parallel; permit one evidence-bearing advocate rebuttal and one challenger response; perform one targeted independent recheck; then route the deterministic outcome. Any material change to strategy, metric, evidence, or dependency creates a new docket rather than another exchange.
+_Avoid_: open debate, review thread, iterative persuasion, committee meeting
+
+**Material Economic Dissent**:
+A preserved challenge that could credibly change the primary economic metric, benchmark superiority, reproducibility, portfolio interaction, cost assumption, evidence validity, Evaluator Independence, or an applicable gate, binding the disputed claim, evidence, estimated impact, and discriminating test or reason none can exist. Vague objection remains visible but cannot block advancement.
+_Avoid_: disagreement, minority vote, negative opinion, risk veto
+
+**Arena Rebuttal Limit**:
+The one advocate rebuttal and one challenger response permitted after blinded findings, where only new evidence or a specific lineage correction carries weight and rhetoric, repetition, confidence language, or agent count does not. Unresolved Material Economic Dissent becomes new evidence work rather than continued argument or managerial escalation.
+_Avoid_: debate rounds, final word, response deadline, consensus building
+
+**Arena Review Clock**:
+The maximum ordinary Evidence Arena duration of two hours for Seed or Swarm, twelve hours for Independent Reproduction, twenty-four hours for Strategy Incubation, and forty-eight hours for Paper Qualification, further capped at twenty-five percent of remaining opportunity half-life. Timeout never passes a claim and instead routes the economically appropriate non-advancement outcome.
+_Avoid_: meeting duration, automatic approval timer, experiment deadline, review estimate
+
+**Conditional Research Continuation**:
+An Evidence Arena Outcome binding one unresolved claim, required experiment or artifact, budget, responsible assignments, permitted Research scope, deadline, and automatic terminal route. It cannot freeze a Strategy Version, enter Paper, consume a Release Holdout again, or imply provisional authority.
+_Avoid_: conditional approval, temporary pass, Paper trial, extension request
+
 **Work Opportunity State**:
 The non-interchangeable managerless state of a Work Opportunity: Eligible, Leased, Running, Blocked, Suspended, Completed, Falsified, Cancelled, Expired, or Fenced. Suspension requires an admitted checkpoint, cancellation preserves partial artifacts and reason, retries create new Assignment Runs, and an unattractive result cannot be retried away.
 _Avoid_: task status, agent availability, Strategy Lifecycle State, progress label
