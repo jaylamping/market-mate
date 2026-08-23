@@ -1630,6 +1630,10 @@ _Avoid_: no signal, idle strategy, heartbeat, empty scan
 An explicit policy-bound substitution for information that cannot appear in a Decision Record Projection, binding its category, reason, governing policy or entitlement, permitted substitute, and authorized forensic route when one exists. Credentials and cryptographic secrets never enter the record; restricted source content and private traces cannot be silently omitted or presented as complete evidence.
 _Avoid_: hidden field, blank value, secret storage, discretionary omission
 
+**Decision Record Retention**:
+The preservation of Decision Record economic, authority, lifecycle, outcome, redaction, and integrity facts for the experiment lifetime and at least seven years after closure, extended where ledger, property, incident, or legal evidence requires. Source-restricted content may follow its certified correction or deletion contract without erasing independently owned decision facts or the permitted Non-Content Audit Envelope.
+_Avoid_: automatic export, permanent source retention, log retention, dashboard history
+
 **Audit Dashboard**:
 The Principal-facing web view over Paper and Live historical, current, and planned actions, their separate ledgers, positions, forecasts, outcomes, and Decision Records.
 _Avoid_: report, portfolio screen
