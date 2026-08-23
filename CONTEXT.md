@@ -794,6 +794,62 @@ _Avoid_: autonomous developer, Paper worker, strategy authority, unrestricted re
 An Incubator Agent Assignment that may operate, observe, reconcile, and contain one exact Paper Authorized Strategy Version within its approved Paper scope and return findings to Research as evidence. It cannot modify the running Strategy Version, promote it, create Live eligibility, or receive Live authority.
 _Avoid_: paper researcher, simulated Live authority, mutable strategy runner, broker agent
 
+**Paper Qualification Bundle**:
+The immutable Incubator handoff for one exact Strategy Version, binding preregistrations, complete trial and failure history, models and Evidence Lineage Manifests, Evidence Arena dockets and outcomes, Evaluator Independence Manifests, Expected Profit Distribution, execution assumptions, portfolio interactions, requested Paper scope, and containment plan. It presents the economic case but grants no certification, lifecycle state, or authority.
+_Avoid_: Promotion Bundle, Paper approval, strategy report, deployment package
+
+**Paper Admission Route**:
+The deterministic path in which Engine checks Paper Qualification Bundle completeness, Sentinel applies every evidence, entitlement, safety, accounting, lifecycle, and scope gate, and the Engine transition service records Paper Authorized only after every applicable result passes. No Incubator assignment, evaluator coalition, vote, manager, or Principal preference performs the transition.
+_Avoid_: paper review, agent approval, automatic deployment, Sentinel debate
+
+**Paper Operation Grant**:
+An expiring non-transitive authorization binding one Paper Authorized Strategy Version, Paper Account and Environment Epoch, Strategy Sleeve, simulated-capital envelope, instruments, venue and adapter capabilities, pinned dependencies, duration, concurrency, and lifecycle handler. Any economic or dependency change requires a new Strategy Version and grant, and no Paper grant can become Live authority.
+_Avoid_: Paper Authorized, Live grant, agent permission, simulator configuration
+
+**Paper State Custody**:
+The durable ownership by the Paper Ledger and lifecycle service of every open simulated position, order, obligation, and reconciliation state across Paper Execution Assignment expiry, failure, fencing, or replacement. Operators receive expiring operational assignments, while continuity workers assume exact service state without inherited hidden memory or authority.
+_Avoid_: agent portfolio, strategy wallet, operator ownership, task state
+
+**Paper Intent Conflict**:
+The deterministic classification of simultaneous Strategy Sleeve intents as Compatible, Overlapping Same Direction, Opposing, Lifecycle Conflict, or Unscorable before consolidated action. Unscorable intents stop, Opposing intents are never internally crossed or treated as zero risk, and overlap cannot double-count profit, liquidity, diversification, or evidence.
+_Avoid_: net order, strategy disagreement, offsetting risk, internal cross
+
+**Paper Portfolio Selection**:
+The managerless deterministic selection of compatible intents for scarce Paper capital or instrument capacity using portfolio-incremental Net Validated Profit Velocity after full costs and overlap, subject to Sentinel controls. Losing intents may continue in explicitly isolated counterfactual sleeves when economically useful but consume no consolidated capacity and create no portfolio-qualified evidence.
+_Avoid_: portfolio manager, agent vote, strategy ranking, capital authority
+
+**Paper Conservative Aggregation**:
+The Paper admission rule that sums standalone risk, lifecycle funding, cash, collateral, liquidity demand, execution friction, and correlated exposure without diversification credit unless Sentinel applies an explicitly certified aggregation rule. Incubator diversification research cannot grant its own portfolio capacity.
+_Avoid_: net exposure, simulated diversification, strategy offsets, portfolio model
+
+**Paper Containment Grant**:
+The restricted non-expanding authority used after Paper Operation Grant expiry or strategy quarantine to stop new exposure while the lifecycle service manages existing simulated obligations to terminal reconciliation. State remains tied to the originating Strategy Version and Strategy Sleeve and cannot be reassigned or silently removed from evidence.
+_Avoid_: Paper Operation Grant, emergency strategy, position transfer, forced close
+
+**Paper Evidence Mode**:
+The mandatory non-interchangeable label on every Paper observation: Consolidated Eligible, Isolated Counterfactual, Suppressed by Conflict, or Containment Only. Results from different modes remain separately attributable and cannot be blended into a favorable performance history.
+_Avoid_: Paper status, strategy result, execution mode, backtest type
+
+**Paper Evidence Package**:
+The immutable terminal record of one Paper run, binding its exact Paper Operation Grant and versions, Environment Epoch, accepted and rejected intents, complete Paper Ledger, Strategy Sleeve attribution, execution friction and deviations, conflicts, lifecycle events, outages, fences, containment, counterfactual observations, and reconciliation. Missing or uncertain Paper state prevents qualification rather than becoming neutral evidence.
+_Avoid_: Paper report, Promotion Bundle, performance summary, trade log
+
+**Exact-Version Paper Evidence**:
+The rule that a Paper Evidence Package qualifies only the exact Strategy Version, pinned dependencies, scope, venue assumptions, and portfolio context that produced it. Material change creates a new Strategy Version and Strategy Sleeve; prior evidence may remain linked but cannot certify changed behavior.
+_Avoid_: strategy track record, similar version, reusable Paper proof, inherited evidence
+
+**Standalone and Portfolio Proof**:
+The paired Paper finding that establishes both the candidate Strategy Sleeve's own economics and its incremental effect inside the consolidated Paper portfolio. Profit attributable to another sleeve's hedge, subsidy, capital, or favorable netting cannot support the candidate.
+_Avoid_: portfolio P&L, sleeve return, diversification benefit, strategy contribution estimate
+
+**Paper-to-Live Evidence Boundary**:
+The rule that a Paper Evidence Package may enter a later Promotion Bundle but can never create Live eligibility, Live authority, broker credentials, or an Authority Grant through duration, profitability, evaluator support, or automatic lifecycle completion. Every future Live proposal requires its separate gates and exact Principal Authorization Decision.
+_Avoid_: paper graduation, automatic promotion, shadow Live, implied authorization
+
+**Autonomous Paper Activation**:
+The Engine transition and Paper Operation Grant creation that occur without Principal review when a complete bundle passes Sentinel inside an already approved Paper resource, entitlement, infrastructure, policy, and authority envelope. Any broader scope routes through Principal Gateway, and Paper findings never create Live eligibility or authority.
+_Avoid_: autonomous Live, implied approval, paper toggle, Principal bypass
+
 **Assignment Handoff**:
 An immutable transfer envelope binding source and destination assignments, artifact hashes, evidence snapshot and lineage, contamination state, dissent, unresolved assumptions, resource use, remaining work, and expiry. The receiving assignment recomputes its own Effective Assignment Capability because permissions and authority never travel through a handoff.
 _Avoid_: chat message, authority delegation, shared memory, copied prompt
@@ -1227,7 +1283,7 @@ An incident in which required registry, evidence, PR, deployment, or authority s
 _Avoid_: eventual consistency, stale UI, assume success
 
 **Strategy Sleeve**:
-The ledger and risk-attribution scope that assigns each economic allocation, intent, order, fill, cost, position contribution, and outcome to one Strategy Version while remaining subordinate to aggregate portfolio controls.
+The immutable ledger, evidence, and risk-attribution scope that assigns every economic allocation, intent, order, fill, cost, position contribution, forecast, and outcome to one Strategy Version while remaining subordinate to aggregate portfolio controls. Paper Account netting or consolidated execution never erases sleeve economics or failure history.
 _Avoid_: brokerage subaccount, ticker position, agent wallet
 
 **Portfolio Intent Resolution**:
