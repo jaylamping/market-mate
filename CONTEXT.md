@@ -1527,7 +1527,7 @@ The non-interchangeable governance state of a Decision Subject: Admitted, Author
 _Avoid_: status, execution result, order state, lifecycle event
 
 **Action Outcome**:
-The non-interchangeable result state of a Decision Subject across its Action Attempts: Not Attempted, Working, Partially Completed, Completed, Cancelled, Failed, or Unknown and Contained. It remains separate from Decision Disposition and links to exact Venue Events, Execution Results, and ledger effects.
+The non-interchangeable result state of a Decision Subject across its Action Attempts: Not Attempted, Working, Partially Completed, Completed, Cancelled, Failed, or Unknown and Contained. Completed requires Execution Completion; the outcome remains separate from Decision Disposition and links to exact Venue Events, Execution Results, and ledger effects.
 _Avoid_: decision status, broker status, success flag, fill state
 
 **Decision Group**:
@@ -1574,9 +1574,29 @@ _Avoid_: revised Decision Record, corrected rationale, backfilled forecast, rewr
 The append-only comparison of a Decision Record's frozen Expected P&L with observed results at every preregistered horizon and terminal lifecycle event, separating price movement, execution quality, Trading Costs, carry, option lifecycle effects, slippage, and allocated Operating Costs. Causal contributions and counterfactual effects remain explicitly estimated and cannot be presented as proven merely because outcomes correlate with the decision.
 _Avoid_: realized P&L, strategy credit, forecast overwrite, causal proof
 
+**Execution Completion**:
+The terminal determination that every Action Attempt has a reconciled venue state, its Execution Result is durable, and all resulting ledger, position, reservation, and lifecycle effects are accounted for or explicitly contained. It does not imply that every Outcome Attribution horizon has matured.
+_Avoid_: order terminal, filled, strategy complete, evaluation complete
+
+**Outcome Evaluation Completion**:
+The independent state that remains Pending until every preregistered evaluation horizon and applicable lifecycle obligation has an Outcome Attribution, then becomes Complete without changing Execution Completion or the original Decision-Time View.
+_Avoid_: execution status, realized P&L available, record closed, forecast settled
+
 **Decision History Projection**:
 The compact rebuildable historical projection of Decision Records, forecasts, baselines, dispositions, Action Outcomes, Outcome Attributions, evidence status, redactions, versions, and integrity references used for fast Principal review and authorized Incubator retrieval. It is non-authoritative, never exported automatically, and reaches an Incubator assignment only as read-only Canonical Evidence through a Retrieved Context Envelope rather than mutable database authority.
 _Avoid_: canonical history table, agent memory, Decision Record archive, automatic report
+
+**Decision History Grain**:
+The stable identity of one collapsed Decision History Projection row as Decision Record by preregistered evaluation horizon by Execution Environment by projection version. Attempts, legs, forecasts, costs, gates, and outcomes may be summarized into that row only while their exact artifact identities remain linked and separately inspectable.
+_Avoid_: one row per agent, one row per strategy, mutable summary, portfolio aggregate
+
+**Decision History Access**:
+The read-only retrieval available to an Incubator Agent Assignment for admitted non-restricted Decision History Projection rows within its evidence and time scope, recorded in its Retrieved Context Envelope. Blinded evaluation, sealed holdouts, entitlements, contamination containment, and assignment boundaries override broad historical access.
+_Avoid_: direct database access, shared agent memory, unrestricted history, evaluator context
+
+**Decision Projection Watermark**:
+The projection evidence binding the latest included canonical event position and time, generation time, validity interval, projection version, and rebuild state. A stale, rebuilding, or broken projection may support labelled forensics but cannot be represented to a Principal or assignment as current evidence.
+_Avoid_: last updated time, cache age, freshness badge, current row
 
 **Decision History Export**:
 An explicit on-demand reproducible rendering of a selected Decision History Projection as machine-readable or human-readable evidence, binding its query, environment, time range, projection and policy versions, redactions, integrity hash, and requester. No schedule, agent session, or completed decision creates an export automatically.
