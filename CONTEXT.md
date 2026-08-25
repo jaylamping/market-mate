@@ -404,9 +404,29 @@ _Avoid_: trading budget, expense estimate, automatic spending authority
 The contribution-adjusted economic performance of Trading Capital after Trading Costs, execution friction, interest, exercise, assignment, and settlement effects, but before separately funded Operating Costs.
 _Avoid_: account balance, fully loaded economics, gross return
 
+**S&P 500 Excess Total Return**:
+Portfolio Performance minus the contemporaneous S&P 500 total return over identical contribution timing and measurement boundaries. Maximizing large, repeatable positive excess return across weekly, monthly, year-to-date, rolling-year, calendar-year, and since-inception views is Market Mate's performance north star, while each short period remains an observation rather than a promise or standalone qualification gate.
+_Avoid_: guaranteed outperformance, price-only benchmark, one winning period, permission to weaken risk controls
+
 **Fully Loaded Experiment Economics**:
-Portfolio Performance reduced by every actual cash Operating Cost for the same reporting period, with development effort reported separately as time rather than imputed expense.
+The separately reported comparison of Portfolio Performance with every actual cash Operating Cost for the same reporting period, with development effort reported as time rather than imputed expense. It preserves cost visibility without implying that Operating Costs are paid from Trading Capital or currently govern Economic Qualification.
 _Avoid_: strategy return, portfolio P&L, hidden infrastructure cost
+
+**Subsidized Experiment**:
+A bounded Research or Paper effort whose Portfolio Performance may support continued learning while the Principal separately funds its visible Operating Costs. Its cost envelope and stopping rule stay explicit; separate funding cannot be presented as strategy profit or hidden from the experiment record.
+_Avoid_: profitable experiment, hidden loss, unlimited research
+
+**Economic Qualification**:
+The stage-scoped evidence result that a preregistered strategy or experiment clears its applicable conservative Portfolio Performance, comparator, risk, uncertainty, sample, and window requirements. Initial qualification does not subtract separately funded Operating Costs, and Research or Paper Economic Qualification never grants Live authority or additional Trading Capital.
+_Avoid_: successful backtest, profitable result, trading approval
+
+**Capital Expansion Eligibility**:
+The evidence state reached when conservative Portfolio Performance clears its preregistered expansion requirements. It permits an authenticated Principal expansion discussion but never increases Trading Capital by itself; whether later expansion must support or fund Operating Costs remains a future Principal decision after Economic Qualification.
+_Avoid_: automatic reinvestment, Economic Qualification, Live authority
+
+**Operating Cost Register**:
+The Principal-visible record of every separately funded Market Mate expense, including payee, category, purpose, amount, timing, commitment, applicable envelope, and relationship to the experiment. It remains at least as prominent as profit reporting even while costs are paid manually outside Trading Capital and are not allocated to individual strategies.
+_Avoid_: Capital Ledger, strategy loss, automated bill payment, hidden subsidy
 
 **Capability-Adjusted Cost**:
 The complete recurring and usage-based cost of an Execution Venue relative to the certified capabilities Market Mate will actually use, including commissions, exchange and regulatory fees, market data, infrastructure burden, and expected execution friction.
