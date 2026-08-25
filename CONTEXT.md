@@ -176,6 +176,74 @@ _Avoid_: miscellaneous adjustment, suspense profit, Evidence Pending
 A versioned comparison of one Order Plan's previewed, simulated, Paper, and Live behavior across acknowledgement, rejection, fill, slippage, fees, buying power, lifecycle timing, and reconciliation. It measures transferability and never grants order authority.
 _Avoid_: matched trade, proof of identical execution
 
+**Conservative Simulation Overlay**:
+An independent versioned execution-evidence model that reconstructs every economically relevant Paper attempt from point-in-time market, venue, instrument, fee, latency, size, lifecycle, and corporate-action evidence. It is a mandatory second opinion for Paper performance and promotion claims but cannot submit orders, alter Paper state, change strategy lifecycle, or grant authority.
+_Avoid_: Paper Venue, backtester, Safety Kernel, pessimistic fill switch
+
+**Overlay Reconstruction**:
+The immutable result of applying one Conservative Simulation Overlay version to an exact Order Plan and its complete Paper attempt evidence, preserving reconstructed fills or non-fills, costs, lifecycle effects, uncertainty, and disagreements with the venue. Unknown or incomplete inputs remain explicit and never become favorable assumptions.
+_Avoid_: corrected Paper trade, replacement fill, simulated P&L
+
+**Overlay Adverse Bound**:
+The calibrated ninety-five-percent adverse execution and lifecycle bound reported beside the overlay's central conservative estimate for promotion evidence. It derives from held-out execution-fidelity data and declared tail scenarios rather than an arbitrary universal worst case or strategy profit.
+_Avoid_: worst case, stress guess, conservative haircut
+
+**Overlay Economic Veto**:
+The narrow non-advancement result produced when an Overlay Reconstruction shows unbounded liquidity, loss, assignment, fees, lifecycle exposure, or other economics that cannot support a qualified Paper claim. It blocks the affected evidence claim without granting control authority or erasing other ensemble members.
+_Avoid_: simulator rejection, Sentinel veto, lowest P&L wins
+
+**Overlay Latency Profile**:
+The versioned empirical distributions of decision, submission, acknowledgement, fill, cancellation, market-data-age, reconnect, and reconciliation delay by venue, adapter, instrument, order class, session, liquidity, and regime. Sparse evidence selects the nearest defensible adverse profile and never implies zero latency.
+_Avoid_: fixed delay, average latency, instant simulation
+
+**Overlay Queue Model**:
+The calibrated passive-fill model that begins behind displayed actionable size and requires qualifying executable volume at or through the limit before reducing the queue ahead. Quote touch, hidden liquidity, midpoint availability, and favorable cancellation rates never create a fill without independent evidence.
+_Avoid_: touched order, midpoint fill, volume guess
+
+**Overlay Fill State**:
+The non-interchangeable outcome of an Overlay Reconstruction: Unfilled, Partially Filled, Filled, Rejected, Unscorable, or Indeterminate, with every supported quantity, remaining quantity, cancellation race, and disagreement preserved. Multi-leg quantity counts only in complete Atomic Package Units.
+_Avoid_: simulated fill, success flag, venue outcome
+
+**Overlay Lifecycle Reconstruction**:
+The independent versioned reconstruction of exercise, assignment, expiration, contrary instructions, pin risk, delivery, cash settlement, insufficient funding, fees, and corporate-action effects from the exact evidence known at the time. Missing venue-native behavior remains an operational capability gap even when the overlay can model its economics.
+_Avoid_: copied Paper lifecycle, assumed expiration, venue certification
+
+**Overlay Calibration Hierarchy**:
+The versioned evidence-sharing order from market-wide baseline through asset, order, liquidity, venue, adapter, and regime buckets. A sparse bucket inherits the nearest qualified conservative parent with wider uncertainty rather than a favorable sibling, and narrow qualification requires at least fifty matured comparable observations.
+_Avoid_: global fill rule, sparse estimate, borrowed venue behavior
+
+**Overlay Central Estimate**:
+The seventy-fifth-percentile adverse execution-cost or delay estimate used for ordinary conservative Paper economics, paired with conservative lower confidence bounds for fill probability. It remains distinct from the ninety-five-percent Overlay Adverse Bound and declared tail scenarios.
+_Avoid_: average fill, expected slippage, worst case
+
+**Overlay Evaluation Contract**:
+The preregistered binding of one Strategy Version or experiment to exact overlay, ensemble, venue, evidence-window, data, and stopping-rule versions before results are observed. Rerunning after results or changing a dependency creates a new evaluation artifact and may require a new Strategy Version.
+_Avoid_: simulator settings, preferred model, post-hoc rerun
+
+**Overlay Version Quarantine**:
+The dependency-scoped exclusion of an overlay version or calibration bucket after material source, entitlement, schema, fee, adapter, routing, market-structure, margin, lifecycle, corporate-action, lineage, or statistical-fidelity failure. It blocks affected Paper qualification until a previously qualified compatible version or validated challenger replaces it.
+_Avoid_: model warning, automatic rollback, global Paper pause
+
+**Overlay Calibration Truth**:
+The chronological execution evidence used to fit and judge an overlay, ordered from reconciled smallest-size Live outcomes and licensed quotes through historical replay, qualified Paper observations, and documented conservative priors. It includes every eligible attempt rather than only fills or favorable outcomes.
+_Avoid_: fill sample, Paper truth, profitable observations
+
+**Overlay Release Holdout**:
+The latest sealed chronological evidence slice used once to decide whether an overlay version may become qualified. Related market episodes remain grouped and separated from training so the holdout represents unseen execution conditions.
+_Avoid_: test split, reusable benchmark, tuning set
+
+**Overlay Uncertainty Propagation**:
+The preservation of dependent uncertainty across fill state, quantity, price, timing, fees, exit capacity, and lifecycle outcomes into one after-cost economic distribution. It forbids combining favorable marginal assumptions that cannot jointly occur.
+_Avoid_: summed error bars, independent slippage, single-point P&L
+
+**Overlay Dependency Family**:
+A group of execution-evidence models that share a venue, simulator, calibration source, market data, adapter, or material modeling assumption. Models in one family do not count as independent confirmation, and no single family may dominate a qualifying Execution Evidence Ensemble.
+_Avoid_: model count, venue vote, duplicate confirmation
+
+**Overlay Recovery Bundle**:
+The versioned evidence that returns a quarantined overlay dependency to qualified use: corrected lineage and dependencies, deterministic replay, current holdout results, uncertainty coverage, and reevaluation of every affected strategy claim. Recovery creates a newly qualified version rather than rewriting the failed one.
+_Avoid_: warning cleared, manual reset, history repair
+
 **Execution Evidence Ensemble**:
 The versioned, reliability-weighted combination of qualified Paper Venue models, the Conservative Simulation Overlay, and later Live-calibrated execution models used to judge whether strategy economics transfer across execution assumptions. Weights reflect fidelity and independence, not reported profit.
 _Avoid_: simulator average, best backtest
@@ -199,6 +267,10 @@ _Avoid_: broker support, API availability
 **Certification Candidate**:
 An Execution Venue selected for written review and executable testing but not yet authorized to receive live orders.
 _Avoid_: selected broker, supported broker
+
+**Preferred Venue Candidate**:
+The Certification Candidate tested first for an intended Paper or Live scope because current evidence makes it the strongest operational fit. Preference changes certification order, not hard gates, certification outcome, exclusivity, or authority; a better-qualified venue may replace it without changing strategy or ledger contracts.
+_Avoid_: selected broker, primary broker, committed venue, certified winner
 
 **Certified Live Venue**:
 A specific Execution Venue, account, adapter version, and approved capability scope that currently hold valid Venue Certification for live use.
@@ -455,12 +527,68 @@ A Coverage Stage for a security whose position has closed but whose settlement, 
 _Avoid_: removed holding, archive
 
 **Market Research Cycle**:
-A scheduled process, run at least once per trading day, that refreshes point-in-time evidence for the Coverage Universe across approved market, fundamental, event, options, sentiment, macroeconomic, liquidity, and portfolio-risk dimensions.
+A point-in-time evidence process that publishes one authoritative post-close cycle each trading day, a pre-open delta before new exposure, and event-driven deltas for material evidence or risk changes. A missed cycle creates an explicit stale interval rather than a silent catch-up.
 _Avoid_: stock scan, daily scrape, trading strategy
 
 **Research Snapshot**:
-The immutable, time-stamped result of a Market Research Cycle for a security or the portfolio, including source lineage, data quality, indicator changes, uncertainty, and comparisons with prior snapshots.
+An immutable, time-stamped security- or portfolio-scoped result of a Market Research Cycle, including source lineage, data quality, applicable observation states, indicator changes, uncertainty, and comparison with prior snapshots. Degraded snapshots remain visible while dependent capabilities are blocked at their proven scope.
 _Avoid_: research report, agent summary
+
+**Research Cycle Manifest**:
+The immutable cycle-level index binding every expected Research Snapshot, its completion and evidence state, shared market or portfolio evidence, stale intervals, anomalies, and superseding deltas. Late or corrected evidence creates a linked manifest and snapshots rather than overwriting the original cycle.
+_Avoid_: batch status, completion flag, mutable daily report
+
+**Research Evidence Obligation**:
+The versioned requirement stating which evidence dimensions and observation states are mandatory, conditional, or Not Applicable for a Coverage Stage, Coverage Capability, held obligation, strategy dependency, and decision purpose. Not Applicable requires a proved contract rule and cannot substitute for missing evidence.
+_Avoid_: required field, universal data checklist, default value
+
+**Research Evidence Profile**:
+The versioned set of Research Evidence Obligations applicable to one Coverage Stage, Coverage Capability, held obligation, or portfolio scope. Universal security evidence, options evidence, holding evidence, and portfolio evidence remain distinct profiles rather than one lowest-common-denominator checklist.
+_Avoid_: research template, ticker checklist, optional fields
+
+**Research Cycle Deadline**:
+The evidence-availability objective for a Market Research Cycle: the authoritative post-close cycle publishes within ninety minutes, the pre-open delta publishes at least thirty minutes before regular-market open, and certified event streams target five-minute ingestion with a fifteen-minute maximum polling interval. A missed deadline creates a visible stale interval and blocks only dependent new exposure.
+_Avoid_: job timeout, best-effort schedule, silent catch-up
+
+**Research Cycle State**:
+The terminal publication state of a Research Cycle Manifest: Complete, Degraded Complete, Incomplete, or Failed. Degraded Complete permits only dependency-compatible downstream use; unresolved or untrustworthy scopes never inherit the status of completed scopes.
+_Avoid_: success flag, batch done, partial success
+
+**Research Evidence Delta**:
+The structured comparison between an immutable Research Snapshot and its prior authoritative snapshot, covering evidence additions, removals, corrections, expiry, observation-state changes, material indicator and catalyst changes, portfolio interactions, and newly blocked or restored dependencies. Generated prose may summarize the delta but is never authoritative evidence.
+_Avoid_: daily summary, change narrative, agent interpretation
+
+**Research Evidence Family**:
+A canonical dimension of point-in-time research evidence: identity and corporate action; price, volume, trend and momentum; realized and implied volatility; fundamentals, valuation, earnings and estimates; options structure; macroeconomic and regime conditions; news and sentiment; liquidity; or correlation and portfolio exposure. Each family has its own Research Evidence Obligations and Freshness Classes.
+_Avoid_: data category, feature group, universal freshness rule
+
+**Regime Evidence Distribution**:
+The versioned portfolio-level evidence over multiple plausible market regimes, including the supporting rates, inflation, growth, credit, volatility, breadth, liquidity, sector, and cross-asset observations. It preserves uncertainty and disagreement rather than assigning one authoritative regime label.
+_Avoid_: current regime, market label, model consensus
+
+**Certified Evidence Substitution**:
+The explicit replacement of an unavailable evidence source by a pre-certified source for the same evidence class and entitlement scope, with preserved lineage, compatibility checks, and a new Research Snapshot. A substitute never silently inherits another source's authority, reliability, timing, or historical semantics.
+_Avoid_: provider fallback, equivalent feed, silent failover
+
+**Research Capacity Containment**:
+The dependency-scoped response when authorized agents, models, provider calls, tokens, compute, or spending cannot satisfy the Research Evidence floor: consume permitted burst capacity, propose an exact envelope expansion, then preserve Mandatory Holdings and the highest-fitness members while demoting lower-priority discretionary coverage. Evidence quality and completeness states are never weakened to fit capacity.
+_Avoid_: partial scan, best-effort coverage, quality downgrade
+
+**Research Reproducibility Envelope**:
+The immutable versions, source observations, Evidence Availability Times, entitlements, identities, calendars, definitions, policies, models, dependencies, and declared randomness required to reproduce a Research Snapshot or state why replay is limited. An Incubator-derived Experimental Indicator remains a separate artifact linked to this envelope rather than becoming canonical snapshot evidence.
+_Avoid_: run configuration, agent context, reproducible enough
+
+**Research Orchestration Graph**:
+The Engine-owned dependency graph that routes shared evidence, parallel evidence-family work, security snapshots, portfolio aggregation, manifest publication, and read-only Incubator admission. It carries typed work and permits disjoint scopes to continue without creating managerial authority for any agent.
+_Avoid_: research manager, agent hierarchy, daily job
+
+**Research Computation Attempt**:
+One preserved execution of an unchanged research computation, including its timing, inputs, versions, provider, resource use, outcome, and failure state. Bounded mechanical retries and promising indeterminate reruns create new attempts, while changed inputs or methods create a new linked computation.
+_Avoid_: retry counter, overwritten run, successful result
+
+**Research Cycle Telemetry**:
+The aggregate operational projection of cycle scopes, queue and terminal states, deadlines, stale intervals, evidence-family blockers, provider and model usage, tokens, compute, requests, spending, retries, substitutions, and affected dependencies. It exposes canonical artifacts and resource use without prompts, responses, secrets, or private reasoning.
+_Avoid_: agent trace, model transcript, job log
 
 **Indicator Definition**:
 The immutable versioned meaning of one indicator, including its purpose, inputs, sources, units, calculation, adjustment and time semantics, horizons, freshness, missingness, valid range, and ownership. A semantic change creates a new definition rather than rewriting prior observations.
@@ -1457,6 +1585,10 @@ _Avoid_: scraper, mood score, stock rating
 **Sentiment Assessment**:
 A security-, horizon-, source-family-, and theme-specific distribution over positive, neutral, and negative expressed attitude, accompanied by confidence, coverage, disagreement, freshness, and provenance. It is not a probability of a market-price outcome.
 _Avoid_: bullish probability, stock direction score
+
+**Sentiment Research Parity**:
+The rule that every Coverage Universe member receives authorized sentiment collection and Incubator research access on equal standing with other applicable evidence dimensions. Raw observations are retained as evidence, but only independently informative, deduplicated clusters may increase confidence; unavailable sentiment blocks only declared dependents.
+_Avoid_: optional sentiment, sentiment quota, social-volume confidence
 
 **Sentiment Balance**:
 A derived −100 to +100 summary of a Sentiment Assessment's positive-versus-negative evidence. It is a display and comparison aid, not a probability or trading threshold.
