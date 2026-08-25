@@ -60,6 +60,14 @@ _Avoid_: mode, account type
 A workload boundary with its own identity, secret scope, network policy, queues, data permissions, and audit controls. Trust Zones may initially share a physical host, but authority never follows from co-location.
 _Avoid_: server, container name
 
+**Workload Release**:
+The signed immutable executable package promoted unchanged across environments, binding its source revision, runtime, dependency lock, entry point, architecture, build provenance, software bill of materials, content digest, compatibility manifest, and qualification evidence. Configuration may bind an environment but cannot silently rebuild or change the release.
+_Avoid_: container tag, deployment, latest image, developer environment
+
+**Portability Evidence Bundle**:
+The immutable result of running one Workload Release through local and candidate-cloud conformance fixtures for deterministic behavior, state durability, interruption, redelivery, isolation, resources, observability, supply chain, and recovery. It supports a bounded portability claim but grants no deployment or trading authority.
+_Avoid_: container smoke test, successful build, cloud certification
+
 **Application Administration**:
 Principal-facing control over Market Mate policies, proposals, deployments, alerts, strategies, and operational state through authenticated, authorized workflows. It never implies unrestricted host, cloud-account, secret, or database access.
 _Avoid_: cloud administration, root access, admin panel
