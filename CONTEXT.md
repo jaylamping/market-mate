@@ -176,6 +176,38 @@ _Avoid_: miscellaneous adjustment, suspense profit, Evidence Pending
 A versioned comparison of one Order Plan's previewed, simulated, Paper, and Live behavior across acknowledgement, rejection, fill, slippage, fees, buying power, lifecycle timing, and reconciliation. It measures transferability and never grants order authority.
 _Avoid_: matched trade, proof of identical execution
 
+**Conservative Simulation Overlay**:
+An independent versioned execution-evidence model that reconstructs every economically relevant Paper attempt from point-in-time market, venue, instrument, fee, latency, size, lifecycle, and corporate-action evidence. It is a mandatory second opinion for Paper performance and promotion claims but cannot submit orders, alter Paper state, change strategy lifecycle, or grant authority.
+_Avoid_: Paper Venue, backtester, Safety Kernel, pessimistic fill switch
+
+**Overlay Reconstruction**:
+The immutable result of applying one Conservative Simulation Overlay version to an exact Order Plan and its complete Paper attempt evidence, preserving reconstructed fills or non-fills, costs, lifecycle effects, uncertainty, and disagreements with the venue. Unknown or incomplete inputs remain explicit and never become favorable assumptions.
+_Avoid_: corrected Paper trade, replacement fill, simulated P&L
+
+**Overlay Adverse Bound**:
+The calibrated ninety-five-percent adverse execution and lifecycle bound reported beside the overlay's central conservative estimate for promotion evidence. It derives from held-out execution-fidelity data and declared tail scenarios rather than an arbitrary universal worst case or strategy profit.
+_Avoid_: worst case, stress guess, conservative haircut
+
+**Overlay Economic Veto**:
+The narrow non-advancement result produced when an Overlay Reconstruction shows unbounded liquidity, loss, assignment, fees, lifecycle exposure, or other economics that cannot support a qualified Paper claim. It blocks the affected evidence claim without granting control authority or erasing other ensemble members.
+_Avoid_: simulator rejection, Sentinel veto, lowest P&L wins
+
+**Overlay Latency Profile**:
+The versioned empirical distributions of decision, submission, acknowledgement, fill, cancellation, market-data-age, reconnect, and reconciliation delay by venue, adapter, instrument, order class, session, liquidity, and regime. Sparse evidence selects the nearest defensible adverse profile and never implies zero latency.
+_Avoid_: fixed delay, average latency, instant simulation
+
+**Overlay Queue Model**:
+The calibrated passive-fill model that begins behind displayed actionable size and requires qualifying executable volume at or through the limit before reducing the queue ahead. Quote touch, hidden liquidity, midpoint availability, and favorable cancellation rates never create a fill without independent evidence.
+_Avoid_: touched order, midpoint fill, volume guess
+
+**Overlay Fill State**:
+The non-interchangeable outcome of an Overlay Reconstruction: Unfilled, Partially Filled, Filled, Rejected, Unscorable, or Indeterminate, with every supported quantity, remaining quantity, cancellation race, and disagreement preserved. Multi-leg quantity counts only in complete Atomic Package Units.
+_Avoid_: simulated fill, success flag, venue outcome
+
+**Overlay Lifecycle Reconstruction**:
+The independent versioned reconstruction of exercise, assignment, expiration, contrary instructions, pin risk, delivery, cash settlement, insufficient funding, fees, and corporate-action effects from the exact evidence known at the time. Missing venue-native behavior remains an operational capability gap even when the overlay can model its economics.
+_Avoid_: copied Paper lifecycle, assumed expiration, venue certification
+
 **Execution Evidence Ensemble**:
 The versioned, reliability-weighted combination of qualified Paper Venue models, the Conservative Simulation Overlay, and later Live-calibrated execution models used to judge whether strategy economics transfer across execution assumptions. Weights reflect fidelity and independence, not reported profit.
 _Avoid_: simulator average, best backtest
@@ -199,6 +231,10 @@ _Avoid_: broker support, API availability
 **Certification Candidate**:
 An Execution Venue selected for written review and executable testing but not yet authorized to receive live orders.
 _Avoid_: selected broker, supported broker
+
+**Preferred Venue Candidate**:
+The Certification Candidate tested first for an intended Paper or Live scope because current evidence makes it the strongest operational fit. Preference changes certification order, not hard gates, certification outcome, exclusivity, or authority; a better-qualified venue may replace it without changing strategy or ledger contracts.
+_Avoid_: selected broker, primary broker, committed venue, certified winner
 
 **Certified Live Venue**:
 A specific Execution Venue, account, adapter version, and approved capability scope that currently hold valid Venue Certification for live use.
