@@ -1518,6 +1518,18 @@ _Avoid_: automatic upgrade, dependency refresh, latest-version migration
 A state that prohibits a Strategy Version from initiating new exposure after its evidence, calibration, data quality, or live behavior violates an approved threshold.
 _Avoid_: pause, poor performance
 
+**Strategy Watch**:
+A non-authority-changing monitoring status for an exact Strategy Version whose early evidence has weakened without crossing a quarantine boundary. It blocks capital expansion and increases scrutiny while leaving the current Authority Grant unchanged.
+_Avoid_: Strategy Quarantine, lifecycle state, provisional failure
+
+**Strategy Loss Budget**:
+The maximum contribution-adjusted drawdown attributable to one Strategy Version and Strategy Sleeve that its current Authority Grant permits, bounded by validated strategy evidence and remaining account-risk headroom.
+_Avoid_: Position Risk, account drawdown limit, loss target, stop-loss order
+
+**Strategy Revalidation Grant**:
+A temporary non-Live authorization allowing one quarantined Strategy Version to gather specifically scoped Paper evidence for an approved recovery question. It grants no restored qualification, promotion, or Live authority.
+_Avoid_: Paper Operation Grant, quarantine release, provisional Live approval
+
 **Strategy Rollback**:
 An audited authority transition from one Strategy Version to a prior version that independently remains compatible, certified, and eligible under current evidence and policies. Rollback never rewrites either version or bypasses a fresh authority check.
 _Avoid_: undo deployment, restore old code, automatic downgrade
