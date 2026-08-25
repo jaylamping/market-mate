@@ -208,6 +208,42 @@ _Avoid_: simulated fill, success flag, venue outcome
 The independent versioned reconstruction of exercise, assignment, expiration, contrary instructions, pin risk, delivery, cash settlement, insufficient funding, fees, and corporate-action effects from the exact evidence known at the time. Missing venue-native behavior remains an operational capability gap even when the overlay can model its economics.
 _Avoid_: copied Paper lifecycle, assumed expiration, venue certification
 
+**Overlay Calibration Hierarchy**:
+The versioned evidence-sharing order from market-wide baseline through asset, order, liquidity, venue, adapter, and regime buckets. A sparse bucket inherits the nearest qualified conservative parent with wider uncertainty rather than a favorable sibling, and narrow qualification requires at least fifty matured comparable observations.
+_Avoid_: global fill rule, sparse estimate, borrowed venue behavior
+
+**Overlay Central Estimate**:
+The seventy-fifth-percentile adverse execution-cost or delay estimate used for ordinary conservative Paper economics, paired with conservative lower confidence bounds for fill probability. It remains distinct from the ninety-five-percent Overlay Adverse Bound and declared tail scenarios.
+_Avoid_: average fill, expected slippage, worst case
+
+**Overlay Evaluation Contract**:
+The preregistered binding of one Strategy Version or experiment to exact overlay, ensemble, venue, evidence-window, data, and stopping-rule versions before results are observed. Rerunning after results or changing a dependency creates a new evaluation artifact and may require a new Strategy Version.
+_Avoid_: simulator settings, preferred model, post-hoc rerun
+
+**Overlay Version Quarantine**:
+The dependency-scoped exclusion of an overlay version or calibration bucket after material source, entitlement, schema, fee, adapter, routing, market-structure, margin, lifecycle, corporate-action, lineage, or statistical-fidelity failure. It blocks affected Paper qualification until a previously qualified compatible version or validated challenger replaces it.
+_Avoid_: model warning, automatic rollback, global Paper pause
+
+**Overlay Calibration Truth**:
+The chronological execution evidence used to fit and judge an overlay, ordered from reconciled smallest-size Live outcomes and licensed quotes through historical replay, qualified Paper observations, and documented conservative priors. It includes every eligible attempt rather than only fills or favorable outcomes.
+_Avoid_: fill sample, Paper truth, profitable observations
+
+**Overlay Release Holdout**:
+The latest sealed chronological evidence slice used once to decide whether an overlay version may become qualified. Related market episodes remain grouped and separated from training so the holdout represents unseen execution conditions.
+_Avoid_: test split, reusable benchmark, tuning set
+
+**Overlay Uncertainty Propagation**:
+The preservation of dependent uncertainty across fill state, quantity, price, timing, fees, exit capacity, and lifecycle outcomes into one after-cost economic distribution. It forbids combining favorable marginal assumptions that cannot jointly occur.
+_Avoid_: summed error bars, independent slippage, single-point P&L
+
+**Overlay Dependency Family**:
+A group of execution-evidence models that share a venue, simulator, calibration source, market data, adapter, or material modeling assumption. Models in one family do not count as independent confirmation, and no single family may dominate a qualifying Execution Evidence Ensemble.
+_Avoid_: model count, venue vote, duplicate confirmation
+
+**Overlay Recovery Bundle**:
+The versioned evidence that returns a quarantined overlay dependency to qualified use: corrected lineage and dependencies, deterministic replay, current holdout results, uncertainty coverage, and reevaluation of every affected strategy claim. Recovery creates a newly qualified version rather than rewriting the failed one.
+_Avoid_: warning cleared, manual reset, history repair
+
 **Execution Evidence Ensemble**:
 The versioned, reliability-weighted combination of qualified Paper Venue models, the Conservative Simulation Overlay, and later Live-calibrated execution models used to judge whether strategy economics transfer across execution assumptions. Weights reflect fidelity and independence, not reported profit.
 _Avoid_: simulator average, best backtest
