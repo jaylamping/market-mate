@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Market Mate identity and approval contract prototype</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #eef5f1;
+      --muted: #9fb0a8;
+      --panel: #111a18;
+      --line: #2a3a35;
+      --accent: #58d6a2;
+      --warn: #ffcc66;
+      --danger: #ff7474;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #09100e;
+      color: var(--ink);
+      font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1180px, calc(100% - 32px)); margin: 36px auto 80px; }
+    h1, h2, h3 { margin: 0 0 10px; line-height: 1.16; }
+    h1 { font-size: clamp(28px, 4vw, 44px); max-width: 850px; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 15px; }
+    p { margin: 0 0 12px; }
+    code { color: #b9f5d8; }
+    .eyebrow { color: var(--accent); font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .lede { max-width: 920px; color: var(--muted); font-size: 17px; }
+    .warning { color: var(--warn); }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-top: 24px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+    .state { grid-column: span 7; }
+    .events { grid-column: span 5; }
+    .actions, .walkthroughs, .providers { grid-column: 1 / -1; }
+    .state-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .datum { background: #0b1311; border: 1px solid #22302c; border-radius: 10px; padding: 11px; min-height: 74px; }
+    .datum span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .datum strong { overflow-wrap: anywhere; }
+    .ok { color: var(--accent); }
+    .bad { color: var(--danger); }
+    .button-row { display: flex; flex-wrap: wrap; gap: 9px; }
+    button {
+      border: 1px solid #3b514a;
+      border-radius: 9px;
+      background: #17231f;
+      color: var(--ink);
+      padding: 9px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #062117; font-weight: 750; }
+    button.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+    button:disabled { cursor: not-allowed; opacity: .42; }
+    ol { margin: 0; padding-left: 22px; }
+    li { margin: 0 0 8px; color: var(--muted); }
+    .event-log { max-height: 370px; overflow: auto; }
+    .event { border-bottom: 1px solid #22302c; padding: 9px 0; }
+    .event:last-child { border-bottom: 0; }
+    .event b { display: block; color: var(--ink); }
+    .event small { color: var(--muted); }
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .scenario { display: grid; grid-template-columns: 1fr 1.4fr; gap: 18px; }
+    .steps { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+    .step-done { opacity: .48; text-decoration: line-through; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 10px 8px; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; }
+    select { background: #0b1311; color: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: 6px; }
+    a { color: var(--accent); }
+    .verdict { margin-top: 14px; padding: 12px; border-left: 3px solid var(--warn); background: #161710; }
+    @media (max-width: 800px) {
+      .state, .events { grid-column: 1 / -1; }
+      .scenario { grid-template-columns: 1fr; }
+      .state-grid { grid-template-columns: 1fr; }
+      .providers { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Throwaway logic prototype</p>
+  <h1>Identity proves who is present. Market Mate decides what that person may authorize.</h1>
+  <p class="lede">Question: can one provider-neutral contract bind exactly one Principal, survive session revocation and recovery, and make every sensitive approval single-use and inseparable from one immutable proposal? This demo deliberately simulates provider responses; it does not authenticate anyone or grant trading authority.</p>
+  <p class="warning"><strong>Boundary:</strong> no provider wins from documentation alone. A real test tenant must pass every hard gate on web and the future native companion before selection.</p>
+
+  <section class="grid">
+    <article class="panel state">
+      <h2>Current contract state</h2>
+      <div class="state-grid" id="state"></div>
+    </article>
+
+    <article class="panel events">
+      <h2>Immutable event trail</h2>
+      <div class="event-log" id="events"></div>
+    </article>
+
+    <article class="panel actions">
+      <h2>Free play</h2>
+      <p>Try these in any order. Rejected actions stay visible in the event trail.</p>
+      <div class="button-row" id="actions"></div>
+    </article>
+
+    <article class="panel walkthroughs">
+      <h2>Adversarial walkthroughs</h2>
+      <div class="tabs" id="tabs"></div>
+      <div class="scenario">
+        <div>
+          <h3 id="scenario-title"></h3>
+          <p id="scenario-description"></p>
+          <div class="verdict" id="scenario-verdict"></div>
+        </div>
+        <div class="steps" id="steps"></div>
+      </div>
+    </article>
+
+    <article class="panel providers">
+      <h2>Executable provider bake-off worksheet</h2>
+      <p>Documentation is only a setup hint. Change cells after observing the behavior in a real test tenant; state is intentionally not saved.</p>
+      <table>
+        <thead>
+          <tr><th>Candidate</th><th>Docs observed</th><th>Web passkey + exact subject</th><th>Hardware-key recovery</th><th>Immediate session revocation</th><th>Signed event export</th><th>Native companion path</th><th>Reproducible cost</th></tr>
+        </thead>
+        <tbody id="provider-rows"></tbody>
+      </table>
+      <div class="verdict" id="provider-verdict"></div>
+      <h3 style="margin-top:18px">Acceptance run for every candidate</h3>
+      <ol>
+        <li>Disable public signup and bind one immutable provider subject to the internal Principal ID; reject email-only matching and account relinking.</li>
+        <li>Enroll a Face ID-backed Safari passkey plus a separate roaming hardware key; prove loss-of-phone recovery without email-only takeover.</li>
+        <li>Revoke the active session and authenticator; measure propagation through API checks and signed events, including provider outage behavior.</li>
+        <li>Issue a Market Mate challenge over the exact proposal digest, binding version, authority epoch, audience, expiry, and nonce; prove replay and proposal mutation fail.</li>
+        <li>Exercise web and native-compatible step-up, deep-link return, device replacement, event export/replay, tenant export, rate limits, support path, and fully loaded monthly cost.</li>
+      </ol>
+    </article>
+  </section>
+</main>
+
+<script>
+// Portable prototype module: no DOM references and no provider-specific authorization.
+const ApprovalContract = (() => {
+  const initial = () => ({
+    principal: { internalId: "principal-001", providerSubject: null, bindingVersion: 0, status: "unbound" },
+    session: null,
+    authorityEpoch: 1,
+    exposure: "frozen",
+    recovery: "none",
+    proposal: null,
+    challenge: null,
+    authorization: null,
+    clock: 1,
+    events: []
+  });
+
+  const append = (state, kind, message, accepted = true) => ({
+    ...state,
+    events: [...state.events, { sequence: state.events.length + 1, kind, message, accepted }]
+  });
+  const reject = (state, action, reason) => append(state, `Rejected: ${action}`, reason, false);
+  const invalidateChallenge = state => state.challenge?.status === "issued"
+    ? { ...state, challenge: { ...state.challenge, status: "invalidated" } }
+    : state;
+
+  function reduce(state, action) {
+    let next = { ...state, clock: state.clock + 1 };
+    switch (action.type) {
+      case "RESET": return initial();
+      case "BIND_PRINCIPAL":
+        if (state.principal.status !== "unbound") return reject(next, "bind Principal", "An existing immutable Principal binding cannot be silently replaced.");
+        next.principal = { ...state.principal, providerSubject: "provider|joey-immutable", bindingVersion: 1, status: "active" };
+        return append(next, "Principal bound", "The provider subject, not an editable email address, is bound to principal-001.");
+      case "SIGN_IN_MATCHING":
+        if (state.principal.status !== "active") return reject(next, "sign in", "No active Principal binding exists.");
+        next.session = { id: `session-${state.clock}`, subject: state.principal.providerSubject, method: "passkey-user-verified", authTime: state.clock, valid: true };
+        return append(next, "Session authenticated", "Provider verified the bound subject with a user-verified passkey. No trading authority was created.");
+      case "SIGN_IN_OTHER":
+        next.session = null;
+        next.exposure = "frozen";
+        return reject(next, "sign in", "Authenticated provider subject does not equal the immutable Principal binding; new exposure remains frozen.");
+      case "ENABLE_EXPOSURE":
+        if (!state.session?.valid || state.recovery !== "none" || state.principal.status !== "active") return reject(next, "enable new exposure", "A valid bound session and settled recovery state are required; Live resumption would also require its separate gate.");
+        next.exposure = "eligible-for-separate-live-gate";
+        return append(next, "Application access restored", "Identity prerequisites pass. This is not Live resumption or order authorization.");
+      case "CREATE_PROPOSAL":
+        next.proposal = { id: `proposal-${state.clock}`, digest: `sha256:exact-${state.clock}`, version: 1, status: "pending" };
+        next.challenge = null;
+        next.authorization = null;
+        return append(next, "Proposal frozen", `${next.proposal.id} has an immutable digest and still needs application authorization.`);
+      case "ISSUE_CHALLENGE":
+        if (!state.session?.valid || state.session.subject !== state.principal.providerSubject) return reject(next, "issue challenge", "A current session for the exact bound Principal is required.");
+        if (state.session.method !== "passkey-user-verified") return reject(next, "issue challenge", "Fresh phishing-resistant user verification is required.");
+        if (!state.proposal || state.proposal.status !== "pending") return reject(next, "issue challenge", "There is no current immutable pending proposal.");
+        if (state.recovery !== "none") return reject(next, "issue challenge", "Recovery freezes sensitive authorization.");
+        next.challenge = {
+          id: `challenge-${state.clock}`, nonce: `nonce-${state.clock}`, proposalId: state.proposal.id,
+          proposalDigest: state.proposal.digest, bindingVersion: state.principal.bindingVersion,
+          authorityEpoch: state.authorityEpoch, sessionId: state.session.id, audience: "market-mate-approval",
+          expiresAt: state.clock + 4, status: "issued"
+        };
+        return append(next, "Challenge issued", "Market Mate bound a short-lived nonce to the exact proposal, Principal binding, session, audience, and authority epoch.");
+      case "APPROVE": {
+        const c = state.challenge;
+        if (!c || c.status !== "issued") return reject(next, "approve", "No unused challenge exists.");
+        if (state.clock > c.expiresAt) return reject({ ...next, challenge: { ...c, status: "expired" } }, "approve", "The challenge expired.");
+        if (!state.session?.valid || c.sessionId !== state.session.id) return reject(next, "approve", "The bound session is no longer valid.");
+        if (c.bindingVersion !== state.principal.bindingVersion || c.authorityEpoch !== state.authorityEpoch) return reject(next, "approve", "Principal binding or authority epoch changed.");
+        if (!state.proposal || c.proposalId !== state.proposal.id || c.proposalDigest !== state.proposal.digest) return reject(next, "approve", "The proposal no longer matches the signed challenge.");
+        next.challenge = { ...c, status: "consumed" };
+        next.proposal = { ...state.proposal, status: "authorized" };
+        next.authorization = { receipt: `authorization-${state.clock}`, proposalDigest: c.proposalDigest, authorityEpoch: c.authorityEpoch };
+        return append(next, "Application authorization recorded", "The one-time challenge was consumed for exactly one proposal. Safety Kernel admission is still separate.");
+      }
+      case "MUTATE_PROPOSAL":
+        if (!state.proposal) return reject(next, "change proposal", "No proposal exists.");
+        next.proposal = { ...state.proposal, digest: `sha256:changed-${state.clock}`, version: state.proposal.version + 1, status: "pending" };
+        next = invalidateChallenge(next);
+        next.authorization = null;
+        return append(next, "Proposal changed", "Any issued challenge was invalidated; changed economics require a fresh proposal and challenge.");
+      case "REVOKE_SESSION":
+        next.session = state.session ? { ...state.session, valid: false } : null;
+        next.authorityEpoch = state.authorityEpoch + 1;
+        next.exposure = "frozen";
+        next = invalidateChallenge(next);
+        return append(next, "Session revoked", "Authority epoch advanced, pending challenges were invalidated, and new exposure froze.");
+      case "START_RECOVERY":
+        next.recovery = "pending-hardware-key-proof";
+        next.session = null;
+        next.authorityEpoch = state.authorityEpoch + 1;
+        next.exposure = "frozen";
+        next = invalidateChallenge(next);
+        return append(next, "Recovery started", "All sessions and pending approvals were revoked; recovery cannot authorize trades or resume Live.");
+      case "COMPLETE_RECOVERY":
+        if (state.recovery !== "pending-hardware-key-proof") return reject(next, "complete recovery", "No recovery ceremony is pending.");
+        next.recovery = "complete-live-resumption-required";
+        next.principal = { ...state.principal, bindingVersion: state.principal.bindingVersion + 1, status: "active" };
+        return append(next, "Recovery proof accepted", "Hardware-key recovery advanced the binding version. Fresh sign-in and separate Live resumption remain required.");
+      default: return reject(next, action.type, "Unknown action.");
+    }
+  }
+  return { initial, reduce };
+})();
+
+const ACTIONS = [
+  ["Bind exact Principal", "BIND_PRINCIPAL"], ["Sign in: matching passkey", "SIGN_IN_MATCHING"],
+  ["Sign in: other account", "SIGN_IN_OTHER"], ["Restore app eligibility", "ENABLE_EXPOSURE"],
+  ["Create immutable proposal", "CREATE_PROPOSAL"], ["Issue approval challenge", "ISSUE_CHALLENGE"],
+  ["Approve exact challenge", "APPROVE"], ["Replay approval", "APPROVE"],
+  ["Change proposal economics", "MUTATE_PROPOSAL"], ["Provider revokes session", "REVOKE_SESSION"],
+  ["Start account recovery", "START_RECOVERY"], ["Prove recovery hardware key", "COMPLETE_RECOVERY"]
+];
+
+const SCENARIOS = [
+  { title: "Exact one-time approval", description: "A legitimate Principal authenticates, reviews one frozen proposal, and consumes one challenge.", verdict: "Watch for: authentication enables challenge issuance, but only Market Mate creates the proposal-bound authorization receipt.", steps: [0,1,3,4,5,6] },
+  { title: "Replay resistance", description: "A captured approval response is submitted twice.", verdict: "Expected: the first approval consumes the nonce; the second is rejected and cannot create another authorization.", steps: [0,1,4,5,6,7] },
+  { title: "Proposal changed after review", description: "Economics change after the Principal receives a challenge.", verdict: "Expected: mutation invalidates the challenge. Identity remains authenticated, but approval must start again for the new digest.", steps: [0,1,4,5,8,6] },
+  { title: "Valid provider, wrong person", description: "The provider authenticates a real account that is not the immutable Principal subject.", verdict: "Expected: no Market Mate session is admitted and new exposure stays frozen. Email equality is never consulted.", steps: [0,2,4,5] },
+  { title: "Lost phone and recovery", description: "Recovery begins while a sensitive challenge is pending.", verdict: "Expected: recovery revokes sessions and challenges, advances the authority epoch, freezes exposure, and never resumes Live by itself.", steps: [0,1,3,4,5,10,11,1,3] }
+];
+
+const PROVIDERS = [
+  { name: "Clerk Pro", docs: '<a href="https://clerk.com/docs/guides/development/deployment/production">production/passkeys/webhooks</a>' },
+  { name: "Stytch Consumer", docs: '<a href="https://stytch.com/docs/consumer-auth/overview">passkeys/sessions/webhooks</a>' },
+  { name: "WorkOS AuthKit", docs: '<a href="https://workos.com/docs/authkit/passkeys/passkey-configuration/multi-factor-auth">hosted-UI passkeys</a>' },
+  { name: "Auth0 Essentials", docs: '<a href="https://auth0.com/docs/authenticate/database-connections/passkeys/passkey-apis">web/native passkey APIs</a>' }
+];
+const GATES = ["web", "recovery", "revocation", "events", "native", "cost"];
+let state = ApprovalContract.initial();
+let activeScenario = 0;
+let scenarioStep = 0;
+
+const labelValue = (label, value, klass = "") => `<div class="datum"><span>${label}</span><strong class="${klass}">${value}</strong></div>`;
+function render() {
+  const c = state.challenge;
+  document.querySelector("#state").innerHTML = [
+    labelValue("Principal binding", state.principal.status === "unbound" ? "Unbound" : `${state.principal.providerSubject} · v${state.principal.bindingVersion}`, state.principal.status === "active" ? "ok" : "bad"),
+    labelValue("Session", state.session ? `${state.session.id} · ${state.session.valid ? state.session.method : "revoked"}` : "None", state.session?.valid ? "ok" : ""),
+    labelValue("Recovery", state.recovery),
+    labelValue("New-exposure posture", state.exposure, state.exposure === "frozen" ? "bad" : "ok"),
+    labelValue("Proposal", state.proposal ? `${state.proposal.id} · v${state.proposal.version} · ${state.proposal.status}<br><code>${state.proposal.digest}</code>` : "None"),
+    labelValue("Approval challenge", c ? `${c.id} · ${c.status}<br><code>${c.proposalDigest}</code>` : "None", c?.status === "issued" ? "ok" : ""),
+    labelValue("Authority epoch", state.authorityEpoch),
+    labelValue("Authorization receipt", state.authorization ? `${state.authorization.receipt}<br><code>${state.authorization.proposalDigest}</code>` : "None", state.authorization ? "ok" : "")
+  ].join("");
+  const events = state.events.length ? [...state.events].reverse().map(e => `<div class="event"><b class="${e.accepted ? "" : "bad"}">${e.sequence}. ${e.kind}</b><small>${e.message}</small></div>`).join("") : '<p class="warning">No actions yet.</p>';
+  document.querySelector("#events").innerHTML = events;
+  renderScenario();
+}
+
+function dispatch(type) { state = ApprovalContract.reduce(state, { type }); render(); }
+document.querySelector("#actions").innerHTML = ACTIONS.map(([label, type]) => `<button data-action="${type}">${label}</button>`).join("") + '<button data-action="RESET">Reset</button>';
+document.querySelector("#actions").addEventListener("click", e => { if (e.target.dataset.action) dispatch(e.target.dataset.action); });
+
+function startScenario(index) { activeScenario = index; scenarioStep = 0; state = ApprovalContract.initial(); render(); }
+function renderScenario() {
+  const scenario = SCENARIOS[activeScenario];
+  document.querySelector("#scenario-title").textContent = scenario.title;
+  document.querySelector("#scenario-description").textContent = scenario.description;
+  document.querySelector("#scenario-verdict").textContent = scenario.verdict;
+  document.querySelector("#tabs").innerHTML = SCENARIOS.map((s, i) => `<button class="${i === activeScenario ? "active" : ""}" data-scenario="${i}">${s.title}</button>`).join("");
+  document.querySelector("#steps").innerHTML = scenario.steps.map((actionIndex, i) => `<button data-step="${i}" ${i > scenarioStep ? "disabled" : ""} class="${i < scenarioStep ? "step-done" : i === scenarioStep ? "primary" : ""}">${i + 1}. ${ACTIONS[actionIndex][0]}</button>`).join("");
+}
+document.querySelector("#tabs").addEventListener("click", e => { if (e.target.dataset.scenario !== undefined) startScenario(Number(e.target.dataset.scenario)); });
+document.querySelector("#steps").addEventListener("click", e => {
+  if (e.target.dataset.step === undefined || Number(e.target.dataset.step) !== scenarioStep) return;
+  const actionIndex = SCENARIOS[activeScenario].steps[scenarioStep];
+  state = ApprovalContract.reduce(state, { type: ACTIONS[actionIndex][1] });
+  scenarioStep += 1;
+  render();
+});
+
+const statusSelect = (provider, gate) => `<select data-provider="${provider}" data-gate="${gate}"><option>Untested</option><option>Pass</option><option>Fail</option></select>`;
+document.querySelector("#provider-rows").innerHTML = PROVIDERS.map((p, i) => `<tr><td><strong>${p.name}</strong></td><td>${p.docs}</td>${GATES.map(g => `<td>${statusSelect(i, g)}</td>`).join("")}</tr>`).join("");
+function renderProviderVerdict() {
+  const rows = PROVIDERS.map((p, i) => ({ name: p.name, values: [...document.querySelectorAll(`select[data-provider="${i}"]`)].map(s => s.value) }));
+  const passing = rows.filter(r => r.values.every(v => v === "Pass"));
+  document.querySelector("#provider-verdict").innerHTML = passing.length === 1
+    ? `<strong>Decision candidate: ${passing[0].name}</strong><br>All hard gates are marked Pass. Preserve tenant evidence and independently review the contract before selection.`
+    : passing.length > 1
+      ? `<strong>No unique decision yet.</strong><br>${passing.map(p => p.name).join(", ")} pass every marked gate; use measured reliability, integration risk, support, and fully loaded cost as documented tie-break evidence.`
+      : "<strong>No provider is selectable yet.</strong><br>A candidate must pass every hard gate; an Untested cell is not a pass.";
+}
+document.querySelector("#provider-rows").addEventListener("change", renderProviderVerdict);
+renderProviderVerdict();
+startScenario(0);
+</script>
+</body>
+</html>
