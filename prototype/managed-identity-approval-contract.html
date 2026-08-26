@@ -137,7 +137,7 @@
     <article class="panel providers">
       <h2>Executable provider bake-off worksheet</h2>
       <p>The providers share the same hard gates, but they do not start from the same documented position. The cards below show why each candidate is materially different.</p>
-      <div class="comparison-note"><strong>Current documentation-first test order:</strong> Auth0 Essentials → Clerk Pro → Stytch Consumer → WorkOS AuthKit. This is an order for spending bake-off effort, not a provider selection.</div>
+      <div class="comparison-note"><strong>Free-first policy:</strong> start with Auth0 Free for Paper. If it fails a hard gate, test Stytch Free and then WorkOS Free before paying for anything. Clerk Hobby is already ineligible because it withholds required production passkeys and MFA. Paid identity is justified only by preserved evidence that every viable free route failed an applicable safety requirement.</div>
       <div class="provider-summary" id="provider-summary"></div>
       <h3>Record observed tenant results</h3>
       <p>Each cell includes the current documentation signal. Change the selector only after reproducing the behavior in a real test tenant; state is intentionally not saved.</p>
@@ -283,63 +283,63 @@ const SCENARIOS = [
 
 const PROVIDERS = [
   {
-    name: "Auth0 Essentials", order: 1, badge: "Test first",
-    thesis: "Strongest documented match for an exact embedded approval experience across web and the future native companion.",
+    name: "Auth0 Free", order: 1, badge: "Best free candidate",
+    thesis: "Best documented zero-dollar match for an exact embedded approval experience across web and the future native companion.",
     native: "Direct passkey APIs for web, iOS, and Android; shared RP ID is documented.",
     recovery: "Multiple passkey flows are documented, but hardware-key-only recovery still needs tenant proof.",
-    events: "Essentials includes audit-log streaming and separate production/development environments.",
-    cost: "$35/month at 500 MAU on the current monthly Essentials tier.",
-    concern: "Broad, configurable platform means the largest integration and misconfiguration surface.",
+    events: "The Management API supports checkpoint export, but Free retains logs for only one day and does not include the paid log-stream path.",
+    cost: "$0 through 25,000 MAU; passkeys and one custom domain are currently included.",
+    concern: "Polling-based provider audit is delayed and must be drained frequently; the platform also has a broad configuration surface.",
     docs: '<a href="https://auth0.com/docs/authenticate/database-connections/passkeys/passkey-apis">passkey APIs</a> · <a href="https://auth0.com/pricing">pricing</a>',
     hints: {
       web: ["positive", "Embedded web API documented"], recovery: ["unknown", "Hardware-key ceremony unproven"],
-      revocation: ["unknown", "Measure propagation"], events: ["positive", "Audit log streaming included"],
-      native: ["positive", "Direct iOS/Android APIs"], cost: ["positive", "$35/mo published floor"]
+      revocation: ["unknown", "Measure propagation"], events: ["concern", "1-day logs; checkpoint polling"],
+      native: ["positive", "Direct iOS/Android APIs"], cost: ["positive", "$0 published tier"]
     }
   },
   {
-    name: "Clerk Pro", order: 2, badge: "Fast SDK path",
-    thesis: "Most direct product-SDK route for a small web plus native-iOS application.",
-    native: "First-party iOS SDK, native application registration, associated domains, and prebuilt views.",
-    recovery: "Production passkeys and MFA are Pro features; the independent hardware-key recovery ceremony is not established by docs.",
-    events: "Signed webhooks and backend APIs are documented.",
-    cost: "$25/month, or $20/month billed annually, for Pro with production passkeys.",
-    concern: "Enabling the Native API creates a public request path that bypasses browser CAPTCHA protections.",
-    docs: '<a href="https://clerk.com/docs/ios/reference/native-mobile/overview">iOS SDK</a> · <a href="https://clerk.com/docs/guides/development/deployment/production">production</a> · <a href="https://clerk.com/pricing">pricing</a>',
-    hints: {
-      web: ["positive", "Production passkeys on Pro"], recovery: ["unknown", "Hardware-key ceremony unproven"],
-      revocation: ["unknown", "Measure propagation"], events: ["positive", "Signed webhooks documented"],
-      native: ["positive", "First-party iOS SDK"], cost: ["positive", "$25/mo published floor"]
-    }
-  },
-  {
-    name: "Stytch Consumer", order: 3, badge: "Recovery tension",
-    thesis: "Most explicit documentation for WebAuthn authenticators, including security hardware such as YubiKeys.",
+    name: "Stytch Consumer Free", order: 2, badge: "Free fallback",
+    thesis: "Strong zero-dollar fallback with no feature gating, explicit WebAuthn authenticators, and signed webhook infrastructure.",
     native: "Consumer SDKs expose native biometrics, but the documented passkey flow reviewed here is web frontend SDK based.",
     recovery: "A verified email or phone primary factor is required before passkey enrollment; that conflicts with a strict no-email-only recovery posture unless constrained.",
-    events: "Sessions and revocation APIs are explicit; webhook/export completeness needs tenant proof.",
-    cost: "$0 starting tier with 10,000 MAU shown; branding removal is listed separately at $99.",
-    concern: "The required primary email/phone factor could become the weakest recovery path.",
-    docs: '<a href="https://stytch.com/docs/consumer-auth/authentication/passkeys/login-sdk">passkeys</a> · <a href="https://stytch.com/pricing">pricing</a>',
+    events: "Sessions, revocation, event logs, and Svix-backed webhooks are documented.",
+    cost: "$0 through 10,000 MAU; brand removal is optional and separately priced.",
+    concern: "The required primary email/phone factor could become the weakest recovery path, and revoked JWTs can remain locally valid for up to five minutes.",
+    docs: '<a href="https://stytch.com/docs/consumer-auth/authentication/passkeys/login-sdk">passkeys</a> · <a href="https://stytch.com/docs/resources/workspace-management/webhooks">webhooks</a> · <a href="https://stytch.com/pricing">pricing</a>',
     hints: {
       web: ["positive", "WebAuthn + hardware keys documented"], recovery: ["concern", "Email/phone primary factor required"],
-      revocation: ["positive", "Session revoke API documented"], events: ["unknown", "Export completeness unproven"],
-      native: ["unknown", "Native passkey path unclear"], cost: ["positive", "$0 starting tier shown"]
+      revocation: ["concern", "JWT valid up to 5 minutes"], events: ["positive", "Svix webhooks documented"],
+      native: ["unknown", "Native passkey path unclear"], cost: ["positive", "$0 published tier"]
     }
   },
   {
-    name: "WorkOS AuthKit", order: 4, badge: "Lowest headline cost",
-    thesis: "Lowest published authentication price at Market Mate scale and clean multi-application session modeling.",
-    native: "Separate mobile application/session configuration is supported, but passkeys are currently documented as hosted-UI-only.",
+    name: "WorkOS AuthKit Free", order: 3, badge: "Free with domain caveat",
+    thesis: "Largest zero-dollar user allowance and clean multi-application sessions, but a weaker direct native-approval fit.",
+    native: "Separate mobile application/session configuration is supported, while passkeys are currently hosted-UI-only.",
     recovery: "Passkeys count as MFA; an independent roaming-key recovery ceremony remains unproven.",
     events: "Session list/revoke APIs, signed webhooks, and an Events API are documented.",
-    cost: "$0 through 1 million active users; a production custom domain is listed at $99/month.",
-    concern: "Hosted-UI-only passkeys make the future proposal-bound native approval experience the weakest documented fit.",
-    docs: '<a href="https://workos.com/docs/authkit/passkeys">passkeys</a> · <a href="https://workos.com/docs/authkit/applications">applications</a> · <a href="https://workos.com/pricing">pricing</a>',
+    cost: "$0 through 1 million active users on a WorkOS domain; a custom domain is optional and listed at $99/month.",
+    concern: "Using the free WorkOS domain binds passkeys to a vendor domain; moving later to a custom domain can force re-enrollment.",
+    docs: '<a href="https://workos.com/docs/authkit/passkeys">passkeys</a> · <a href="https://workos.com/docs/authkit/environments">environments</a> · <a href="https://workos.com/pricing">pricing</a>',
     hints: {
       web: ["positive", "Hosted-UI passkeys documented"], recovery: ["unknown", "Hardware-key ceremony unproven"],
       revocation: ["positive", "Session revoke API documented"], events: ["positive", "Events + signed webhooks"],
-      native: ["concern", "Passkeys hosted-UI-only"], cost: ["positive", "$0 auth; $99 custom domain"]
+      native: ["concern", "Passkeys hosted-UI-only"], cost: ["positive", "$0 on WorkOS domain"]
+    }
+  },
+  {
+    name: "Clerk Hobby", order: 4, badge: "Free tier fails gate",
+    thesis: "Good SDK ergonomics, but the free production tier does not satisfy Market Mate's passkey and MFA requirements.",
+    native: "First-party iOS SDK and native application path are documented.",
+    recovery: "Production passkeys and MFA require Pro, so the free tier cannot run the required recovery bake-off for Live.",
+    events: "Webhooks and backend APIs remain available, with short free-tier log retention.",
+    cost: "$0 through 50,000 retained users; the required Pro security features begin at $25/month or $20 annually billed.",
+    concern: "Hobby lacks production passkeys and MFA, making it ineligible rather than merely lower-ranked.",
+    docs: '<a href="https://clerk.com/docs/ios/reference/native-mobile/overview">iOS SDK</a> · <a href="https://clerk.com/pricing">pricing</a>',
+    hints: {
+      web: ["concern", "No production passkeys on Hobby"], recovery: ["concern", "MFA unavailable on Hobby"],
+      revocation: ["unknown", "Measure propagation"], events: ["positive", "Signed webhooks documented"],
+      native: ["positive", "First-party iOS SDK"], cost: ["concern", "Required security needs Pro"]
     }
   }
 ];
