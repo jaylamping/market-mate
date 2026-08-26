@@ -68,16 +68,31 @@
     .scenario { display: grid; grid-template-columns: 1fr 1.4fr; gap: 18px; }
     .steps { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
     .step-done { opacity: .48; text-decoration: line-through; }
+    .provider-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 16px 0 22px; }
+    .provider-card { background: #0b1311; border: 1px solid var(--line); border-radius: 12px; padding: 15px; }
+    .provider-card.recommended { border-color: var(--accent); }
+    .provider-card h3 { display: flex; justify-content: space-between; gap: 12px; font-size: 17px; }
+    .provider-card p { color: var(--muted); }
+    .provider-card dl { display: grid; grid-template-columns: 105px 1fr; gap: 7px 10px; margin: 12px 0 0; }
+    .provider-card dt { color: var(--muted); font-size: 12px; }
+    .provider-card dd { margin: 0; }
+    .badge { border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 11px; padding: 3px 7px; white-space: nowrap; }
+    .badge.lead { border-color: var(--accent); color: var(--accent); }
+    .comparison-note { border-left: 3px solid var(--accent); padding: 11px 13px; background: #0d1b16; margin-top: 12px; }
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     th, td { border-bottom: 1px solid var(--line); padding: 10px 8px; text-align: left; vertical-align: top; }
     th { color: var(--muted); font-size: 12px; }
     select { background: #0b1311; color: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: 6px; }
+    .doc-hint { display: block; color: var(--muted); font-size: 11px; line-height: 1.3; margin-top: 6px; min-width: 110px; }
+    .doc-positive { color: var(--accent); }
+    .doc-concern { color: var(--warn); }
     a { color: var(--accent); }
     .verdict { margin-top: 14px; padding: 12px; border-left: 3px solid var(--warn); background: #161710; }
     @media (max-width: 800px) {
       .state, .events { grid-column: 1 / -1; }
       .scenario { grid-template-columns: 1fr; }
       .state-grid { grid-template-columns: 1fr; }
+      .provider-summary { grid-template-columns: 1fr; }
       .providers { overflow-x: auto; }
     }
   </style>
@@ -121,7 +136,11 @@
 
     <article class="panel providers">
       <h2>Executable provider bake-off worksheet</h2>
-      <p>Documentation is only a setup hint. Change cells after observing the behavior in a real test tenant; state is intentionally not saved.</p>
+      <p>The providers share the same hard gates, but they do not start from the same documented position. The cards below show why each candidate is materially different.</p>
+      <div class="comparison-note"><strong>Current documentation-first test order:</strong> Auth0 Essentials → Clerk Pro → Stytch Consumer → WorkOS AuthKit. This is an order for spending bake-off effort, not a provider selection.</div>
+      <div class="provider-summary" id="provider-summary"></div>
+      <h3>Record observed tenant results</h3>
+      <p>Each cell includes the current documentation signal. Change the selector only after reproducing the behavior in a real test tenant; state is intentionally not saved.</p>
       <table>
         <thead>
           <tr><th>Candidate</th><th>Docs observed</th><th>Web passkey + exact subject</th><th>Hardware-key recovery</th><th>Immediate session revocation</th><th>Signed event export</th><th>Native companion path</th><th>Reproducible cost</th></tr>
@@ -263,10 +282,66 @@ const SCENARIOS = [
 ];
 
 const PROVIDERS = [
-  { name: "Clerk Pro", docs: '<a href="https://clerk.com/docs/guides/development/deployment/production">production/passkeys/webhooks</a>' },
-  { name: "Stytch Consumer", docs: '<a href="https://stytch.com/docs/consumer-auth/overview">passkeys/sessions/webhooks</a>' },
-  { name: "WorkOS AuthKit", docs: '<a href="https://workos.com/docs/authkit/passkeys/passkey-configuration/multi-factor-auth">hosted-UI passkeys</a>' },
-  { name: "Auth0 Essentials", docs: '<a href="https://auth0.com/docs/authenticate/database-connections/passkeys/passkey-apis">web/native passkey APIs</a>' }
+  {
+    name: "Auth0 Essentials", order: 1, badge: "Test first",
+    thesis: "Strongest documented match for an exact embedded approval experience across web and the future native companion.",
+    native: "Direct passkey APIs for web, iOS, and Android; shared RP ID is documented.",
+    recovery: "Multiple passkey flows are documented, but hardware-key-only recovery still needs tenant proof.",
+    events: "Essentials includes audit-log streaming and separate production/development environments.",
+    cost: "$35/month at 500 MAU on the current monthly Essentials tier.",
+    concern: "Broad, configurable platform means the largest integration and misconfiguration surface.",
+    docs: '<a href="https://auth0.com/docs/authenticate/database-connections/passkeys/passkey-apis">passkey APIs</a> · <a href="https://auth0.com/pricing">pricing</a>',
+    hints: {
+      web: ["positive", "Embedded web API documented"], recovery: ["unknown", "Hardware-key ceremony unproven"],
+      revocation: ["unknown", "Measure propagation"], events: ["positive", "Audit log streaming included"],
+      native: ["positive", "Direct iOS/Android APIs"], cost: ["positive", "$35/mo published floor"]
+    }
+  },
+  {
+    name: "Clerk Pro", order: 2, badge: "Fast SDK path",
+    thesis: "Most direct product-SDK route for a small web plus native-iOS application.",
+    native: "First-party iOS SDK, native application registration, associated domains, and prebuilt views.",
+    recovery: "Production passkeys and MFA are Pro features; the independent hardware-key recovery ceremony is not established by docs.",
+    events: "Signed webhooks and backend APIs are documented.",
+    cost: "$25/month, or $20/month billed annually, for Pro with production passkeys.",
+    concern: "Enabling the Native API creates a public request path that bypasses browser CAPTCHA protections.",
+    docs: '<a href="https://clerk.com/docs/ios/reference/native-mobile/overview">iOS SDK</a> · <a href="https://clerk.com/docs/guides/development/deployment/production">production</a> · <a href="https://clerk.com/pricing">pricing</a>',
+    hints: {
+      web: ["positive", "Production passkeys on Pro"], recovery: ["unknown", "Hardware-key ceremony unproven"],
+      revocation: ["unknown", "Measure propagation"], events: ["positive", "Signed webhooks documented"],
+      native: ["positive", "First-party iOS SDK"], cost: ["positive", "$25/mo published floor"]
+    }
+  },
+  {
+    name: "Stytch Consumer", order: 3, badge: "Recovery tension",
+    thesis: "Most explicit documentation for WebAuthn authenticators, including security hardware such as YubiKeys.",
+    native: "Consumer SDKs expose native biometrics, but the documented passkey flow reviewed here is web frontend SDK based.",
+    recovery: "A verified email or phone primary factor is required before passkey enrollment; that conflicts with a strict no-email-only recovery posture unless constrained.",
+    events: "Sessions and revocation APIs are explicit; webhook/export completeness needs tenant proof.",
+    cost: "$0 starting tier with 10,000 MAU shown; branding removal is listed separately at $99.",
+    concern: "The required primary email/phone factor could become the weakest recovery path.",
+    docs: '<a href="https://stytch.com/docs/consumer-auth/authentication/passkeys/login-sdk">passkeys</a> · <a href="https://stytch.com/pricing">pricing</a>',
+    hints: {
+      web: ["positive", "WebAuthn + hardware keys documented"], recovery: ["concern", "Email/phone primary factor required"],
+      revocation: ["positive", "Session revoke API documented"], events: ["unknown", "Export completeness unproven"],
+      native: ["unknown", "Native passkey path unclear"], cost: ["positive", "$0 starting tier shown"]
+    }
+  },
+  {
+    name: "WorkOS AuthKit", order: 4, badge: "Lowest headline cost",
+    thesis: "Lowest published authentication price at Market Mate scale and clean multi-application session modeling.",
+    native: "Separate mobile application/session configuration is supported, but passkeys are currently documented as hosted-UI-only.",
+    recovery: "Passkeys count as MFA; an independent roaming-key recovery ceremony remains unproven.",
+    events: "Session list/revoke APIs, signed webhooks, and an Events API are documented.",
+    cost: "$0 through 1 million active users; a production custom domain is listed at $99/month.",
+    concern: "Hosted-UI-only passkeys make the future proposal-bound native approval experience the weakest documented fit.",
+    docs: '<a href="https://workos.com/docs/authkit/passkeys">passkeys</a> · <a href="https://workos.com/docs/authkit/applications">applications</a> · <a href="https://workos.com/pricing">pricing</a>',
+    hints: {
+      web: ["positive", "Hosted-UI passkeys documented"], recovery: ["unknown", "Hardware-key ceremony unproven"],
+      revocation: ["positive", "Session revoke API documented"], events: ["positive", "Events + signed webhooks"],
+      native: ["concern", "Passkeys hosted-UI-only"], cost: ["positive", "$0 auth; $99 custom domain"]
+    }
+  }
 ];
 const GATES = ["web", "recovery", "revocation", "events", "native", "cost"];
 let state = ApprovalContract.initial();
@@ -313,8 +388,25 @@ document.querySelector("#steps").addEventListener("click", e => {
   render();
 });
 
-const statusSelect = (provider, gate) => `<select data-provider="${provider}" data-gate="${gate}"><option>Untested</option><option>Pass</option><option>Fail</option></select>`;
-document.querySelector("#provider-rows").innerHTML = PROVIDERS.map((p, i) => `<tr><td><strong>${p.name}</strong></td><td>${p.docs}</td>${GATES.map(g => `<td>${statusSelect(i, g)}</td>`).join("")}</tr>`).join("");
+document.querySelector("#provider-summary").innerHTML = PROVIDERS.map(p => `
+  <section class="provider-card ${p.order === 1 ? "recommended" : ""}">
+    <h3><span>${p.order}. ${p.name}</span><span class="badge ${p.order === 1 ? "lead" : ""}">${p.badge}</span></h3>
+    <p>${p.thesis}</p>
+    <dl>
+      <dt>Native path</dt><dd>${p.native}</dd>
+      <dt>Recovery</dt><dd>${p.recovery}</dd>
+      <dt>Events</dt><dd>${p.events}</dd>
+      <dt>Cost signal</dt><dd>${p.cost}</dd>
+      <dt>Main risk</dt><dd class="warning">${p.concern}</dd>
+      <dt>Sources</dt><dd>${p.docs}</dd>
+    </dl>
+  </section>`).join("");
+
+const statusSelect = (provider, gate, hint) => {
+  const hintClass = hint[0] === "positive" ? "doc-positive" : hint[0] === "concern" ? "doc-concern" : "";
+  return `<select data-provider="${provider}" data-gate="${gate}"><option>Untested</option><option>Pass</option><option>Fail</option></select><small class="doc-hint ${hintClass}">${hint[1]}</small>`;
+};
+document.querySelector("#provider-rows").innerHTML = PROVIDERS.map((p, i) => `<tr><td><strong>${p.order}. ${p.name}</strong><span class="doc-hint">${p.badge}</span></td><td>${p.docs}</td>${GATES.map(g => `<td>${statusSelect(i, g, p.hints[g])}</td>`).join("")}</tr>`).join("");
 function renderProviderVerdict() {
   const rows = PROVIDERS.map((p, i) => ({ name: p.name, values: [...document.querySelectorAll(`select[data-provider="${i}"]`)].map(s => s.value) }));
   const passing = rows.filter(r => r.values.every(v => v === "Pass"));
