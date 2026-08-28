@@ -428,6 +428,14 @@ _Avoid_: profitable experiment, hidden loss, unlimited research
 The stage-scoped evidence result that a preregistered strategy or experiment clears its applicable conservative Portfolio Performance, comparator, risk, uncertainty, sample, and window requirements. Initial qualification does not subtract separately funded Operating Costs, and Research or Paper Economic Qualification never grants Live authority or additional Trading Capital.
 _Avoid_: successful backtest, profitable result, trading approval
 
+**Research Qualification**:
+The stage-scoped evidence result that one Strategy Version clears the Research-grade gates of its preregistration: disjoint chronological walk-forward evaluations, a once-used sealed Release Holdout, Effective Independent Sample Size floors using the lower of raw cluster count and EIS, and a multiplicity-corrected one-sided 95% lower confidence bound above its comparators net of Trading Costs. Research Qualification never grants order authority or capital.
+_Avoid_: good backtest, paper profit, promotion approval
+
+**Executable Capital Feasibility**:
+The deterministic, evidence-backed assessment of which defined-risk structures can actually be traded at the current Trading Capital — minimum contract units, collateral, approvals, fees, slippage, assignment exposure, and total modeled Position Risk — without weakening safety. A negative result triggers the stock-only fallback; it never loosens a risk floor to make a structure fit.
+_Avoid_: buying-power estimate, backtest budget, margin guess
+
 **Capital Expansion Eligibility**:
 The evidence state reached when conservative Portfolio Performance clears its preregistered expansion requirements. It permits an authenticated Principal expansion discussion but never increases Trading Capital by itself; whether later expansion must support or fund Operating Costs remains a future Principal decision after Economic Qualification.
 _Avoid_: automatic reinvestment, Economic Qualification, Live authority
@@ -1913,6 +1921,10 @@ _Avoid_: permanent assignment, ownership lock
 **Decision Liveness Record**:
 The operational record for blocked planning work: exact blocked scope, hazard, dependency, owner, next action or evidence, checkpoint or expiry, escalation path, and safe work that may continue. A timeout escalates but never grants authority or converts a failed gate into a pass.
 _Avoid_: blocked label, waiting for safety
+
+**Deployable Work Unit**:
+The smallest mergeable increment of implementation work: one PR on `main` that passes its own executable acceptance tests, brings the platform up green in its target environment, emits its material actions to the audit chain, and produces its named evidence artifact. It must be completable in one focused sitting; a unit is never done as documentation alone.
+_Avoid_: epic, ticket, spike, design doc
 
 **Safety Control Case**:
 The versioned justification for one safety control, including its hazard, applicable stage and scope, enforcement action, evidence, owner, recovery path, expected benefit, false-positive and Principal-attention burden, Operating Cost, dependencies, review cadence, and merge or retirement criteria.
