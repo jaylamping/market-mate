@@ -1450,6 +1450,14 @@ _Avoid_: account size, strategy confidence, automatic compounding
 The Observation-tier mode in which a Strategy Version proposes real orders that are evaluated against the real account state but never submitted. It produces parity and readiness evidence without granting any execution authority.
 _Avoid_: shadow trading, paper mode, hidden execution
 
+**Event Cycle**:
+One complete, non-overlapping occurrence of a Strategy Version's preregistered trigger event, from its Research Snapshot through matured positions and full outcome recording. Distinct occurrences with complete evidence lineage are counted separately; partial or overlapping spans never merge or extend one another.
+_Avoid_: trading day, earnings season, holding period
+
+**Scrutinized Paper**:
+A Paper MVP segment in which every matured position carries complete Decision Record and Research Snapshot lineage, the daily Market Research Cycle ran without evidence gaps, and unresolved reconciliation breaks were zero — the only Paper evidence eligible for Strategy Version promotion.
+_Avoid_: paper trading, backtest, dry run
+
 **Principal Operational Budget**:
 The rolling attention limit that keeps approval safety from freezing the system: no more than one digest per day, ten decision items per rolling seven days, and a target of thirty minutes of Principal review per week for Research and Paper work. Critical incidents, custody uncertainty, and required Live containment alert immediately outside this budget, and exceeding it pauses only discretionary affected work without ever suppressing an alert, bypassing a gate, or creating authority.
 _Avoid_: approval quota, notification cap, safety delay
