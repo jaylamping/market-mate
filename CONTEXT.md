@@ -1371,8 +1371,20 @@ The deterministic authority that approves or rejects every order against the cur
 _Avoid_: AI risk agent, safety prompt
 
 **Options Lifecycle Engine**:
-The dedicated deterministic authority that continuously controls options-specific exposure and lifecycle risk, including multi-leg integrity, exercise, assignment, expiration, and related underlying positions.
+The dedicated deterministic authority that continuously controls options-specific exposure and lifecycle risk, including multi-leg integrity, exercise, assignment, expiration, and related underlying positions. It enforces the Lifecycle Survivability Envelope, executes only Preauthorized Lifecycle Actions, and honors every Protective Deadline without discretionary trading.
 _Avoid_: options strategy, options bot
+
+**Lifecycle Survivability Envelope**:
+The versioned maximum detection, containment, reconciliation, and Principal-unavailability interval through which an option position's loss, funding, exercise, assignment, expiration, settlement, and broken-package obligations must remain bounded using preauthorized actions and certified venue capabilities. A position whose nearer lifecycle deadline cannot satisfy the envelope is denied or requires a fully preauthorized action before that deadline.
+_Avoid_: response-time target, best-effort monitoring, uptime promise
+
+**Preauthorized Lifecycle Action**:
+The closed catalog of deterministic actions the Options Lifecycle Engine may execute autonomously: cancel working orders, close a Broken Package Exposure as a whole package, bounded preauthorized buy-to-close of a short leg, preauthorized exercise or contrary-exercise decisions under deadline rules, and close-to-contained actions. Nothing outside the catalog is executable without fresh authority, and every action preserves its applicable admission floors except certified Risk-Reducing Orders on the degraded-liquidity path.
+_Avoid_: discretionary hedge, emergency strategy, unbounded market order
+
+**Protective Deadline**:
+A preassigned time boundary after which only the preauthorized action may run for an exposed option leg, such as the expiration-day close-or-roll deadline two hours before the close for every short leg without certified coverage, or the ex-dividend protection point when a short call's extrinsic falls below the dividend. Missing a deadline escalates as a Critical alert while the preauthorized action executes; it never extends by timeout.
+_Avoid_: soft reminder, auto-renewal, discretionary timing choice
 
 **Circuit Breaker**:
 A non-bypassable automated halt on trading when a defined account-level loss or other risk boundary is reached; resumption requires the Principal's intervention.
@@ -1383,8 +1395,20 @@ The versioned set of limits and mandatory controls that bound Autonomous Executi
 _Avoid_: guardrails, configuration
 
 **Risk State**:
-The account-wide authority state derived by the Safety Kernel from the current Risk Policy, account evidence, and containment conditions; it determines which risk-increasing or risk-reducing actions remain permitted.
-_Avoid_: trading mode, alert level
+The account-wide authority state derived by the Safety Kernel from the current Risk Policy, account evidence, and containment conditions; it determines which risk-increasing or risk-reducing actions remain permitted. The canonical states are Normal (full permitted authority), Warning (constrained new exposure, no expansion), Frozen (new exposure blocked in scope; risk reduction, lifecycle, and reconciliation continue), Halted (no new submissions; only preauthorized risk reduction and mandatory lifecycle actions), Uncertain (custody, authority, or audit integrity unknown; submissions fenced pending fresh evidence), and Catastrophic (compromise assumed; full stop, evidence preservation, Principal-led recovery). When multiple triggers hold, the most restrictive state governs, release requires every contributing trigger's gate, and improvement advances at most one level per trading day except through Catastrophic and Uncertain full-recovery gates.
+_Avoid_: trading mode, alert level, threshold owner
+
+**Authority Epoch**:
+The control-handoff interval invalidated by any out-of-band custody intervention, such as a Principal broker-native cancel, credential revocation, trade-desk action, exercise instruction, external position change, or destructive venue reset. It cancels every pending Risk Decision and unsubmitted order, fences all submissions including previously classified risk-reducing actions until reclassified against fresh custody, and ends only after complete reconciliation plus authenticated Principal handback.
+_Avoid_: session, deployment window, assumed continuity
+
+**Risk State Precedence Matrix**:
+The single exhaustive, versioned table consumed by the Safety Kernel, Options Lifecycle Engine, reconciliation, authority, incident, and dashboard contracts, giving each trigger its evidence, exact scope, permitted new exposure, permitted cancellation and risk reduction, lifecycle deadlines, owner, next action, alert, expiry, and release gate. It enforces that compliance denials are never overridden, unknown integrity fences affected submissions, validated risk reduction continues through narrower freezes, and account-wide freezes are reserved for failures invalidating trusted state.
+_Avoid_: informal policy notes, per-service rule lists, dashboard legend
+
+**Emergency Restriction**:
+The immediate containment activated only by an already-approved deterministic trigger, recording its scope, reason, activating policy, start, review deadline, and required release evidence. A novel agent-authored policy never self-activates merely by being stricter; reaching the review deadline escalates and preserves containment rather than loosening it.
+_Avoid_: panic button, improvised shutdown, timeout release
 
 **Recovery State**:
 A fail-closed operational state entered after restoration, material integrity failure, or suspected host compromise. It permits verification, evidence preservation, broker reconciliation, and approved recovery work but grants no new Live exposure authority.
@@ -1419,8 +1443,20 @@ The most restrictive current allowance among the percentage Risk Policy, Strateg
 _Avoid_: five-percent allowance, target position size, buying power
 
 **Strategy Scale Tier**:
-The evidence- and Principal-approved Position Risk authority currently earned by one Strategy Version: Observation, Restricted Live 1, Restricted Live 2, or Mature Live. Account profits or contributions may increase equity but cannot advance the tier or widen its Authority Grant automatically.
+The evidence- and Principal-approved Position Risk authority currently earned by one Strategy Version: Observation, Restricted Live 1, Restricted Live 2, or Mature Live. Observation permits only Live Shadow Evaluation with no live orders; Restricted Live 1 requires per-order Principal approval; Restricted Live 2 permits approval of the daily order plan as one proposal; Mature Live grants Autonomous Execution within the grant scope. A strategy advances one tier at a time through preregistered quantitative gates, a clean compliance, containment, and reconciliation record, Strategy Promotion Review, and a fresh Principal Authorization Decision. Account profits or contributions may increase equity but cannot advance the tier or widen its Authority Grant automatically.
 _Avoid_: account size, strategy confidence, automatic compounding
+
+**Live Shadow Evaluation**:
+The Observation-tier mode in which a Strategy Version proposes real orders that are evaluated against the real account state but never submitted. It produces parity and readiness evidence without granting any execution authority.
+_Avoid_: shadow trading, paper mode, hidden execution
+
+**Principal Operational Budget**:
+The rolling attention limit that keeps approval safety from freezing the system: no more than one digest per day, ten decision items per rolling seven days, and a target of thirty minutes of Principal review per week for Research and Paper work. Critical incidents, custody uncertainty, and required Live containment alert immediately outside this budget, and exceeding it pauses only discretionary affected work without ever suppressing an alert, bypassing a gate, or creating authority.
+_Avoid_: approval quota, notification cap, safety delay
+
+**Certification Lease**:
+An independently expiring evidence grant for one venue, data, or operational capability, with staggered expiry, reused unchanged automated evidence, and dependency-aware renewal bundles that preserve each capability's separate result, scope, and expiry. One rejected or expired lease disables only its dependent capability, and a lease timeout escalates and remains contained rather than passing automatically.
+_Avoid_: blanket certification, synchronized renewal, grace period
 
 **Aggregate Standalone Risk**:
 The sum of every Risk Position's standalone Position Risk without diversification credit. It governs the portfolio's normal and absolute aggregate modeled-risk limits even when the individual worst outcomes are not simultaneous.
@@ -1877,3 +1913,41 @@ _Avoid_: agent-created policy activation, automatic timeout release
 **Economic Evaluation Family**:
 A genuinely independent strategy-review path for economics, robustness, and benchmark value. Reviewers sharing a model, dataset, implementation, or evaluator failure path count as one family when mixture-of-experts consensus is computed.
 _Avoid_: agent count, model-name count, correlated vote
+
+## Compliance
+
+**Compliance Gate**:
+The deterministic Safety Kernel module that evaluates every proposed order against the active Legal Policy Version and issues a Compliance Decision before any broker submission. Hard denials have no Principal override, and venue acceptance never converts a denied action into an allowed one.
+_Avoid_: compliance chatbot, advisory warning, configurable filter
+
+**Compliance Decision**:
+The immutable machine-readable result of one Compliance Gate evaluation, binding the exact order or package hash, its evidence, controlling policy versions, external facts and attestation ages, an Allowed, Denied, or Counsel/Principal Fact Review Required outcome, human-readable reasons, and an expiry after which any material change forces re-evaluation. Only an Allowed decision may reach a Live sender.
+_Avoid_: permission flag, risk score, broker preview result
+
+**Legal Policy Version**:
+The immutable versioned set of compliance rules, surveillance thresholds, attestation requirements, cadences, and counsel-review gates that the Compliance Gate enforces. Changes that remove authority take effect immediately; changes that add authority require validated promotion and a Principal Authorization Decision. A version cannot activate itself.
+_Avoid_: compliance documentation, editable rule list, standing legal approval
+
+**Restricted Issuer**:
+An Issuer whose securities, options, and economically linked instruments are blocked from new Market Mate exposure because of a Principal relationship, confidentiality duty, or MNPI risk. Only counsel-approved or broker-required risk reduction may touch its instruments.
+_Avoid_: blacklisted ticker, trading ban, watchlist entry
+
+**Restricted-Issuer List**:
+The versioned set of Restricted Issuers maintained exclusively through authenticated Principal Gateway declarations, such as employers, board roles, consulting engagements, and household-controlled entities. A list change freezes affected instruments and requires fresh attestation before the next Live action.
+_Avoid_: manual spreadsheet, agent-curated blocklist, public exclusion list
+
+**Compliance Attestation**:
+The Principal's authenticated, specific factual declaration that supplies facts only the Principal knows, such as employment relationships or absence of known MNPI. It cannot override objective evidence, legal prohibitions, broker restrictions, surveillance blocks, or the Safety Kernel, and false answers remain the Principal's legal risk.
+_Avoid_: I agree checkbox, generic legal waiver, permission grant
+
+**Surveillance Alert**:
+The deterministic detection of a potential manipulation-pattern risk, such as self-matching, non-bona-fide cancellation patterns, close or reference-price influence, or cross-product manipulation, across all Market Mate-controlled accounts, strategies, and instruments. An unresolved alert quarantines affected scope; there is no override, only cancellation, risk reduction, or counsel review.
+_Avoid_: warning message, AI suspicion, broker-only concern
+
+**Compliance Quarantine**:
+The frozen state that blocks new exposure in an identified scope while facts, counsel review, sanctions clarity, or a controlling rule determination is outstanding. Independent research, reconciliation, and validated risk reduction remain available; quarantine never times out into permission.
+_Avoid_: temporary pause, waiting period, soft block
+
+**Broker Rule Regime**:
+The venue-declared account and margin rule state, such as legacy pattern-day-trader provisions or intraday-margin standards, that governs an account during a stated period. The system persists the declared regime, models all applicable regimes during transitions, and applies the strictest interpretation whenever status is unclear.
+_Avoid_: universal market rule, assumed account type, broker guess
