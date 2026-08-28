@@ -432,6 +432,18 @@ _Avoid_: successful backtest, profitable result, trading approval
 The evidence state reached when conservative Portfolio Performance clears its preregistered expansion requirements. It permits an authenticated Principal expansion discussion but never increases Trading Capital by itself; whether later expansion must support or fund Operating Costs remains a future Principal decision after Economic Qualification.
 _Avoid_: automatic reinvestment, Economic Qualification, Live authority
 
+**Scaling Step**:
+A Principal-approved, bounded increase of Trading Capital (at most double per step, at least 90 days apart) that re-passes current Capital Expansion Eligibility, scale-tier evidence, and recovery requirements before any additional exposure deploys. Profits alone never constitute a Scaling Step.
+_Avoid_: automatic compounding, profit rollover, de-risked raise
+
+**Scaling Reserve**:
+The minimum unencumbered cash an account must hold — the larger of 25% equity headroom under the Risk Policy utilization ceiling and every enabled capability's options collateral plus Lifecycle Funding headroom floors. A shortfall blocks scaling and new exposure but never triggers liquidation to restore itself.
+_Avoid_: emergency fund, margin buffer, buying power
+
+**Withdrawal Eligibility Model**:
+The read-only computation of whether a Principal-initiated withdrawal would leave Trading Capital at or above every enabled capability's certified minimum while preserving Position Risk, utilization, and Scaling Reserve headroom. Market Mate never exposes or invokes a withdrawal action.
+_Avoid_: payout function, automated withdrawal, disbursement
+
 **Operating Cost Register**:
 The Principal-visible record of every separately funded Market Mate expense, including payee, category, purpose, amount, timing, commitment, applicable envelope, and relationship to the experiment. It remains at least as prominent as profit reporting even while costs are paid manually outside Trading Capital and are not allocated to individual strategies.
 _Avoid_: Capital Ledger, strategy loss, automated bill payment, hidden subsidy
