@@ -1,0 +1,9 @@
+target/
+node_modules/
+.next/
+*.tsbuildinfo
+evidence/**
+!evidence/**/
+!evidence/**/*.json
+*.log
+.DS_Store

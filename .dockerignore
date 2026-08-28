@@ -1,0 +1,6 @@
+.git
+target
+evidence
+frontend/node_modules
+frontend/.next
+frontend/*.tsbuildinfo

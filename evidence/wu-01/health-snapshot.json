@@ -1,0 +1,43 @@
+{
+  "captured_at": "2026-08-28T23:12:19Z",
+  "services": [
+    {
+      "service": "backend",
+      "state": "running",
+      "health": "healthy"
+    },
+    {
+      "service": "frontend",
+      "state": "running",
+      "health": "healthy"
+    },
+    {
+      "service": "postgres",
+      "state": "running",
+      "health": "healthy"
+    }
+  ],
+  "backend_healthz": {
+    "status": "ok",
+    "service": "backend",
+    "environment": "local-research"
+  },
+  "backend_readyz": {
+    "status": "ok",
+    "service": "backend",
+    "database": true
+  },
+  "frontend_health": {
+    "status": "ok",
+    "service": "frontend"
+  },
+  "postgres": {
+    "pgvector_version": "0.8.6",
+    "public_table_count": 0,
+    "public_index_count": 0,
+    "vector_column_count": 0,
+    "named_volume": "market-mate-wu01_pgdata",
+    "crash_exit_code": 137,
+    "persistence_probe": "survive"
+  }
+}

@@ -1,0 +1,12 @@
+FROM rust:1.85-slim AS build
+WORKDIR /app
+COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
+COPY backend ./backend
+WORKDIR /app/backend
+RUN cargo build --release --locked
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY --from=build /app/target/release/backend /usr/local/bin/backend
+EXPOSE 8080
+CMD ["backend"]
