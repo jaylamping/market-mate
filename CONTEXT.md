@@ -1378,6 +1378,18 @@ _Avoid_: mobile backend, Engine API, admin portal, approval bot
 An optional Principal client, such as a native mobile application, that communicates only through the Principal Gateway to present server-fetched evidence, receive Operational Notifications, invoke emergency containment, and cryptographically submit a Principal Authorization Decision. It owns no strategy, risk, ledger, execution, or canonical authorization state.
 _Avoid_: mobile trading engine, second backend, biometric approval
 
+**Approval Signing Ceremony**:
+The one-time, server-challenged signing of an exact proposal during an approval: fresh passkey step-up, fetch of the current proposal state, then a Face ID-gated Secure Enclave signature over a single-use server nonce, verified server-side and recorded with the Principal Authorization Decision. Push notifications are doorbells only, and the device never holds standing authority.
+_Avoid_: biometric login, stored signature, background signing, notification approval
+
+**Device Binding**:
+The fail-closed association of exactly one attested native device with the Principal: paid-program App Attestation plus a Secure Enclave proposal key bound to current biometry, so a biometric change invalidates the key and forces re-binding through a fresh ceremony. Revocation, device listing, and re-enrollment live on the web, and recovery never requires the lost device.
+_Avoid_: remembered device, multi-device trust, device admin, passkey sync
+
+**Companion Activation Gate**:
+One of the four fail-closed conditions a native Approval Companion must satisfy before exercising any authority: paid Apple Developer Program entitlements proven in the build, device binding and attestation, a current security-patched iOS release, and a fresh passkey plus proposal signature for each session.
+_Avoid_: install wizard, beta opt-in, app-store listing
+
 **Principal Authorization Decision**:
 The Principal's authenticated, step-up-verified approval or rejection of an exact, immutable proposal within Market Mate, including proposal identity, scope, expiry, evidence, and resulting authority change. A message acknowledgement or external-channel interaction is not a Principal Authorization Decision.
 _Avoid_: Slack approval, notification acknowledgement, button click
