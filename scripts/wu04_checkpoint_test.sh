@@ -126,7 +126,7 @@ log "== WU-04 checkpoint test $(date -u +%FT%TZ) (project: $WU04_PROJECT_NAME) =
 "${COMPOSE[@]}" config --quiet >>"$BRING_UP_LOG" 2>&1 \
   || fail "Compose configuration is invalid"
 
-for sibling in market-mate-wu01 market-mate-wu02 market-mate-wu03 market-mate-wu05 market-mate-wu06; do
+for sibling in market-mate-wu01 market-mate-wu02 market-mate-wu03 market-mate-wu05 market-mate-wu06 market-mate-wu07; do
   docker compose --project-name "$sibling" down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 done
 "${COMPOSE[@]}" down -v --remove-orphans >>"$BRING_UP_LOG" 2>&1 \
