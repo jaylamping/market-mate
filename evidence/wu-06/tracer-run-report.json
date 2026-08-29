@@ -1,0 +1,219 @@
+{
+  "captured_at": "2026-08-29T14:39:04Z",
+  "runs": {
+    "first": {
+      "audit_positions": {
+        "evaluation_recorded": 4,
+        "preregistration_created": 3,
+        "snapshot_captured": 2
+      },
+      "evaluation_id": "4d1ea737-ace6-4ab2-b21c-1004dc6edf06",
+      "preregistration_id": "7e4e74e2-928a-43fb-b8ce-27434340abbd",
+      "result": {
+        "decision": "non_positive",
+        "difference_bps": -393,
+        "estimator": "mean_return_difference_bps",
+        "group_bottom": {
+          "mean_cumulative_bps": 299,
+          "symbols": [
+            "XOM",
+            "AAPL"
+          ]
+        },
+        "group_top": {
+          "mean_cumulative_bps": -94,
+          "symbols": [
+            "JPM",
+            "MSFT"
+          ]
+        },
+        "window_returns": {
+          "AAPL": {
+            "cumulative_bps": 172,
+            "first_close_bps_change": 10,
+            "last_close_bps_change": -283
+          },
+          "JPM": {
+            "cumulative_bps": 190,
+            "first_close_bps_change": 209,
+            "last_close_bps_change": 126
+          },
+          "MMM": {
+            "cumulative_bps": 47,
+            "first_close_bps_change": 215,
+            "last_close_bps_change": 119
+          },
+          "MSFT": {
+            "cumulative_bps": -379,
+            "first_close_bps_change": -232,
+            "last_close_bps_change": -26
+          },
+          "XOM": {
+            "cumulative_bps": 427,
+            "first_close_bps_change": 178,
+            "last_close_bps_change": -137
+          }
+        }
+      },
+      "result_digest": "c06f2c33cb60818a2a22724e458fd78c7da15d3803e3583885b85e7b5d2a091c",
+      "run_id": "e7535c00-7f5d-4aa4-8c36-f07851a9bf00",
+      "snapshot_digest": "80f31bf4c2849d426231d6d89f772feed547679c32660406cf95762d967b3f3f",
+      "snapshot_id": "fb17e634-aacb-4c01-b5ea-ac85f6ce929a",
+      "snapshot_kind": "tracer_inline",
+      "spec": {
+        "comparator": "zero_difference",
+        "data_source": "research_snapshot[tracer_inline]",
+        "determinism": "sha256_derived_synthetic_data",
+        "estimator": "mean_return_difference_bps",
+        "experiment_key": "wu06-tracer-toy",
+        "groups": {
+          "bottom": 2,
+          "rank_by": "earnings_surprise_bps",
+          "top": 2
+        },
+        "hypothesis": "Symbols with higher synthetic earnings surprise show higher synthetic EOD return over the tracer window",
+        "multiplicity": "none",
+        "stopping_rule": "single_pass",
+        "symbols": [
+          "MMM",
+          "AAPL",
+          "MSFT",
+          "XOM",
+          "JPM"
+        ],
+        "window": {
+          "kind": "synthetic_chronological",
+          "trading_days": 10
+        }
+      },
+      "spec_digest": "e0c0b1745a90ed9d5e188b6b37d57252d4edebd4be11577e69ed93b725bc65b6",
+      "symbols": [
+        "MMM",
+        "AAPL",
+        "MSFT",
+        "XOM",
+        "JPM"
+      ]
+    },
+    "second": {
+      "audit_positions": {
+        "evaluation_recorded": 7,
+        "preregistration_created": 6,
+        "snapshot_captured": 5
+      },
+      "evaluation_id": "a4f87e99-725f-4b34-8791-06a21a883eff",
+      "preregistration_id": "9c518086-260b-4c2b-85c4-8535767ada3a",
+      "result": {
+        "decision": "non_positive",
+        "difference_bps": -393,
+        "estimator": "mean_return_difference_bps",
+        "group_bottom": {
+          "mean_cumulative_bps": 299,
+          "symbols": [
+            "XOM",
+            "AAPL"
+          ]
+        },
+        "group_top": {
+          "mean_cumulative_bps": -94,
+          "symbols": [
+            "JPM",
+            "MSFT"
+          ]
+        },
+        "window_returns": {
+          "AAPL": {
+            "cumulative_bps": 172,
+            "first_close_bps_change": 10,
+            "last_close_bps_change": -283
+          },
+          "JPM": {
+            "cumulative_bps": 190,
+            "first_close_bps_change": 209,
+            "last_close_bps_change": 126
+          },
+          "MMM": {
+            "cumulative_bps": 47,
+            "first_close_bps_change": 215,
+            "last_close_bps_change": 119
+          },
+          "MSFT": {
+            "cumulative_bps": -379,
+            "first_close_bps_change": -232,
+            "last_close_bps_change": -26
+          },
+          "XOM": {
+            "cumulative_bps": 427,
+            "first_close_bps_change": 178,
+            "last_close_bps_change": -137
+          }
+        }
+      },
+      "result_digest": "c06f2c33cb60818a2a22724e458fd78c7da15d3803e3583885b85e7b5d2a091c",
+      "run_id": "8b401cfa-81f2-44c5-be13-0106b13ee89c",
+      "snapshot_digest": "80f31bf4c2849d426231d6d89f772feed547679c32660406cf95762d967b3f3f",
+      "snapshot_id": "02eb605a-ec75-4a82-9bf5-682d22dbca20",
+      "snapshot_kind": "tracer_inline",
+      "spec": {
+        "comparator": "zero_difference",
+        "data_source": "research_snapshot[tracer_inline]",
+        "determinism": "sha256_derived_synthetic_data",
+        "estimator": "mean_return_difference_bps",
+        "experiment_key": "wu06-tracer-toy",
+        "groups": {
+          "bottom": 2,
+          "rank_by": "earnings_surprise_bps",
+          "top": 2
+        },
+        "hypothesis": "Symbols with higher synthetic earnings surprise show higher synthetic EOD return over the tracer window",
+        "multiplicity": "none",
+        "stopping_rule": "single_pass",
+        "symbols": [
+          "MMM",
+          "AAPL",
+          "MSFT",
+          "XOM",
+          "JPM"
+        ],
+        "window": {
+          "kind": "synthetic_chronological",
+          "trading_days": 10
+        }
+      },
+      "spec_digest": "e0c0b1745a90ed9d5e188b6b37d57252d4edebd4be11577e69ed93b725bc65b6",
+      "symbols": [
+        "MMM",
+        "AAPL",
+        "MSFT",
+        "XOM",
+        "JPM"
+      ]
+    }
+  },
+  "determinism": {
+    "snapshot_digest_match": true,
+    "spec_digest_match": true,
+    "result_digest_match": true
+  },
+  "snapshot_store": {
+    "snapshots": 2,
+    "digests_verify": true,
+    "lineage_present": true
+  },
+  "preregistration_precedes_result": true,
+  "immutability_probes": {
+    "snapshot_update_blocked": true,
+    "preregistration_delete_blocked": true,
+    "orphan_result_blocked": true
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 7,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  }
+}

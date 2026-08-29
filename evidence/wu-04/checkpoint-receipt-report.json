@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T13:57:59Z",
+  "captured_at": "2026-08-29T14:41:11Z",
   "readyz_initial": {
     "status": "ok",
     "service": "backend",
@@ -11,28 +11,28 @@
   },
   "custody_public_key": {
     "algorithm": "ed25519",
-    "public_key": "c49369be8aaaa9e4a14b9b31f27cda0b6f5a73b6718578b750b5377753085f66"
+    "public_key": "21872fc6c6071994df0455869f9823840a3c764830cd79742b62befb1fcc5d88"
   },
   "receipts_initial": [],
   "checkpoint_one": {
     "receipt": {
       "algorithm": "ed25519",
-      "chain_digest": "28eaacd7f1e9dd92ca2ec2a4d9fe5fd36d49bd648d910798325b870c283f1f07",
+      "chain_digest": "e4800a0ca744bad015fcc29ea9cc85dbabc4194e8205539a557763865770cc72",
       "chain_position": 4,
       "checkpoint_index": 1,
-      "checkpoint_time": "2026-08-29T13:57:03.446742Z",
-      "public_key": "c49369be8aaaa9e4a14b9b31f27cda0b6f5a73b6718578b750b5377753085f66",
-      "signature": "f86fea071b62b343ee96d71665ec6ca5a44c24261781e4aaefc7a61f4a7fb5b8ee5aad1821e4749d03602c6be461ad28caad6e874e4ae56190aec4ea63793c08"
+      "checkpoint_time": "2026-08-29T14:40:14.935461Z",
+      "public_key": "21872fc6c6071994df0455869f9823840a3c764830cd79742b62befb1fcc5d88",
+      "signature": "a5dfd02c0d0f746839d4ed949d995e2f06be4d56dd47fe855b7765358438633ad1a8859cb6e81bd52a842b76e724235bb6d3504e9506d2085cc180a79f3cdf03"
     },
     "audit_chain_position": 5,
     "database_mirror": {
       "checkpoint_index": 1,
       "chain_position": 4,
-      "chain_digest": "28eaacd7f1e9dd92ca2ec2a4d9fe5fd36d49bd648d910798325b870c283f1f07",
-      "signature": "f86fea071b62b343ee96d71665ec6ca5a44c24261781e4aaefc7a61f4a7fb5b8ee5aad1821e4749d03602c6be461ad28caad6e874e4ae56190aec4ea63793c08"
+      "chain_digest": "e4800a0ca744bad015fcc29ea9cc85dbabc4194e8205539a557763865770cc72",
+      "signature": "a5dfd02c0d0f746839d4ed949d995e2f06be4d56dd47fe855b7765358438633ad1a8859cb6e81bd52a842b76e724235bb6d3504e9506d2085cc180a79f3cdf03"
     },
     "independent_verification": {
-      "canonical": "market-mate-checkpoint-receipt-v1|1|4|28eaacd7f1e9dd92ca2ec2a4d9fe5fd36d49bd648d910798325b870c283f1f07|2026-08-29T13:57:03.446742Z",
+      "canonical": "market-mate-checkpoint-receipt-v1|1|4|e4800a0ca744bad015fcc29ea9cc85dbabc4194e8205539a557763865770cc72|2026-08-29T14:40:14.935461Z",
       "tool": "openssl pkeyutl ed25519",
       "output": "Signature Verified Successfully"
     },
@@ -40,11 +40,11 @@
       {
         "checkpoint_index": 1,
         "chain_position": 4,
-        "chain_digest": "28eaacd7f1e9dd92ca2ec2a4d9fe5fd36d49bd648d910798325b870c283f1f07",
-        "checkpoint_time": "2026-08-29T13:57:03.446742Z",
+        "chain_digest": "e4800a0ca744bad015fcc29ea9cc85dbabc4194e8205539a557763865770cc72",
+        "checkpoint_time": "2026-08-29T14:40:14.935461Z",
         "algorithm": "ed25519",
-        "public_key": "c49369be8aaaa9e4a14b9b31f27cda0b6f5a73b6718578b750b5377753085f66",
-        "signature": "f86fea071b62b343ee96d71665ec6ca5a44c24261781e4aaefc7a61f4a7fb5b8ee5aad1821e4749d03602c6be461ad28caad6e874e4ae56190aec4ea63793c08"
+        "public_key": "21872fc6c6071994df0455869f9823840a3c764830cd79742b62befb1fcc5d88",
+        "signature": "a5dfd02c0d0f746839d4ed949d995e2f06be4d56dd47fe855b7765358438633ad1a8859cb6e81bd52a842b76e724235bb6d3504e9506d2085cc180a79f3cdf03"
       }
     ]
   },
@@ -54,15 +54,15 @@
       "checked_events": 1,
       "break_position": 2,
       "reason": "event_hash_mismatch",
-      "expected_previous_hash": "e03d5f26f1f465013e993865da97f01995516662436463c1f20619df6bc56a8b",
-      "actual_previous_hash": "e03d5f26f1f465013e993865da97f01995516662436463c1f20619df6bc56a8b",
-      "expected_event_hash": "b6f1efcb7d0e32aec9f9e89776ee145ba9101be07b55d5118a1d4d06c43be3de",
-      "actual_event_hash": "7c4ef98fa3e4d90fb64f0154df84e3f5a8191ef5d2d732c192cd98fe7b805e35"
+      "expected_previous_hash": "9c05f3f4f110c77d2c9176e2bb62ff2a084b7342525769371d43900f50897726",
+      "actual_previous_hash": "9c05f3f4f110c77d2c9176e2bb62ff2a084b7342525769371d43900f50897726",
+      "expected_event_hash": "7028ee3e074151b459011d4d72d71c253607765e6a925b1787fdd32b0ef2a1f9",
+      "actual_event_hash": "0aaf489ac7f0428fd121391a2559378f12f3115e844cfee5f6b13d0de676ba66"
     },
     "consistent_rewrite": {
       "chain_valid_after_rewrite": true,
-      "digest_after_rewrite": "5fd8d45ecf5fe9d0a27ab14925776af10823a4c649dec777866484a9bf2e1a95",
-      "receipt_digest": "28eaacd7f1e9dd92ca2ec2a4d9fe5fd36d49bd648d910798325b870c283f1f07"
+      "digest_after_rewrite": "9fd730cefb03d72b82bff37f89941e282ba80f706bffec09845959d68f12f1c8",
+      "receipt_digest": "e4800a0ca744bad015fcc29ea9cc85dbabc4194e8205539a557763865770cc72"
     }
   },
   "restart_gate": {
@@ -94,7 +94,7 @@
         "checkpoint_pending": false,
         "checkpoint_failure": {
           "checkpoint_index": 1,
-          "detail": "receipt binds digest 28eaacd7f1e9dd92ca2ec2a4d9fe5fd36d49bd648d910798325b870c283f1f07 but chain position 4 now hashes to d6e0efbe120cded31ef122b722a58ae604f3c68d4b5f3b85a2869165f7ebf73a",
+          "detail": "receipt binds digest e4800a0ca744bad015fcc29ea9cc85dbabc4194e8205539a557763865770cc72 but chain position 4 now hashes to 93967e722de1de3188097cd61098567459444459b67740bf219a2c2e90931ef2",
           "reason": "chain_digest_mismatch"
         }
       }
@@ -113,41 +113,41 @@
     }
   },
   "restore": {
-    "dump_bytes": 29450,
+    "dump_bytes": 36292,
     "restored_chain_head": 6,
     "replay": {
       "chain_checked_events": 6,
       "chain_valid": true,
-      "custody_public_key": "c49369be8aaaa9e4a14b9b31f27cda0b6f5a73b6718578b750b5377753085f66",
+      "custody_public_key": "21872fc6c6071994df0455869f9823840a3c764830cd79742b62befb1fcc5d88",
       "first_failure": null,
       "head_position": 6,
       "pending": false,
       "receipts_checked": 1,
       "valid": true,
-      "verified_at": "2026-08-29T13:57:59.490493Z"
+      "verified_at": "2026-08-29T14:41:11.129850Z"
     }
   },
   "checkpoint_two": {
     "receipt": {
       "algorithm": "ed25519",
-      "chain_digest": "be67be5221f4a2e5e58ac3bc30aad1e9f70f0ffbceee314663dc295cf80db07f",
+      "chain_digest": "133e72958c9df623b56caef719e4a9c5d03f2c0ca6d43adb3f0aab36a44cdf8c",
       "chain_position": 6,
       "checkpoint_index": 2,
-      "checkpoint_time": "2026-08-29T13:57:59.862421Z",
-      "public_key": "c49369be8aaaa9e4a14b9b31f27cda0b6f5a73b6718578b750b5377753085f66",
-      "signature": "6ef77e60998fdc903ad19d411fecbb555c6a4cd1c440724375b259783a9e41137bfd2b2d8644a21f10bdedf8d6d961dcdd7367271500a4190d934e3b798de409"
+      "checkpoint_time": "2026-08-29T14:41:11.526869Z",
+      "public_key": "21872fc6c6071994df0455869f9823840a3c764830cd79742b62befb1fcc5d88",
+      "signature": "2b2f7ba2a2ce370a4267c1655d7403bb91bc27b02afc357d5872533d1e29407cfd62d1adba13ac2d00abbf01c78ae37dc72d8272fd10b2c9f318928d80074100"
     },
     "audit_chain_position": 7
   },
   "final_verification": {
     "chain_checked_events": 7,
     "chain_valid": true,
-    "custody_public_key": "c49369be8aaaa9e4a14b9b31f27cda0b6f5a73b6718578b750b5377753085f66",
+    "custody_public_key": "21872fc6c6071994df0455869f9823840a3c764830cd79742b62befb1fcc5d88",
     "first_failure": null,
     "head_position": 7,
     "pending": false,
     "receipts_checked": 2,
     "valid": true,
-    "verified_at": "2026-08-29T13:57:59.916280Z"
+    "verified_at": "2026-08-29T14:41:11.592193Z"
   }
 }

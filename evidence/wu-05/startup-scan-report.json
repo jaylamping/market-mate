@@ -1,9 +1,9 @@
 {
-  "captured_at": "2026-08-29T13:55:48Z",
+  "captured_at": "2026-08-29T14:42:10Z",
   "environment_scan": {
     "profile": "local_research",
     "surface": "environment",
-    "scanned_at": "2026-08-29T13:55:42.338820Z",
+    "scanned_at": "2026-08-29T14:42:04.543248Z",
     "variables_scanned": 5,
     "allowed_config": [
       "CUSTODY_URL"
@@ -23,7 +23,7 @@
   "compose_config_scan": {
     "profile": "local_research",
     "surface": "json-input",
-    "scanned_at": "2026-08-29T13:55:43.297789Z",
+    "scanned_at": "2026-08-29T14:42:05.486820Z",
     "variables_scanned": 6,
     "allowed_config": [
       "CUSTODY_DATA_DIR",
@@ -52,7 +52,7 @@
       "event": "config.redact_demo",
       "level": "info",
       "service": "backend",
-      "ts": "2026-08-29T13:55:44.793978Z"
+      "ts": "2026-08-29T14:42:06.989368Z"
     }
   },
   "negative_probes": [
@@ -62,7 +62,7 @@
       "report": {
         "profile": "local_research",
         "surface": "environment",
-        "scanned_at": "2026-08-29T13:55:45.252493Z",
+        "scanned_at": "2026-08-29T14:42:07.487444Z",
         "variables_scanned": 6,
         "allowed_config": [
           "CUSTODY_URL"
@@ -92,7 +92,7 @@
       "report": {
         "profile": "local_research",
         "surface": "environment",
-        "scanned_at": "2026-08-29T13:55:45.784248Z",
+        "scanned_at": "2026-08-29T14:42:08.023796Z",
         "variables_scanned": 6,
         "allowed_config": [
           "CUSTODY_URL"
@@ -122,7 +122,7 @@
       "report": {
         "profile": "local_research",
         "surface": "environment",
-        "scanned_at": "2026-08-29T13:55:46.297536Z",
+        "scanned_at": "2026-08-29T14:42:08.570289Z",
         "variables_scanned": 6,
         "allowed_config": [
           "CUSTODY_URL"
@@ -160,7 +160,7 @@
       ],
       "profile": "local_research",
       "result": "blocked",
-      "scanned_at": "2026-08-29T13:55:46.830050Z",
+      "scanned_at": "2026-08-29T14:42:09.120690Z",
       "service": "backend",
       "surface": "environment",
       "system_variables": [
@@ -168,7 +168,7 @@
         "HOSTNAME",
         "PATH"
       ],
-      "ts": "2026-08-29T13:55:46.830065Z",
+      "ts": "2026-08-29T14:42:09.120701Z",
       "unrecognized_variables": [],
       "variables_scanned": 6,
       "violations": [
