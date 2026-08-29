@@ -1,0 +1,37 @@
+{
+  "captured_at": "2026-08-29T21:48:45Z",
+  "delta_categories": {
+    "additions": true,
+    "removals": true,
+    "corrections": true,
+    "expiry": true,
+    "observation_state_changes": true,
+    "indicator_changes": true
+  },
+  "dependencies": {
+    "newly_blocked": true,
+    "restored": true
+  },
+  "prose": {
+    "digest_bound": true,
+    "non_authoritative": true
+  },
+  "append_only": {
+    "delta_update_blocked": true,
+    "prose_update_blocked": true
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 3,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  },
+  "audit_positions": {
+    "delta": 2,
+    "dependency": 3
+  }
+}
