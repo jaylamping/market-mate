@@ -12,8 +12,6 @@ pub const DIGEST_HEX_LEN: usize = 32;
 pub const SIGNATURE_HEX_LEN: usize = 64;
 
 pub const CHECKPOINT_TIME_LEN: usize = 27;
-pub const CHECKPOINT_TIME_FORMAT: &str =
-    "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:6]Z";
 
 /// Converts days since 1970-01-01 to a civil UTC date (Howard Hinnant's algorithm).
 fn civil_from_days(days: i64) -> (i64, u32, u32) {
@@ -73,9 +71,9 @@ fn days_from_civil(year: i64, month: u32, day: u32) -> i64 {
 /// re-formatting the parsed value, so impossible calendar dates fail closed.
 pub fn parse_checkpoint_time(value: &str) -> Result<SystemTime, String> {
     let invalid = |detail: String| format!("checkpoint_time is invalid: {detail}");
-    if value.len() != CHECKPOINT_TIME_LEN || !value.ends_with('Z') {
+    if value.len() != CHECKPOINT_TIME_LEN || !value.is_ascii() || !value.ends_with('Z') {
         return Err(invalid(format!(
-            "expected {CHECKPOINT_TIME_LEN} characters ending in Z, got {}",
+            "expected {CHECKPOINT_TIME_LEN} ASCII characters ending in Z, got {}",
             value.len()
         )));
     }
@@ -143,9 +141,8 @@ pub fn is_lower_hex(value: &str, byte_len: usize) -> bool {
 }
 
 pub fn chain_digest(chain_position: i64, head_event_hash: &str) -> String {
-    let digest = Sha256::digest(
-        format!("{DIGEST_DOMAIN}|{chain_position}|{head_event_hash}").as_bytes(),
-    );
+    let digest =
+        Sha256::digest(format!("{DIGEST_DOMAIN}|{chain_position}|{head_event_hash}").as_bytes());
     hex::encode(digest)
 }
 
@@ -311,6 +308,14 @@ mod tests {
             chain_digest(3, "aa"),
             "digest must be deterministic"
         );
+        // Pinned test vector
+        assert_eq!(
+            chain_digest(
+                1,
+                "0000000000000000000000000000000000000000000000000000000000000000"
+            ),
+            "cf3459da8b9cab7583c4df5a4bbaddc9fac23f908a64bd2ad75eac739e1b5664"
+        );
     }
 
     #[test]
@@ -353,8 +358,8 @@ mod tests {
                 "round trip failed for {formatted}"
             );
         }
-        let leap_day = parse_checkpoint_time("2024-02-29T12:00:00.000000Z")
-            .expect("leap day must parse");
+        let leap_day =
+            parse_checkpoint_time("2024-02-29T12:00:00.000000Z").expect("leap day must parse");
         assert_eq!(
             format_epoch_micros(leap_day.duration_since(UNIX_EPOCH).unwrap()),
             "2024-02-29T12:00:00.000000Z"
@@ -364,17 +369,18 @@ mod tests {
     #[test]
     fn checkpoint_time_rejects_invalid_values() {
         for bad in [
-            "2026-02-30T00:00:00.000000Z",   // impossible calendar date
-            "2026-13-01T00:00:00.000000Z",   // month out of range
-            "2026-01-32T00:00:00.000000Z",   // day out of range
-            "2026-01-01T24:00:00.000000Z",   // hour out of range
-            "2026-01-01T00:60:00.000000Z",   // minute out of range
-            "2026-01-01T00:00:60.000000Z",   // second out of range
-            "2026-01-01T00:00:00.0000000Z",  // wrong width
-            "2026/01/01T00:00:00.000000Z",   // wrong separator
-            "2026-01-01 00:00:00.000000Z",   // wrong time separator
-            "2026-01-01T00:00:00.000000",    // missing zone
-            "",                              // empty
+            "2026-02-30T00:00:00.000000Z",  // impossible calendar date
+            "2026-13-01T00:00:00.000000Z",  // month out of range
+            "2026-01-32T00:00:00.000000Z",  // day out of range
+            "2026-01-01T24:00:00.000000Z",  // hour out of range
+            "2026-01-01T00:60:00.000000Z",  // minute out of range
+            "2026-01-01T00:00:60.000000Z",  // second out of range
+            "2026-01-01T00:00:00.0000000Z", // wrong width
+            "2026/01/01T00:00:00.000000Z",  // wrong separator
+            "2026-01-01 00:00:00.000000Z",  // wrong time separator
+            "2026-01-01T00:00:00.000000",   // missing zone
+            "2026-01-01T00:00:00.00000éZ",  // multi-byte non-ascii boundary
+            "",                             // empty
         ] {
             assert!(
                 parse_checkpoint_time(bad).is_err(),

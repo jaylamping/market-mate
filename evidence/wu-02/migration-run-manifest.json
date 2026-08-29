@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T06:43:09Z",
+  "captured_at": "2026-08-29T12:56:14Z",
   "expected_head": 4,
   "expected_versions": [
     1,
@@ -28,11 +28,11 @@
       {
         "version": 4,
         "name": "signed_checkpoint_receipts",
-        "checksum": "d5a9c617dad8a884f7e9fdf77ea158ecef0aaf63c9e3027825a96dfb6cde9ce5"
+        "checksum": "d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80"
       }
     ],
-    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d5a9c617dad8a884f7e9fdf77ea158ecef0aaf63c9e3027825a96dfb6cde9ce5",
-    "fingerprint": "b82db315c67a31d9593946e133b16da2",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80",
+    "fingerprint": "8b0a906416494e49b6defe0cdd4fad4c",
     "evidence_tables": [
       "audit_checkpoint",
       "audit_event"
@@ -70,11 +70,11 @@
       {
         "version": 4,
         "name": "signed_checkpoint_receipts",
-        "checksum": "d5a9c617dad8a884f7e9fdf77ea158ecef0aaf63c9e3027825a96dfb6cde9ce5"
+        "checksum": "d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80"
       }
     ],
-    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d5a9c617dad8a884f7e9fdf77ea158ecef0aaf63c9e3027825a96dfb6cde9ce5",
-    "fingerprint": "b82db315c67a31d9593946e133b16da2",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80",
+    "fingerprint": "8b0a906416494e49b6defe0cdd4fad4c",
     "evidence_tables": [
       "audit_checkpoint",
       "audit_event"
@@ -112,11 +112,11 @@
       {
         "version": 4,
         "name": "signed_checkpoint_receipts",
-        "checksum": "d5a9c617dad8a884f7e9fdf77ea158ecef0aaf63c9e3027825a96dfb6cde9ce5"
+        "checksum": "d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80"
       }
     ],
-    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d5a9c617dad8a884f7e9fdf77ea158ecef0aaf63c9e3027825a96dfb6cde9ce5",
-    "fingerprint": "b82db315c67a31d9593946e133b16da2",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80",
+    "fingerprint": "8b0a906416494e49b6defe0cdd4fad4c",
     "evidence_tables": [
       "audit_checkpoint",
       "audit_event"

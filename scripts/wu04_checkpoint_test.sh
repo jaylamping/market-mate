@@ -60,6 +60,24 @@ wait_for_healthy_services() {
   return 1
 }
 
+wait_for_service_healthy() {
+  local service="$1"
+  local attempts="$2"
+  local attempt
+  local health
+
+  for ((attempt = 1; attempt <= attempts; attempt++)); do
+    health=$("${COMPOSE[@]}" ps --format json 2>/dev/null \
+      | jq -r --arg s "$service" 'select(.Service == $s) | .Health' 2>/dev/null || true)
+    if [[ "$health" == "healthy" ]]; then
+      return 0
+    fi
+    sleep 2
+  done
+
+  return 1
+}
+
 wait_for_readyz_status() {
   local expected_status="$1"
   local attempts="$2"
@@ -301,26 +319,56 @@ pass "tamper probes confirm both chain and receipt detection layers"
 dump_bytes=$(wc -c <"$scratch_dir/pre-tamper.sql" | tr -d ' ')
 log "-- pre-tamper dump captured ($dump_bytes bytes)"
 
-# 5. Restart gate: tamper committed, backend must refuse to resume.
+# 5. Restart gates: committed tampers (both broken chain and consistent rewrite) must refuse to resume.
 "${PSQL[@]}" -qAtc "BEGIN; SET LOCAL session_replication_role = replica; UPDATE audit_event SET payload = '{\"tampered\":true}'::jsonb WHERE chain_position = $tamper_target; COMMIT;" >/dev/null \
-  || fail "committed tamper failed"
-log "-- docker compose restart backend (tampered database)"
+  || fail "committed payload tamper failed"
+log "-- docker compose restart backend (tampered payload)"
 "${COMPOSE[@]}" restart backend >>"$BRING_UP_LOG" 2>&1 \
   || fail "backend restart failed"
 wait_for_readyz_status 503 60 \
   || fail "backend did not fail readiness with a tampered chain"
 tampered_readyz_body=$(curl -sS "$BACKEND_URL/readyz") \
   || fail "could not read tampered readyz body"
-jq -e '.status == "unavailable" and .checkpoints == false' \
+jq -e '.status == "unavailable" and .checkpoints == false and .checkpoint_failure.reason == "chain_invalid"' \
   <<<"$tampered_readyz_body" >/dev/null \
-  || fail "tampered readiness body is not failing closed: $tampered_readyz_body"
-sleep 5
-tampered_readyz_again=$(curl -s -o /dev/null -w '%{http_code}' "$BACKEND_URL/readyz" 2>/dev/null || true)
-[[ "$tampered_readyz_again" == "503" ]] \
-  || fail "backend became ready despite the tampered chain (status $tampered_readyz_again)"
-pass "tampered database: backend refuses to resume (readyz 503, checkpoints false)"
+  || fail "tampered readiness body did not report chain_invalid: $tampered_readyz_body"
 
-# 6. Restore the database from the pre-tamper dump; only then may service resume.
+# Now perform a consistent rewrite of event hashes so the chain is internally valid,
+# but diverges from custody's signed receipt.
+"${PSQL[@]}" -qAtc "
+  BEGIN;
+  SET LOCAL session_replication_role = replica;
+  $consistent_rewrite_sql
+  COMMIT;
+" >>"$BRING_UP_LOG" 2>&1 || fail "committed consistent rewrite failed"
+
+log "-- docker compose restart backend (internally valid chain with tampered digest)"
+"${COMPOSE[@]}" restart backend >>"$BRING_UP_LOG" 2>&1 \
+  || fail "backend restart failed"
+wait_for_readyz_status 503 60 \
+  || fail "backend did not fail readiness on digest mismatch"
+rewrite_readyz_body=$(curl -sS "$BACKEND_URL/readyz") \
+  || fail "could not read rewrite readyz body"
+jq -e '.status == "unavailable" and .checkpoints == false and .checkpoint_failure.reason == "chain_digest_mismatch"' \
+  <<<"$rewrite_readyz_body" >/dev/null \
+  || fail "rewrite readiness body did not report chain_digest_mismatch: $rewrite_readyz_body"
+pass "restart gates refuse to resume on both broken chain and consistent digest mismatch"
+
+# 6. Test custody restart durability: signing key and receipts survive container restart.
+log "-- docker compose restart custody"
+"${COMPOSE[@]}" restart custody >>"$BRING_UP_LOG" 2>&1 \
+  || fail "custody restart failed"
+wait_for_service_healthy custody 30 \
+  || fail "custody failed to recover healthy after restart"
+custody_key_after=$(curl -fsS "$CUSTODY_URL/public-key" | jq -r '.public_key')
+[[ "$custody_key_after" == "$custody_key_hex" ]] \
+  || fail "custody signing key rotated across restart: $custody_key_after vs $custody_key_hex"
+custody_receipts_after=$(curl -fsS "$CUSTODY_URL/receipts")
+[[ "$(jq 'length' <<<"$custody_receipts_after")" == "1" ]] \
+  || fail "custody receipt lost across restart"
+pass "custody key and receipt store survive container restart unchanged"
+
+# 7. Restore the database from the pre-tamper dump; only then may service resume.
 # Stop the backend first so its retry loop cannot append during the restore window.
 "${COMPOSE[@]}" stop backend >>"$BRING_UP_LOG" 2>&1 \
   || fail "could not stop the backend before the restore"
@@ -391,6 +439,7 @@ jq -n \
   --arg digest_after_rewrite "$rewrite_verification" \
   --arg receipt_digest "$expected_digest" \
   --argjson tampered_readyz_body "$(jq -c . <<<"$tampered_readyz_body")" \
+  --argjson rewrite_readyz_body "$(jq -c . <<<"$rewrite_readyz_body")" \
   --argjson restored_readyz_body "$(jq -c . <<<"$restored_readyz_body")" \
   --argjson restore_replay "$restore_replay" \
   --argjson dump_bytes "$dump_bytes" \
@@ -423,10 +472,14 @@ jq -n \
       }
     },
     restart_gate: {
-      tampered: {
+      tampered_payload: {
         status: 503,
         sustained: true,
         body: $tampered_readyz_body
+      },
+      tampered_digest: {
+        status: 503,
+        body: $rewrite_readyz_body
       },
       restored: {
         status: 200,
@@ -456,8 +509,12 @@ jq -e '
   and .tamper_probes.payload_only.valid == false
   and .tamper_probes.consistent_rewrite.chain_valid_after_rewrite == true
   and .tamper_probes.consistent_rewrite.digest_after_rewrite != .tamper_probes.consistent_rewrite.receipt_digest
-  and .restart_gate.tampered.status == 503
-  and .restart_gate.tampered.body.checkpoints == false
+  and .restart_gate.tampered_payload.status == 503
+  and .restart_gate.tampered_payload.body.checkpoints == false
+  and .restart_gate.tampered_payload.body.checkpoint_failure.reason == "chain_invalid"
+  and .restart_gate.tampered_digest.status == 503
+  and .restart_gate.tampered_digest.body.checkpoints == false
+  and .restart_gate.tampered_digest.body.checkpoint_failure.reason == "chain_digest_mismatch"
   and .restart_gate.restored.status == 200
   and .restart_gate.restored.body.checkpoints == true
   and .restore.replay.valid == true

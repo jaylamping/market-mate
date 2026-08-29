@@ -5,12 +5,13 @@ use axum::{
     Json, Router,
 };
 use backend::{
-    checkpoints::{current_head, run_restore_verification, CustodyClient, RestoreVerification},
+    checkpoints::{
+        execute_checkpoint_flow, run_restore_verification, CustodyClient, RestoreVerification,
+    },
     migrate::{
         apply, bundled_migrations, connect, database_url, load_from_dir, migrations_match_head,
         ApplyReport,
     },
-    receipt::parse_checkpoint_time,
 };
 use std::{
     path::PathBuf,
@@ -193,10 +194,7 @@ async fn verify_until_valid_or_exhausted(state: &AppState, database_url: &str) {
                     .verification
                     .write()
                     .expect("verification state must not poison");
-                *guard = RestoreVerification {
-                    head_position: Some(event_position),
-                    ..report
-                };
+                *guard = report;
                 return;
             }
             Ok(Err(report)) => {
@@ -253,128 +251,16 @@ async fn create_checkpoint(State(state): State<AppState>) -> (StatusCode, Json<s
         }
     };
 
-    let chain_row = match client
-        .query_one(
-            "SELECT row_to_json(r) FROM verify_audit_event_chain() AS r",
-            &[],
-        )
-        .await
-    {
-        Ok(row) => row,
-        Err(error) => {
-            return (
-                StatusCode::SERVICE_UNAVAILABLE,
-                Json(serde_json::json!({ "error": format!("chain verification failed: {error}") })),
-            );
-        }
-    };
-    let chain_state: serde_json::Value = chain_row.get(0);
-    let chain_valid = chain_state
-        .get("valid")
-        .and_then(serde_json::Value::as_bool)
-        .unwrap_or(false);
-    if !chain_valid {
-        return (
-            StatusCode::CONFLICT,
+    match execute_checkpoint_flow(&client, &state.custody).await {
+        Ok((receipt, audit_position)) => (
+            StatusCode::CREATED,
             Json(serde_json::json!({
-                "error": "the audit chain does not verify; checkpoint refused"
+                "receipt": receipt,
+                "audit_chain_position": audit_position,
             })),
-        );
+        ),
+        Err((code, message)) => (code, Json(serde_json::json!({ "error": message }))),
     }
-
-    let (chain_position, digest) = match current_head(&client).await {
-        Ok(head) => head,
-        Err(error) => {
-            return (
-                StatusCode::CONFLICT,
-                Json(serde_json::json!({ "error": error })),
-            );
-        }
-    };
-
-    let receipt = match state.custody.sign(chain_position, &digest).await {
-        Ok(receipt) => receipt,
-        Err(error) => {
-            return (
-                StatusCode::BAD_GATEWAY,
-                Json(serde_json::json!({ "error": error })),
-            );
-        }
-    };
-
-    let payload = serde_json::json!({
-        "checkpoint_index": receipt.checkpoint_index,
-        "chain_position": receipt.chain_position,
-        "chain_digest": receipt.chain_digest,
-        "checkpoint_time": receipt.checkpoint_time,
-    });
-    let checkpoint_time = match parse_checkpoint_time(&receipt.checkpoint_time) {
-        Ok(time) => time,
-        Err(error) => {
-            return (
-                StatusCode::BAD_GATEWAY,
-                Json(serde_json::json!({ "error": format!("custody issued an invalid timestamp: {error}") })),
-            );
-        }
-    };
-    let lineage = local_lineage("backend-checkpoint");
-    let insert = client
-        .query_one(
-            "INSERT INTO audit_checkpoint (
-                checkpoint_index, chain_position, chain_digest, checkpoint_time,
-                signature, source_lineage, receipt_time, record_environment
-            ) VALUES (
-                $1, $2, $3, $4, $5, $6, now(), 'local_research'
-            ) RETURNING checkpoint_index",
-            &[
-                &receipt.checkpoint_index,
-                &receipt.chain_position,
-                &receipt.chain_digest,
-                &checkpoint_time,
-                &receipt.signature,
-                &lineage,
-            ],
-        )
-        .await;
-    if let Err(error) = insert {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({ "error": format!("checkpoint mirror insert failed: {error}") })),
-        );
-    }
-
-    let event_id = format!("checkpoint-{}", receipt.checkpoint_index);
-    let audit = client
-        .query_one(
-            "SELECT chain_position FROM append_audit_event(
-                $1,
-                'audit.checkpoint_created',
-                now(),
-                $2,
-                $3,
-                now(),
-                'local_research'
-            )",
-            &[&event_id, &payload, &lineage],
-        )
-        .await;
-    let audit_position = match audit {
-        Ok(row) => row.get::<_, i64>(0),
-        Err(error) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({ "error": format!("checkpoint audit append failed: {error}") })),
-            );
-        }
-    };
-
-    (
-        StatusCode::CREATED,
-        Json(serde_json::json!({
-            "receipt": receipt,
-            "audit_chain_position": audit_position,
-        })),
-    )
 }
 
 async fn restore_verification(
@@ -399,15 +285,6 @@ async fn restore_verification(
         }
     };
     let report = run_restore_verification(&client, &state.custody).await;
-    if !report.pending {
-        let mut guard = state
-            .verification
-            .write()
-            .expect("verification state must not poison");
-        if !report.valid {
-            *guard = report.clone();
-        }
-    }
     let code = if report.valid {
         StatusCode::OK
     } else {

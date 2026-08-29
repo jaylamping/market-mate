@@ -80,4 +80,27 @@ AS $$
     );
 $$;
 
+CREATE FUNCTION guard_audit_checkpoint_write() RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog, public
+AS $$
+BEGIN
+    IF TG_OP IN ('UPDATE', 'DELETE', 'TRUNCATE') THEN
+        RAISE EXCEPTION 'audit_checkpoint is append-only; % is forbidden', TG_OP
+            USING ERRCODE = '55000';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER audit_checkpoint_mutation_guard
+BEFORE UPDATE OR DELETE ON audit_checkpoint
+FOR EACH ROW EXECUTE FUNCTION guard_audit_checkpoint_write();
+
+CREATE TRIGGER audit_checkpoint_truncate_guard
+BEFORE TRUNCATE ON audit_checkpoint
+FOR EACH STATEMENT EXECUTE FUNCTION guard_audit_checkpoint_write();
+
+REVOKE UPDATE, DELETE, TRUNCATE ON audit_checkpoint FROM PUBLIC;
+
 SELECT assert_all_evidence_table_conventions();

@@ -88,6 +88,7 @@ log "== WU-03 audit-chain test $(date -u +%FT%TZ) (project: $WU03_PROJECT_NAME) 
 
 docker compose --project-name market-mate-wu01 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 docker compose --project-name market-mate-wu02 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
+docker compose --project-name market-mate-wu04 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 "${COMPOSE[@]}" down -v --remove-orphans >>"$BRING_UP_LOG" 2>&1 \
   || fail "could not remove prior WU-03 Compose state"
 
