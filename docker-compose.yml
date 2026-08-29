@@ -10,6 +10,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mm -d market_mate"]
       interval: 5s
@@ -24,6 +25,7 @@ services:
       DATABASE_URL: postgres://mm:local-only@postgres:5432/market_mate
     ports:
       - "127.0.0.1:8080:8080"
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,6 +39,7 @@ services:
     build: ./frontend
     ports:
       - "127.0.0.1:3000:3000"
+    restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy

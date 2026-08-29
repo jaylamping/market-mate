@@ -1,7 +1,10 @@
 mod migrate;
 
 use axum::{http::StatusCode, routing::get, Json, Router};
-use migrate::{apply, bundled_migrations, connect, database_url, load_from_dir, ApplyReport};
+use migrate::{
+    apply, bundled_migrations, connect, database_url, load_from_dir, migrations_match_head,
+    ApplyReport,
+};
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::time::timeout;
@@ -57,7 +60,7 @@ async fn database_is_ready() -> (bool, bool) {
         return (false, false);
     };
 
-    let readiness = async {
+    let connect = async {
         let (client, connection) = tokio_postgres::connect(&database_url, NoTls).await?;
         tokio::spawn(async move {
             if let Err(error) = connection.await {
@@ -65,16 +68,31 @@ async fn database_is_ready() -> (bool, bool) {
             }
         });
         client.simple_query("SELECT 1").await?;
-        let migrated = client
-            .query_opt("SELECT 1 FROM schema_migration WHERE version = 1", &[])
-            .await?;
-        Ok::<_, tokio_postgres::Error>(migrated.is_some())
+        Ok::<_, tokio_postgres::Error>(client)
     };
 
-    match timeout(DATABASE_READINESS_TIMEOUT, readiness).await {
-        Ok(Ok(migrations)) => (true, migrations),
-        Ok(Err(_)) | Err(_) => (false, false),
-    }
+    let client = match timeout(DATABASE_READINESS_TIMEOUT, connect).await {
+        Ok(Ok(client)) => client,
+        Ok(Err(_)) | Err(_) => return (false, false),
+    };
+
+    let Ok(bundled) = bundled_migrations() else {
+        return (true, false);
+    };
+    let Ok(rows) = client
+        .query(
+            "SELECT version, name, checksum FROM schema_migration ORDER BY version",
+            &[],
+        )
+        .await
+    else {
+        return (true, false);
+    };
+    let applied: Vec<(i64, String, String)> = rows
+        .iter()
+        .map(|row: &tokio_postgres::Row| (row.get(0), row.get(1), row.get(2)))
+        .collect();
+    (true, migrations_match_head(&applied, &bundled))
 }
 
 struct Cli {
@@ -133,10 +151,12 @@ async fn run_migrations(from_dir: Option<PathBuf>) -> ApplyReport {
         eprintln!("{error}");
         std::process::exit(1);
     });
-    apply(&mut client, &migrations).await.unwrap_or_else(|error| {
-        eprintln!("{error}");
-        std::process::exit(1);
-    })
+    apply(&mut client, &migrations)
+        .await
+        .unwrap_or_else(|error| {
+            eprintln!("{error}");
+            std::process::exit(1);
+        })
 }
 
 async fn serve() {

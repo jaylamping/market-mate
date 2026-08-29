@@ -1,65 +1,98 @@
 {
-  "captured_at": "2026-08-29T02:11:25Z",
+  "captured_at": "2026-08-29T04:35:31Z",
   "first_apply": {
-    "head_version": 1,
+    "head_version": 2,
     "applied": [
       {
         "version": 1,
         "name": "schema_conventions",
         "checksum": "b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007"
+      },
+      {
+        "version": 2,
+        "name": "convention_enforcement",
+        "checksum": "99afdf43a83fc663250b8005c026dd5f3590e162a63badf6b84d38af0aa73b9a"
       }
     ],
-    "fingerprint": "8063c9aaa7aca4f2d0a271880ff8f4cb",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:99afdf43a83fc663250b8005c026dd5f3590e162a63badf6b84d38af0aa73b9a",
+    "fingerprint": "31577b8b3d002505f5e6de3dc32ea537",
     "evidence_tables": []
   },
   "second_apply": {
     "applied_versions": [],
     "already_applied_versions": [
-      1
+      1,
+      2
     ],
-    "head_version": 1,
+    "head_version": 2,
     "noop": true
   },
   "second_state": {
-    "head_version": 1,
+    "head_version": 2,
     "applied": [
       {
         "version": 1,
         "name": "schema_conventions",
         "checksum": "b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007"
+      },
+      {
+        "version": 2,
+        "name": "convention_enforcement",
+        "checksum": "99afdf43a83fc663250b8005c026dd5f3590e162a63badf6b84d38af0aa73b9a"
       }
     ],
-    "fingerprint": "8063c9aaa7aca4f2d0a271880ff8f4cb",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:99afdf43a83fc663250b8005c026dd5f3590e162a63badf6b84d38af0aa73b9a",
+    "fingerprint": "31577b8b3d002505f5e6de3dc32ea537",
     "evidence_tables": []
   },
   "fresh_apply": {
     "applied_versions": [
-      1
+      1,
+      2
     ],
     "already_applied_versions": [],
-    "head_version": 1,
+    "head_version": 2,
     "noop": false
   },
   "fresh_state": {
-    "head_version": 1,
+    "head_version": 2,
     "applied": [
       {
         "version": 1,
         "name": "schema_conventions",
         "checksum": "b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007"
+      },
+      {
+        "version": 2,
+        "name": "convention_enforcement",
+        "checksum": "99afdf43a83fc663250b8005c026dd5f3590e162a63badf6b84d38af0aa73b9a"
       }
     ],
-    "fingerprint": "8063c9aaa7aca4f2d0a271880ff8f4cb",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:99afdf43a83fc663250b8005c026dd5f3590e162a63badf6b84d38af0aa73b9a",
+    "fingerprint": "31577b8b3d002505f5e6de3dc32ea537",
     "evidence_tables": []
   },
   "conventions": {
     "conforming_register": "ok",
-    "nonconforming_failed_closed": true
+    "nonconforming_failed_closed": true,
+    "defaults_failed_closed": true,
+    "empty_lineage_failed_closed": true,
+    "unregistered_failed_closed": true
   },
   "out_of_order": {
     "exit_status": 1,
     "failed_closed": true,
     "output": "migration sequence failed closed: versions must be contiguous from 1; expected 2, found 3"
+  },
+  "checksum_mismatch": {
+    "exit_status": 1,
+    "failed_closed": true,
+    "output": "migration sequence failed closed: checksum mismatch for version 1 (applied b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007, file 93a588997a7112abcc60c74584eab8326d9f5fa1bae5cf94b92f8b50718dba5e)"
+  },
+  "unregistered": {
+    "exit_status": 1,
+    "rolled_back_to": 2,
+    "output": "migration SQL failed closed: public base tables are not registered in schema_object: {sneak}"
   },
   "postgres": {
     "pgvector_version": "0.8.6",

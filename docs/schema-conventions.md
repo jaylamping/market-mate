@@ -32,15 +32,17 @@ Every evidence table MUST include these columns, all `NOT NULL`, with no default
 | `receipt_time` | `timestamptz` | When Market Mate received the evidence. Distinct from source-native / availability time. |
 | `record_environment` | `record_environment` | Isolation class as above. |
 
-Helper SQL (installed by the baseline migration):
+Helper SQL (installed by the baseline migration, enforced from 0002):
 
 - `source_lineage_is_valid(jsonb)` — true only for an object with non-empty `source` and `entitlement_version`.
-- `register_evidence_table(table_name)` — fail-closed if the table is missing the required columns, then registers it as evidence.
-- `assert_all_evidence_table_conventions()` — fail-closed if any registered evidence table has drifted.
+- `register_evidence_table(table_name)` — fail-closed unless the required columns exist, are NOT NULL, have no defaults, and carry `CHECK (source_lineage_is_valid(source_lineage))`; then registers the table as evidence.
+- `assert_all_evidence_table_conventions()` — fail-closed if any public base table is unregistered, any vector-typed column exists, or any registered evidence table has drifted.
+- `schema_head()` — the applied checksum chain; this is schema identity for migrate-determinism checks.
+- `schema_fingerprint()` — catalog hash of non-extension public objects, including constraints, indexes, and function bodies.
 
-New evidence tables MUST call `register_evidence_table` in the same migration that creates them, and SHOULD add `CHECK (source_lineage_is_valid(source_lineage))`.
+New evidence tables MUST call `register_evidence_table` in the same migration that creates them.
 
-Unregistered public tables MUST NOT store canonical evidence. Vector columns and indexes remain prohibited until a later work unit ungates them.
+Unregistered public tables fail closed at migrate time. Vector columns fail closed until a later work unit ungates them.
 
 ## Migrations
 
@@ -52,6 +54,7 @@ Rules:
 2. Applying an already-applied set is a no-op.
 3. A fresh database that applies the same files reaches the same schema head.
 4. A gap, a duplicate version, a checksum change to an applied file, or a missing applied file fails closed — nothing further is applied.
-5. Each file runs in a single transaction.
+5. Each file runs in a single transaction. Convention asserts run inside that transaction before commit.
+6. The running binary applies every `db/migrations/*.sql` file embedded at build time. Disk and binary are the same set.
 
-The migrator records applied files in `schema_migration` (`version`, `name`, `checksum`, `applied_at`).
+The migrator records applied files in `schema_migration` (`version`, `name`, `checksum`, `applied_at`) and fail-closes if that table's shape does not match those four columns.
