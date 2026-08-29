@@ -80,7 +80,7 @@ log "== WU-08 instrument mapping test $(date -u +%FT%TZ) (project: $WU08_PROJECT
 "${COMPOSE[@]}" config --quiet >>"$BRING_UP_LOG" 2>&1 \
   || fail "Compose configuration is invalid"
 
-for sibling in market-mate-wu01 market-mate-wu02 market-mate-wu03 market-mate-wu04 market-mate-wu05 market-mate-wu06 market-mate-wu07; do
+for sibling in market-mate-wu01 market-mate-wu02 market-mate-wu03 market-mate-wu04 market-mate-wu05 market-mate-wu06 market-mate-wu07 market-mate-wu08 market-mate-wu09; do
   if [[ "$sibling" == "$WU08_PROJECT_NAME" ]]; then continue; fi
   docker compose --project-name "$sibling" down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 done
