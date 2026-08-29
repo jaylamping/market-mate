@@ -183,7 +183,12 @@ pub async fn connect(database_url: &str) -> Result<(Client, JoinHandle<()>), Mig
     let (client, connection) = tokio_postgres::connect(database_url, NoTls).await?;
     let handle = tokio::spawn(async move {
         if let Err(error) = connection.await {
-            eprintln!("PostgreSQL connection failed: {error}");
+            crate::logging::log_event(
+                "backend",
+                "warn",
+                "db.connection_failed",
+                &serde_json::json!({ "error": error.to_string() }),
+            );
         }
     });
     Ok((client, handle))

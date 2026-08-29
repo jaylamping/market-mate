@@ -132,6 +132,14 @@ jq -e '.result == "pass" and (.violations | length) == 0' \
 compose_scan_report=$(jq -c . <<<"$compose_scan_output")
 pass "merged Compose environment scan: zero violations"
 
+# 2b. The --stdin surface (docker compose exec with piped input) must not hang.
+stdin_scan_output=$(printf '%s' "$env_map" | "${COMPOSE[@]}" exec -T backend backend scan-config --stdin) \
+  || fail "--stdin scan failed or timed out: $stdin_scan_output"
+jq -e '.result == "pass" and (.violations | length) == 0' \
+  <<<"$stdin_scan_output" >/dev/null \
+  || fail "--stdin scan did not pass: $stdin_scan_output"
+pass "--stdin scan surface works and does not hang"
+
 # 3. Every backend and custody log line is structured JSON.
 for service in backend custody; do
   "${COMPOSE[@]}" logs --no-log-prefix "$service" 2>/dev/null \

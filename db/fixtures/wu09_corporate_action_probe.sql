@@ -4,6 +4,8 @@
 
 CREATE TEMP TABLE wu09_probe_result (result jsonb NOT NULL);
 
+DO $$ BEGIN PERFORM set_config('market_mate.security_master_write', 'on', true); END $$;
+
 INSERT INTO issuer (issuer_id, legal_name, source_lineage, receipt_time, record_environment)
 VALUES (
   '99999999-0000-0000-0000-000000000001', 'Probe Issuer',
@@ -86,6 +88,11 @@ BEGIN
     v_case_id, 'final', 'evidence complete', NULL, v_lineage);
   v_state_at_final := corporate_action_case_state(v_case_id, now());
   v_results := v_results || jsonb_build_object('state_final', v_state_at_final = 'final');
+  v_results := v_results || jsonb_build_object(
+    'observed_state_names',
+    (SELECT jsonb_agg(observed_state ORDER BY observation_seq)
+     FROM corporate_action_state_observation o WHERE o.case_id = v_case_id)
+  );
 
   v_results := v_results || jsonb_build_object(
     'full_progression_recorded',

@@ -4,6 +4,8 @@
 
 CREATE TEMP TABLE wu08_probe_result (result jsonb NOT NULL);
 
+DO $$ BEGIN PERFORM set_config('market_mate.security_master_write', 'on', true); END $$;
+
 INSERT INTO issuer (issuer_id, legal_name, source_lineage, receipt_time, record_environment)
 VALUES (
   '99999999-0000-0000-0000-000000000001', 'Probe Issuer',

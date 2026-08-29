@@ -9,6 +9,7 @@ use backend::receipt::{
     is_lower_hex, sign_receipt, utc_checkpoint_time_now, validate_receipt_shape,
     verify_receipt_signature, CheckpointReceipt,
 };
+use backend::secrets;
 use ed25519_dalek::SigningKey;
 use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
@@ -289,6 +290,14 @@ async fn sign(
 
 #[tokio::main]
 async fn main() {
+    let scan_report = secrets::scan_current_environment();
+    let scan_payload = serde_json::to_value(&scan_report).unwrap_or_default();
+    if scan_report.blocked() {
+        log_event(SERVICE, "error", "config.startup_blocked", &scan_payload);
+        std::process::exit(1);
+    }
+    log_event(SERVICE, "info", "config.startup_scan_passed", &scan_payload);
+
     let data_dir = PathBuf::from(
         std::env::var("CUSTODY_DATA_DIR").unwrap_or_else(|_| "/var/lib/custody".to_string()),
     );
