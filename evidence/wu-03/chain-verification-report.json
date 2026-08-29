@@ -1,19 +1,22 @@
 {
-  "captured_at": "2026-08-29T05:16:02Z",
+  "captured_at": "2026-08-29T12:57:06Z",
   "backend_ready": {
     "status": "ok",
     "service": "backend",
     "database": true,
-    "migrations": true
+    "migrations": true,
+    "checkpoints": true,
+    "checkpoint_pending": false,
+    "checkpoint_failure": null
   },
   "schema": {
-    "head_version": 3,
+    "head_version": 4,
     "registered_kind": "evidence",
     "pgcrypto_installed": true
   },
   "events": [
     {
-      "chain_position": 1,
+      "chain_position": 2,
       "event_id": "wu03-0001",
       "event_type": "wu03.verification_started",
       "event_time": "2026-08-28T20:00:00+00:00",
@@ -27,11 +30,11 @@
       },
       "receipt_time": "2026-08-28T20:00:01+00:00",
       "record_environment": "local_research",
-      "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-      "event_hash": "8713dc80d19acd983567ed763c22b7c312cb25695e14e6b5da56dd826d9adf5a"
+      "previous_hash": "88cf4a50b6763aa15f4fe1f5aa27087d095fb0e4f3ab1c4754f693ea37415de2",
+      "event_hash": "128688539bca2ccde528d2b44a6208434e7a7de0c3d602c8b1e04581a677ed8e"
     },
     {
-      "chain_position": 2,
+      "chain_position": 3,
       "event_id": "wu03-0002",
       "event_type": "wu03.immutability_probed",
       "event_time": "2026-08-28T20:00:02+00:00",
@@ -45,11 +48,11 @@
       },
       "receipt_time": "2026-08-28T20:00:03+00:00",
       "record_environment": "local_research",
-      "previous_hash": "8713dc80d19acd983567ed763c22b7c312cb25695e14e6b5da56dd826d9adf5a",
-      "event_hash": "a7d4cf5d7d04b0dc4ba7173b1483608e906ed806a6827d40bd64aeb8307bdd56"
+      "previous_hash": "128688539bca2ccde528d2b44a6208434e7a7de0c3d602c8b1e04581a677ed8e",
+      "event_hash": "f234af6ea19fac25846a27b3fa3fe4ef636a9fc6b8c9fadbf2f846a8608ded49"
     },
     {
-      "chain_position": 3,
+      "chain_position": 4,
       "event_id": "wu03-0003",
       "event_type": "wu03.verification_completed",
       "event_time": "2026-08-28T20:00:04+00:00",
@@ -63,13 +66,13 @@
       },
       "receipt_time": "2026-08-28T20:00:05+00:00",
       "record_environment": "local_research",
-      "previous_hash": "a7d4cf5d7d04b0dc4ba7173b1483608e906ed806a6827d40bd64aeb8307bdd56",
-      "event_hash": "9510aaf3d1130eec34348da271fb43b2600bbbf39ecf4daa4005244ae8388688"
+      "previous_hash": "f234af6ea19fac25846a27b3fa3fe4ef636a9fc6b8c9fadbf2f846a8608ded49",
+      "event_hash": "abb67aa099c5f854c7e061fa662c9f18a33e7f5cd815e1925ce99039909fda3b"
     }
   ],
   "valid_verification": {
     "valid": true,
-    "checked_events": 3,
+    "checked_events": 4,
     "break_position": null,
     "reason": null,
     "expected_previous_hash": null,
@@ -79,13 +82,13 @@
   },
   "tamper_probe": {
     "valid": false,
-    "checked_events": 1,
-    "break_position": 2,
+    "checked_events": 2,
+    "break_position": 3,
     "reason": "event_hash_mismatch",
-    "expected_previous_hash": "8713dc80d19acd983567ed763c22b7c312cb25695e14e6b5da56dd826d9adf5a",
-    "actual_previous_hash": "8713dc80d19acd983567ed763c22b7c312cb25695e14e6b5da56dd826d9adf5a",
-    "expected_event_hash": "cf23a1161938318f943a15725c2db3f7a5de9dfd571dbd440aa485fb8b153dbf",
-    "actual_event_hash": "a7d4cf5d7d04b0dc4ba7173b1483608e906ed806a6827d40bd64aeb8307bdd56"
+    "expected_previous_hash": "128688539bca2ccde528d2b44a6208434e7a7de0c3d602c8b1e04581a677ed8e",
+    "actual_previous_hash": "128688539bca2ccde528d2b44a6208434e7a7de0c3d602c8b1e04581a677ed8e",
+    "expected_event_hash": "8d3e4b1ea166a2d417800c65852ef7875d2e702877c881e1b795a3993749d009",
+    "actual_event_hash": "f234af6ea19fac25846a27b3fa3fe4ef636a9fc6b8c9fadbf2f846a8608ded49"
   },
   "mutation_guards": {
     "update_failed_closed": true,
@@ -97,7 +100,7 @@
   },
   "final_verification": {
     "valid": true,
-    "checked_events": 3,
+    "checked_events": 4,
     "break_position": null,
     "reason": null,
     "expected_previous_hash": null,

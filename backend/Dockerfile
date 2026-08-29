@@ -12,6 +12,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 10001 --home /nonexistent --shell /usr/sbin/nologin app
 COPY --from=build /app/target/release/backend /usr/local/bin/backend
+COPY --from=build /app/target/release/custody /usr/local/bin/custody
+RUN mkdir -p /var/lib/custody && chown app /var/lib/custody
 USER app
 EXPOSE 8080
 CMD ["backend"]

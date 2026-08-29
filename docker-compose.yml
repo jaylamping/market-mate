@@ -17,17 +17,38 @@ services:
       timeout: 3s
       retries: 20
 
+  custody:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["custody"]
+    environment:
+      CUSTODY_DATA_DIR: /var/lib/custody
+    ports:
+      - "127.0.0.1:8081:8081"
+    volumes:
+      - custodydata:/var/lib/custody
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
     environment:
       DATABASE_URL: postgres://mm:local-only@postgres:5432/market_mate
+      CUSTODY_URL: http://custody:8081
     ports:
       - "127.0.0.1:8080:8080"
     restart: unless-stopped
     depends_on:
       postgres:
+        condition: service_healthy
+      custody:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/readyz"]
@@ -51,3 +72,4 @@ services:
 
 volumes:
   pgdata:
+  custodydata:

@@ -88,6 +88,7 @@ log "== WU-02 migration test $(date -u +%FT%TZ) (project: $WU02_PROJECT_NAME) ==
 # Isolate from a leftover WU-01 stack that publishes the same localhost ports.
 docker compose --project-name market-mate-wu01 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 docker compose --project-name market-mate-wu03 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
+docker compose --project-name market-mate-wu04 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 
 "${COMPOSE[@]}" down -v --remove-orphans >>"$BRING_UP_LOG" 2>&1 \
   || fail "could not remove prior WU-02 Compose state"

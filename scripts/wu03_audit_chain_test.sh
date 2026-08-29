@@ -88,6 +88,7 @@ log "== WU-03 audit-chain test $(date -u +%FT%TZ) (project: $WU03_PROJECT_NAME) 
 
 docker compose --project-name market-mate-wu01 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 docker compose --project-name market-mate-wu02 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
+docker compose --project-name market-mate-wu04 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 "${COMPOSE[@]}" down -v --remove-orphans >>"$BRING_UP_LOG" 2>&1 \
   || fail "could not remove prior WU-03 Compose state"
 
@@ -117,6 +118,12 @@ jq -e '.head_version >= 3 and .registered_kind == "evidence" and .pgcrypto_insta
   || fail "audit-event schema is not registered at migration head: $audit_registration"
 pass "audit_event is a registered evidence table with cryptographic hashing available"
 
+# The backend may already have emitted chain events at startup (restore
+# verification); the WU-03 events append after the current head.
+head_before=$("${PSQL[@]}" -qAtc \
+  "SELECT coalesce(max(chain_position), 0) FROM audit_event;") \
+  || fail "could not read the current chain head"
+
 event_one=$(append_event \
   "wu03-0001" \
   "wu03.verification_started" \
@@ -143,9 +150,10 @@ events=$(jq -n \
   --argjson first "$event_one" \
   --argjson second "$event_two" \
   --argjson third "$event_three" \
+  --argjson head_before "$head_before" \
   '[$first, $second, $third]')
-jq -e '
-  [.[].chain_position] == [1, 2, 3]
+jq -e --argjson head_before "$head_before" '
+  [.[].chain_position] == [$head_before + 1, $head_before + 2, $head_before + 3]
   and all(.[]; (.event_hash | length) == 64 and (.previous_hash | length) == 64)
   and .[1].previous_hash == .[0].event_hash
   and .[2].previous_hash == .[1].event_hash
@@ -153,27 +161,29 @@ jq -e '
   || fail "appended events do not form a predecessor-linked chain: $events"
 pass "canonical events link to their predecessor hashes"
 
+expected_total=$((head_before + 3))
 valid_verification=$("${PSQL[@]}" -qAtc \
   "SELECT row_to_json(result) FROM verify_audit_event_chain() AS result;") \
   || fail "valid chain verification failed to run"
-jq -e '.valid == true and .checked_events == 3 and .break_position == null and .reason == null' \
+jq -e ".valid == true and .checked_events == $expected_total and .break_position == null and .reason == null" \
   <<<"$valid_verification" >/dev/null \
   || fail "valid chain did not verify: $valid_verification"
 pass "untampered chain verifies"
 
+tamper_target=$((head_before + 2))
 set +e
 update_output=$("${PSQL[@]}" -qAtc \
-  "UPDATE audit_event SET payload = jsonb_set(payload, '{forbidden}', 'true') WHERE chain_position = 2;" 2>&1)
+  "UPDATE audit_event SET payload = jsonb_set(payload, '{forbidden}', 'true') WHERE chain_position = $tamper_target;" 2>&1)
 update_status=$?
 delete_output=$("${PSQL[@]}" -qAtc \
-  "DELETE FROM audit_event WHERE chain_position = 2;" 2>&1)
+  "DELETE FROM audit_event WHERE chain_position = $tamper_target;" 2>&1)
 delete_status=$?
 direct_insert_output=$("${PSQL[@]}" -qAtc "
   INSERT INTO audit_event (
     chain_position, event_id, event_type, event_time, payload,
     source_lineage, receipt_time, record_environment, previous_hash, event_hash
   ) VALUES (
-    4, 'forged', 'forged', '2026-08-28T20:00:06Z', '{}'::jsonb,
+    $((expected_total + 1)), 'forged', 'forged', '2026-08-28T20:00:06Z', '{}'::jsonb,
     '{\"source\":\"forged\",\"entitlement_version\":\"v1\"}'::jsonb,
     '2026-08-28T20:00:07Z', 'local_research', repeat('0', 64), repeat('0', 64)
   );
@@ -196,25 +206,25 @@ tampered_verification=$("${PSQL[@]}" -qAtc "
   SET LOCAL session_replication_role = replica;
   UPDATE audit_event
      SET payload = jsonb_set(payload, '{action}', '\"tampered\"'::jsonb)
-   WHERE chain_position = 2;
+   WHERE chain_position = $tamper_target;
   SET LOCAL session_replication_role = origin;
   SELECT row_to_json(result) FROM verify_audit_event_chain() AS result;
   ROLLBACK;
 ") || fail "tamper-detection probe failed to run"
-jq -e '
+jq -e --argjson tamper_target "$tamper_target" '
   .valid == false
-  and .checked_events == 1
-  and .break_position == 2
+  and .checked_events == ($tamper_target - 1)
+  and .break_position == $tamper_target
   and .reason == "event_hash_mismatch"
   and .expected_event_hash != .actual_event_hash
 ' <<<"$tampered_verification" >/dev/null \
   || fail "tampered byte did not identify the exact break point: $tampered_verification"
-pass "tampering is reported at exact chain position 2"
+pass "tampering is reported at exact chain position $tamper_target"
 
 final_verification=$("${PSQL[@]}" -qAtc \
   "SELECT row_to_json(result) FROM verify_audit_event_chain() AS result;") \
   || fail "final chain verification failed to run"
-jq -e '.valid == true and .checked_events == 3' <<<"$final_verification" >/dev/null \
+jq -e ".valid == true and .checked_events == $expected_total" <<<"$final_verification" >/dev/null \
   || fail "tamper probe did not roll back cleanly: $final_verification"
 
 jq -n \
@@ -253,7 +263,7 @@ jq -e '
   and (.events | length) == 3
   and .valid_verification.valid == true
   and .tamper_probe.valid == false
-  and .tamper_probe.break_position == 2
+  and .tamper_probe.break_position == (.events[1].chain_position)
   and .mutation_guards.update_failed_closed == true
   and .mutation_guards.delete_failed_closed == true
   and .mutation_guards.direct_insert_failed_closed == true

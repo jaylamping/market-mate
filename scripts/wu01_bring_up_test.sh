@@ -82,6 +82,7 @@ log "== WU-01 bring-up test $(date -u +%FT%TZ) (project: $WU01_PROJECT_NAME) =="
 # Isolate from other acceptance stacks that publish the same localhost ports.
 docker compose --project-name market-mate-wu02 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 docker compose --project-name market-mate-wu03 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
+docker compose --project-name market-mate-wu04 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 
 # Clean only the isolated WU-01 test project and its named test volume.
 "${COMPOSE[@]}" down -v --remove-orphans >>"$BRING_UP_LOG" 2>&1 \
@@ -269,7 +270,7 @@ jq -n \
   || fail "could not write the health snapshot"
 
 jq -e '
-  (.services | length) == 3
+  (.services | length) == 4
   and all(.services[]; .state == "running" and .health == "healthy")
   and .backend_healthz.status == "ok"
   and .backend_healthz.service == "backend"
