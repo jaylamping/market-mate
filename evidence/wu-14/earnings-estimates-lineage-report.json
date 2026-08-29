@@ -1,0 +1,38 @@
+{
+  "captured_at": "2026-08-29T20:42:19Z",
+  "estimates": {
+    "ingested": true,
+    "as_of_timestamp_attached": true,
+    "announcement_timestamp_attached": true,
+    "missing_as_of_rejected": true
+  },
+  "reconciliation": {
+    "actual_edgar_linked": true,
+    "announcement_linked": true,
+    "disagreement_surfaced": true,
+    "provenance_attached": true
+  },
+  "entitlement": {
+    "gate_allowed": true,
+    "uses_recorded": true
+  },
+  "append_only": {
+    "estimate_update_blocked": true,
+    "reconciliation_update_blocked": true,
+    "reconciliation_truncate_blocked": true
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 3,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  },
+  "audit_positions": {
+    "estimate": 2,
+    "reconciliation": 3
+  }
+}
