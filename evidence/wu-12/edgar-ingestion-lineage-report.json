@@ -1,0 +1,41 @@
+{
+  "captured_at": "2026-08-29T20:13:19Z",
+  "ingestion": {
+    "filing_ingested": true,
+    "xbrl_actual_ingested": true,
+    "filing_receipt_time_preserved": true,
+    "actual_receipt_time_preserved": true,
+    "certified_mapping_linked": true,
+    "actual_identity_linked": true,
+    "entitlement_gate_allowed": true,
+    "entitlement_use_recorded": true
+  },
+  "untrusted_content": {
+    "filing_raw_content_verbatim": true,
+    "xbrl_raw_content_verbatim": true,
+    "content_marked_untrusted": true,
+    "direct_update_blocked": true,
+    "direct_truncate_blocked": true,
+    "non_certified_mapping_rejected": true
+  },
+  "provenance": {
+    "filing_source_lineage_attached": true,
+    "actual_source_lineage_attached": true,
+    "filing_entitlement_version_attached": true,
+    "actual_entitlement_version_attached": true
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 3,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  },
+  "audit_positions": {
+    "ingestion": 2,
+    "content": 3
+  }
+}
