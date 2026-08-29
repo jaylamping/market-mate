@@ -1,0 +1,201 @@
+{
+  "captured_at": "2026-08-29T13:55:48Z",
+  "environment_scan": {
+    "profile": "local_research",
+    "surface": "environment",
+    "scanned_at": "2026-08-29T13:55:42.338820Z",
+    "variables_scanned": 5,
+    "allowed_config": [
+      "CUSTODY_URL"
+    ],
+    "local_database_config": [
+      "DATABASE_URL"
+    ],
+    "system_variables": [
+      "HOME",
+      "HOSTNAME",
+      "PATH"
+    ],
+    "unrecognized_variables": [],
+    "violations": [],
+    "result": "pass"
+  },
+  "compose_config_scan": {
+    "profile": "local_research",
+    "surface": "json-input",
+    "scanned_at": "2026-08-29T13:55:43.297789Z",
+    "variables_scanned": 6,
+    "allowed_config": [
+      "CUSTODY_DATA_DIR",
+      "CUSTODY_URL"
+    ],
+    "local_database_config": [
+      "DATABASE_URL",
+      "POSTGRES_DB",
+      "POSTGRES_PASSWORD",
+      "POSTGRES_USER"
+    ],
+    "system_variables": [],
+    "unrecognized_variables": [],
+    "violations": [],
+    "result": "pass"
+  },
+  "structured_logs": {
+    "backend_lines": 3,
+    "custody_lines": 1,
+    "all_lines_valid_json": true
+  },
+  "redaction_demo": {
+    "input": "postgres://mm:local-only@postgres:5432/market_mate",
+    "output": {
+      "DATABASE_URL": "postgres://mm:[REDACTED:url-password]@postgres:5432/market_mate",
+      "event": "config.redact_demo",
+      "level": "info",
+      "service": "backend",
+      "ts": "2026-08-29T13:55:44.793978Z"
+    }
+  },
+  "negative_probes": [
+    {
+      "name": "broker-api-key-name",
+      "exit_code": 1,
+      "report": {
+        "profile": "local_research",
+        "surface": "environment",
+        "scanned_at": "2026-08-29T13:55:45.252493Z",
+        "variables_scanned": 6,
+        "allowed_config": [
+          "CUSTODY_URL"
+        ],
+        "local_database_config": [
+          "DATABASE_URL"
+        ],
+        "system_variables": [
+          "HOME",
+          "HOSTNAME",
+          "PATH"
+        ],
+        "unrecognized_variables": [],
+        "violations": [
+          {
+            "variable": "ALPACA_API_KEY",
+            "detector": "api-key-named-variable",
+            "reason": "variable name contains api_key"
+          }
+        ],
+        "result": "blocked"
+      }
+    },
+    {
+      "name": "pem-private-key-value",
+      "exit_code": 1,
+      "report": {
+        "profile": "local_research",
+        "surface": "environment",
+        "scanned_at": "2026-08-29T13:55:45.784248Z",
+        "variables_scanned": 6,
+        "allowed_config": [
+          "CUSTODY_URL"
+        ],
+        "local_database_config": [
+          "DATABASE_URL"
+        ],
+        "system_variables": [
+          "HOME",
+          "HOSTNAME",
+          "PATH"
+        ],
+        "unrecognized_variables": [],
+        "violations": [
+          {
+            "variable": "CERT_BLOB",
+            "detector": "pem-private-key",
+            "reason": "value embeds a PEM private key block"
+          }
+        ],
+        "result": "blocked"
+      }
+    },
+    {
+      "name": "jwt-value",
+      "exit_code": 1,
+      "report": {
+        "profile": "local_research",
+        "surface": "environment",
+        "scanned_at": "2026-08-29T13:55:46.297536Z",
+        "variables_scanned": 6,
+        "allowed_config": [
+          "CUSTODY_URL"
+        ],
+        "local_database_config": [
+          "DATABASE_URL"
+        ],
+        "system_variables": [
+          "HOME",
+          "HOSTNAME",
+          "PATH"
+        ],
+        "unrecognized_variables": [],
+        "violations": [
+          {
+            "variable": "SESSION_STATE",
+            "detector": "jwt-credential",
+            "reason": "value is a JWT credential"
+          }
+        ],
+        "result": "blocked"
+      }
+    }
+  ],
+  "serve_gate": {
+    "startup_blocked_logged": true,
+    "blocked_log_line": {
+      "allowed_config": [
+        "CUSTODY_URL"
+      ],
+      "event": "config.startup_blocked",
+      "level": "error",
+      "local_database_config": [
+        "DATABASE_URL"
+      ],
+      "profile": "local_research",
+      "result": "blocked",
+      "scanned_at": "2026-08-29T13:55:46.830050Z",
+      "service": "backend",
+      "surface": "environment",
+      "system_variables": [
+        "HOME",
+        "HOSTNAME",
+        "PATH"
+      ],
+      "ts": "2026-08-29T13:55:46.830065Z",
+      "unrecognized_variables": [],
+      "variables_scanned": 6,
+      "violations": [
+        {
+          "detector": "api-key-named-variable",
+          "reason": "variable name contains api_key",
+          "variable": "ALPACA_API_KEY"
+        }
+      ]
+    }
+  },
+  "audit_events": [
+    {
+      "event_type": "config.startup_scan_completed",
+      "chain_position": 2
+    },
+    {
+      "event_type": "config.scan_blocked",
+      "chain_position": 3
+    },
+    {
+      "event_type": "config.scan_blocked",
+      "chain_position": 4
+    },
+    {
+      "event_type": "config.scan_blocked",
+      "chain_position": 5
+    }
+  ]
+}

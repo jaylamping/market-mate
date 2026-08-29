@@ -8,12 +8,16 @@ use backend::{
     checkpoints::{
         execute_checkpoint_flow, run_restore_verification, CustodyClient, RestoreVerification,
     },
+    logging::log_event,
     migrate::{
         apply, bundled_migrations, connect, database_url, load_from_dir, migrations_match_head,
         ApplyReport,
     },
+    secrets,
 };
+use serde_json::json;
 use std::{
+    collections::BTreeMap,
     path::PathBuf,
     sync::{Arc, RwLock},
     time::Duration,
@@ -21,9 +25,20 @@ use std::{
 use tokio::time::{sleep, timeout};
 use tokio_postgres::NoTls;
 
+const SERVICE: &str = "backend";
 const DATABASE_READINESS_TIMEOUT: Duration = Duration::from_secs(2);
 const VERIFICATION_RETRY: Duration = Duration::from_secs(3);
 const VERIFICATION_MAX_ATTEMPTS: u32 = 200;
+
+fn enforce_credential_free_startup() {
+    let report = secrets::scan_current_environment();
+    let payload = serde_json::to_value(&report).unwrap_or_default();
+    if report.blocked() {
+        log_event(SERVICE, "error", "config.startup_blocked", &payload);
+        std::process::exit(1);
+    }
+    log_event(SERVICE, "info", "config.startup_scan_passed", &payload);
+}
 
 #[derive(serde::Serialize)]
 struct Health {
@@ -103,7 +118,12 @@ async fn database_is_ready() -> (bool, bool) {
         let (client, connection) = tokio_postgres::connect(&database_url, NoTls).await?;
         tokio::spawn(async move {
             if let Err(error) = connection.await {
-                eprintln!("PostgreSQL readiness connection failed: {error}");
+                log_event(
+                    SERVICE,
+                    "warn",
+                    "db.readiness_connection_failed",
+                    &json!({ "error": error.to_string() }),
+                );
             }
         });
         client.simple_query("SELECT 1").await?;
@@ -186,9 +206,15 @@ async fn verify_until_valid_or_exhausted(state: &AppState, database_url: &str) {
         };
         match attempted.await {
             Ok(Ok((report, event_position))) => {
-                eprintln!(
-                    "restore verification passed: receipts={}, head_position={:?}, audit position {event_position}",
-                    report.receipts_checked, report.head_position
+                log_event(
+                    SERVICE,
+                    "info",
+                    "restore.verified",
+                    &json!({
+                        "receipts_checked": report.receipts_checked,
+                        "head_position": report.head_position,
+                        "audit_position": event_position,
+                    }),
                 );
                 let mut guard = state
                     .verification
@@ -198,14 +224,16 @@ async fn verify_until_valid_or_exhausted(state: &AppState, database_url: &str) {
                 return;
             }
             Ok(Err(report)) => {
-                if let Some(failure) = &report.first_failure {
-                    eprintln!(
-                        "restore verification attempt {attempt} failed: {} ({})",
-                        failure.reason, failure.detail
-                    );
-                } else {
-                    eprintln!("restore verification attempt {attempt} failed");
-                }
+                let failure = report
+                    .first_failure
+                    .as_ref()
+                    .map(|failure| json!({ "reason": failure.reason, "detail": failure.detail }));
+                log_event(
+                    SERVICE,
+                    "warn",
+                    "restore.verification_attempt_failed",
+                    &json!({ "attempt": attempt, "failure": failure }),
+                );
                 let mut guard = state
                     .verification
                     .write()
@@ -213,12 +241,22 @@ async fn verify_until_valid_or_exhausted(state: &AppState, database_url: &str) {
                 *guard = report;
             }
             Err(error) => {
-                eprintln!("restore verification attempt {attempt} errored: {error}");
+                log_event(
+                    SERVICE,
+                    "warn",
+                    "restore.verification_attempt_errored",
+                    &json!({ "attempt": attempt, "error": error }),
+                );
             }
         }
         sleep(VERIFICATION_RETRY).await;
     }
-    eprintln!("restore verification never became valid; refusing readiness");
+    log_event(
+        SERVICE,
+        "error",
+        "restore.verification_never_became_valid",
+        &json!({ "max_attempts": VERIFICATION_MAX_ATTEMPTS }),
+    );
 }
 
 async fn create_checkpoint(State(state): State<AppState>) -> (StatusCode, Json<serde_json::Value>) {
@@ -296,23 +334,30 @@ async fn restore_verification(
     )
 }
 
-struct Cli {
-    migrate_only: bool,
-    from_dir: Option<PathBuf>,
+enum Command {
+    Serve,
+    Migrate(Option<PathBuf>),
+    ScanConfig(ScanConfigSource),
 }
 
-fn parse_cli(args: &[String]) -> Result<Cli, String> {
+enum ScanConfigSource {
+    Environment,
+    Stdin,
+    JsonFile(PathBuf),
+    RedactDemo(String),
+}
+
+fn parse_cli(args: &[String]) -> Result<Command, String> {
     if args.len() <= 1 {
-        return Ok(Cli {
-            migrate_only: false,
-            from_dir: None,
-        });
+        return Ok(Command::Serve);
     }
     match args[1].as_str() {
-        "serve" => Ok(Cli {
-            migrate_only: false,
-            from_dir: None,
-        }),
+        "serve" => {
+            if args.len() > 2 {
+                return Err("serve takes no arguments".into());
+            }
+            Ok(Command::Serve)
+        }
         "migrate" => {
             let mut from_dir = None;
             let mut index = 2;
@@ -326,46 +371,124 @@ fn parse_cli(args: &[String]) -> Result<Cli, String> {
                     other => return Err(format!("unknown migrate argument: {other}")),
                 }
             }
-            Ok(Cli {
-                migrate_only: true,
-                from_dir,
-            })
+            Ok(Command::Migrate(from_dir))
+        }
+        "scan-config" => {
+            let mut source = ScanConfigSource::Environment;
+            let mut index = 2;
+            while index < args.len() {
+                match args[index].as_str() {
+                    "--stdin" => source = ScanConfigSource::Stdin,
+                    "--json-file" => {
+                        let path = args.get(index + 1).ok_or("--json-file requires a path")?;
+                        source = ScanConfigSource::JsonFile(PathBuf::from(path));
+                        index += 2;
+                    }
+                    "--redact-demo" => {
+                        let sample = args
+                            .get(index + 1)
+                            .ok_or("--redact-demo requires a KEY=VALUE sample")?;
+                        source = ScanConfigSource::RedactDemo(sample.to_string());
+                        index += 2;
+                    }
+                    other => return Err(format!("unknown scan-config argument: {other}")),
+                }
+            }
+            Ok(Command::ScanConfig(source))
         }
         other => Err(format!("unknown command: {other}")),
     }
 }
 
-async fn run_migrations(from_dir: Option<PathBuf>) -> ApplyReport {
-    let database_url = database_url().unwrap_or_else(|error| {
+fn run_scan_config(source: ScanConfigSource) -> Result<i32, String> {
+    match source {
+        ScanConfigSource::RedactDemo(sample) => {
+            let (key, value) = sample
+                .split_once('=')
+                .ok_or("--redact-demo requires a KEY=VALUE sample")?;
+            let line = backend::logging::format_event(
+                SERVICE,
+                "info",
+                "config.redact_demo",
+                &json!({ key: value }),
+            );
+            println!("{line}");
+            Ok(0)
+        }
+        ScanConfigSource::Environment => {
+            let report = secrets::scan_current_environment();
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&report)
+                    .map_err(|error| format!("scan report failed to serialize: {error}"))?
+            );
+            Ok(if report.blocked() { 1 } else { 0 })
+        }
+        ScanConfigSource::Stdin => {
+            use std::io::Read;
+            let mut input = String::new();
+            std::io::stdin()
+                .read_to_string(&mut input)
+                .map_err(|error| format!("could not read stdin: {error}"))?;
+            scan_json_input(&input)
+        }
+        ScanConfigSource::JsonFile(path) => {
+            let input = std::fs::read_to_string(&path)
+                .map_err(|error| format!("could not read {}: {error}", path.display()))?;
+            scan_json_input(&input)
+        }
+    }
+}
+
+fn scan_json_input(input: &str) -> Result<i32, String> {
+    let map: BTreeMap<String, String> = serde_json::from_str(input)
+        .map_err(|error| format!("expected a JSON object of string variables: {error}"))?;
+    let report = secrets::scan_environment("json-input", &map);
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&report)
+            .map_err(|error| format!("scan report failed to serialize: {error}"))?
+    );
+    Ok(if report.blocked() { 1 } else { 0 })
+}
+
+#[tokio::main]
+async fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    let command = parse_cli(&args).unwrap_or_else(|error| {
         eprintln!("{error}");
-        std::process::exit(1);
+        std::process::exit(2);
     });
-    let migrations = match from_dir {
-        Some(path) => load_from_dir(&path),
-        None => bundled_migrations(),
-    };
-    let migrations = migrations.unwrap_or_else(|error| {
-        eprintln!("{error}");
-        std::process::exit(1);
-    });
-    let (mut client, _connection) = connect(&database_url).await.unwrap_or_else(|error| {
-        eprintln!("{error}");
-        std::process::exit(1);
-    });
-    apply(&mut client, &migrations)
-        .await
-        .unwrap_or_else(|error| {
+    if let Command::ScanConfig(source) = command {
+        let code = run_scan_config(source).unwrap_or_else(|error| {
             eprintln!("{error}");
-            std::process::exit(1);
-        })
+            2
+        });
+        std::process::exit(code);
+    }
+    enforce_credential_free_startup();
+    if let Command::Migrate(from_dir) = command {
+        let report = run_migrations(from_dir).await;
+        println!(
+            "{}",
+            serde_json::to_string(&report).expect("apply report must serialize")
+        );
+        return;
+    }
+    serve().await;
 }
 
 async fn serve() {
     let report = run_migrations(None).await;
     if !report.noop {
-        eprintln!(
-            "applied migrations {:?}; head {:?}",
-            report.applied_versions, report.head_version
+        log_event(
+            SERVICE,
+            "info",
+            "migrations.applied",
+            &json!({
+                "applied_versions": report.applied_versions,
+                "head_version": report.head_version,
+            }),
         );
     }
     let custody_url =
@@ -394,20 +517,23 @@ async fn serve() {
         .expect("backend server must run");
 }
 
-#[tokio::main]
-async fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    let cli = parse_cli(&args).unwrap_or_else(|error| {
-        eprintln!("{error}");
-        std::process::exit(2);
-    });
-    if cli.migrate_only {
-        let report = run_migrations(cli.from_dir).await;
-        println!(
-            "{}",
-            serde_json::to_string(&report).expect("apply report must serialize")
-        );
-        return;
-    }
-    serve().await;
+async fn run_migrations(from_dir: Option<PathBuf>) -> ApplyReport {
+    let fail = |event: &str, detail: String| -> ! {
+        log_event(SERVICE, "error", event, &json!({ "detail": detail }));
+        std::process::exit(1);
+    };
+    let database_url = database_url()
+        .unwrap_or_else(|error| fail("migrate.database_url_missing", error.to_string()));
+    let migrations = match from_dir {
+        Some(path) => load_from_dir(&path),
+        None => bundled_migrations(),
+    };
+    let migrations =
+        migrations.unwrap_or_else(|error| fail("migrate.migrations_unloadable", error.to_string()));
+    let (mut client, _connection) = connect(&database_url)
+        .await
+        .unwrap_or_else(|error| fail("migrate.connect_failed", error.to_string()));
+    apply(&mut client, &migrations)
+        .await
+        .unwrap_or_else(|error| fail("migrate.apply_failed", error.to_string()))
 }
