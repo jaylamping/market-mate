@@ -1,0 +1,68 @@
+{
+  "captured_at": "2026-08-29T02:11:25Z",
+  "first_apply": {
+    "head_version": 1,
+    "applied": [
+      {
+        "version": 1,
+        "name": "schema_conventions",
+        "checksum": "b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007"
+      }
+    ],
+    "fingerprint": "8063c9aaa7aca4f2d0a271880ff8f4cb",
+    "evidence_tables": []
+  },
+  "second_apply": {
+    "applied_versions": [],
+    "already_applied_versions": [
+      1
+    ],
+    "head_version": 1,
+    "noop": true
+  },
+  "second_state": {
+    "head_version": 1,
+    "applied": [
+      {
+        "version": 1,
+        "name": "schema_conventions",
+        "checksum": "b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007"
+      }
+    ],
+    "fingerprint": "8063c9aaa7aca4f2d0a271880ff8f4cb",
+    "evidence_tables": []
+  },
+  "fresh_apply": {
+    "applied_versions": [
+      1
+    ],
+    "already_applied_versions": [],
+    "head_version": 1,
+    "noop": false
+  },
+  "fresh_state": {
+    "head_version": 1,
+    "applied": [
+      {
+        "version": 1,
+        "name": "schema_conventions",
+        "checksum": "b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007"
+      }
+    ],
+    "fingerprint": "8063c9aaa7aca4f2d0a271880ff8f4cb",
+    "evidence_tables": []
+  },
+  "conventions": {
+    "conforming_register": "ok",
+    "nonconforming_failed_closed": true
+  },
+  "out_of_order": {
+    "exit_status": 1,
+    "failed_closed": true,
+    "output": "migration sequence failed closed: versions must be contiguous from 1; expected 2, found 3"
+  },
+  "postgres": {
+    "pgvector_version": "0.8.6",
+    "vector_column_count": 0
+  }
+}
