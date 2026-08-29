@@ -75,17 +75,19 @@ probe_result=$("${PSQL[@]}" -c "BEGIN;" -f /tmp/wu18-probe.sql \
 
 for key in \
   universal_profile_resolved options_profile_resolved holding_profile_resolved portfolio_profile_resolved \
-  profiles_are_typed_and_distinct not_applicable_has_proved_rule no_default_substitution_in_profiles \
-  unproved_not_applicable_blocked resolution_update_blocked obligation_update_blocked; do
+  profiles_are_typed_and_distinct proof_artifact_bound not_applicable_has_proved_rule \
+  no_default_substitution_in_profiles unproved_not_applicable_blocked unverified_proof_blocked \
+  proof_expression_binding_blocked proof_artifact_update_blocked resolution_update_blocked \
+  obligation_update_blocked; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
     || fail "probe assertion $key failed: $probe_result"
 done
 pass "stage, capability, and decision purpose resolve distinct typed profiles"
-pass "Not Applicable obligations carry a proved contract rule without a default substitute"
-pass "unproved Not Applicable and evidence-profile mutations fail closed"
+pass "Not Applicable obligations carry a proved, verified, content-bound contract rule without a default substitute"
+pass "unproved or unverified Not Applicable proofs and evidence-profile mutations fail closed"
 
 profile_payload=$(jq -c '{universal: .universal_profile_resolved, options: .options_profile_resolved, holding: .holding_profile_resolved, portfolio: .portfolio_profile_resolved, distinct: .profiles_are_typed_and_distinct}' <<<"$probe_result")
-obligation_payload=$(jq -c '{proved_not_applicable: .not_applicable_has_proved_rule, no_default: .no_default_substitution_in_profiles, unproved_blocked: .unproved_not_applicable_blocked}' <<<"$probe_result")
+obligation_payload=$(jq -c '{proved_not_applicable: .not_applicable_has_proved_rule, proof_artifact_bound: .proof_artifact_bound, no_default: .no_default_substitution_in_profiles, unproved_blocked: .unproved_not_applicable_blocked, unverified_blocked: .unverified_proof_blocked, expression_binding_blocked: .proof_expression_binding_blocked}' <<<"$probe_result")
 chain_profile=$(append_audit_event "wu18-profile-$(date +%s)" "research.evidence_profile_resolved" "$(jq -nc --argjson evidence "$profile_payload" '{probe: "wu18_evidence_profiles_probe", evidence: $evidence}')")
 chain_obligation=$(append_audit_event "wu18-obligation-$(date +%s)" "research.evidence_obligation_proved" "$(jq -nc --argjson evidence "$obligation_payload" '{probe: "wu18_evidence_profiles_probe", evidence: $evidence}')")
 [[ "$chain_obligation" -gt "$chain_profile" ]] || fail "audit chain positions did not advance: $chain_profile -> $chain_obligation"
@@ -103,8 +105,8 @@ jq -n \
   '{
     captured_at: $captured_at,
     profiles: {universal: $probe.universal_profile_resolved, options: $probe.options_profile_resolved, holding: $probe.holding_profile_resolved, portfolio: $probe.portfolio_profile_resolved, typed_and_distinct: $probe.profiles_are_typed_and_distinct},
-    obligations: {not_applicable_has_proved_rule: $probe.not_applicable_has_proved_rule, no_default_substitution: $probe.no_default_substitution_in_profiles, unproved_not_applicable_blocked: $probe.unproved_not_applicable_blocked},
-    append_only: {resolution_update_blocked: $probe.resolution_update_blocked, obligation_update_blocked: $probe.obligation_update_blocked},
+    obligations: {not_applicable_has_proved_rule: $probe.not_applicable_has_proved_rule, proof_artifact_bound: $probe.proof_artifact_bound, no_default_substitution: $probe.no_default_substitution_in_profiles, unproved_not_applicable_blocked: $probe.unproved_not_applicable_blocked, unverified_proof_blocked: $probe.unverified_proof_blocked, proof_expression_binding_blocked: $probe.proof_expression_binding_blocked},
+    append_only: {proof_artifact_update_blocked: $probe.proof_artifact_update_blocked, resolution_update_blocked: $probe.resolution_update_blocked, obligation_update_blocked: $probe.obligation_update_blocked},
     audit_chain: $chain,
     audit_positions: {profile: $audit_position_profile, obligation: $audit_position_obligation}
   }' >"$REPORT" || fail "could not write WU-18 evidence report"
@@ -114,9 +116,13 @@ jq -e '
   and .profiles.holding == true
   and .profiles.portfolio == true
   and .profiles.typed_and_distinct == true
+  and .obligations.proof_artifact_bound == true
   and .obligations.not_applicable_has_proved_rule == true
   and .obligations.no_default_substitution == true
   and .obligations.unproved_not_applicable_blocked == true
+  and .obligations.unverified_proof_blocked == true
+  and .obligations.proof_expression_binding_blocked == true
+  and .append_only.proof_artifact_update_blocked == true
   and .append_only.resolution_update_blocked == true
   and .append_only.obligation_update_blocked == true
   and .audit_chain.valid == true

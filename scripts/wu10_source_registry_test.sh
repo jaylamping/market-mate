@@ -113,7 +113,8 @@ for key in \
   connector_fields_match_contract_version mismatched_field_version_rejected \
   unregistered_source_rejected versioned_records_append_only \
   contract_source_range_rejected overlapping_contract_version_rejected \
-  source_version_mismatch_rejected connector_binding_version_mismatch_rejected; do
+  source_version_mismatch_rejected connector_binding_version_mismatch_rejected \
+  source_connector_update_blocked source_connector_delete_blocked; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
     || fail "probe assertion $key failed: $probe_result"
 done
@@ -177,6 +178,10 @@ jq -n \
       connector_binding_version_mismatch_rejected: $probe.connector_binding_version_mismatch_rejected,
       bound_field_keys: $probe.bound_field_keys
     },
+    source_connector: {
+      update_blocked: $probe.source_connector_update_blocked,
+      delete_blocked: $probe.source_connector_delete_blocked
+    },
     audit_chain: $chain,
     audit_positions: {
       source_registry: $audit_position_registry,
@@ -200,6 +205,8 @@ jq -e '
   and .data_contract.overlapping_version_rejected == true
   and .data_contract.source_version_mismatch_rejected == true
   and .data_contract.connector_binding_version_mismatch_rejected == true
+  and .source_connector.update_blocked == true
+  and .source_connector.delete_blocked == true
   and .audit_chain.valid == true
   and .audit_positions.source_registry > 0
   and .audit_positions.data_contract > 0

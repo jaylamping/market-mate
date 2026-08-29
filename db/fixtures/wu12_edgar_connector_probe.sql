@@ -145,7 +145,7 @@ BEGIN
     'filing_entitlement_version_attached', v_filing.entitlement_version_id = v_entitlement_v1,
     'actual_entitlement_version_attached', v_actual.entitlement_version_id = v_entitlement_v1,
     'direct_update_blocked', false,
-    'direct_truncate_blocked', false,
+    'direct_delete_blocked', false,
     'non_certified_mapping_rejected', false
   );
 
@@ -199,14 +199,17 @@ BEGIN
   END;
 
   BEGIN
-    TRUNCATE edgar_xbrl_actual;
-    RAISE EXCEPTION 'probe corrupted: EDGAR XBRL actuals were truncatable';
+    -- Use a direct row mutation here. On the final migration head, a TRUNCATE
+    -- can fail first on a downstream foreign key, which would not isolate the
+    -- WU-12 append-only trigger required by issue #97.
+    DELETE FROM edgar_xbrl_actual;
+    RAISE EXCEPTION 'probe corrupted: EDGAR XBRL actuals were deletable';
   EXCEPTION
     WHEN others THEN
       IF SQLERRM NOT LIKE '%append-only%' THEN
         RAISE;
       END IF;
-      v_results := v_results || jsonb_build_object('direct_truncate_blocked', true);
+      v_results := v_results || jsonb_build_object('direct_delete_blocked', true);
   END;
 
   INSERT INTO wu12_probe_result (result) VALUES (v_results);

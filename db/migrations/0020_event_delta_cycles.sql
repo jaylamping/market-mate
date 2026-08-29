@@ -11,6 +11,8 @@ CREATE TABLE research_event_delta_cycle (
     parent_cycle_id uuid NOT NULL REFERENCES research_post_close_cycle(cycle_id),
     manifest_id uuid NOT NULL REFERENCES research_cycle_manifest(manifest_id),
     source_event_ref text NOT NULL CHECK (btrim(source_event_ref) <> ''),
+    source_earnings_estimate_id uuid REFERENCES earnings_estimate_observation(estimate_id),
+    source_edgar_filing_id uuid REFERENCES edgar_filing(filing_id),
     event_payload jsonb NOT NULL CHECK (jsonb_typeof(event_payload) = 'object'),
     publication_state text NOT NULL CHECK (
         publication_state IN ('complete', 'degraded_complete', 'failed')
@@ -21,6 +23,15 @@ CREATE TABLE research_event_delta_cycle (
     CHECK (source_lineage_is_valid(source_lineage)),
     CHECK (detected_at >= event_at),
     CHECK (event_payload->>'source_event_ref' = source_event_ref),
+    CHECK (
+        (event_kind = 'earnings_announcement'
+         AND source_earnings_estimate_id IS NOT NULL
+         AND source_edgar_filing_id IS NULL)
+        OR
+        (event_kind = 'edgar_8k'
+         AND source_earnings_estimate_id IS NULL
+         AND source_edgar_filing_id IS NOT NULL)
+    ),
     CHECK (
         (
             event_kind = 'earnings_announcement'
@@ -73,6 +84,8 @@ CREATE FUNCTION publish_event_delta_cycle(
     event_at_value timestamptz,
     detected_at_value timestamptz,
     parent_cycle_id_value uuid,
+    source_earnings_estimate_id_value uuid,
+    source_edgar_filing_id_value uuid,
     expected_snapshots_value jsonb,
     event_payload_value jsonb,
     source_lineage_value jsonb
@@ -85,8 +98,11 @@ DECLARE
     item jsonb;
     snapshot_key_value text;
     snapshot_id_value uuid;
+    source_event_ref_value text;
     outcome_state_value text;
     parent_cycle research_post_close_cycle%ROWTYPE;
+    earnings_estimate_row earnings_estimate_observation%ROWTYPE;
+    edgar_filing_row edgar_filing%ROWTYPE;
     event_manifest research_cycle_manifest%ROWTYPE;
     created research_event_delta_cycle%ROWTYPE;
     expected_count integer;
@@ -123,6 +139,97 @@ BEGIN
     END IF;
     IF coalesce(btrim(event_payload_value->>'source_event_ref'), '') = '' THEN
         RAISE EXCEPTION 'event delta cycle requires a source event reference' USING ERRCODE = '22023';
+    END IF;
+    source_event_ref_value := event_payload_value->>'source_event_ref';
+
+    IF event_kind_value = 'earnings_announcement' THEN
+        IF source_earnings_estimate_id_value IS NULL OR source_edgar_filing_id_value IS NOT NULL THEN
+            RAISE EXCEPTION
+                'earnings event must identify exactly one registered earnings estimate'
+                USING ERRCODE = '55000';
+        END IF;
+        SELECT e.*
+        INTO earnings_estimate_row
+        FROM earnings_estimate_observation e
+        WHERE e.estimate_id = source_earnings_estimate_id_value;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'earnings event source estimate % is not registered', source_earnings_estimate_id_value
+                USING ERRCODE = '22023';
+        END IF;
+        IF NOT EXISTS (
+            SELECT 1
+            FROM source_registry_version sv
+            JOIN source_registry s ON s.source_id = sv.source_id
+            WHERE sv.source_version_id = earnings_estimate_row.source_registry_version_id
+              AND s.source_kind = 'fundamental_data'
+        ) THEN
+            RAISE EXCEPTION 'earnings event source estimate is not registered as fundamental data'
+                USING ERRCODE = '55000';
+        END IF;
+        IF source_event_ref_value <> earnings_estimate_row.vendor_observation_key THEN
+            RAISE EXCEPTION 'earnings event source reference does not match its estimate'
+                USING ERRCODE = '55000';
+        END IF;
+        IF earnings_estimate_row.announcement_at <> event_at_value THEN
+            RAISE EXCEPTION 'earnings event time does not match its estimate announcement time'
+                USING ERRCODE = '55000';
+        END IF;
+        BEGIN
+            IF (event_payload_value->>'announcement_at')::timestamptz <> event_at_value THEN
+                RAISE EXCEPTION 'earnings event payload time does not match event time'
+                    USING ERRCODE = '55000';
+            END IF;
+        EXCEPTION
+            WHEN invalid_datetime_format OR datetime_field_overflow OR invalid_text_representation THEN
+                RAISE EXCEPTION 'earnings event announcement_at must be a valid timestamp'
+                    USING ERRCODE = '22023';
+        END;
+    ELSE
+        IF source_edgar_filing_id_value IS NULL OR source_earnings_estimate_id_value IS NOT NULL THEN
+            RAISE EXCEPTION
+                'EDGAR event must identify exactly one registered EDGAR filing'
+                USING ERRCODE = '55000';
+        END IF;
+        SELECT f.*
+        INTO edgar_filing_row
+        FROM edgar_filing f
+        WHERE f.filing_id = source_edgar_filing_id_value;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'EDGAR event source filing % is not registered', source_edgar_filing_id_value
+                USING ERRCODE = '22023';
+        END IF;
+        IF NOT EXISTS (
+            SELECT 1
+            FROM source_registry_version sv
+            JOIN source_registry s ON s.source_id = sv.source_id
+            WHERE sv.source_version_id = edgar_filing_row.source_registry_version_id
+              AND s.source_kind = 'public_filing'
+        ) THEN
+            RAISE EXCEPTION 'EDGAR event source filing is not registered as a public filing'
+                USING ERRCODE = '55000';
+        END IF;
+        IF upper(btrim(edgar_filing_row.form_type)) <> '8-K' THEN
+            RAISE EXCEPTION 'EDGAR event source filing is not an 8-K'
+                USING ERRCODE = '55000';
+        END IF;
+        IF source_event_ref_value <> edgar_filing_row.accession_number THEN
+            RAISE EXCEPTION 'EDGAR event source reference does not match its filing accession'
+                USING ERRCODE = '55000';
+        END IF;
+        IF edgar_filing_row.filed_at <> event_at_value THEN
+            RAISE EXCEPTION 'EDGAR event time does not match its filing time'
+                USING ERRCODE = '55000';
+        END IF;
+        BEGIN
+            IF (event_payload_value->>'filed_at')::timestamptz <> event_at_value THEN
+                RAISE EXCEPTION 'EDGAR event payload time does not match event time'
+                    USING ERRCODE = '55000';
+            END IF;
+        EXCEPTION
+            WHEN invalid_datetime_format OR datetime_field_overflow OR invalid_text_representation THEN
+                RAISE EXCEPTION 'EDGAR event filed_at must be a valid timestamp'
+                    USING ERRCODE = '22023';
+        END;
     END IF;
 
     PERFORM pg_advisory_xact_lock(8720);
@@ -232,12 +339,14 @@ BEGIN
     BEGIN
         INSERT INTO research_event_delta_cycle (
             event_kind, event_key, event_at, detected_at, parent_cycle_id,
-            manifest_id, source_event_ref, event_payload, publication_state,
+            manifest_id, source_event_ref, source_earnings_estimate_id,
+            source_edgar_filing_id, event_payload, publication_state,
             source_lineage, receipt_time, record_environment
         ) VALUES (
             event_kind_value, event_key_value, event_at_value, detected_at_value,
             parent_cycle_id_value, event_manifest.manifest_id,
-            event_payload_value->>'source_event_ref', event_payload_value,
+            source_event_ref_value, source_earnings_estimate_id_value,
+            source_edgar_filing_id_value, event_payload_value,
             cycle_state, source_lineage_value, cycle_receipt_time, 'local_research'
         ) RETURNING * INTO created;
     EXCEPTION

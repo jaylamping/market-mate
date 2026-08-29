@@ -10,6 +10,9 @@ DECLARE
   v_options research_evidence_profile_resolution%ROWTYPE;
   v_holding research_evidence_profile_resolution%ROWTYPE;
   v_portfolio research_evidence_profile_resolution%ROWTYPE;
+  v_pending_artifact_body jsonb := '{"assertions":{"pending_proof_must_not_resolve":true},"proof_expression":{"test":"wu18_pending_proof_probe"}}'::jsonb;
+  v_pending_artifact_digest text;
+  v_pending_rule_id uuid;
   v_results jsonb;
 BEGIN
   SELECT * INTO v_universal FROM resolve_research_evidence_profile(
@@ -46,11 +49,24 @@ BEGIN
         v_holding.resolution_id, v_portfolio.resolution_id
       )
     ),
+    'proof_artifact_bound', (
+      SELECT count(*) = 1
+        AND bool_and(a.verification_state = 'verified')
+        AND bool_and(r.proof_artifact_digest = a.artifact_digest)
+        AND bool_and(a.artifact_body -> 'proof_expression' IS NOT DISTINCT FROM r.proof_expression)
+        AND bool_and(a.artifact_digest = encode(digest(a.artifact_body::text, 'sha256'), 'hex'))
+      FROM research_evidence_contract_rule r
+      JOIN research_evidence_proof_artifact a
+        ON a.artifact_ref = r.proof_artifact_ref
+       AND a.artifact_digest = r.proof_artifact_digest
+      WHERE r.rule_key = 'stock-coverage-options-not-applicable-v1'
+    ),
     'not_applicable_has_proved_rule', (
       SELECT bool_and(
         obligation->>'applicability' <> 'not_applicable'
         OR (
           (obligation->'not_applicable_rule'->>'proof_status') = 'proved'
+          AND (obligation->'not_applicable_rule'->>'verification_state') = 'verified'
           AND coalesce(obligation->'not_applicable_rule'->>'proof_artifact_digest', '') ~ '^[0-9a-f]{64}$'
         )
       )
@@ -64,6 +80,9 @@ BEGIN
       ) obligation
     ),
     'unproved_not_applicable_blocked', false,
+    'unverified_proof_blocked', false,
+    'proof_expression_binding_blocked', false,
+    'proof_artifact_update_blocked', false,
     'resolution_update_blocked', false,
     'obligation_update_blocked', false
   );
@@ -83,6 +102,83 @@ BEGIN
     WHEN check_violation THEN
       IF SQLERRM NOT LIKE '%not_applicable_requires_proof%' THEN RAISE; END IF;
       v_results := v_results || jsonb_build_object('unproved_not_applicable_blocked', true);
+  END;
+
+  BEGIN
+    INSERT INTO research_evidence_contract_rule (
+      rule_key, description, proof_expression, proof_status,
+      proof_artifact_ref, proof_artifact_digest,
+      source_lineage, receipt_time, record_environment
+    ) VALUES (
+      'WU18-mismatched-proof-rule', 'Probe-only rule with the wrong proof expression.',
+      '{"test":"wu18_mismatched_proof_probe"}'::jsonb, 'proved',
+      'migration:0018:wu18_stock_options_contract_v1',
+      (SELECT artifact_digest
+       FROM research_evidence_proof_artifact
+       WHERE artifact_ref = 'migration:0018:wu18_stock_options_contract_v1'),
+      v_lineage, now(), 'local_research'
+    );
+    RAISE EXCEPTION 'probe accepted a rule with a mismatched proof artifact';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%does not match its proof artifact%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('proof_expression_binding_blocked', true);
+  END;
+
+  v_pending_artifact_digest := encode(digest(v_pending_artifact_body::text, 'sha256'), 'hex');
+  INSERT INTO research_evidence_proof_artifact (
+    proof_artifact_id, artifact_ref, artifact_body, artifact_digest,
+    verification_state, verification_result, source_lineage,
+    receipt_time, record_environment
+  ) VALUES (
+    '18000000-0000-0000-0000-000000000002',
+    'probe:wu18:pending-proof', v_pending_artifact_body, v_pending_artifact_digest,
+    'pending', '{"status":"pending"}'::jsonb, v_lineage, now(), 'local_research'
+  );
+
+  INSERT INTO research_evidence_contract_rule (
+    rule_key, description, proof_expression, proof_status,
+    proof_artifact_ref, proof_artifact_digest,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    'WU18-pending-proof-rule', 'Probe-only rule with an unverified artifact.',
+    '{"test":"wu18_pending_proof_probe"}'::jsonb, 'proved',
+    'probe:wu18:pending-proof', v_pending_artifact_digest,
+    v_lineage, now(), 'local_research'
+  ) RETURNING rule_id INTO v_pending_rule_id;
+
+  INSERT INTO research_evidence_obligation (
+    profile_version_id, obligation_key, evidence_family, description,
+    applicability, required_observation_states, not_applicable_rule_id,
+    default_substitute, source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_universal.profile_version_id, 'WU18-unverified-na', 'options_structure',
+    'probe-only Not Applicable obligation with an unverified proof artifact',
+    'not_applicable', '[]'::jsonb, v_pending_rule_id,
+    NULL, v_lineage, now(), 'local_research'
+  );
+
+  BEGIN
+    PERFORM resolve_research_evidence_profile(
+      'research_candidate', 'stock_eligible', 'research',
+      '2026-08-29T20:00:00Z', v_lineage
+    );
+    RAISE EXCEPTION 'probe accepted Not Applicable with an unverified proof artifact';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%lacks a proved contract rule%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('unverified_proof_blocked', true);
+  END;
+
+  BEGIN
+    UPDATE research_evidence_proof_artifact
+       SET verification_result = '{"status":"tampered"}'::jsonb
+     WHERE artifact_ref = 'migration:0018:wu18_stock_options_contract_v1';
+    RAISE EXCEPTION 'probe corrupted: proof artifact was mutable';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%append-only%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('proof_artifact_update_blocked', true);
   END;
 
   BEGIN

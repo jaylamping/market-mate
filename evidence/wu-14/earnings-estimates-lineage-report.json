@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T20:42:19Z",
+  "captured_at": "2026-08-29T23:34:31Z",
   "estimates": {
     "ingested": true,
     "as_of_timestamp_attached": true,
@@ -10,6 +10,7 @@
     "actual_edgar_linked": true,
     "announcement_linked": true,
     "disagreement_surfaced": true,
+    "mismatched_period_rejected": true,
     "provenance_attached": true
   },
   "entitlement": {

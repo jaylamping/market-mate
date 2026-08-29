@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T19:19:10Z",
+  "captured_at": "2026-08-29T23:31:22Z",
   "source_registry": {
     "source_key": "licensed-eod-primary",
     "required_terms_recorded": true,
@@ -22,6 +22,10 @@
       "close_price",
       "volume"
     ]
+  },
+  "source_connector": {
+    "update_blocked": true,
+    "delete_blocked": true
   },
   "audit_chain": {
     "valid": true,

@@ -9,15 +9,23 @@ DECLARE
   v_source_v1 uuid := '20000000-0000-0000-0000-000000000101';
   v_source_v2 uuid := '20000000-0000-0000-0000-000000000102';
   v_entitlement_id uuid := '20000000-0000-0000-0000-000000000201';
+  v_expired_entitlement_id uuid := '20000000-0000-0000-0000-000000000202';
   v_entitlement_v1 uuid := '20000000-0000-0000-0000-000000000301';
   v_entitlement_v2 uuid := '20000000-0000-0000-0000-000000000302';
+  v_expired_entitlement_v1 uuid := '20000000-0000-0000-0000-000000000303';
   v_uncertified_decision entitlement_gate_decision%ROWTYPE;
   v_certified_decision entitlement_gate_decision%ROWTYPE;
   v_expired_decision entitlement_gate_decision%ROWTYPE;
+  v_expired_allowed_decision entitlement_gate_decision%ROWTYPE;
   v_use_receipt entitled_use_receipt%ROWTYPE;
   v_lineage jsonb := '{"source":"wu11-probe","entitlement_version":"local-v1"}';
+  v_expired_effective timestamptz;
+  v_expired_at timestamptz;
   v_results jsonb;
 BEGIN
+  v_expired_effective := clock_timestamp() - interval '2 days';
+  v_expired_at := clock_timestamp() - interval '1 hour';
+
   INSERT INTO source_registry (
     source_id, source_key, source_name, source_kind,
     source_lineage, receipt_time, record_environment
@@ -59,6 +67,9 @@ BEGIN
   ) VALUES (
     v_entitlement_id, 'wu11-licensed-source-entitlement', 'paper-research-account',
     'WU-11 local certification plan', v_lineage, '2026-01-01T00:00:00Z', 'local_research'
+  ), (
+    v_expired_entitlement_id, 'wu11-expired-source-entitlement', 'paper-research-account',
+    'WU-11 expired certification regression plan', v_lineage, '2026-01-01T00:00:00Z', 'local_research'
   );
 
   INSERT INTO data_entitlement_version (
@@ -76,9 +87,15 @@ BEGIN
   (
     v_entitlement_v2, v_entitlement_id, 2, v_source_v2, 'certified',
     ARRAY['local_research','paper_validation'],
-    '2026-07-01T00:00:00Z', '2026-08-01T00:00:00Z',
+    '2026-07-01T00:00:00Z', NULL,
     '{"authority":"principal-approved-paper-plan","certificate":"wu11-local-cert-2026.2"}',
     v_lineage, '2026-07-01T00:00:00Z', 'local_research'
+  ), (
+    v_expired_entitlement_v1, v_expired_entitlement_id, 1, v_source_v2, 'certified',
+    ARRAY['local_research'],
+    v_expired_effective, v_expired_at,
+    '{"authority":"principal-approved-paper-plan","certificate":"wu11-expired-regression-cert"}',
+    v_lineage, v_expired_effective, 'local_research'
   );
 
   SELECT * INTO v_uncertified_decision FROM evaluate_entitlement_gate(
@@ -98,8 +115,12 @@ BEGIN
     'paper-validation-consumer', v_lineage
   );
   SELECT * INTO v_expired_decision FROM evaluate_entitlement_gate(
-    'wu11-expired-request', v_entitlement_v2, 'local_research',
-    '2026-08-02T00:00:00Z', v_lineage
+    'wu11-expired-request', v_expired_entitlement_v1, 'local_research',
+    v_expired_at + interval '1 minute', v_lineage
+  );
+  SELECT * INTO v_expired_allowed_decision FROM evaluate_entitlement_gate(
+    'wu11-expired-allowed-request', v_expired_entitlement_v1, 'local_research',
+    v_expired_effective + interval '1 hour', v_lineage
   );
 
   v_results := jsonb_build_object(
@@ -120,6 +141,7 @@ BEGIN
       FROM entitled_use_receipt
       WHERE decision_id = v_certified_decision.decision_id
     ),
+    'expired_allowed_use_denied', false,
     'provenance_source_attached', v_use_receipt.source_registry_version_id = v_source_v2
       AND v_use_receipt.provenance ? 'source_registry_version',
     'provenance_entitlement_attached', v_use_receipt.entitlement_version_id = v_entitlement_v2
@@ -148,6 +170,20 @@ BEGIN
           WHERE use_key = 'wu11-denied-use'
         )
       );
+  END;
+
+  BEGIN
+    PERFORM record_entitled_use(
+      'wu11-expired-use-after-decision', v_expired_allowed_decision.decision_id,
+      'market-research-consumer', v_lineage
+    );
+    RAISE EXCEPTION 'probe corrupted: an expired allowed decision produced a use receipt';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%no longer usable%' THEN
+        RAISE;
+      END IF;
+      v_results := v_results || jsonb_build_object('expired_allowed_use_denied', true);
   END;
 
   BEGIN

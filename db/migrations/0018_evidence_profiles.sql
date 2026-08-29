@@ -3,6 +3,26 @@
 -- Applicable obligation must name a proved contract rule; no default value
 -- can stand in for absent evidence.
 
+CREATE TABLE research_evidence_proof_artifact (
+    proof_artifact_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    artifact_ref text NOT NULL UNIQUE CHECK (btrim(artifact_ref) <> ''),
+    artifact_body jsonb NOT NULL CHECK (
+        jsonb_typeof(artifact_body) = 'object'
+        AND jsonb_typeof(artifact_body -> 'proof_expression') = 'object'
+    ),
+    artifact_digest text NOT NULL CHECK (artifact_digest ~ '^[0-9a-f]{64}$'),
+    verification_state text NOT NULL CHECK (verification_state IN ('verified', 'pending', 'invalidated')),
+    verification_result jsonb NOT NULL CHECK (jsonb_typeof(verification_result) = 'object'),
+    source_lineage jsonb NOT NULL,
+    receipt_time timestamptz NOT NULL,
+    record_environment record_environment NOT NULL,
+    CHECK (source_lineage_is_valid(source_lineage)),
+    CHECK (artifact_digest = encode(digest(artifact_body::text, 'sha256'), 'hex')),
+    UNIQUE (artifact_ref, artifact_digest)
+);
+
+SELECT register_evidence_table('research_evidence_proof_artifact');
+
 CREATE TABLE research_evidence_contract_rule (
     rule_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     rule_key text NOT NULL UNIQUE CHECK (btrim(rule_key) <> ''),
@@ -15,15 +35,49 @@ CREATE TABLE research_evidence_contract_rule (
     receipt_time timestamptz NOT NULL,
     record_environment record_environment NOT NULL,
     CHECK (source_lineage_is_valid(source_lineage)),
-    CHECK (
-        proof_artifact_digest = encode(
-            digest(proof_artifact_ref || '|' || proof_expression::text, 'sha256'),
-            'hex'
-        )
-    )
+    FOREIGN KEY (proof_artifact_ref, proof_artifact_digest)
+        REFERENCES research_evidence_proof_artifact (artifact_ref, artifact_digest)
 );
 
 SELECT register_evidence_table('research_evidence_contract_rule');
+
+CREATE FUNCTION validate_research_evidence_contract_rule_artifact() RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+    artifact_body_value jsonb;
+BEGIN
+    SELECT artifact_body
+    INTO artifact_body_value
+    FROM research_evidence_proof_artifact
+    WHERE artifact_ref = NEW.proof_artifact_ref
+      AND artifact_digest = NEW.proof_artifact_digest;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'research evidence contract rule proof artifact is not registered'
+            USING ERRCODE = '23503';
+    END IF;
+    IF artifact_body_value -> 'proof_expression' IS DISTINCT FROM NEW.proof_expression THEN
+        RAISE EXCEPTION
+            'research evidence contract rule proof expression does not match its proof artifact'
+            USING ERRCODE = '23514';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER research_evidence_contract_rule_artifact_guard
+BEFORE INSERT OR UPDATE ON research_evidence_contract_rule
+FOR EACH ROW EXECUTE FUNCTION validate_research_evidence_contract_rule_artifact();
+
+CREATE TRIGGER research_evidence_proof_artifact_mutation_guard
+BEFORE UPDATE OR DELETE ON research_evidence_proof_artifact
+FOR EACH ROW EXECUTE FUNCTION guard_append_only_evidence();
+
+CREATE TRIGGER research_evidence_proof_artifact_truncate_guard
+BEFORE TRUNCATE ON research_evidence_proof_artifact
+FOR EACH STATEMENT EXECUTE FUNCTION guard_append_only_evidence();
 
 CREATE TABLE research_evidence_profile_version (
     profile_version_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -188,6 +242,22 @@ FOR EACH STATEMENT EXECUTE FUNCTION guard_research_evidence_profile_resolution_w
 -- The first proved rule is deliberately narrow: stock-only coverage does not
 -- require options structure evidence, but this exemption cannot be inferred
 -- from a missing row or a default state.
+INSERT INTO research_evidence_proof_artifact (
+    artifact_ref, artifact_body, artifact_digest, verification_state,
+    verification_result, source_lineage, receipt_time, record_environment
+) VALUES (
+    'migration:0018:wu18_stock_options_contract_v1',
+    '{"assertions":{"stock_only_options_not_applicable":true,"no_default_substitute":true},"proof_expression":{"when":{"coverage_capability":"stock_eligible"},"then":{"options_structure":"not_applicable"},"test":"wu18_stock_options_contract_v1"}}'::jsonb,
+    encode(digest(
+        '{"assertions":{"stock_only_options_not_applicable":true,"no_default_substitute":true},"proof_expression":{"when":{"coverage_capability":"stock_eligible"},"then":{"options_structure":"not_applicable"},"test":"wu18_stock_options_contract_v1"}}'::jsonb::text,
+        'sha256'
+    ), 'hex'),
+    'verified',
+    '{"status":"verified","method":"migration_fixture_contract_probe"}'::jsonb,
+    '{"source":"wu18-migration","entitlement_version":"evidence-profile-v1"}'::jsonb,
+    clock_timestamp(), 'local_research'
+);
+
 INSERT INTO research_evidence_contract_rule (
     rule_key, description, proof_expression, proof_status,
     proof_artifact_ref, proof_artifact_digest,
@@ -198,11 +268,9 @@ INSERT INTO research_evidence_contract_rule (
     '{"when":{"coverage_capability":"stock_eligible"},"then":{"options_structure":"not_applicable"},"test":"wu18_stock_options_contract_v1"}'::jsonb,
     'proved',
     'migration:0018:wu18_stock_options_contract_v1',
-    encode(digest(
-        'migration:0018:wu18_stock_options_contract_v1|'
-            || '{"when":{"coverage_capability":"stock_eligible"},"then":{"options_structure":"not_applicable"},"test":"wu18_stock_options_contract_v1"}'::jsonb::text,
-        'sha256'
-    ), 'hex'),
+    (SELECT artifact_digest
+     FROM research_evidence_proof_artifact
+     WHERE artifact_ref = 'migration:0018:wu18_stock_options_contract_v1'),
     '{"source":"wu18-migration","entitlement_version":"evidence-profile-v1"}'::jsonb,
     clock_timestamp(), 'local_research'
 );
@@ -347,9 +415,18 @@ BEGIN
         SELECT 1
         FROM research_evidence_obligation o
         LEFT JOIN research_evidence_contract_rule r ON r.rule_id = o.not_applicable_rule_id
+        LEFT JOIN research_evidence_proof_artifact a
+          ON a.artifact_ref = r.proof_artifact_ref
+         AND a.artifact_digest = r.proof_artifact_digest
         WHERE o.profile_version_id = profile_row.profile_version_id
           AND o.applicability = 'not_applicable'
-          AND (r.rule_id IS NULL OR r.proof_status <> 'proved')
+          AND (
+              r.rule_id IS NULL
+              OR r.proof_status <> 'proved'
+              OR a.proof_artifact_id IS NULL
+              OR a.verification_state <> 'verified'
+              OR a.artifact_body -> 'proof_expression' IS DISTINCT FROM r.proof_expression
+          )
     ) THEN
         RAISE EXCEPTION 'Not Applicable evidence obligation lacks a proved contract rule'
             USING ERRCODE = '55000';
@@ -368,6 +445,8 @@ BEGIN
                        ELSE jsonb_build_object(
                            'rule_key', r.rule_key,
                            'proof_status', r.proof_status,
+                           'proof_artifact_ref', r.proof_artifact_ref,
+                           'verification_state', a.verification_state,
                            'proof_artifact_digest', r.proof_artifact_digest
                        )
                    END
@@ -376,6 +455,9 @@ BEGIN
     INTO obligation_count_value, obligations_value
     FROM research_evidence_obligation o
     LEFT JOIN research_evidence_contract_rule r ON r.rule_id = o.not_applicable_rule_id
+    LEFT JOIN research_evidence_proof_artifact a
+      ON a.artifact_ref = r.proof_artifact_ref
+     AND a.artifact_digest = r.proof_artifact_digest
     WHERE o.profile_version_id = profile_row.profile_version_id;
 
     PERFORM set_config('market_mate.evidence_profile_resolution_write', 'on', true);

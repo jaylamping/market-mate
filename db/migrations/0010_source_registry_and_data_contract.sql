@@ -227,6 +227,14 @@ CREATE TABLE source_connector (
 
 SELECT register_evidence_table('source_connector');
 
+CREATE TRIGGER source_connector_mutation_guard
+BEFORE UPDATE OR DELETE ON source_connector
+FOR EACH ROW EXECUTE FUNCTION guard_append_only_evidence();
+
+CREATE TRIGGER source_connector_truncate_guard
+BEFORE TRUNCATE ON source_connector
+FOR EACH STATEMENT EXECUTE FUNCTION guard_append_only_evidence();
+
 CREATE TABLE connector_field_binding (
     connector_id uuid NOT NULL,
     contract_version_id uuid NOT NULL,

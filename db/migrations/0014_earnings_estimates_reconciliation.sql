@@ -339,6 +339,12 @@ BEGIN
         RAISE EXCEPTION 'earnings actual concept does not match estimate metric'
             USING ERRCODE = '55000';
     END IF;
+    IF actual_row.period_end IS NULL
+       OR (actual_row.period_end AT TIME ZONE 'UTC')::date <> estimate_row.fiscal_period_end THEN
+        RAISE EXCEPTION
+            'earnings actual period end does not match estimate fiscal period end'
+            USING ERRCODE = '55000';
+    END IF;
 
     BEGIN
         actual_value_value := actual_row.fact_value::numeric;

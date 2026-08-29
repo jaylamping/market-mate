@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T20:13:19Z",
+  "captured_at": "2026-08-29T23:32:56Z",
   "ingestion": {
     "filing_ingested": true,
     "xbrl_actual_ingested": true,
@@ -15,7 +15,7 @@
     "xbrl_raw_content_verbatim": true,
     "content_marked_untrusted": true,
     "direct_update_blocked": true,
-    "direct_truncate_blocked": true,
+    "direct_delete_blocked": true,
     "non_certified_mapping_rejected": true
   },
   "provenance": {

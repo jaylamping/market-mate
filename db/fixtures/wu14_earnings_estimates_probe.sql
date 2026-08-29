@@ -18,6 +18,7 @@ DECLARE
   v_security_mapping instrument_mapping%ROWTYPE;
   v_issuer_mapping instrument_mapping%ROWTYPE;
   v_estimate earnings_estimate_observation%ROWTYPE;
+  v_mismatched_estimate earnings_estimate_observation%ROWTYPE;
   v_missing_estimate earnings_estimate_observation%ROWTYPE;
   v_filing edgar_filing%ROWTYPE;
   v_actual edgar_xbrl_actual%ROWTYPE;
@@ -206,6 +207,7 @@ BEGIN
       AND v_reconciliation.estimate_entitlement_version_id = v_earnings_entitlement_v1
       AND v_reconciliation.edgar_source_registry_version_id = v_edgar_source_v1
       AND v_reconciliation.edgar_entitlement_version_id = v_edgar_entitlement_v1,
+    'mismatched_period_rejected', false,
     'entitlement_gate_allowed', (
       SELECT decision = 'allowed'
       FROM entitlement_gate_decision
@@ -221,6 +223,25 @@ BEGIN
     'reconciliation_update_blocked', false,
     'reconciliation_truncate_blocked', false
   );
+
+  SELECT * INTO v_mismatched_estimate FROM ingest_earnings_estimate(
+    v_security_mapping.mapping_id, v_earnings_source_v1, v_earnings_entitlement_v1,
+    'WU14-EPS-2026Q3', '2026-09-30', 'eps_basic', 2.60, 'USD_PER_SHARE', 'USD',
+    '2026-08-05T20:00:00Z', '2026-07-16T12:00:00Z',
+    '{"metric":"eps_basic","estimate":2.60,"as_of":"2026-07-16T12:00:00Z"}'::jsonb,
+    v_lineage
+  );
+
+  BEGIN
+    PERFORM reconcile_earnings_actual(
+      v_mismatched_estimate.estimate_id, v_actual.actual_id, 0.0001, v_lineage
+    );
+    RAISE EXCEPTION 'probe corrupted: mismatched fiscal periods were reconciled';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%period end does not match%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('mismatched_period_rejected', true);
+  END;
 
   BEGIN
     UPDATE earnings_estimate_observation

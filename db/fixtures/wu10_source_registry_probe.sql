@@ -183,6 +183,8 @@ BEGIN
       JOIN data_contract_field f ON f.field_id = b.field_id
       WHERE b.connector_id = v_connector_id
     ),
+    'source_connector_update_blocked', false,
+    'source_connector_delete_blocked', false,
     'versioned_records_append_only', false,
     'contract_source_range_rejected', false,
     'overlapping_contract_version_rejected', false,
@@ -301,6 +303,31 @@ BEGIN
   END;
 
   BEGIN
+    UPDATE source_connector
+    SET lifecycle = 'retired'
+    WHERE connector_id = v_connector_id;
+    RAISE EXCEPTION 'probe corrupted: source connector was mutable';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%append-only%' THEN
+        RAISE;
+      END IF;
+      v_results := v_results || jsonb_build_object('source_connector_update_blocked', true);
+  END;
+
+  BEGIN
+    DELETE FROM source_connector
+    WHERE connector_id = v_connector_id;
+    RAISE EXCEPTION 'probe corrupted: source connector was deletable';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%append-only%' THEN
+        RAISE;
+      END IF;
+      v_results := v_results || jsonb_build_object('source_connector_delete_blocked', true);
+  END;
+
+  BEGIN
     DELETE FROM data_contract_field WHERE field_id = v_close_v2;
     RAISE EXCEPTION 'probe corrupted: data contract field was mutable';
   EXCEPTION
@@ -366,7 +393,9 @@ BEGIN
     'contract_source_range_rejected', coalesce(v_results->>'contract_source_range_rejected', 'false')::boolean,
     'overlapping_contract_version_rejected', coalesce(v_results->>'overlapping_contract_version_rejected', 'false')::boolean,
     'source_version_mismatch_rejected', coalesce(v_results->>'source_version_mismatch_rejected', 'false')::boolean,
-    'connector_binding_version_mismatch_rejected', coalesce(v_results->>'connector_binding_version_mismatch_rejected', 'false')::boolean
+    'connector_binding_version_mismatch_rejected', coalesce(v_results->>'connector_binding_version_mismatch_rejected', 'false')::boolean,
+    'source_connector_update_blocked', coalesce(v_results->>'source_connector_update_blocked', 'false')::boolean,
+    'source_connector_delete_blocked', coalesce(v_results->>'source_connector_delete_blocked', 'false')::boolean
   ));
 END
 $probe$;

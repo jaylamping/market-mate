@@ -108,14 +108,14 @@ probe_result=$("${PSQL[@]}" \
 
 for key in \
   uncertified_use_denied uncertified_denial_recorded certified_use_allowed \
-  expired_use_denied certified_use_recorded provenance_source_attached \
+  expired_use_denied expired_allowed_use_denied certified_use_recorded provenance_source_attached \
   provenance_entitlement_attached provenance_receipt_time_attached \
   decision_log_append_only denied_use_blocked; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
     || fail "probe assertion $key failed: $probe_result"
 done
 pass "uncertified entitlement use fails closed and records a denial"
-pass "certified entitlement use is admitted before expiry and past-expiry use is denied"
+pass "certified entitlement use is admitted while current and expired decisions cannot be reused"
 pass "downstream use receipt carries source, entitlement version, and receipt time provenance"
 pass "gate decision log rejects in-place mutation and denied use creates no receipt"
 
@@ -153,6 +153,7 @@ jq -n \
       denial_recorded: $probe.uncertified_denial_recorded,
       certified_use_allowed: $probe.certified_use_allowed,
       expired_use_denied: $probe.expired_use_denied,
+      expired_allowed_use_denied: $probe.expired_allowed_use_denied,
       decision_log_append_only: $probe.decision_log_append_only,
       denied_use_blocked: $probe.denied_use_blocked
     },
@@ -175,6 +176,7 @@ jq -e '
   and .entitlement_gate.denial_recorded == true
   and .entitlement_gate.certified_use_allowed == true
   and .entitlement_gate.expired_use_denied == true
+  and .entitlement_gate.expired_allowed_use_denied == true
   and .entitlement_gate.decision_log_append_only == true
   and .entitlement_gate.denied_use_blocked == true
   and .provenance.use_receipt_recorded == true

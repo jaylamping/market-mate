@@ -112,7 +112,7 @@ for key in \
   entitlement_gate_allowed entitlement_use_recorded filing_raw_content_verbatim \
   xbrl_raw_content_verbatim content_marked_untrusted filing_source_lineage_attached \
   actual_source_lineage_attached filing_entitlement_version_attached \
-  actual_entitlement_version_attached direct_update_blocked direct_truncate_blocked \
+  actual_entitlement_version_attached direct_update_blocked direct_delete_blocked \
   non_certified_mapping_rejected; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
     || fail "probe assertion $key failed: $probe_result"
@@ -166,7 +166,7 @@ jq -n \
       xbrl_raw_content_verbatim: $probe.xbrl_raw_content_verbatim,
       content_marked_untrusted: $probe.content_marked_untrusted,
       direct_update_blocked: $probe.direct_update_blocked,
-      direct_truncate_blocked: $probe.direct_truncate_blocked,
+      direct_delete_blocked: $probe.direct_delete_blocked,
       non_certified_mapping_rejected: $probe.non_certified_mapping_rejected
     },
     provenance: {
@@ -196,7 +196,7 @@ jq -e '
   and .untrusted_content.xbrl_raw_content_verbatim == true
   and .untrusted_content.content_marked_untrusted == true
   and .untrusted_content.direct_update_blocked == true
-  and .untrusted_content.direct_truncate_blocked == true
+  and .untrusted_content.direct_delete_blocked == true
   and .untrusted_content.non_certified_mapping_rejected == true
   and .provenance.filing_source_lineage_attached == true
   and .provenance.actual_source_lineage_attached == true

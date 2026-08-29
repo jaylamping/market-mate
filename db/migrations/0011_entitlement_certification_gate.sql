@@ -317,6 +317,8 @@ SET search_path = pg_catalog, public
 AS $$
 DECLARE
     decision_row entitlement_gate_decision%ROWTYPE;
+    entitlement_version_row data_entitlement_version%ROWTYPE;
+    source_version_row source_registry_version%ROWTYPE;
     use_receipt_time timestamptz := clock_timestamp();
     provenance_value jsonb;
     created entitled_use_receipt%ROWTYPE;
@@ -342,6 +344,51 @@ BEGIN
         RAISE EXCEPTION
             'entitlement gate denied request %; no use receipt may be recorded',
             decision_row.request_key
+            USING ERRCODE = '55000';
+    END IF;
+
+    SELECT v.*
+    INTO entitlement_version_row
+    FROM data_entitlement_version v
+    WHERE v.entitlement_version_id = decision_row.entitlement_version_id
+      AND v.source_registry_version_id = decision_row.source_registry_version_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'entitlement gate decision % references an unavailable entitlement version',
+            decision_row.decision_id
+            USING ERRCODE = '55000';
+    END IF;
+    IF entitlement_version_row.certification_state <> 'certified' THEN
+        RAISE EXCEPTION
+            'entitlement gate decision % is no longer usable: entitlement is not certified',
+            decision_row.decision_id
+            USING ERRCODE = '55000';
+    END IF;
+    IF use_receipt_time < entitlement_version_row.effective_from
+       OR (entitlement_version_row.expires_at IS NOT NULL
+           AND use_receipt_time >= entitlement_version_row.expires_at) THEN
+        RAISE EXCEPTION
+            'entitlement gate decision % is no longer usable: entitlement is outside its effective range',
+            decision_row.decision_id
+            USING ERRCODE = '55000';
+    END IF;
+
+    SELECT s.*
+    INTO source_version_row
+    FROM source_registry_version s
+    WHERE s.source_version_id = decision_row.source_registry_version_id;
+    IF NOT FOUND OR source_version_row.lifecycle <> 'active' THEN
+        RAISE EXCEPTION
+            'entitlement gate decision % is no longer usable: source is not active',
+            decision_row.decision_id
+            USING ERRCODE = '55000';
+    END IF;
+    IF use_receipt_time < source_version_row.effective_from
+       OR (source_version_row.effective_to IS NOT NULL
+           AND use_receipt_time >= source_version_row.effective_to) THEN
+        RAISE EXCEPTION
+            'entitlement gate decision % is no longer usable: source is outside its effective range',
+            decision_row.decision_id
             USING ERRCODE = '55000';
     END IF;
 
