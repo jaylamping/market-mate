@@ -1,7 +1,7 @@
-use serde_json::{json, Map, Value};
+use serde_json::{json, Value};
 
 use crate::receipt::utc_checkpoint_time_now;
-use crate::secrets::credential_shaped_name;
+use crate::secrets::{credential_shaped_name, secret_run_length};
 
 const REDACTED_KEY: &str = "[REDACTED:credential-shaped-key]";
 const REDACTED_SECRET: &str = "[REDACTED:secret-shaped]";
@@ -13,16 +13,14 @@ pub fn log_event(service: &str, level: &str, event: &str, fields: &Value) {
 }
 
 pub fn format_event(service: &str, level: &str, event: &str, fields: &Value) -> String {
-    let mut object = Map::new();
+    let mut object = redact_fields(fields)
+        .as_object()
+        .cloned()
+        .unwrap_or_default();
     object.insert("ts".into(), json!(utc_checkpoint_time_now()));
     object.insert("level".into(), json!(level));
     object.insert("service".into(), json!(service));
     object.insert("event".into(), json!(event));
-    if let Value::Object(entries) = redact_fields(fields) {
-        for (key, value) in entries {
-            object.insert(key, value);
-        }
-    }
     Value::Object(object).to_string()
 }
 
@@ -59,21 +57,13 @@ fn redact_url_passwords(input: &str) -> String {
         let scheme_end = position + 3;
         output.push_str(&rest[..scheme_end]);
         rest = &rest[scheme_end..];
-        let authority_end = rest
-            .find('/')
-            .or_else(|| rest.find('?'))
-            .unwrap_or(rest.len());
+        let authority_end = crate::secrets::url_authority_span(rest);
         let authority = &rest[..authority_end];
-        if let Some(at_index) = authority.rfind('@') {
-            let userinfo = &authority[..at_index];
-            if let Some(colon_index) = userinfo.find(':') {
-                output.push_str(&userinfo[..colon_index + 1]);
-                output.push_str(REDACTED_URL_PASSWORD);
-                output.push('@');
-                output.push_str(&authority[at_index + 1..]);
-            } else {
-                output.push_str(authority);
-            }
+        if let Some(colon_index) = crate::secrets::url_userinfo_password_index(authority) {
+            output.push_str(&authority[..colon_index + 1]);
+            output.push_str(REDACTED_URL_PASSWORD);
+            output.push('@');
+            output.push_str(&authority[authority.rfind('@').expect("index verified") + 1..]);
         } else {
             output.push_str(authority);
         }
@@ -126,101 +116,6 @@ fn redact_secret_runs(input: &str) -> String {
     output
 }
 
-fn secret_run_length(chars: &[char]) -> Option<usize> {
-    jwt_run_length(chars)
-        .or_else(|| aws_key_run_length(chars))
-        .or_else(|| prefixed_token_run_length(chars))
-        .or_else(|| hex_run_length(chars))
-}
-
-fn jwt_run_length(chars: &[char]) -> Option<usize> {
-    if chars.len() < 6 || chars[..3] != ['e', 'y', 'J'] {
-        return None;
-    }
-    let mut index = 3;
-    while index < chars.len() && is_base64url_char(chars[index]) {
-        index += 1;
-    }
-    if index == 3 || index >= chars.len() || chars[index] != '.' {
-        return None;
-    }
-    index += 1;
-    let claims_start = index;
-    while index < chars.len() && is_base64url_char(chars[index]) {
-        index += 1;
-    }
-    if index == claims_start || index >= chars.len() || chars[index] != '.' {
-        return None;
-    }
-    index += 1;
-    while index < chars.len() && is_base64url_char(chars[index]) {
-        index += 1;
-    }
-    Some(index)
-}
-
-fn aws_key_run_length(chars: &[char]) -> Option<usize> {
-    if chars.len() < 20
-        || !(chars[..4] == ['A', 'K', 'I', 'A'] || chars[..4] == ['A', 'S', 'I', 'A'])
-    {
-        return None;
-    }
-    if !chars[4..20]
-        .iter()
-        .all(|char| char.is_ascii_uppercase() || char.is_ascii_digit())
-    {
-        return None;
-    }
-    Some(20)
-}
-
-fn prefixed_token_run_length(chars: &[char]) -> Option<usize> {
-    for (prefix, minimum) in [
-        ("xox", 20),
-        ("ghp_", 8),
-        ("gho_", 8),
-        ("ghu_", 8),
-        ("ghs_", 8),
-        ("ghr_", 8),
-        ("github_pat_", 20),
-        ("sk-", 20),
-    ] {
-        let prefix_chars: Vec<char> = prefix.chars().collect();
-        if chars.len() >= prefix_chars.len() + minimum
-            && chars[..prefix_chars.len()] == prefix_chars[..]
-        {
-            let mut index = prefix_chars.len();
-            while index < chars.len() && is_token_char(chars[index]) {
-                index += 1;
-            }
-            if index - prefix_chars.len() >= minimum {
-                return Some(index);
-            }
-        }
-    }
-    None
-}
-
-fn hex_run_length(chars: &[char]) -> Option<usize> {
-    let mut index = 0;
-    while index < chars.len() && is_hex_char(chars[index]) {
-        index += 1;
-    }
-    (index >= 32).then_some(index)
-}
-
-fn is_base64url_char(char: char) -> bool {
-    char.is_ascii_alphanumeric() || char == '-' || char == '_'
-}
-
-fn is_token_char(char: char) -> bool {
-    char.is_ascii_alphanumeric() || char == '-' || char == '_'
-}
-
-fn is_hex_char(char: char) -> bool {
-    char.is_ascii_hexdigit()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -236,6 +131,21 @@ mod tests {
         assert_eq!(parsed["count"], 1);
         assert_eq!(line.matches('\n').count(), 0);
         assert!(parsed["ts"].as_str().unwrap().ends_with('Z'));
+    }
+
+    #[test]
+    fn envelope_keys_cannot_be_overwritten_by_fields() {
+        let line = format_event(
+            "backend",
+            "info",
+            "test.spoof",
+            &json!({"level": "forged", "event": "fake", "ts": "0", "service": "other"}),
+        );
+        let parsed: Value = serde_json::from_str(&line).unwrap();
+        assert_eq!(parsed["level"], "info");
+        assert_eq!(parsed["event"], "test.spoof");
+        assert_eq!(parsed["service"], "backend");
+        assert_ne!(parsed["ts"], "0");
     }
 
     #[test]
@@ -332,5 +242,24 @@ mod tests {
         assert!(!line.contains(token), "{line}");
         assert!(line.contains(REDACTED_URL_PASSWORD));
         assert!(line.contains(REDACTED_SECRET));
+    }
+
+    #[test]
+    fn scanner_blocked_shapes_are_always_redacted() {
+        let blocked_values = [
+            "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJVadQssw5c",
+            "AKIAIOSFODNN7EXAMPLE",
+            "ghp_0123456789abcdef0123456789abcdef1234",
+            "sk-abcdef0123456789abcdef01234567890123",
+            "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2",
+        ];
+        for value in blocked_values {
+            assert!(
+                crate::secrets::credential_shaped_value("SOME_NAME", value).is_some(),
+                "{value} should be blocked by the scanner"
+            );
+            let redacted = redact_text(value);
+            assert_eq!(redacted, REDACTED_SECRET, "{value} must be fully redacted");
+        }
     }
 }

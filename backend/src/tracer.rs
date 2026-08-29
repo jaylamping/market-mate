@@ -1,7 +1,7 @@
 use serde::Serialize;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
-use tokio_postgres::Client;
+use tokio_postgres::GenericClient;
 
 pub const TRACER_DOMAIN: &str = "market-mate-tracer-data-v1";
 pub const PREREGISTRATION_DOMAIN: &str = "market-mate-preregistration-v1";
@@ -206,8 +206,8 @@ pub fn content_digest(domain: &str, canonical: &str) -> String {
     hex::encode(hasher.finalize())
 }
 
-async fn append_tracer_event(
-    client: &Client,
+async fn append_tracer_event<C: GenericClient>(
+    client: &C,
     event_id: &str,
     event_type: &str,
     payload: &Value,
@@ -228,7 +228,12 @@ async fn append_tracer_event(
     Ok(row.get(0))
 }
 
-pub async fn run_tracer(client: &Client) -> Result<TracerRun, String> {
+pub async fn run_tracer<C: GenericClient>(client: &mut C) -> Result<TracerRun, String> {
+    let transaction = client
+        .transaction()
+        .await
+        .map_err(|error| format!("could not open tracer transaction: {error}"))?;
+    let client = &transaction;
     let symbols = TRACER_SYMBOLS.to_vec();
 
     let run_id: String = client
@@ -338,7 +343,7 @@ pub async fn run_tracer(client: &Client) -> Result<TracerRun, String> {
     )
     .await?;
 
-    Ok(TracerRun {
+    let report = TracerRun {
         run_id,
         symbols: symbols.iter().map(|symbol| symbol.to_string()).collect(),
         snapshot_id,
@@ -355,7 +360,14 @@ pub async fn run_tracer(client: &Client) -> Result<TracerRun, String> {
             "preregistration_created": preregistration_position,
             "evaluation_recorded": evaluation_position,
         }),
-    })
+    };
+
+    transaction
+        .commit()
+        .await
+        .map_err(|error| format!("could not commit tracer run: {error}"))?;
+
+    Ok(report)
 }
 
 #[cfg(test)]

@@ -8,6 +8,8 @@
 --   * Beta Inc: NYSE listing from 2023 reusing the symbol ACME — alias
 --     history records the reuse while both listings keep distinct identities.
 
+DO $$ BEGIN PERFORM set_config('market_mate.security_master_write', 'on', true); END $$;
+
 INSERT INTO issuer (issuer_id, legal_name, source_lineage, receipt_time, record_environment)
 VALUES ('11111111-1111-1111-1111-111111111111', 'Acme Corporation',
         '{"source":"wu07-fixture","entitlement_version":"local-v1"}', '2026-01-01T00:00:00Z', 'local_research'),

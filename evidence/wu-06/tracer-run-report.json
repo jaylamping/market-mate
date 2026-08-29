@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T15:13:33Z",
+  "captured_at": "2026-08-29T18:29:18Z",
   "runs": {
     "first": {
       "audit_positions": {
@@ -7,8 +7,8 @@
         "preregistration_created": 3,
         "snapshot_captured": 2
       },
-      "evaluation_id": "80930375-07f3-40bf-8d33-9c8f416b1da6",
-      "preregistration_id": "6cdef077-9d85-434b-ae3e-f0df357b36f9",
+      "evaluation_id": "33a8319b-927b-4bc3-a2b1-23767dc38a7c",
+      "preregistration_id": "149581f7-1538-4512-9052-acce23ab5c7f",
       "result": {
         "decision": "non_positive",
         "difference_bps": -393,
@@ -56,9 +56,9 @@
         }
       },
       "result_digest": "c06f2c33cb60818a2a22724e458fd78c7da15d3803e3583885b85e7b5d2a091c",
-      "run_id": "82dce1d1-db05-4013-8d59-78682abb4b78",
+      "run_id": "c38987bf-b11a-4fcb-aaf4-efe17475dd0f",
       "snapshot_digest": "80f31bf4c2849d426231d6d89f772feed547679c32660406cf95762d967b3f3f",
-      "snapshot_id": "b489acae-d0af-4102-b369-740cee3c336d",
+      "snapshot_id": "796b1893-ad5d-4994-a802-bf7084c68c25",
       "snapshot_kind": "tracer_inline",
       "spec": {
         "comparator": "zero_difference",
@@ -101,8 +101,8 @@
         "preregistration_created": 6,
         "snapshot_captured": 5
       },
-      "evaluation_id": "abdd3c58-bc15-4fc1-9268-5b3c785b7b12",
-      "preregistration_id": "c6afec49-13d6-4e00-8cc9-ab7bf4d66f1d",
+      "evaluation_id": "99d1b28b-8612-4b5a-9f0d-5f8911a3f7dc",
+      "preregistration_id": "dd87a58d-de4c-4b73-a0ab-fd7ec40c5a95",
       "result": {
         "decision": "non_positive",
         "difference_bps": -393,
@@ -150,9 +150,9 @@
         }
       },
       "result_digest": "c06f2c33cb60818a2a22724e458fd78c7da15d3803e3583885b85e7b5d2a091c",
-      "run_id": "957c3ff7-2801-4560-99e7-865e9ae8ce41",
+      "run_id": "de3e784f-b995-4626-b8be-f3486a2b13dd",
       "snapshot_digest": "80f31bf4c2849d426231d6d89f772feed547679c32660406cf95762d967b3f3f",
-      "snapshot_id": "1315eb65-ffa3-474f-9182-d40f2e4d4aef",
+      "snapshot_id": "4244f0df-2135-4a89-b05b-4e8b44259559",
       "snapshot_kind": "tracer_inline",
       "spec": {
         "comparator": "zero_difference",
@@ -203,6 +203,7 @@
   "preregistration_precedes_result": true,
   "immutability_probes": {
     "snapshot_update_blocked": true,
+    "consistent_rewrite_blocked_by_trigger": true,
     "preregistration_delete_blocked": true,
     "orphan_result_blocked": true
   },

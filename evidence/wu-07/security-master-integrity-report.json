@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T17:28:06Z",
+  "captured_at": "2026-08-29T18:26:34Z",
   "fixture_set": {
     "loaded": true,
     "issuers": 2,
@@ -21,6 +21,10 @@
     "no_identifier_is_primary_or_unique_key": true
   },
   "append_only": {
-    "issuer_delete_blocked": true
+    "issuer_delete_blocked": true,
+    "alias_update_blocked": true,
+    "alias_delete_blocked": true,
+    "truncate_blocked": true,
+    "error_source_asserted": true
   }
 }

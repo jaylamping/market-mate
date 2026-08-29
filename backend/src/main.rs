@@ -323,7 +323,7 @@ async fn run_tracer_endpoint(
             );
         }
     };
-    let (client, _connection) = match connect(&database_url).await {
+    let (mut client, _connection) = match connect(&database_url).await {
         Ok(pair) => pair,
         Err(error) => {
             return (
@@ -333,7 +333,7 @@ async fn run_tracer_endpoint(
         }
     };
 
-    match tracer::run_tracer(&client).await {
+    match tracer::run_tracer(&mut client).await {
         Ok(report) => {
             log_event(
                 SERVICE,
@@ -352,10 +352,18 @@ async fn run_tracer_endpoint(
                 Json(serde_json::to_value(report).unwrap_or_default()),
             )
         }
-        Err(error) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({ "error": error })),
-        ),
+        Err(error) => {
+            log_event(
+                SERVICE,
+                "error",
+                "tracer.run_failed",
+                &json!({ "error": error }),
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "tracer run failed; see backend logs" })),
+            )
+        }
     }
 }
 
@@ -436,7 +444,10 @@ fn parse_cli(args: &[String]) -> Result<Command, String> {
             let mut index = 2;
             while index < args.len() {
                 match args[index].as_str() {
-                    "--stdin" => source = ScanConfigSource::Stdin,
+                    "--stdin" => {
+                        source = ScanConfigSource::Stdin;
+                        index += 1;
+                    }
                     "--json-file" => {
                         let path = args.get(index + 1).ok_or("--json-file requires a path")?;
                         source = ScanConfigSource::JsonFile(PathBuf::from(path));

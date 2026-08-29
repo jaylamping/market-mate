@@ -121,7 +121,7 @@ pass "deletes and terms edits blocked; digests distinct per terms version"
 
 # 2. Material actions land on the append-only audit chain.
 case_payload=$(jq -nc \
-  --argjson states "$(jq -c '[.state_rumored, .state_confirmed, .state_effective, .state_final]' <<<"$probe_result" 2>/dev/null || echo '["rumored","authoritatively_confirmed","effective","final"]')" \
+  --argjson states "$(jq -c '.observed_state_names' <<<"$probe_result")" \
   '{probe: "wu09_corporate_action_probe", progression_observed: $states}')
 chain_case=$(append_audit_event "wu09-case-$(date +%s)" \
   "corporate_action.case_progression_recorded" "$case_payload")

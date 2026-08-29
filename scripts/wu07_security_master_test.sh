@@ -81,11 +81,16 @@ pass "full Compose stack is healthy"
 
 expect_reject() {
   local name="$1"
-  local sql="$2"
-  if "${PSQL[@]}" -c "$sql" >>"$BRING_UP_LOG" 2>&1; then
+  local expected_error_class="$2"
+  local sql="$3"
+  local probe_output
+  if probe_output=$("${PSQL[@]}" -c "$sql" 2>&1); then
     fail "probe $name unexpectedly succeeded; the contract it exercises is not enforced"
   fi
-  pass "probe $name blocked as required"
+  if ! grep -q "$expected_error_class" <<<"$probe_output"; then
+    fail "probe $name failed for the wrong reason: $probe_output"
+  fi
+  pass "probe $name blocked as required ($expected_error_class)"
 }
 
 FIXTURE_LINEAGE="'{\"source\":\"wu07-fixture\",\"entitlement_version\":\"local-v1\"}'"
@@ -94,10 +99,12 @@ RECEIPT="'2026-01-01T00:00:00Z'"
 probe_setup() {
   printf '%s\n' \
     "BEGIN;" \
+    "DO \$\$ BEGIN PERFORM set_config('market_mate.security_master_write', 'on', true); END \$\$;" \
     "INSERT INTO issuer (issuer_id, legal_name, source_lineage, receipt_time, record_environment)" \
     "VALUES ('99999999-0000-0000-0000-000000000001', 'Probe Issuer', $FIXTURE_LINEAGE, $RECEIPT, 'local_research');" \
     "INSERT INTO security (security_id, issuer_id, security_class, source_lineage, receipt_time, record_environment)" \
-    "VALUES ('99999999-0000-0000-0000-000000000002', '99999999-0000-0000-0000-000000000001', 'common_stock', $FIXTURE_LINEAGE, $RECEIPT, 'local_research');"
+    "VALUES ('99999999-0000-0000-0000-000000000002', '99999999-0000-0000-0000-000000000001', 'common_stock', $FIXTURE_LINEAGE, $RECEIPT, 'local_research');" \
+    "DO \$\$ BEGIN PERFORM set_config('market_mate.security_master_write', 'off', true); END \$\$;"
 }
 
 # 1. The fixture set loads cleanly and satisfies its structural assertions.
@@ -141,7 +148,8 @@ jq -e '
 pass "fixture set loads; identity-continuous symbol change is two time-bounded aliases on one listing; reuse keeps distinct identities"
 
 # 2. Validity intervals are enforced: an inverted interval is rejected.
-expect_reject "interval-inversion" "$(probe_setup)
+expect_reject "interval-inversion" "check constraint" "$(probe_setup)
+SELECT set_config('market_mate.security_master_write', 'on', true);
 INSERT INTO security_symbol_alias (
   alias_id, security_id, symbol, source, valid_from, valid_to,
   source_lineage, receipt_time, record_environment
@@ -154,7 +162,8 @@ INSERT INTO security_symbol_alias (
 ROLLBACK;"
 
 # 3. Overlapping same-source same-symbol aliases are rejected (fail closed).
-expect_reject "overlapping-alias" "$(probe_setup)
+expect_reject "overlapping-alias" "conflicting key value violates exclusion constraint" "$(probe_setup)
+SELECT set_config('market_mate.security_master_write', 'on', true);
 INSERT INTO security_symbol_alias (
   alias_id, security_id, symbol, source, valid_from, valid_to,
   source_lineage, receipt_time, record_environment
@@ -176,7 +185,8 @@ INSERT INTO security_symbol_alias (
 ROLLBACK;"
 
 # 4. Overlapping listings of one security on one venue are rejected.
-expect_reject "overlapping-listing" "$(probe_setup)
+expect_reject "overlapping-listing" "conflicting key value violates exclusion constraint" "$(probe_setup)
+SELECT set_config('market_mate.security_master_write', 'on', true);
 INSERT INTO exchange_listing (
   listing_id, security_id, venue, currency, listing_status,
   valid_from, valid_to, source_lineage, receipt_time, record_environment
@@ -201,6 +211,7 @@ sequential_tmp=$(mktemp /tmp/wu07.XXXXXX)
 trap 'rm -f "$sequential_tmp"' EXIT
 {
   printf '%s\n' "$(probe_setup)"
+  printf '%s\n' "DO \$\$ BEGIN PERFORM set_config('market_mate.security_master_write', 'on', true); END \$\$;"
   printf '%s\n' \
     "INSERT INTO security_symbol_alias (alias_id, security_id, symbol, source, valid_from, valid_to, source_lineage, receipt_time, record_environment)" \
     "VALUES ('99999999-0000-0000-0000-000000000003', '99999999-0000-0000-0000-000000000002', 'PROBE', 'wu07-probe-source', '2020-01-01T00:00:00Z', '2022-01-01T00:00:00Z', $FIXTURE_LINEAGE, $RECEIPT, 'local_research');" \
@@ -251,9 +262,62 @@ pk_unique_symbol=$("${PSQL[@]}" -c "SELECT count(*) FROM pg_index i
   || fail "an identifier column carries a unique index"
 pass "no identifier is a primary or unique key"
 
-# 7. Master entities are append-only: mutation is rejected.
-expect_reject "issuer-delete-blocked" "$(probe_setup)
+# 7. Master entities and alias history are append-only; the error source is
+#    asserted so an FK failure cannot stand in for the missing guard.
+expect_reject "issuer-delete-blocked" "security master rows are never deleted" "$(probe_setup)
 DELETE FROM issuer;
+ROLLBACK;"
+
+expect_reject "alias-update-blocked" "security master writes must go through workflow functions" "$(probe_setup)
+SELECT set_config('market_mate.security_master_write', 'on', true);
+INSERT INTO exchange_listing (
+  listing_id, security_id, venue, currency, listing_status,
+  valid_from, valid_to, source_lineage, receipt_time, record_environment
+) VALUES (
+  '99999999-0000-0000-0000-000000000003',
+  '99999999-0000-0000-0000-000000000002', 'NYSE', 'USD', 'active',
+  '2020-01-01T00:00:00Z', NULL,
+  $FIXTURE_LINEAGE, $RECEIPT, 'local_research'
+);
+INSERT INTO listing_symbol_alias (
+  alias_id, listing_id, symbol, source, valid_from, valid_to,
+  source_lineage, receipt_time, record_environment
+) VALUES (
+  '99999999-0000-0000-0000-000000000003',
+  '99999999-0000-0000-0000-000000000003', 'PROBE', 'wu07-probe-source',
+  '2020-01-01T00:00:00Z', NULL,
+  $FIXTURE_LINEAGE, $RECEIPT, 'local_research'
+);
+SELECT set_config('market_mate.security_master_write', 'off', true);
+UPDATE listing_symbol_alias SET valid_to = '2020-01-02T00:00:00Z';
+ROLLBACK;"
+
+expect_reject "alias-delete-blocked" "security master rows are never deleted" "$(probe_setup)
+SELECT set_config('market_mate.security_master_write', 'on', true);
+INSERT INTO exchange_listing (
+  listing_id, security_id, venue, currency, listing_status,
+  valid_from, valid_to, source_lineage, receipt_time, record_environment
+) VALUES (
+  '99999999-0000-0000-0000-000000000003',
+  '99999999-0000-0000-0000-000000000002', 'NYSE', 'USD', 'active',
+  '2020-01-01T00:00:00Z', NULL,
+  $FIXTURE_LINEAGE, $RECEIPT, 'local_research'
+);
+INSERT INTO listing_symbol_alias (
+  alias_id, listing_id, symbol, source, valid_from, valid_to,
+  source_lineage, receipt_time, record_environment
+) VALUES (
+  '99999999-0000-0000-0000-000000000003',
+  '99999999-0000-0000-0000-000000000003', 'PROBE', 'wu07-probe-source',
+  '2020-01-01T00:00:00Z', NULL,
+  $FIXTURE_LINEAGE, $RECEIPT, 'local_research'
+);
+SELECT set_config('market_mate.security_master_write', 'off', true);
+DELETE FROM listing_symbol_alias;
+ROLLBACK;"
+
+expect_reject "security-master-truncate-blocked" "issuer_symbol_alias is append-only; TRUNCATE is forbidden" "$(probe_setup)
+TRUNCATE issuer_symbol_alias;
 ROLLBACK;"
 
 # 8. Assemble and validate the evidence report.
@@ -288,7 +352,11 @@ jq -n \
       no_identifier_is_primary_or_unique_key: true
     },
     append_only: {
-      issuer_delete_blocked: true
+      issuer_delete_blocked: true,
+      alias_update_blocked: true,
+      alias_delete_blocked: true,
+      truncate_blocked: true,
+      error_source_asserted: true
     }
   }' >"$REPORT" \
   || fail "could not write security-master integrity report"
@@ -304,6 +372,10 @@ jq -e '
   and .validity_interval_enforcement.sequential_alias_accepted == true
   and .identifier_discipline.unique_symbol_indexes == 0
   and .append_only.issuer_delete_blocked == true
+  and .append_only.alias_update_blocked == true
+  and .append_only.alias_delete_blocked == true
+  and .append_only.truncate_blocked == true
+  and .append_only.error_source_asserted == true
 ' "$REPORT" >/dev/null \
   || fail "integrity report does not satisfy the WU-07 evidence schema"
 [[ -s "$BRING_UP_LOG" && -s "$REPORT" ]] \

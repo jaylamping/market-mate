@@ -147,6 +147,13 @@ ordering_ok=$("${PSQL[@]}" -qAtc "
 pass "preregistrations are content-addressed and precede every recorded result"
 
 # 5. Fail-closed probes: the tracer contracts are append-only and FK-protected.
+#    The consistent-rewrite probe is the only one that isolates the append-only
+#    trigger from the digest CHECK: payload and digest are rewritten together,
+#    so only the trigger can refuse it.
+consistent_rewrite_output=$("${PSQL[@]}" -c "UPDATE research_snapshot SET payload = '{\"tampered\":true}'::jsonb, payload_digest = encode(digest('{\"tampered\":true}'::jsonb::text, 'sha256'), 'hex');" 2>&1) || true
+if ! grep -q "research_snapshot is append-only" <<<"$consistent_rewrite_output"; then
+  fail "consistent rewrite did not fail on the append-only trigger: $consistent_rewrite_output"
+fi
 if "${PSQL[@]}" -q -c "UPDATE research_snapshot SET payload = '{\"tampered\":true}'::jsonb;" >/dev/null 2>&1; then
   fail "research_snapshot accepted an UPDATE; append-only contract is broken"
 fi
@@ -201,6 +208,7 @@ jq -n \
     preregistration_precedes_result: ($preregistration_ordering_ok == "t"),
     immutability_probes: {
       snapshot_update_blocked: true,
+      consistent_rewrite_blocked_by_trigger: true,
       preregistration_delete_blocked: true,
       orphan_result_blocked: true
     },
@@ -218,6 +226,7 @@ jq -e '
   and .snapshot_store.lineage_present == true
   and .preregistration_precedes_result == true
   and .immutability_probes.snapshot_update_blocked == true
+  and .immutability_probes.consistent_rewrite_blocked_by_trigger == true
   and .immutability_probes.preregistration_delete_blocked == true
   and .immutability_probes.orphan_result_blocked == true
   and .audit_chain.valid == true

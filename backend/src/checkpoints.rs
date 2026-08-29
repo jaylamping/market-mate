@@ -462,8 +462,11 @@ pub async fn run_restore_verification(
                         &base,
                     );
                 }
-                eprintln!(
-                    "reconciled missing audit_checkpoint mirror row for receipt {checkpoint_index}"
+                crate::logging::log_event(
+                    "backend",
+                    "warn",
+                    "restore.mirror_reconciled",
+                    &serde_json::json!({ "checkpoint_index": checkpoint_index }),
                 );
             }
             Ok(None) => {}

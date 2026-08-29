@@ -1,9 +1,9 @@
 {
-  "captured_at": "2026-08-29T14:42:10Z",
+  "captured_at": "2026-08-29T18:28:26Z",
   "environment_scan": {
     "profile": "local_research",
     "surface": "environment",
-    "scanned_at": "2026-08-29T14:42:04.543248Z",
+    "scanned_at": "2026-08-29T18:28:19.534693Z",
     "variables_scanned": 5,
     "allowed_config": [
       "CUSTODY_URL"
@@ -23,7 +23,7 @@
   "compose_config_scan": {
     "profile": "local_research",
     "surface": "json-input",
-    "scanned_at": "2026-08-29T14:42:05.486820Z",
+    "scanned_at": "2026-08-29T18:28:20.432879Z",
     "variables_scanned": 6,
     "allowed_config": [
       "CUSTODY_DATA_DIR",
@@ -42,7 +42,7 @@
   },
   "structured_logs": {
     "backend_lines": 3,
-    "custody_lines": 1,
+    "custody_lines": 2,
     "all_lines_valid_json": true
   },
   "redaction_demo": {
@@ -52,7 +52,7 @@
       "event": "config.redact_demo",
       "level": "info",
       "service": "backend",
-      "ts": "2026-08-29T14:42:06.989368Z"
+      "ts": "2026-08-29T18:28:22.223856Z"
     }
   },
   "negative_probes": [
@@ -62,7 +62,7 @@
       "report": {
         "profile": "local_research",
         "surface": "environment",
-        "scanned_at": "2026-08-29T14:42:07.487444Z",
+        "scanned_at": "2026-08-29T18:28:22.708189Z",
         "variables_scanned": 6,
         "allowed_config": [
           "CUSTODY_URL"
@@ -75,7 +75,9 @@
           "HOSTNAME",
           "PATH"
         ],
-        "unrecognized_variables": [],
+        "unrecognized_variables": [
+          "ALPACA_API_KEY"
+        ],
         "violations": [
           {
             "variable": "ALPACA_API_KEY",
@@ -92,7 +94,7 @@
       "report": {
         "profile": "local_research",
         "surface": "environment",
-        "scanned_at": "2026-08-29T14:42:08.023796Z",
+        "scanned_at": "2026-08-29T18:28:23.238811Z",
         "variables_scanned": 6,
         "allowed_config": [
           "CUSTODY_URL"
@@ -105,7 +107,9 @@
           "HOSTNAME",
           "PATH"
         ],
-        "unrecognized_variables": [],
+        "unrecognized_variables": [
+          "CERT_BLOB"
+        ],
         "violations": [
           {
             "variable": "CERT_BLOB",
@@ -122,7 +126,7 @@
       "report": {
         "profile": "local_research",
         "surface": "environment",
-        "scanned_at": "2026-08-29T14:42:08.570289Z",
+        "scanned_at": "2026-08-29T18:28:23.798013Z",
         "variables_scanned": 6,
         "allowed_config": [
           "CUSTODY_URL"
@@ -135,7 +139,9 @@
           "HOSTNAME",
           "PATH"
         ],
-        "unrecognized_variables": [],
+        "unrecognized_variables": [
+          "SESSION_STATE"
+        ],
         "violations": [
           {
             "variable": "SESSION_STATE",
@@ -160,7 +166,7 @@
       ],
       "profile": "local_research",
       "result": "blocked",
-      "scanned_at": "2026-08-29T14:42:09.120690Z",
+      "scanned_at": "2026-08-29T18:28:24.311323Z",
       "service": "backend",
       "surface": "environment",
       "system_variables": [
@@ -168,8 +174,10 @@
         "HOSTNAME",
         "PATH"
       ],
-      "ts": "2026-08-29T14:42:09.120701Z",
-      "unrecognized_variables": [],
+      "ts": "2026-08-29T18:28:24.311414Z",
+      "unrecognized_variables": [
+        "ALPACA_API_KEY"
+      ],
       "variables_scanned": 6,
       "violations": [
         {
