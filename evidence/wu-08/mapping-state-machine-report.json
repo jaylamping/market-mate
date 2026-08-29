@@ -1,0 +1,33 @@
+{
+  "captured_at": "2026-08-29T15:31:31Z",
+  "lifecycle": {
+    "proposed_to_certified_blocked": true,
+    "corroboration_path_to_certified": true,
+    "certified_view_only": true
+  },
+  "conflict_handling": {
+    "conflicting_certification_blocked": true,
+    "resolution_via_suspend_then_certify": true
+  },
+  "integrity": {
+    "retired_is_terminal": true,
+    "delete_blocked": true,
+    "mismatched_object_kind_refused": true,
+    "transition_history_count_matches_moves": true,
+    "transitions_recorded": 6
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 3,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  },
+  "audit_positions": {
+    "workflow_completed": 2,
+    "conflict_denied": 3
+  }
+}
