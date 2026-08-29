@@ -2,6 +2,7 @@ FROM rust:1.85-slim AS build
 WORKDIR /app
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 COPY backend ./backend
+COPY db/migrations ./db/migrations
 WORKDIR /app/backend
 RUN cargo build --release --locked
 
