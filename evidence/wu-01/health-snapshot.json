@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T04:42:47Z",
+  "captured_at": "2026-08-29T05:14:47Z",
   "services": [
     {
       "service": "backend",
@@ -38,7 +38,8 @@
     "vector_column_count": 0,
     "vector_index_count": 0,
     "control_table_count": 2,
-    "evidence_table_count": 0,
+    "evidence_table_count": 1,
+    "unregistered_table_count": 0,
     "named_volume": "market-mate-wu01_pgdata",
     "crash_exit_code": 137,
     "restart_policy": "unless-stopped",

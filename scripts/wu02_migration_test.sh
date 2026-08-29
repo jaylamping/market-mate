@@ -11,6 +11,8 @@ MANIFEST="$EVIDENCE_DIR/migration-run-manifest.json"
 WU02_PROJECT_NAME="${WU02_COMPOSE_PROJECT_NAME:-market-mate-wu02}"
 COMPOSE=(docker compose --project-name "$WU02_PROJECT_NAME")
 PSQL=("${COMPOSE[@]}" exec -T postgres psql -v ON_ERROR_STOP=1 -U mm)
+expected_head=$(find db/migrations -maxdepth 1 -type f -name '*.sql' | wc -l | tr -d ' ')
+expected_versions=$(jq -cn --argjson head "$expected_head" '[range(1; $head + 1)]')
 
 mkdir -p "$EVIDENCE_DIR"
 : > "$BRING_UP_LOG"
@@ -85,6 +87,7 @@ log "== WU-02 migration test $(date -u +%FT%TZ) (project: $WU02_PROJECT_NAME) ==
 
 # Isolate from a leftover WU-01 stack that publishes the same localhost ports.
 docker compose --project-name market-mate-wu01 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
+docker compose --project-name market-mate-wu03 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 
 "${COMPOSE[@]}" down -v --remove-orphans >>"$BRING_UP_LOG" 2>&1 \
   || fail "could not remove prior WU-02 Compose state"
@@ -106,14 +109,21 @@ pass "readiness includes applied migrations"
 
 first_state=$(schema_state market_mate) \
   || fail "could not read schema state after first apply"
-jq -e '.head_version == 2 and (.applied | length) == 2 and .schema_head != "" and .fingerprint != "" and (.evidence_tables | length) == 0' \
+jq -e --argjson expected_head "$expected_head" '
+  .head_version == $expected_head
+  and (.applied | length) == $expected_head
+  and .schema_head != ""
+  and .fingerprint != ""
+  and (.evidence_tables | index("audit_event")) != null
+' \
   <<<"$first_state" >/dev/null \
   || fail "first apply did not reach expected head: $first_state"
-pass "first apply reached schema head 2"
+pass "first apply reached schema head $expected_head"
 
 second_apply=$("${COMPOSE[@]}" exec -T backend backend migrate) \
   || fail "second migrate invocation failed"
-jq -e '.noop == true and .head_version == 2 and (.applied_versions | length) == 0' \
+jq -e --argjson expected_head "$expected_head" \
+  '.noop == true and .head_version == $expected_head and (.applied_versions | length) == 0' \
   <<<"$second_apply" >/dev/null \
   || fail "second apply was not a no-op: $second_apply"
 second_state=$(schema_state market_mate) \
@@ -128,7 +138,8 @@ fresh_apply=$("${COMPOSE[@]}" exec -T \
   -e DATABASE_URL=postgres://mm:local-only@postgres:5432/wu02_fresh \
   backend backend migrate) \
   || fail "fresh-database migrate failed"
-jq -e '.noop == false and .head_version == 2 and (.applied_versions == [1, 2])' \
+jq -e --argjson expected_head "$expected_head" --argjson expected_versions "$expected_versions" \
+  '.noop == false and .head_version == $expected_head and .applied_versions == $expected_versions' \
   <<<"$fresh_apply" >/dev/null \
   || fail "fresh database did not apply versions 1 and 2: $fresh_apply"
 fresh_state=$(schema_state wu02_fresh) \
@@ -244,8 +255,9 @@ head_after=$("${PSQL[@]}" -d wu02_fresh -Atc "SELECT schema_head();")
 pass "checksum mismatch of an applied file fails closed"
 
 cp db/migrations/*.sql "$scratch_dir/unregistered/"
+unregistered_version=$(printf '%04d' "$((expected_head + 1))")
 printf '%s\n' 'CREATE TABLE sneak (id integer PRIMARY KEY);' \
-  >"$scratch_dir/unregistered/0003_unregistered.sql"
+  >"$scratch_dir/unregistered/${unregistered_version}_unregistered.sql"
 "${PSQL[@]}" -d postgres -c "CREATE DATABASE wu02_unreg;" >>"$BRING_UP_LOG" 2>&1 \
   || fail "could not create wu02_unreg"
 set +e
@@ -260,8 +272,8 @@ set -e
 grep -q 'not registered in schema_object' <<<"$unreg_output" \
   || fail "unregistered public table did not fail closed: $unreg_output"
 unreg_head=$("${PSQL[@]}" -d wu02_unreg -Atc "SELECT coalesce(max(version), 0) FROM schema_migration;")
-[[ "$unreg_head" == "2" ]] \
-  || fail "unregistered table apply did not roll back version 3 (head=$unreg_head)"
+[[ "$unreg_head" == "$expected_head" ]] \
+  || fail "unregistered table apply did not roll back version $((expected_head + 1)) (head=$unreg_head)"
 pass "unregistered public tables fail closed inside the migration transaction"
 
 pgvector_version=$("${PSQL[@]}" -d market_mate -Atc \
@@ -274,6 +286,8 @@ vector_column_count=$("${PSQL[@]}" -d market_mate -Atc \
 
 jq -n \
   --arg captured_at "$(date -u +%FT%TZ)" \
+  --argjson expected_head "$expected_head" \
+  --argjson expected_versions "$expected_versions" \
   --argjson first_apply "$first_state" \
   --argjson second_apply "$second_apply" \
   --argjson second_state "$second_state" \
@@ -291,6 +305,8 @@ jq -n \
   --argjson vector_column_count "$vector_column_count" \
   '{
     captured_at: $captured_at,
+    expected_head: $expected_head,
+    expected_versions: $expected_versions,
     first_apply: $first_apply,
     second_apply: $second_apply,
     second_state: $second_state,
@@ -326,9 +342,9 @@ jq -n \
   || fail "could not write the migration run manifest"
 
 jq -e '
-  .first_apply.head_version == 2
+  .first_apply.head_version == .expected_head
   and .second_apply.noop == true
-  and .fresh_apply.applied_versions == [1, 2]
+  and .fresh_apply.applied_versions == .expected_versions
   and .first_apply.schema_head == .second_state.schema_head
   and .first_apply.schema_head == .fresh_state.schema_head
   and .first_apply.fingerprint == .fresh_state.fingerprint
@@ -340,7 +356,7 @@ jq -e '
   and .out_of_order.exit_status != 0
   and .checksum_mismatch.exit_status != 0
   and .unregistered.exit_status != 0
-  and .unregistered.rolled_back_to == 2
+  and .unregistered.rolled_back_to == .expected_head
   and .postgres.vector_column_count == 0
 ' "$MANIFEST" >/dev/null \
   || fail "migration run manifest does not satisfy the WU-02 evidence schema"

@@ -57,6 +57,19 @@ wait_for_healthy_services() {
   return 1
 }
 
+unregistered_public_table_count() {
+  "${COMPOSE[@]}" exec -T postgres psql -U mm -d market_mate -tAc \
+    "SELECT count(*)
+       FROM pg_class c
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public'
+        AND c.relkind IN ('r', 'p')
+        AND NOT EXISTS (
+          SELECT 1 FROM schema_object s
+           WHERE s.table_schema = n.nspname AND s.table_name = c.relname
+        );"
+}
+
 require_command curl
 require_command docker
 require_command jq
@@ -65,6 +78,10 @@ log "== WU-01 bring-up test $(date -u +%FT%TZ) (project: $WU01_PROJECT_NAME) =="
 
 "${COMPOSE[@]}" config --quiet >>"$BRING_UP_LOG" 2>&1 \
   || fail "Compose configuration is invalid"
+
+# Isolate from other acceptance stacks that publish the same localhost ports.
+docker compose --project-name market-mate-wu02 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
+docker compose --project-name market-mate-wu03 down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 
 # Clean only the isolated WU-01 test project and its named test volume.
 "${COMPOSE[@]}" down -v --remove-orphans >>"$BRING_UP_LOG" 2>&1 \
@@ -122,6 +139,7 @@ control_table_count=$("${COMPOSE[@]}" exec -T postgres \
 evidence_table_count=$("${COMPOSE[@]}" exec -T postgres \
   psql -U mm -d market_mate -tAc \
   "SELECT count(*) FROM schema_object WHERE kind = 'evidence';")
+unregistered_table_count=$(unregistered_public_table_count)
 
 [[ "$vector_column_count" == "0" ]] \
   || fail "expected zero vector-typed columns at baseline, found $vector_column_count"
@@ -129,9 +147,9 @@ evidence_table_count=$("${COMPOSE[@]}" exec -T postgres \
   || fail "expected zero vector indexes at baseline, found $vector_index_count"
 [[ "$control_table_count" -ge 2 ]] \
   || fail "expected migrate-on-startup control tables, found $control_table_count"
-[[ "$evidence_table_count" == "0" ]] \
-  || fail "expected zero evidence tables at baseline, found $evidence_table_count"
-pass "pgvector installed, unused, and only control tables registered"
+[[ "$unregistered_table_count" == "0" ]] \
+  || fail "found $unregistered_table_count unregistered public tables"
+pass "pgvector is unused and every public table is registered"
 
 # 3. Named-volume state survives SIGKILL and Compose restart of the same container.
 # Host `docker kill` is an operator stop, so unless-stopped will not auto-start;
@@ -196,8 +214,9 @@ pass "named-volume state survived PostgreSQL SIGKILL and Compose restart of the 
 evidence_table_count=$("${COMPOSE[@]}" exec -T postgres \
   psql -U mm -d market_mate -tAc \
   "SELECT count(*) FROM schema_object WHERE kind = 'evidence';")
-[[ "$evidence_table_count" == "0" ]] \
-  || fail "persistence probe cleanup left $evidence_table_count evidence tables"
+unregistered_table_count=$(unregistered_public_table_count)
+[[ "$unregistered_table_count" == "0" ]] \
+  || fail "persistence probe cleanup left $unregistered_table_count unregistered tables"
 
 backend_health=$(curl -fsS http://127.0.0.1:8080/healthz) \
   || fail "backend /healthz did not recover after the PostgreSQL crash"
@@ -221,6 +240,7 @@ jq -n \
   --argjson vector_index_count "$vector_index_count" \
   --argjson control_table_count "$control_table_count" \
   --argjson evidence_table_count "$evidence_table_count" \
+  --argjson unregistered_table_count "$unregistered_table_count" \
   --arg named_volume "$postgres_volume" \
   --argjson crash_exit_code "$crash_exit_code" \
   --arg restart_policy "$restart_policy" \
@@ -239,6 +259,7 @@ jq -n \
       vector_index_count: $vector_index_count,
       control_table_count: $control_table_count,
       evidence_table_count: $evidence_table_count,
+      unregistered_table_count: $unregistered_table_count,
       named_volume: $named_volume,
       crash_exit_code: $crash_exit_code,
       restart_policy: $restart_policy,
@@ -263,7 +284,7 @@ jq -e '
   and .postgres.vector_column_count == 0
   and .postgres.vector_index_count == 0
   and .postgres.control_table_count >= 2
-  and .postgres.evidence_table_count == 0
+  and .postgres.unregistered_table_count == 0
   and .postgres.named_volume != ""
   and .postgres.crash_exit_code == 137
   and .postgres.restart_policy == "unless-stopped"

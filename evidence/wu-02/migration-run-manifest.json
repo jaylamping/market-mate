@@ -1,7 +1,13 @@
 {
-  "captured_at": "2026-08-29T04:47:06Z",
+  "captured_at": "2026-08-29T05:15:27Z",
+  "expected_head": 3,
+  "expected_versions": [
+    1,
+    2,
+    3
+  ],
   "first_apply": {
-    "head_version": 2,
+    "head_version": 3,
     "applied": [
       {
         "version": 1,
@@ -12,23 +18,31 @@
         "version": 2,
         "name": "convention_enforcement",
         "checksum": "3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f"
+      },
+      {
+        "version": 3,
+        "name": "audit_event_hash_chain",
+        "checksum": "29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125"
       }
     ],
-    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f",
-    "fingerprint": "c43e9fc8435c7878d1f7557109ba04fe",
-    "evidence_tables": []
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125",
+    "fingerprint": "a207481cd6e0965039ebd76eb4427a49",
+    "evidence_tables": [
+      "audit_event"
+    ]
   },
   "second_apply": {
     "applied_versions": [],
     "already_applied_versions": [
       1,
-      2
+      2,
+      3
     ],
-    "head_version": 2,
+    "head_version": 3,
     "noop": true
   },
   "second_state": {
-    "head_version": 2,
+    "head_version": 3,
     "applied": [
       {
         "version": 1,
@@ -39,23 +53,31 @@
         "version": 2,
         "name": "convention_enforcement",
         "checksum": "3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f"
+      },
+      {
+        "version": 3,
+        "name": "audit_event_hash_chain",
+        "checksum": "29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125"
       }
     ],
-    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f",
-    "fingerprint": "c43e9fc8435c7878d1f7557109ba04fe",
-    "evidence_tables": []
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125",
+    "fingerprint": "a207481cd6e0965039ebd76eb4427a49",
+    "evidence_tables": [
+      "audit_event"
+    ]
   },
   "fresh_apply": {
     "applied_versions": [
       1,
-      2
+      2,
+      3
     ],
     "already_applied_versions": [],
-    "head_version": 2,
+    "head_version": 3,
     "noop": false
   },
   "fresh_state": {
-    "head_version": 2,
+    "head_version": 3,
     "applied": [
       {
         "version": 1,
@@ -66,11 +88,18 @@
         "version": 2,
         "name": "convention_enforcement",
         "checksum": "3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f"
+      },
+      {
+        "version": 3,
+        "name": "audit_event_hash_chain",
+        "checksum": "29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125"
       }
     ],
-    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f",
-    "fingerprint": "c43e9fc8435c7878d1f7557109ba04fe",
-    "evidence_tables": []
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125",
+    "fingerprint": "a207481cd6e0965039ebd76eb4427a49",
+    "evidence_tables": [
+      "audit_event"
+    ]
   },
   "conventions": {
     "conforming_register": "ok",
@@ -91,7 +120,7 @@
   },
   "unregistered": {
     "exit_status": 1,
-    "rolled_back_to": 2,
+    "rolled_back_to": 3,
     "output": "migration SQL failed closed: public base tables are not registered in schema_object: {sneak}"
   },
   "postgres": {
