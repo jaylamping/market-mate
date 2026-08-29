@@ -1,0 +1,33 @@
+{
+  "captured_at": "2026-08-29T21:38:04Z",
+  "profiles": {
+    "universal": true,
+    "options": true,
+    "holding": true,
+    "portfolio": true,
+    "typed_and_distinct": true
+  },
+  "obligations": {
+    "not_applicable_has_proved_rule": true,
+    "no_default_substitution": true,
+    "unproved_not_applicable_blocked": true
+  },
+  "append_only": {
+    "resolution_update_blocked": true,
+    "obligation_update_blocked": true
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 3,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  },
+  "audit_positions": {
+    "profile": 2,
+    "obligation": 3
+  }
+}
