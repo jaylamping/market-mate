@@ -1,4 +1,5 @@
 use sha2::{Digest, Sha256};
+use std::fmt::Write as _;
 use std::fs;
 use std::path::Path;
 use tokio::task::JoinHandle;
@@ -53,7 +54,10 @@ impl std::fmt::Display for MigrateError {
                 "migration sequence failed closed: checksum mismatch for version {version} (applied {expected}, file {actual})"
             ),
             Self::Io(error) => write!(f, "migration I/O failed closed: {error}"),
-            Self::Sql(error) => write!(f, "migration SQL failed closed: {error}"),
+            Self::Sql(error) => match error.as_db_error() {
+                Some(db) => write!(f, "migration SQL failed closed: {}", db.message()),
+                None => write!(f, "migration SQL failed closed: {error}"),
+            },
             Self::DatabaseUrl => write!(f, "DATABASE_URL is required"),
         }
     }
@@ -73,12 +77,7 @@ impl From<std::io::Error> for MigrateError {
     }
 }
 
-pub fn bundled_migrations() -> Result<Vec<Migration>, MigrateError> {
-    parse_migration_files(&[(
-        "0001_schema_conventions.sql",
-        include_str!("../../db/migrations/0001_schema_conventions.sql"),
-    )])
-}
+include!(concat!(env!("OUT_DIR"), "/bundled.rs"));
 
 pub fn load_from_dir(path: &Path) -> Result<Vec<Migration>, MigrateError> {
     let mut files = Vec::new();
@@ -131,7 +130,9 @@ pub fn parse_filename(filename: &str) -> Result<(i64, String), MigrateError> {
             ))
         })?;
     let version: i64 = version_part.parse().map_err(|_| {
-        MigrateError::Sequence(format!("migration filename {filename} has a non-integer version"))
+        MigrateError::Sequence(format!(
+            "migration filename {filename} has a non-integer version"
+        ))
     })?;
     if version < 1 {
         return Err(MigrateError::Sequence(format!(
@@ -188,7 +189,59 @@ pub async fn connect(database_url: &str) -> Result<(Client, JoinHandle<()>), Mig
     Ok((client, handle))
 }
 
-pub async fn apply(client: &mut Client, migrations: &[Migration]) -> Result<ApplyReport, MigrateError> {
+pub fn migrations_match_head(applied: &[(i64, String, String)], bundled: &[Migration]) -> bool {
+    applied.len() == bundled.len()
+        && applied.iter().zip(bundled.iter()).all(|(row, file)| {
+            row.0 == file.version && row.1 == file.name && row.2 == file.checksum()
+        })
+}
+
+async fn assert_schema_migration_shape(client: &Client) -> Result<(), MigrateError> {
+    let rows = client
+        .query(
+            "SELECT a.attname, t.typname, a.attnotnull
+             FROM pg_attribute a
+             JOIN pg_class c ON c.oid = a.attrelid
+             JOIN pg_namespace n ON n.oid = c.relnamespace
+             JOIN pg_type t ON t.oid = a.atttypid
+             WHERE n.nspname = 'public'
+               AND c.relname = 'schema_migration'
+               AND a.attnum > 0
+               AND NOT a.attisdropped
+             ORDER BY a.attnum",
+            &[],
+        )
+        .await?;
+    let expected = [
+        ("version", "int8", true),
+        ("name", "text", true),
+        ("checksum", "text", true),
+        ("applied_at", "timestamptz", true),
+    ];
+    if rows.len() != expected.len() {
+        return Err(MigrateError::Sequence(format!(
+            "schema_migration shape mismatch: expected {} columns, found {}",
+            expected.len(),
+            rows.len()
+        )));
+    }
+    for (row, (name, type_name, not_null)) in rows.iter().zip(expected) {
+        let found_name: String = row.get(0);
+        let found_type: String = row.get(1);
+        let found_not_null: bool = row.get(2);
+        if found_name != name || found_type != type_name || found_not_null != not_null {
+            return Err(MigrateError::Sequence(format!(
+                "schema_migration shape mismatch: expected {name} {type_name} notnull={not_null}, found {found_name} {found_type} notnull={found_not_null}"
+            )));
+        }
+    }
+    Ok(())
+}
+
+pub async fn apply(
+    client: &mut Client,
+    migrations: &[Migration],
+) -> Result<ApplyReport, MigrateError> {
     validate_sequence(migrations)?;
     client
         .query_one("SELECT pg_advisory_lock($1)", &[&MIGRATION_LOCK_KEY])
@@ -218,6 +271,7 @@ async fn apply_locked(
             )",
         )
         .await?;
+    assert_schema_migration_shape(client).await?;
 
     let applied_rows = client
         .query(
@@ -277,11 +331,16 @@ async fn apply_locked(
                 &[&migration.version, &migration.name, &checksum],
             )
             .await?;
+        transaction
+            .batch_execute("SELECT assert_all_evidence_table_conventions()")
+            .await?;
         transaction.commit().await?;
         applied_versions.push(migration.version);
     }
 
-    client.batch_execute("SELECT assert_all_evidence_table_conventions()").await?;
+    client
+        .batch_execute("SELECT assert_all_evidence_table_conventions()")
+        .await?;
 
     let head_version = migrations.last().map(|migration| migration.version);
     Ok(ApplyReport {
@@ -294,7 +353,11 @@ async fn apply_locked(
 
 pub fn checksum(sql: &str) -> String {
     let digest = Sha256::digest(sql.as_bytes());
-    digest.iter().map(|byte| format!("{byte:02x}")).collect()
+    let mut encoded = String::with_capacity(digest.len() * 2);
+    for byte in digest {
+        write!(&mut encoded, "{byte:02x}").expect("writing to a String cannot fail");
+    }
+    encoded
 }
 
 pub fn database_url() -> Result<String, MigrateError> {
@@ -341,8 +404,9 @@ mod tests {
 
     #[test]
     fn reject_duplicate_version_via_files() {
-        let error = parse_migration_files(&[("0001_a.sql", "SELECT 1;"), ("0001_b.sql", "SELECT 2;")])
-            .unwrap_err();
+        let error =
+            parse_migration_files(&[("0001_a.sql", "SELECT 1;"), ("0001_b.sql", "SELECT 2;")])
+                .unwrap_err();
         match error {
             MigrateError::Sequence(message) => {
                 assert!(message.contains("expected 2"), "{message}");
@@ -352,11 +416,30 @@ mod tests {
     }
 
     #[test]
-    fn bundled_migrations_are_a_valid_sequence() {
+    fn bundled_migrations_match_the_directory() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../db/migrations");
         let bundled = bundled_migrations().unwrap();
-        assert_eq!(bundled.len(), 1);
-        assert_eq!(bundled[0].version, 1);
+        let from_dir = load_from_dir(&dir).unwrap();
+        assert_eq!(bundled, from_dir);
+        assert!(bundled.len() >= 2);
         assert_eq!(bundled[0].name, "schema_conventions");
-        assert!(bundled[0].sql.contains("record_environment"));
+        assert_eq!(bundled[1].name, "convention_enforcement");
+    }
+
+    #[test]
+    fn head_match_requires_exact_applied_prefix() {
+        let bundled = bundled_migrations().unwrap();
+        let head: Vec<(i64, String, String)> = bundled
+            .iter()
+            .map(|migration| {
+                (
+                    migration.version,
+                    migration.name.clone(),
+                    migration.checksum(),
+                )
+            })
+            .collect();
+        assert!(migrations_match_head(&head, &bundled));
+        assert!(!migrations_match_head(&head[..1], &bundled));
     }
 }

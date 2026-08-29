@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-28T23:12:19Z",
+  "captured_at": "2026-08-29T04:42:47Z",
   "services": [
     {
       "service": "backend",
@@ -25,19 +25,23 @@
   "backend_readyz": {
     "status": "ok",
     "service": "backend",
-    "database": true
+    "database": true,
+    "migrations": true
   },
   "frontend_health": {
     "status": "ok",
     "service": "frontend"
   },
+  "backend_user": "app",
   "postgres": {
     "pgvector_version": "0.8.6",
-    "public_table_count": 0,
-    "public_index_count": 0,
     "vector_column_count": 0,
+    "vector_index_count": 0,
+    "control_table_count": 2,
+    "evidence_table_count": 0,
     "named_volume": "market-mate-wu01_pgdata",
     "crash_exit_code": 137,
+    "restart_policy": "unless-stopped",
     "persistence_probe": "survive"
   }
 }
