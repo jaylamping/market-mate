@@ -13,7 +13,7 @@ use backend::{
         apply, bundled_migrations, connect, database_url, load_from_dir, migrations_match_head,
         ApplyReport,
     },
-    secrets,
+    secrets, tracer,
 };
 use serde_json::json;
 use std::{
@@ -301,6 +301,64 @@ async fn create_checkpoint(State(state): State<AppState>) -> (StatusCode, Json<s
     }
 }
 
+async fn run_tracer_endpoint(
+    State(state): State<AppState>,
+) -> (StatusCode, Json<serde_json::Value>) {
+    let verification = state.verification_snapshot();
+    if verification.pending || !verification.valid {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "restore verification has not passed; the tracer is unavailable"
+            })),
+        );
+    }
+
+    let database_url = match database_url() {
+        Ok(url) => url,
+        Err(error) => {
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({ "error": error.to_string() })),
+            );
+        }
+    };
+    let (client, _connection) = match connect(&database_url).await {
+        Ok(pair) => pair,
+        Err(error) => {
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({ "error": format!("database connect failed: {error}") })),
+            );
+        }
+    };
+
+    match tracer::run_tracer(&client).await {
+        Ok(report) => {
+            log_event(
+                SERVICE,
+                "info",
+                "tracer.run_completed",
+                &json!({
+                    "run_id": report.run_id,
+                    "snapshot_id": report.snapshot_id,
+                    "preregistration_id": report.preregistration_id,
+                    "evaluation_id": report.evaluation_id,
+                    "chain_head_position": report.audit_positions["evaluation_recorded"],
+                }),
+            );
+            (
+                StatusCode::CREATED,
+                Json(serde_json::to_value(report).unwrap_or_default()),
+            )
+        }
+        Err(error) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({ "error": error })),
+        ),
+    }
+}
+
 async fn restore_verification(
     State(state): State<AppState>,
 ) -> (StatusCode, Json<serde_json::Value>) {
@@ -508,6 +566,7 @@ async fn serve() {
         .route("/readyz", get(readyz))
         .route("/checkpoints", post(create_checkpoint))
         .route("/restore-verification", post(restore_verification))
+        .route("/tracer/run", post(run_tracer_endpoint))
         .with_state(state);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080")
         .await
