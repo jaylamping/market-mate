@@ -1,0 +1,26 @@
+{
+  "captured_at": "2026-08-29T15:12:41Z",
+  "fixture_set": {
+    "loaded": true,
+    "issuers": 2,
+    "securities": 2,
+    "listings": 2,
+    "listing_aliases": 3,
+    "security_aliases": 3,
+    "identity_continuous_symbol_change_represented": true,
+    "symbol_reuse_keeps_distinct_identities": true
+  },
+  "validity_interval_enforcement": {
+    "inverted_interval_blocked": true,
+    "overlapping_alias_blocked": true,
+    "overlapping_listing_blocked": true,
+    "sequential_alias_accepted": true
+  },
+  "identifier_discipline": {
+    "unique_symbol_indexes": 0,
+    "no_identifier_is_primary_or_unique_key": true
+  },
+  "append_only": {
+    "issuer_delete_blocked": true
+  }
+}

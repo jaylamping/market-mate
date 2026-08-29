@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T14:39:04Z",
+  "captured_at": "2026-08-29T15:13:33Z",
   "runs": {
     "first": {
       "audit_positions": {
@@ -7,8 +7,8 @@
         "preregistration_created": 3,
         "snapshot_captured": 2
       },
-      "evaluation_id": "4d1ea737-ace6-4ab2-b21c-1004dc6edf06",
-      "preregistration_id": "7e4e74e2-928a-43fb-b8ce-27434340abbd",
+      "evaluation_id": "80930375-07f3-40bf-8d33-9c8f416b1da6",
+      "preregistration_id": "6cdef077-9d85-434b-ae3e-f0df357b36f9",
       "result": {
         "decision": "non_positive",
         "difference_bps": -393,
@@ -56,9 +56,9 @@
         }
       },
       "result_digest": "c06f2c33cb60818a2a22724e458fd78c7da15d3803e3583885b85e7b5d2a091c",
-      "run_id": "e7535c00-7f5d-4aa4-8c36-f07851a9bf00",
+      "run_id": "82dce1d1-db05-4013-8d59-78682abb4b78",
       "snapshot_digest": "80f31bf4c2849d426231d6d89f772feed547679c32660406cf95762d967b3f3f",
-      "snapshot_id": "fb17e634-aacb-4c01-b5ea-ac85f6ce929a",
+      "snapshot_id": "b489acae-d0af-4102-b369-740cee3c336d",
       "snapshot_kind": "tracer_inline",
       "spec": {
         "comparator": "zero_difference",
@@ -101,8 +101,8 @@
         "preregistration_created": 6,
         "snapshot_captured": 5
       },
-      "evaluation_id": "a4f87e99-725f-4b34-8791-06a21a883eff",
-      "preregistration_id": "9c518086-260b-4c2b-85c4-8535767ada3a",
+      "evaluation_id": "abdd3c58-bc15-4fc1-9268-5b3c785b7b12",
+      "preregistration_id": "c6afec49-13d6-4e00-8cc9-ab7bf4d66f1d",
       "result": {
         "decision": "non_positive",
         "difference_bps": -393,
@@ -150,9 +150,9 @@
         }
       },
       "result_digest": "c06f2c33cb60818a2a22724e458fd78c7da15d3803e3583885b85e7b5d2a091c",
-      "run_id": "8b401cfa-81f2-44c5-be13-0106b13ee89c",
+      "run_id": "957c3ff7-2801-4560-99e7-865e9ae8ce41",
       "snapshot_digest": "80f31bf4c2849d426231d6d89f772feed547679c32660406cf95762d967b3f3f",
-      "snapshot_id": "02eb605a-ec75-4a82-9bf5-682d22dbca20",
+      "snapshot_id": "1315eb65-ffa3-474f-9182-d40f2e4d4aef",
       "snapshot_kind": "tracer_inline",
       "spec": {
         "comparator": "zero_difference",
