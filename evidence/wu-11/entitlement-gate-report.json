@@ -1,0 +1,31 @@
+{
+  "captured_at": "2026-08-29T19:57:33Z",
+  "entitlement_gate": {
+    "uncertified_use_denied": true,
+    "denial_recorded": true,
+    "certified_use_allowed": true,
+    "expired_use_denied": true,
+    "decision_log_append_only": true,
+    "denied_use_blocked": true
+  },
+  "provenance": {
+    "use_receipt_recorded": true,
+    "source_registry_version_attached": true,
+    "entitlement_version_attached": true,
+    "receipt_time_attached": true
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 3,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  },
+  "audit_positions": {
+    "denial": 2,
+    "provenance": 3
+  }
+}
