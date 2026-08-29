@@ -1,13 +1,14 @@
 {
-  "captured_at": "2026-08-29T05:15:27Z",
-  "expected_head": 3,
+  "captured_at": "2026-08-29T06:43:09Z",
+  "expected_head": 4,
   "expected_versions": [
     1,
     2,
-    3
+    3,
+    4
   ],
   "first_apply": {
-    "head_version": 3,
+    "head_version": 4,
     "applied": [
       {
         "version": 1,
@@ -23,11 +24,17 @@
         "version": 3,
         "name": "audit_event_hash_chain",
         "checksum": "29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125"
+      },
+      {
+        "version": 4,
+        "name": "signed_checkpoint_receipts",
+        "checksum": "d5a9c617dad8a884f7e9fdf77ea158ecef0aaf63c9e3027825a96dfb6cde9ce5"
       }
     ],
-    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125",
-    "fingerprint": "a207481cd6e0965039ebd76eb4427a49",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d5a9c617dad8a884f7e9fdf77ea158ecef0aaf63c9e3027825a96dfb6cde9ce5",
+    "fingerprint": "b82db315c67a31d9593946e133b16da2",
     "evidence_tables": [
+      "audit_checkpoint",
       "audit_event"
     ]
   },
@@ -36,13 +43,14 @@
     "already_applied_versions": [
       1,
       2,
-      3
+      3,
+      4
     ],
-    "head_version": 3,
+    "head_version": 4,
     "noop": true
   },
   "second_state": {
-    "head_version": 3,
+    "head_version": 4,
     "applied": [
       {
         "version": 1,
@@ -58,11 +66,17 @@
         "version": 3,
         "name": "audit_event_hash_chain",
         "checksum": "29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125"
+      },
+      {
+        "version": 4,
+        "name": "signed_checkpoint_receipts",
+        "checksum": "d5a9c617dad8a884f7e9fdf77ea158ecef0aaf63c9e3027825a96dfb6cde9ce5"
       }
     ],
-    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125",
-    "fingerprint": "a207481cd6e0965039ebd76eb4427a49",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d5a9c617dad8a884f7e9fdf77ea158ecef0aaf63c9e3027825a96dfb6cde9ce5",
+    "fingerprint": "b82db315c67a31d9593946e133b16da2",
     "evidence_tables": [
+      "audit_checkpoint",
       "audit_event"
     ]
   },
@@ -70,14 +84,15 @@
     "applied_versions": [
       1,
       2,
-      3
+      3,
+      4
     ],
     "already_applied_versions": [],
-    "head_version": 3,
+    "head_version": 4,
     "noop": false
   },
   "fresh_state": {
-    "head_version": 3,
+    "head_version": 4,
     "applied": [
       {
         "version": 1,
@@ -93,11 +108,17 @@
         "version": 3,
         "name": "audit_event_hash_chain",
         "checksum": "29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125"
+      },
+      {
+        "version": 4,
+        "name": "signed_checkpoint_receipts",
+        "checksum": "d5a9c617dad8a884f7e9fdf77ea158ecef0aaf63c9e3027825a96dfb6cde9ce5"
       }
     ],
-    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125",
-    "fingerprint": "a207481cd6e0965039ebd76eb4427a49",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d5a9c617dad8a884f7e9fdf77ea158ecef0aaf63c9e3027825a96dfb6cde9ce5",
+    "fingerprint": "b82db315c67a31d9593946e133b16da2",
     "evidence_tables": [
+      "audit_checkpoint",
       "audit_event"
     ]
   },
@@ -120,7 +141,7 @@
   },
   "unregistered": {
     "exit_status": 1,
-    "rolled_back_to": 3,
+    "rolled_back_to": 4,
     "output": "migration SQL failed closed: public base tables are not registered in schema_object: {sneak}"
   },
   "postgres": {

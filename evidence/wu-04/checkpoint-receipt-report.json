@@ -1,0 +1,137 @@
+{
+  "captured_at": "2026-08-29T06:39:23Z",
+  "readyz_initial": {
+    "status": "ok",
+    "service": "backend",
+    "database": true,
+    "migrations": true,
+    "checkpoints": true,
+    "checkpoint_pending": false,
+    "checkpoint_failure": null
+  },
+  "custody_public_key": {
+    "algorithm": "ed25519",
+    "public_key": "b78a8515d56f2986e50b763ad50c9a087b3953cd806d2b69356c760711019d9e"
+  },
+  "receipts_initial": [],
+  "checkpoint_one": {
+    "receipt": {
+      "algorithm": "ed25519",
+      "chain_digest": "185ec75c84ac7980a5a1190bf17f760e9a4208e9de12cecd04ac76edcae18452",
+      "chain_position": 4,
+      "checkpoint_index": 1,
+      "checkpoint_time": "2026-08-29T06:38:51.278595Z",
+      "public_key": "b78a8515d56f2986e50b763ad50c9a087b3953cd806d2b69356c760711019d9e",
+      "signature": "40cbe724a4b873bd8c5d92d9b55ab4139b5ac5eceb97437b5bb536265966ccafbcadfc97777542aeaa7c960b4c35d585da035095bd5d966761500150a6a91700"
+    },
+    "audit_chain_position": 5,
+    "database_mirror": {
+      "checkpoint_index": 1,
+      "chain_position": 4,
+      "chain_digest": "185ec75c84ac7980a5a1190bf17f760e9a4208e9de12cecd04ac76edcae18452",
+      "signature": "40cbe724a4b873bd8c5d92d9b55ab4139b5ac5eceb97437b5bb536265966ccafbcadfc97777542aeaa7c960b4c35d585da035095bd5d966761500150a6a91700"
+    },
+    "independent_verification": {
+      "canonical": "market-mate-checkpoint-receipt-v1|1|4|185ec75c84ac7980a5a1190bf17f760e9a4208e9de12cecd04ac76edcae18452|2026-08-29T06:38:51.278595Z",
+      "tool": "openssl pkeyutl ed25519",
+      "output": "Signature Verified Successfully"
+    },
+    "custody_receipts": [
+      {
+        "checkpoint_index": 1,
+        "chain_position": 4,
+        "chain_digest": "185ec75c84ac7980a5a1190bf17f760e9a4208e9de12cecd04ac76edcae18452",
+        "checkpoint_time": "2026-08-29T06:38:51.278595Z",
+        "algorithm": "ed25519",
+        "public_key": "b78a8515d56f2986e50b763ad50c9a087b3953cd806d2b69356c760711019d9e",
+        "signature": "40cbe724a4b873bd8c5d92d9b55ab4139b5ac5eceb97437b5bb536265966ccafbcadfc97777542aeaa7c960b4c35d585da035095bd5d966761500150a6a91700"
+      }
+    ]
+  },
+  "tamper_probes": {
+    "payload_only": {
+      "valid": false,
+      "checked_events": 1,
+      "break_position": 2,
+      "reason": "event_hash_mismatch",
+      "expected_previous_hash": "fb1cfba9c14c551a9027dc3bdd3793d442cbb6fed0764f9153496cb09dc4a5de",
+      "actual_previous_hash": "fb1cfba9c14c551a9027dc3bdd3793d442cbb6fed0764f9153496cb09dc4a5de",
+      "expected_event_hash": "0e2b646c4f6f1f7fd3d44d012ed2aee76923260f1bc8f658f02c387317724a78",
+      "actual_event_hash": "1a2d50806cff26aa2de78a5684d016b47f5a28a02b51337661e9718d9fada022"
+    },
+    "consistent_rewrite": {
+      "chain_valid_after_rewrite": true,
+      "digest_after_rewrite": "ef4fecde85132a84f0698099b692ecb3209179a59c50c5db0b467baafe32ec02",
+      "receipt_digest": "185ec75c84ac7980a5a1190bf17f760e9a4208e9de12cecd04ac76edcae18452"
+    }
+  },
+  "restart_gate": {
+    "tampered": {
+      "status": 503,
+      "sustained": true,
+      "body": {
+        "status": "unavailable",
+        "service": "backend",
+        "database": true,
+        "migrations": true,
+        "checkpoints": false,
+        "checkpoint_pending": false,
+        "checkpoint_failure": {
+          "checkpoint_index": null,
+          "detail": "verify_audit_event_chain reported the stored chain is broken",
+          "reason": "chain_invalid"
+        }
+      }
+    },
+    "restored": {
+      "status": 200,
+      "body": {
+        "status": "ok",
+        "service": "backend",
+        "database": true,
+        "migrations": true,
+        "checkpoints": true,
+        "checkpoint_pending": false,
+        "checkpoint_failure": null
+      }
+    }
+  },
+  "restore": {
+    "dump_bytes": 28448,
+    "restored_chain_head": 6,
+    "replay": {
+      "chain_checked_events": 6,
+      "chain_valid": true,
+      "custody_public_key": "b78a8515d56f2986e50b763ad50c9a087b3953cd806d2b69356c760711019d9e",
+      "first_failure": null,
+      "head_position": 6,
+      "pending": false,
+      "receipts_checked": 1,
+      "valid": true,
+      "verified_at": "2026-08-29T06:39:23.489428Z"
+    }
+  },
+  "checkpoint_two": {
+    "receipt": {
+      "algorithm": "ed25519",
+      "chain_digest": "b52a2d05526872ed92654fa5e57585b7839e2f250650adda48ea32eb495a3db7",
+      "chain_position": 6,
+      "checkpoint_index": 2,
+      "checkpoint_time": "2026-08-29T06:39:23.855220Z",
+      "public_key": "b78a8515d56f2986e50b763ad50c9a087b3953cd806d2b69356c760711019d9e",
+      "signature": "8dcfe4e006e3ee1221611cdee46156c292ab01625fb552d8d18b3a460fc58012668d2bddc236e86226b13d50684ee24488dbf275a92fab51577cb7b685f9d60e"
+    },
+    "audit_chain_position": 7
+  },
+  "final_verification": {
+    "chain_checked_events": 7,
+    "chain_valid": true,
+    "custody_public_key": "b78a8515d56f2986e50b763ad50c9a087b3953cd806d2b69356c760711019d9e",
+    "first_failure": null,
+    "head_position": 7,
+    "pending": false,
+    "receipts_checked": 2,
+    "valid": true,
+    "verified_at": "2026-08-29T06:39:23.899045Z"
+  }
+}

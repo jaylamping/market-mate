@@ -1,8 +1,13 @@
 {
-  "captured_at": "2026-08-29T05:14:47Z",
+  "captured_at": "2026-08-29T06:42:15Z",
   "services": [
     {
       "service": "backend",
+      "state": "running",
+      "health": "healthy"
+    },
+    {
+      "service": "custody",
       "state": "running",
       "health": "healthy"
     },
@@ -26,7 +31,10 @@
     "status": "ok",
     "service": "backend",
     "database": true,
-    "migrations": true
+    "migrations": true,
+    "checkpoints": true,
+    "checkpoint_pending": false,
+    "checkpoint_failure": null
   },
   "frontend_health": {
     "status": "ok",
@@ -38,7 +46,7 @@
     "vector_column_count": 0,
     "vector_index_count": 0,
     "control_table_count": 2,
-    "evidence_table_count": 1,
+    "evidence_table_count": 2,
     "unregistered_table_count": 0,
     "named_volume": "market-mate-wu01_pgdata",
     "crash_exit_code": 137,
