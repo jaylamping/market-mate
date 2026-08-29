@@ -4,6 +4,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use backend::logging::log_event;
 use backend::receipt::{
     is_lower_hex, sign_receipt, utc_checkpoint_time_now, validate_receipt_shape,
     verify_receipt_signature, CheckpointReceipt,
@@ -19,6 +20,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+const SERVICE: &str = "custody";
 const DEFAULT_PORT: u16 = 8081;
 const RECEIPTS_FILE: &str = "receipts.jsonl";
 const KEY_FILE: &str = "signing-key.json";
@@ -317,8 +319,15 @@ async fn main() {
         }),
     });
 
-    eprintln!(
-        "custody listening on 0.0.0.0:{port}; next index {next_index}, max position {max_chain_position}"
+    log_event(
+        SERVICE,
+        "info",
+        "custody.listening",
+        &json!({
+            "port": port,
+            "next_index": next_index,
+            "max_chain_position": max_chain_position,
+        }),
     );
 
     let app = Router::new()
