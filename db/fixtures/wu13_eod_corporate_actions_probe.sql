@@ -10,6 +10,12 @@ DECLARE
   v_source_v1 uuid := '40000000-0000-0000-0000-000000000101';
   v_entitlement_id uuid := '40000000-0000-0000-0000-000000000201';
   v_entitlement_v1 uuid := '40000000-0000-0000-0000-000000000301';
+  v_contract_id uuid := '40000000-0000-0000-0000-000000000501';
+  v_contract_v1 uuid := '40000000-0000-0000-0000-000000000502';
+  v_observation_field uuid := '40000000-0000-0000-0000-000000000601';
+  v_available_field uuid := '40000000-0000-0000-0000-000000000602';
+  v_received_field uuid := '40000000-0000-0000-0000-000000000603';
+  v_connector_id uuid := '40000000-0000-0000-0000-000000000701';
   v_uncertified_entitlement_id uuid := '40000000-0000-0000-0000-000000000202';
   v_uncertified_entitlement_v1 uuid := '40000000-0000-0000-0000-000000000302';
   v_issuer_id uuid := '40000000-0000-0000-0000-000000000401';
@@ -19,6 +25,8 @@ DECLARE
   v_uncertified_selection eod_vendor_selection%ROWTYPE;
   v_first_bar eod_price_observation%ROWTYPE;
   v_revised_bar eod_price_observation%ROWTYPE;
+  v_future_bar eod_price_observation%ROWTYPE;
+  v_future_visible eod_price_observation%ROWTYPE;
   v_missing_bar eod_price_observation%ROWTYPE;
   v_denied_bar eod_price_observation%ROWTYPE;
   v_historical_bar eod_price_observation%ROWTYPE;
@@ -88,6 +96,50 @@ BEGIN
     v_lineage, '2026-01-01T00:00:00Z', 'local_research'
   );
 
+  INSERT INTO data_contract (
+    contract_id, contract_key, contract_kind, description,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_contract_id, 'daily-eod-contract-wu13', 'market',
+    'Point-in-time licensed daily market and corporate-action delivery contract',
+    v_lineage, now(), 'local_research'
+  );
+  INSERT INTO data_contract_version (
+    contract_version_id, contract_id, contract_version, source_registry_version_id,
+    effective_from, effective_to, availability_time_rules,
+    instrument_identity_rules, provenance_requirements,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_contract_v1, v_contract_id, 1, v_source_v1,
+    '2026-01-01T00:00:00Z', NULL,
+    '{"as_of_required":true,"receipt_time_required":true,"availability_time_required":true}',
+    '{"security_id_required":true,"mapping_must_be_certified":true}',
+    '{"source_registry_version":true,"entitlement_version":true,"receipt_time":true}',
+    v_lineage, now(), 'local_research'
+  );
+  INSERT INTO data_contract_field (
+    field_id, contract_version_id, field_key, value_type,
+    observation_states, field_semantics, source_lineage, receipt_time, record_environment
+  ) VALUES
+    (v_observation_field, v_contract_v1, 'vendor_observation_key', 'text', ARRAY['current','stale','missing'], '{"required":true}'::jsonb, v_lineage, now(), 'local_research'),
+    (v_available_field, v_contract_v1, 'available_at', 'timestamp', ARRAY['current','stale','missing'], '{"required":true,"as_of":"point_in_time"}'::jsonb, v_lineage, now(), 'local_research'),
+    (v_received_field, v_contract_v1, 'received_at', 'timestamp', ARRAY['current'], '{"required":true}'::jsonb, v_lineage, now(), 'local_research');
+  INSERT INTO source_connector (
+    connector_id, connector_key, connector_kind,
+    source_registry_version_id, contract_version_id, lifecycle,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_connector_id, 'licensed-eod-connector-wu13', 'daily_eod', v_source_v1, v_contract_v1,
+    'active', v_lineage, now(), 'local_research'
+  );
+  INSERT INTO connector_field_binding (
+    connector_id, contract_version_id, field_id,
+    source_lineage, receipt_time, record_environment
+  ) VALUES
+    (v_connector_id, v_contract_v1, v_observation_field, v_lineage, now(), 'local_research'),
+    (v_connector_id, v_contract_v1, v_available_field, v_lineage, now(), 'local_research'),
+    (v_connector_id, v_contract_v1, v_received_field, v_lineage, now(), 'local_research');
+
   INSERT INTO issuer (
     issuer_id, legal_name, source_lineage, receipt_time, record_environment
   ) VALUES (
@@ -146,6 +198,16 @@ BEGIN
     '2026-08-20T21:00:00Z', '{"open":100,"high":106,"low":99,"close":103,"volume":1100000,"revision":"vendor-correction"}'::jsonb,
     v_lineage
   );
+  SELECT * INTO v_future_bar FROM ingest_eod_price_observation(
+    v_selection.selection_id, v_mapping.mapping_id, 'WU13-availability-future',
+    '2026-08-23', 'complete', 101, 102, 100, 101, 900000,
+    v_first_bar.receipt_time + interval '1 hour',
+    '{"open":101,"high":102,"low":100,"close":101,"volume":900000}'::jsonb,
+    v_lineage
+  );
+  SELECT * INTO v_future_visible FROM eod_price_observation_at(
+    v_mapping.mapping_id, '2026-08-23', v_future_bar.receipt_time + interval '1 minute'
+  );
   SELECT * INTO v_missing_bar FROM ingest_eod_price_observation(
     v_selection.selection_id, v_mapping.mapping_id, 'WU13-2026-08-21',
     '2026-08-21', 'missing', NULL, NULL, NULL, NULL, NULL,
@@ -193,6 +255,9 @@ BEGIN
     'point_in_time_preserved', v_historical_bar.close_price = 102
       AND v_revised_bar.close_price = 103
       AND v_revised_bar.revision = 2,
+    'future_availability_hidden', v_future_bar.observation_id IS NOT NULL
+      AND v_future_bar.available_at > v_future_bar.receipt_time
+      AND v_future_visible.observation_id IS NULL,
     'corporate_action_ingested', v_first_action.observation_id IS NOT NULL,
     'corporate_action_revision_appended', (
       SELECT count(*) = 2 AND min(revision) = 1 AND max(revision) = 2
@@ -215,7 +280,7 @@ BEGIN
       ORDER BY requested_at LIMIT 1
     ),
     'allowed_use_receipts_recorded', (
-      SELECT count(*) = 5
+      SELECT count(*) = 6
       FROM entitled_use_receipt r
       JOIN entitlement_gate_decision d ON d.decision_id = r.decision_id
       WHERE d.source_registry_version_id = v_source_v1
@@ -233,6 +298,10 @@ BEGIN
     ),
     'price_source_lineage_attached', v_revised_bar.source_lineage = v_lineage,
     'corporate_action_source_lineage_attached', v_revised_action.source_lineage = v_lineage,
+    'connector_contract_bound', v_selection.connector_id = v_connector_id
+      AND v_selection.contract_version_id = v_contract_v1
+      AND v_revised_bar.connector_id = v_connector_id
+      AND v_revised_action.contract_version_id = v_contract_v1,
     'price_update_blocked', false,
     'corporate_action_update_blocked', false,
     'price_truncate_blocked', false

@@ -25,65 +25,46 @@ BEGIN
     v_lineage, v_initial_snapshot.snapshot_id, 'vendor correction received'
   );
 
-  INSERT INTO research_cycle_manifest (
-    cycle_key, cycle_kind, cycle_as_of, expected_snapshot_count,
-    completed_snapshot_count, completion_state, evidence_state,
-    stale_from, stale_to, supersedes_manifest_id, superseding_delta,
-    source_lineage, receipt_time, record_environment
-  ) VALUES (
+  BEGIN
+    INSERT INTO research_cycle_manifest (
+      cycle_key, cycle_kind, cycle_as_of, expected_snapshot_count,
+      completed_snapshot_count, completion_state, evidence_state,
+      stale_from, stale_to, supersedes_manifest_id, superseding_delta,
+      source_lineage, receipt_time, record_environment
+    ) VALUES (
+      'wu16-direct-insert-probe', 'post_close', clock_timestamp(), 0, 0,
+      'complete', 'complete', NULL, NULL, NULL, '{}'::jsonb,
+      v_lineage, clock_timestamp(), 'local_research'
+    );
+    RAISE EXCEPTION 'probe accepted a direct research cycle manifest insert';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%publication workflow%' THEN RAISE; END IF;
+  END;
+
+  SELECT * INTO v_manifest FROM record_research_cycle_manifest(
     'wu16-cycle-2026-08-28', 'post_close', '2026-08-28T22:00:00Z', 2, 1,
     'degraded_complete', 'degraded', '2026-08-28T23:30:00Z', NULL, NULL,
-    '{}'::jsonb, v_lineage, '2026-08-28T23:31:00Z', 'local_research'
-  ) RETURNING * INTO v_manifest;
-
-  INSERT INTO research_cycle_manifest_entry (
-    manifest_id, snapshot_key, expected, snapshot_id,
-    completion_state, evidence_state, stale_from, stale_to,
-    supersedes_entry_id, source_lineage, receipt_time, record_environment
-  ) VALUES (
-    v_manifest.manifest_id, 'WU16-security', true, v_correction_snapshot.snapshot_id,
-    'complete', 'complete', NULL, NULL, NULL,
-    v_lineage, '2026-08-28T23:30:00Z', 'local_research'
-  ) RETURNING * INTO v_initial_entry;
-  INSERT INTO research_cycle_manifest_entry (
-    manifest_id, snapshot_key, expected, snapshot_id,
-    completion_state, evidence_state, stale_from, stale_to,
-    supersedes_entry_id, source_lineage, receipt_time, record_environment
-  ) VALUES (
-    v_manifest.manifest_id, 'WU16-portfolio', true, NULL,
-    'stale', 'stale', '2026-08-28T23:30:00Z', NULL, NULL,
-    v_lineage, '2026-08-28T23:31:00Z', 'local_research'
+    '{}'::jsonb,
+    jsonb_build_array(
+      jsonb_build_object('snapshot_key','WU16-security','snapshot_id',v_correction_snapshot.snapshot_id::text,'completion_state','complete','evidence_state','complete'),
+      jsonb_build_object('snapshot_key','WU16-portfolio','completion_state','stale','evidence_state','stale','stale_from','2026-08-28T23:30:00Z')
+    ), v_lineage
   );
+  SELECT * INTO v_initial_entry FROM research_cycle_manifest_entry
+  WHERE manifest_id = v_manifest.manifest_id AND snapshot_key = 'WU16-security';
 
-  INSERT INTO research_cycle_manifest (
-    cycle_key, cycle_kind, cycle_as_of, expected_snapshot_count,
-    completed_snapshot_count, completion_state, evidence_state,
-    stale_from, stale_to, supersedes_manifest_id, superseding_delta,
-    source_lineage, receipt_time, record_environment
-  ) VALUES (
+  SELECT * INTO v_successor_manifest FROM record_research_cycle_manifest(
     'wu16-cycle-2026-08-28-correction', 'post_close', '2026-08-28T23:45:00Z', 2, 2,
     'complete', 'complete', NULL, NULL, v_manifest.manifest_id,
     '{"corrected_snapshots":["WU16-security"],"restored_evidence":["WU16-portfolio"]}'::jsonb,
-    v_lineage, '2026-08-28T23:46:00Z', 'local_research'
-  ) RETURNING * INTO v_successor_manifest;
-  INSERT INTO research_cycle_manifest_entry (
-    manifest_id, snapshot_key, expected, snapshot_id,
-    completion_state, evidence_state, stale_from, stale_to,
-    supersedes_entry_id, source_lineage, receipt_time, record_environment
-  ) VALUES (
-    v_successor_manifest.manifest_id, 'WU16-security', true,
-    v_correction_snapshot.snapshot_id, 'complete', 'complete', NULL, NULL,
-    v_initial_entry.entry_id, v_lineage, '2026-08-28T23:46:00Z', 'local_research'
-  ) RETURNING * INTO v_successor_entry;
-  INSERT INTO research_cycle_manifest_entry (
-    manifest_id, snapshot_key, expected, snapshot_id,
-    completion_state, evidence_state, stale_from, stale_to,
-    supersedes_entry_id, source_lineage, receipt_time, record_environment
-  ) VALUES (
-    v_successor_manifest.manifest_id, 'WU16-portfolio', true,
-    v_correction_snapshot.snapshot_id, 'complete', 'complete', NULL, NULL,
-    NULL, v_lineage, '2026-08-28T23:46:00Z', 'local_research'
+    jsonb_build_array(
+      jsonb_build_object('snapshot_key','WU16-security','snapshot_id',v_correction_snapshot.snapshot_id::text,'completion_state','complete','evidence_state','complete','supersedes_entry_id',v_initial_entry.entry_id::text),
+      jsonb_build_object('snapshot_key','WU16-portfolio','snapshot_id',v_correction_snapshot.snapshot_id::text,'completion_state','complete','evidence_state','complete')
+    ), v_lineage
   );
+  SELECT * INTO v_successor_entry FROM research_cycle_manifest_entry
+  WHERE manifest_id = v_successor_manifest.manifest_id AND snapshot_key = 'WU16-security';
 
   v_results := jsonb_build_object(
     'snapshot_successor_linked', v_correction_snapshot.supersedes_snapshot_id = v_initial_snapshot.snapshot_id,
@@ -109,6 +90,7 @@ BEGIN
     'snapshot_update_blocked', false,
     'snapshot_revision_update_blocked', false,
     'manifest_update_blocked', false,
+    'manifest_insert_workflow_blocked', true,
     'manifest_entry_truncate_blocked', false
   );
 

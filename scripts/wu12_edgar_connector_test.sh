@@ -107,7 +107,7 @@ probe_result=$("${PSQL[@]}" \
   || fail "EDGAR connector probe failed: $probe_result"
 
 for key in \
-  filing_ingested xbrl_actual_ingested filing_receipt_time_preserved \
+  filing_ingested xbrl_actual_ingested same_concept_multi_fact_supported filing_receipt_time_preserved connector_contract_bound \
   actual_receipt_time_preserved certified_mapping_linked actual_identity_linked \
   entitlement_gate_allowed entitlement_use_recorded filing_raw_content_verbatim \
   xbrl_raw_content_verbatim content_marked_untrusted filing_source_lineage_attached \
@@ -154,8 +154,10 @@ jq -n \
     ingestion: {
       filing_ingested: $probe.filing_ingested,
       xbrl_actual_ingested: $probe.xbrl_actual_ingested,
+      same_concept_multi_fact_supported: $probe.same_concept_multi_fact_supported,
       filing_receipt_time_preserved: $probe.filing_receipt_time_preserved,
       actual_receipt_time_preserved: $probe.actual_receipt_time_preserved,
+      connector_contract_bound: $probe.connector_contract_bound,
       certified_mapping_linked: $probe.certified_mapping_linked,
       actual_identity_linked: $probe.actual_identity_linked,
       entitlement_gate_allowed: $probe.entitlement_gate_allowed,
@@ -186,8 +188,10 @@ jq -n \
 jq -e '
   .ingestion.filing_ingested == true
   and .ingestion.xbrl_actual_ingested == true
+  and .ingestion.same_concept_multi_fact_supported == true
   and .ingestion.filing_receipt_time_preserved == true
   and .ingestion.actual_receipt_time_preserved == true
+  and .ingestion.connector_contract_bound == true
   and .ingestion.certified_mapping_linked == true
   and .ingestion.actual_identity_linked == true
   and .ingestion.entitlement_gate_allowed == true

@@ -1,10 +1,12 @@
 {
-  "captured_at": "2026-08-29T23:32:56Z",
+  "captured_at": "2026-08-30T01:05:31Z",
   "ingestion": {
     "filing_ingested": true,
     "xbrl_actual_ingested": true,
+    "same_concept_multi_fact_supported": true,
     "filing_receipt_time_preserved": true,
     "actual_receipt_time_preserved": true,
+    "connector_contract_bound": true,
     "certified_mapping_linked": true,
     "actual_identity_linked": true,
     "entitlement_gate_allowed": true,

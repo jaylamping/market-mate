@@ -145,7 +145,13 @@ CREATE TABLE research_evidence_profile_route (
     record_environment record_environment NOT NULL,
     CHECK (source_lineage_is_valid(source_lineage)),
     CHECK (valid_to IS NULL OR valid_to > valid_from),
-    UNIQUE (coverage_stage, coverage_capability, decision_purpose, valid_from)
+    UNIQUE (coverage_stage, coverage_capability, decision_purpose, valid_from),
+    CONSTRAINT research_evidence_profile_route_no_overlap EXCLUDE USING gist (
+        coverage_stage WITH =,
+        coverage_capability WITH =,
+        decision_purpose WITH =,
+        tstzrange(valid_from, valid_to, '[)') WITH &&
+    )
 );
 
 SELECT register_evidence_table('research_evidence_profile_route');
@@ -369,6 +375,7 @@ DECLARE
     route_row research_evidence_profile_route%ROWTYPE;
     profile_row research_evidence_profile_version%ROWTYPE;
     created research_evidence_profile_resolution%ROWTYPE;
+    route_match_count integer;
     obligation_count_value integer;
     obligations_value jsonb;
     resolution_time timestamptz := clock_timestamp();
@@ -383,6 +390,26 @@ BEGIN
         RAISE EXCEPTION 'evidence profile resolution source_lineage is invalid' USING ERRCODE = '22023';
     END IF;
 
+    SELECT count(*)::integer
+    INTO route_match_count
+    FROM research_evidence_profile_route r
+    WHERE r.coverage_stage = coverage_stage_value
+      AND r.coverage_capability = coverage_capability_value
+      AND r.decision_purpose = decision_purpose_value
+      AND r.valid_from <= as_of_value
+      AND (r.valid_to IS NULL OR as_of_value < r.valid_to);
+    IF route_match_count = 0 THEN
+        RAISE EXCEPTION
+            'no typed research evidence profile route exists for %, %, %',
+            coverage_stage_value, coverage_capability_value, decision_purpose_value
+            USING ERRCODE = '55000';
+    ELSIF route_match_count > 1 THEN
+        RAISE EXCEPTION
+            'multiple typed research evidence profile routes exist for %, %, % at %',
+            coverage_stage_value, coverage_capability_value, decision_purpose_value, as_of_value
+            USING ERRCODE = '55000';
+    END IF;
+
     SELECT r.*
     INTO route_row
     FROM research_evidence_profile_route r
@@ -393,12 +420,6 @@ BEGIN
       AND (r.valid_to IS NULL OR as_of_value < r.valid_to)
     ORDER BY r.valid_from DESC
     LIMIT 1;
-    IF NOT FOUND THEN
-        RAISE EXCEPTION
-            'no typed research evidence profile route exists for %, %, %',
-            coverage_stage_value, coverage_capability_value, decision_purpose_value
-            USING ERRCODE = '55000';
-    END IF;
 
     SELECT p.*
     INTO profile_row

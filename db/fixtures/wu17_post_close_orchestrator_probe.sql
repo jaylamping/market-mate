@@ -6,6 +6,7 @@ CREATE TEMP TABLE wu17_probe_result (result jsonb NOT NULL);
 DO $probe$
 DECLARE
   v_lineage jsonb := '{"source":"wu17-probe","entitlement_version":"post-close-v1"}';
+  v_now timestamptz := clock_timestamp();
   v_day_one_security research_snapshot%ROWTYPE;
   v_day_one_actions research_snapshot%ROWTYPE;
   v_day_two_security research_snapshot%ROWTYPE;
@@ -48,7 +49,7 @@ BEGIN
     )
   );
   SELECT * INTO v_day_one FROM publish_post_close_cycle(
-    '2026-08-27', '2026-08-27T20:00:00Z', '2026-08-27T21:15:00Z',
+    '2026-08-27', v_now - interval '30 minutes', v_now + interval '5 minutes',
     v_day_one_expected, v_lineage
   );
 
@@ -69,7 +70,7 @@ BEGIN
     )
   );
   SELECT * INTO v_day_two FROM publish_post_close_cycle(
-    '2026-08-28', '2026-08-28T20:00:00Z', '2026-08-28T22:00:00Z',
+    '2026-08-28', v_now - interval '3 hours', v_now + interval '10 minutes',
     v_day_two_expected, v_lineage
   );
 
@@ -122,7 +123,7 @@ BEGIN
 
   BEGIN
     PERFORM publish_post_close_cycle(
-      '2026-08-27', '2026-08-27T20:00:00Z', '2026-08-27T21:15:00Z',
+      '2026-08-27', v_now - interval '30 minutes', v_now + interval '5 minutes',
       v_day_one_expected, v_lineage
     );
     RAISE EXCEPTION 'probe duplicate publish unexpectedly succeeded';

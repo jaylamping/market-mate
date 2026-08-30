@@ -26,7 +26,7 @@ CREATE TABLE research_evidence_delta (
             'hex'
         )
     ),
-    UNIQUE (snapshot_id, prior_snapshot_id)
+    UNIQUE (snapshot_id, prior_snapshot_id, as_of_at)
 );
 
 SELECT register_evidence_table('research_evidence_delta');
@@ -214,8 +214,8 @@ BEGIN
     INTO corrections_value
     FROM jsonb_each(current_facts) current_item
     WHERE prior_facts ? current_item.key
-      AND (current_item.value - 'observation_state' - 'expires_at') IS DISTINCT FROM
-          ((prior_facts->current_item.key) - 'observation_state' - 'expires_at');
+      AND (current_item.value - 'observation_state') IS DISTINCT FROM
+          ((prior_facts->current_item.key) - 'observation_state');
 
     SELECT coalesce(jsonb_agg(
         jsonb_build_object(

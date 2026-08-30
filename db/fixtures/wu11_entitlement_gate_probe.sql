@@ -12,8 +12,10 @@ DECLARE
   v_expired_entitlement_id uuid := '20000000-0000-0000-0000-000000000202';
   v_entitlement_v1 uuid := '20000000-0000-0000-0000-000000000301';
   v_entitlement_v2 uuid := '20000000-0000-0000-0000-000000000302';
+  v_entitlement_v3 uuid := '20000000-0000-0000-0000-000000000304';
   v_expired_entitlement_v1 uuid := '20000000-0000-0000-0000-000000000303';
   v_uncertified_decision entitlement_gate_decision%ROWTYPE;
+  v_retry_decision entitlement_gate_decision%ROWTYPE;
   v_certified_decision entitlement_gate_decision%ROWTYPE;
   v_expired_decision entitlement_gate_decision%ROWTYPE;
   v_expired_allowed_decision entitlement_gate_decision%ROWTYPE;
@@ -98,9 +100,25 @@ BEGIN
     v_lineage, v_expired_effective, 'local_research'
   );
 
+  INSERT INTO data_entitlement_version (
+    entitlement_version_id, entitlement_id, entitlement_version,
+    source_registry_version_id, certification_state, authorized_purposes,
+    effective_from, expires_at, certification_basis,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_entitlement_v3, v_entitlement_id, 3, v_source_v2, 'certified',
+    ARRAY['local_research','paper_validation'], '2090-01-01T00:00:00Z', NULL,
+    '{"authority":"principal-approved-paper-plan","certificate":"wu11-local-cert-2090.3"}',
+    v_lineage, '2026-01-01T00:00:00Z', 'local_research'
+  );
+
   SELECT * INTO v_uncertified_decision FROM evaluate_entitlement_gate(
     'wu11-uncertified-request', v_entitlement_v1, 'local_research',
     '2026-03-01T00:00:00Z', v_lineage
+  );
+  SELECT * INTO v_retry_decision FROM evaluate_entitlement_gate(
+    'wu11-uncertified-request', v_entitlement_v2, 'local_research',
+    clock_timestamp(), v_lineage
   );
   SELECT * INTO v_certified_decision FROM evaluate_entitlement_gate(
     'wu11-certified-request', v_entitlement_v2, 'local_research',
@@ -132,6 +150,9 @@ BEGIN
       WHERE request_key = 'wu11-uncertified-request'
         AND decision = 'denied'
     ),
+    'denied_request_retry_allowed', v_retry_decision.decision = 'allowed'
+      AND v_retry_decision.request_key = v_uncertified_decision.request_key
+      AND v_retry_decision.decision_attempt = 2,
     'certified_use_allowed', v_certified_decision.decision = 'allowed'
       AND v_certified_decision.denial_reason IS NULL,
     'expired_use_denied', v_expired_decision.decision = 'denied'
@@ -142,6 +163,11 @@ BEGIN
       WHERE decision_id = v_certified_decision.decision_id
     ),
     'expired_allowed_use_denied', false,
+    'entitlement_successor_closes_open_range', (
+      SELECT expires_at = '2090-01-01T00:00:00Z'::timestamptz
+      FROM data_entitlement_version
+      WHERE entitlement_version_id = v_entitlement_v2
+    ),
     'provenance_source_attached', v_use_receipt.source_registry_version_id = v_source_v2
       AND v_use_receipt.provenance ? 'source_registry_version',
     'provenance_entitlement_attached', v_use_receipt.entitlement_version_id = v_entitlement_v2

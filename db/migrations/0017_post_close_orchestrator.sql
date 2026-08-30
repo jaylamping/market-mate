@@ -258,7 +258,7 @@ BEGIN
         stale_to_value := published_at_value;
     END IF;
 
-    IF completed_count = expected_count AND NOT late THEN
+    IF completed_count = expected_count THEN
         cycle_state := 'complete';
         manifest_evidence_state := 'complete';
     ELSIF completed_count > 0 THEN
@@ -269,6 +269,7 @@ BEGIN
         manifest_evidence_state := 'failed';
     END IF;
 
+    PERFORM set_config('market_mate.research_cycle_manifest_write', 'on', true);
     INSERT INTO research_cycle_manifest (
         cycle_key, cycle_kind, cycle_as_of, expected_snapshot_count,
         completed_snapshot_count, completion_state, evidence_state,
@@ -299,6 +300,7 @@ BEGIN
             NULL, source_lineage_value, cycle_receipt_time, 'local_research'
         );
     END LOOP;
+    PERFORM set_config('market_mate.research_cycle_manifest_write', 'off', true);
 
     PERFORM set_config('market_mate.post_close_cycle_write', 'on', true);
     BEGIN

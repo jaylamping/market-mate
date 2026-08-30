@@ -74,9 +74,10 @@ probe_result=$("${PSQL[@]}" -c "BEGIN;" -f /tmp/wu19-probe.sql \
   || fail "WU-19 Evidence Delta probe failed: $probe_result"
 
 for key in \
-  delta_covers_additions delta_covers_removals delta_covers_corrections delta_covers_expiry \
+  delta_covers_additions delta_covers_removals delta_covers_corrections delta_covers_expiry delta_covers_expiry_schedule_correction \
   delta_covers_observation_state_changes delta_covers_indicator_changes \
   delta_covers_newly_blocked_dependency delta_covers_restored_dependency delta_digest_bound \
+  distinct_as_of_recomputations_supported expiry_is_as_of_sensitive future_as_of_rejected \
   generated_prose_non_authoritative prose_digest_bound delta_update_blocked prose_update_blocked; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
     || fail "probe assertion $key failed: $probe_result"
@@ -104,7 +105,7 @@ jq -n \
   --argjson audit_position_dependency "$chain_dependency" \
   '{
     captured_at: $captured_at,
-    delta_categories: {additions: $probe.delta_covers_additions, removals: $probe.delta_covers_removals, corrections: $probe.delta_covers_corrections, expiry: $probe.delta_covers_expiry, observation_state_changes: $probe.delta_covers_observation_state_changes, indicator_changes: $probe.delta_covers_indicator_changes},
+    delta_categories: {additions: $probe.delta_covers_additions, removals: $probe.delta_covers_removals, corrections: $probe.delta_covers_corrections, expiry: $probe.delta_covers_expiry, expiry_schedule_correction: $probe.delta_covers_expiry_schedule_correction, observation_state_changes: $probe.delta_covers_observation_state_changes, indicator_changes: $probe.delta_covers_indicator_changes, distinct_as_of_recomputations_supported: $probe.distinct_as_of_recomputations_supported, expiry_is_as_of_sensitive: $probe.expiry_is_as_of_sensitive, future_as_of_rejected: $probe.future_as_of_rejected},
     dependencies: {newly_blocked: $probe.delta_covers_newly_blocked_dependency, restored: $probe.delta_covers_restored_dependency},
     prose: {digest_bound: $probe.prose_digest_bound, non_authoritative: $probe.generated_prose_non_authoritative},
     append_only: {delta_update_blocked: $probe.delta_update_blocked, prose_update_blocked: $probe.prose_update_blocked},
@@ -115,9 +116,13 @@ jq -e '
   .delta_categories.additions == true
   and .delta_categories.removals == true
   and .delta_categories.corrections == true
+  and .delta_categories.expiry_schedule_correction == true
   and .delta_categories.expiry == true
   and .delta_categories.observation_state_changes == true
   and .delta_categories.indicator_changes == true
+  and .delta_categories.distinct_as_of_recomputations_supported == true
+  and .delta_categories.expiry_is_as_of_sensitive == true
+  and .delta_categories.future_as_of_rejected == true
   and .dependencies.newly_blocked == true
   and .dependencies.restored == true
   and .prose.digest_bound == true

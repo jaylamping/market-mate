@@ -1,9 +1,10 @@
 {
-  "captured_at": "2026-08-29T23:35:19Z",
+  "captured_at": "2026-08-30T01:07:54Z",
   "snapshots": {
     "dates_preserved": true,
     "historical_mode_only": true,
     "point_in_time_provenance_preserved": true,
+    "connector_contract_bound": true,
     "certified_mapping_attached": true,
     "source_lineage_attached": true
   },

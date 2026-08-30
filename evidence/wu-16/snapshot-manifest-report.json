@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T23:36:07Z",
+  "captured_at": "2026-08-30T01:08:42Z",
   "snapshots": {
     "successor_linked": true,
     "correction_recorded": true,
@@ -14,7 +14,8 @@
     "snapshot_update_blocked": true,
     "snapshot_revision_update_blocked": true,
     "manifest_update_blocked": true,
-    "manifest_entry_truncate_blocked": true
+    "manifest_entry_truncate_blocked": true,
+    "manifest_insert_workflow_blocked": true
   },
   "audit_chain": {
     "valid": true,

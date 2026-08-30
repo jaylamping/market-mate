@@ -76,7 +76,7 @@ probe_result=$("${PSQL[@]}" -c "BEGIN;" -f /tmp/wu14-probe.sql \
 for key in \
   estimate_ingested as_of_timestamp_attached announcement_timestamp_attached \
   missing_as_of_rejected actual_edgar_linked announcement_linked disagreement_surfaced \
-  reconciliation_provenance_attached mismatched_period_rejected entitlement_gate_allowed entitled_uses_recorded \
+  reconciliation_provenance_attached connector_contract_bound mismatched_period_rejected unit_currency_mismatch_rejected entitlement_gate_allowed entitled_uses_recorded \
   estimate_update_blocked reconciliation_update_blocked reconciliation_truncate_blocked; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
     || fail "probe assertion $key failed: $probe_result"
@@ -88,7 +88,7 @@ pass "estimate, EDGAR, and reconciliation provenance carries exact source and en
 pass "direct mutation probes isolate append-only estimate and reconciliation guards"
 
 estimate_payload=$(jq -c '{estimate: .estimate_ingested, as_of: .as_of_timestamp_attached, announcement: .announcement_timestamp_attached, missing_as_of_rejected: .missing_as_of_rejected}' <<<"$probe_result")
-reconciliation_payload=$(jq -c '{actual_edgar_linked: .actual_edgar_linked, announcement_linked: .announcement_linked, disagreement: .disagreement_surfaced, mismatched_period_rejected: .mismatched_period_rejected, provenance: .reconciliation_provenance_attached}' <<<"$probe_result")
+reconciliation_payload=$(jq -c '{actual_edgar_linked: .actual_edgar_linked, announcement_linked: .announcement_linked, disagreement: .disagreement_surfaced, mismatched_period_rejected: .mismatched_period_rejected, unit_currency_mismatch_rejected: .unit_currency_mismatch_rejected, provenance: .reconciliation_provenance_attached}' <<<"$probe_result")
 chain_estimate=$(append_audit_event "wu14-estimate-$(date +%s)" "earnings.estimate_ingested" "$(jq -nc --argjson evidence "$estimate_payload" '{probe: "wu14_earnings_estimates_probe", evidence: $evidence}')")
 chain_reconciliation=$(append_audit_event "wu14-reconciliation-$(date +%s)" "earnings.actual_reconciled" "$(jq -nc --argjson evidence "$reconciliation_payload" '{probe: "wu14_earnings_estimates_probe", evidence: $evidence}')")
 [[ "$chain_reconciliation" -gt "$chain_estimate" ]] || fail "audit chain positions did not advance: $chain_estimate -> $chain_reconciliation"
@@ -116,7 +116,9 @@ jq -n \
       announcement_linked: $probe.announcement_linked,
       disagreement_surfaced: $probe.disagreement_surfaced,
       mismatched_period_rejected: $probe.mismatched_period_rejected,
-      provenance_attached: $probe.reconciliation_provenance_attached
+      unit_currency_mismatch_rejected: $probe.unit_currency_mismatch_rejected,
+      provenance_attached: $probe.reconciliation_provenance_attached,
+      connector_contract_bound: $probe.connector_contract_bound
     },
     entitlement: {
       gate_allowed: $probe.entitlement_gate_allowed,
@@ -139,7 +141,9 @@ jq -e '
   and .reconciliation.announcement_linked == true
   and .reconciliation.disagreement_surfaced == true
   and .reconciliation.mismatched_period_rejected == true
+  and .reconciliation.unit_currency_mismatch_rejected == true
   and .reconciliation.provenance_attached == true
+  and .reconciliation.connector_contract_bound == true
   and .entitlement.gate_allowed == true
   and .entitlement.uses_recorded == true
   and .append_only.estimate_update_blocked == true

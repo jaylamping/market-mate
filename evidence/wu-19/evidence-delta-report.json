@@ -1,12 +1,16 @@
 {
-  "captured_at": "2026-08-29T23:45:38Z",
+  "captured_at": "2026-08-30T01:11:09Z",
   "delta_categories": {
     "additions": true,
     "removals": true,
     "corrections": true,
     "expiry": true,
+    "expiry_schedule_correction": true,
     "observation_state_changes": true,
-    "indicator_changes": true
+    "indicator_changes": true,
+    "distinct_as_of_recomputations_supported": true,
+    "expiry_is_as_of_sensitive": true,
+    "future_as_of_rejected": true
   },
   "dependencies": {
     "newly_blocked": true,

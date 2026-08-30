@@ -73,19 +73,58 @@ BEGIN
       FROM jsonb_array_elements(v_universal.obligations) obligation
     ),
     'no_default_substitution_in_profiles', (
-      SELECT bool_and(NOT obligation ? 'default_substitute')
-      FROM jsonb_array_elements(
-        v_universal.obligations || v_options.obligations
-          || v_holding.obligations || v_portfolio.obligations
-      ) obligation
+      SELECT bool_and(default_substitute IS NULL)
+      FROM research_evidence_obligation
+      WHERE profile_version_id IN (
+        v_universal.profile_version_id, v_options.profile_version_id,
+        v_holding.profile_version_id, v_portfolio.profile_version_id
+      )
     ),
+    'overlapping_route_blocked', false,
     'unproved_not_applicable_blocked', false,
     'unverified_proof_blocked', false,
     'proof_expression_binding_blocked', false,
+    'verified_artifact_direct_insert_blocked', false,
     'proof_artifact_update_blocked', false,
     'resolution_update_blocked', false,
     'obligation_update_blocked', false
   );
+
+  BEGIN
+    INSERT INTO research_evidence_profile_route (
+      coverage_stage, coverage_capability, decision_purpose,
+      profile_version_id, valid_from, valid_to,
+      source_lineage, receipt_time, record_environment
+    ) VALUES (
+      'research_candidate', 'stock_eligible', 'research',
+      v_options.profile_version_id, '2026-06-01T00:00:00Z', NULL,
+      v_lineage, now(), 'local_research'
+    );
+    RAISE EXCEPTION 'probe accepted an overlapping typed evidence profile route';
+  EXCEPTION
+    WHEN exclusion_violation THEN
+      IF SQLERRM NOT LIKE '%research_evidence_profile_route_no_overlap%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('overlapping_route_blocked', true);
+  END;
+
+  BEGIN
+    INSERT INTO research_evidence_proof_artifact (
+      proof_artifact_id, artifact_ref, artifact_body, artifact_digest,
+      verification_state, verification_result, source_lineage,
+      receipt_time, record_environment
+    ) VALUES (
+      '18000000-0000-0000-0000-000000000003',
+      'probe:wu18:direct-verified',
+      '{"proof_expression":{"test":"direct"}}'::jsonb,
+      encode(digest('{"proof_expression":{"test":"direct"}}'::jsonb::text, 'sha256'), 'hex'),
+      'verified', '{"status":"verified"}'::jsonb, v_lineage, now(), 'local_research'
+    );
+    RAISE EXCEPTION 'probe accepted a directly inserted verified proof artifact';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%proof artifacts must be recorded%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('verified_artifact_direct_insert_blocked', true);
+  END;
 
   BEGIN
     INSERT INTO research_evidence_obligation (
@@ -105,18 +144,14 @@ BEGIN
   END;
 
   BEGIN
-    INSERT INTO research_evidence_contract_rule (
-      rule_key, description, proof_expression, proof_status,
-      proof_artifact_ref, proof_artifact_digest,
-      source_lineage, receipt_time, record_environment
-    ) VALUES (
+    PERFORM record_research_evidence_contract_rule(
       'WU18-mismatched-proof-rule', 'Probe-only rule with the wrong proof expression.',
       '{"test":"wu18_mismatched_proof_probe"}'::jsonb, 'proved',
       'migration:0018:wu18_stock_options_contract_v1',
       (SELECT artifact_digest
        FROM research_evidence_proof_artifact
        WHERE artifact_ref = 'migration:0018:wu18_stock_options_contract_v1'),
-      v_lineage, now(), 'local_research'
+      v_lineage
     );
     RAISE EXCEPTION 'probe accepted a rule with a mismatched proof artifact';
   EXCEPTION
@@ -126,26 +161,18 @@ BEGIN
   END;
 
   v_pending_artifact_digest := encode(digest(v_pending_artifact_body::text, 'sha256'), 'hex');
-  INSERT INTO research_evidence_proof_artifact (
-    proof_artifact_id, artifact_ref, artifact_body, artifact_digest,
-    verification_state, verification_result, source_lineage,
-    receipt_time, record_environment
-  ) VALUES (
-    '18000000-0000-0000-0000-000000000002',
-    'probe:wu18:pending-proof', v_pending_artifact_body, v_pending_artifact_digest,
-    'pending', '{"status":"pending"}'::jsonb, v_lineage, now(), 'local_research'
+  PERFORM record_research_evidence_proof_artifact(
+    'probe:wu18:pending-proof', v_pending_artifact_body,
+    'pending', '{"status":"pending"}'::jsonb, v_lineage
   );
 
-  INSERT INTO research_evidence_contract_rule (
-    rule_key, description, proof_expression, proof_status,
-    proof_artifact_ref, proof_artifact_digest,
-    source_lineage, receipt_time, record_environment
-  ) VALUES (
+  SELECT rule_id INTO v_pending_rule_id
+  FROM record_research_evidence_contract_rule(
     'WU18-pending-proof-rule', 'Probe-only rule with an unverified artifact.',
     '{"test":"wu18_pending_proof_probe"}'::jsonb, 'proved',
     'probe:wu18:pending-proof', v_pending_artifact_digest,
-    v_lineage, now(), 'local_research'
-  ) RETURNING rule_id INTO v_pending_rule_id;
+    v_lineage
+  );
 
   INSERT INTO research_evidence_obligation (
     profile_version_id, obligation_key, evidence_family, description,

@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T23:44:46Z",
+  "captured_at": "2026-08-30T01:10:20Z",
   "profiles": {
     "universal": true,
     "options": true,
@@ -11,9 +11,11 @@
     "not_applicable_has_proved_rule": true,
     "proof_artifact_bound": true,
     "no_default_substitution": true,
+    "overlapping_route_blocked": true,
     "unproved_not_applicable_blocked": true,
     "unverified_proof_blocked": true,
-    "proof_expression_binding_blocked": true
+    "proof_expression_binding_blocked": true,
+    "verified_artifact_direct_insert_blocked": true
   },
   "append_only": {
     "proof_artifact_update_blocked": true,

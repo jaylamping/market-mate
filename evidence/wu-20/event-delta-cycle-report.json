@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T23:46:31Z",
+  "captured_at": "2026-08-30T01:11:59Z",
   "triggers": {
     "earnings_date_reached": true,
     "eight_k_detected": true
@@ -12,6 +12,7 @@
   "provenance": {
     "event_source_refs_bound": true,
     "source_ref_mismatch_rejected": true,
+    "duplicate_source_ref_blocked": true,
     "malformed_timestamp_rejected": true
   },
   "append_only": {

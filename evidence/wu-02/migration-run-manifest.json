@@ -1,14 +1,31 @@
 {
-  "captured_at": "2026-08-29T12:56:14Z",
-  "expected_head": 4,
+  "captured_at": "2026-08-30T01:14:01Z",
+  "expected_head": 21,
   "expected_versions": [
     1,
     2,
     3,
-    4
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21
   ],
   "first_apply": {
-    "head_version": 4,
+    "head_version": 21,
     "applied": [
       {
         "version": 1,
@@ -29,13 +46,148 @@
         "version": 4,
         "name": "signed_checkpoint_receipts",
         "checksum": "d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80"
+      },
+      {
+        "version": 5,
+        "name": "tracer_contracts",
+        "checksum": "bf3691749b9218dee86b9142e99547154b2880830111cc16b7c99a9f49d52455"
+      },
+      {
+        "version": 6,
+        "name": "security_master",
+        "checksum": "c660231a5d607e61278dbfd4cfc47c77ba3a0107a07dc774b1411972771bb822"
+      },
+      {
+        "version": 7,
+        "name": "instrument_mapping",
+        "checksum": "4698f8d1fe90a213e9799322dca742b504b4844f02ddd8810b8ae7641c57e4ed"
+      },
+      {
+        "version": 8,
+        "name": "corporate_actions",
+        "checksum": "ea83954f442e8870f50550fbc180d927827d1c1d046da2af1c139cfad26c9a35"
+      },
+      {
+        "version": 9,
+        "name": "evidence_guard_hardening",
+        "checksum": "8db8ce3707901062c7b79bccdf91651c5d4e4007a9f5618db444f475c73fdccc"
+      },
+      {
+        "version": 10,
+        "name": "source_registry_and_data_contract",
+        "checksum": "1808294d1a98be0bcf20031d290c01e49edae748d9a94c3946dc9ec592f9ecd5"
+      },
+      {
+        "version": 11,
+        "name": "entitlement_certification_gate",
+        "checksum": "41fe3f882bf096f1630756ef44aa13181cb169cd8df748198c8a747a42f6594b"
+      },
+      {
+        "version": 12,
+        "name": "edgar_connector",
+        "checksum": "3c35915f3a3f9d552a097bffb809c90ac5cf43cf1a99e143b2173ed1bfb2d3e2"
+      },
+      {
+        "version": 13,
+        "name": "eod_corporate_actions_connector",
+        "checksum": "cf74796a895070dd8c56adb47c54525295e2017b476a10466b485096a10258b0"
+      },
+      {
+        "version": 14,
+        "name": "earnings_estimates_reconciliation",
+        "checksum": "c3440579a40717f31b551f7b096d31252cccfa36ae87c69f91f4011f22a240d2"
+      },
+      {
+        "version": 15,
+        "name": "historical_options_connector",
+        "checksum": "fcbec5ea359e1362d1f0ecc75d8485429206bc19f24a1f2a3644ca91a781a45a"
+      },
+      {
+        "version": 16,
+        "name": "snapshot_manifest",
+        "checksum": "445dfa433924c4c2d43872bedc96eefec9690da819c274d3460209cebcf3d75e"
+      },
+      {
+        "version": 17,
+        "name": "post_close_orchestrator",
+        "checksum": "49373bb135e488902547e22469080155776d09f3a5001019b0a5ca486a61b529"
+      },
+      {
+        "version": 18,
+        "name": "evidence_profiles",
+        "checksum": "5c6a1ddfb918f69a0de3fd3cf79152b54477b8c14a6bdda6c062ca8001e826ba"
+      },
+      {
+        "version": 19,
+        "name": "evidence_deltas",
+        "checksum": "b05f8e50845241d4b4cebfd78a0543e6df2a9831e44a239aa86acfb0205c5762"
+      },
+      {
+        "version": 20,
+        "name": "event_delta_cycles",
+        "checksum": "46d6732a52ac1a54f28d1884e5b1461a8150b583baaacaf6f398540984bd203a"
+      },
+      {
+        "version": 21,
+        "name": "final_interrogate_hardening",
+        "checksum": "cad7bcf68ebb0d404540acec22572e37f0d56bd5a27d7a838659ec9b01af50c5"
       }
     ],
-    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80",
-    "fingerprint": "8b0a906416494e49b6defe0cdd4fad4c",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80,5:tracer_contracts:bf3691749b9218dee86b9142e99547154b2880830111cc16b7c99a9f49d52455,6:security_master:c660231a5d607e61278dbfd4cfc47c77ba3a0107a07dc774b1411972771bb822,7:instrument_mapping:4698f8d1fe90a213e9799322dca742b504b4844f02ddd8810b8ae7641c57e4ed,8:corporate_actions:ea83954f442e8870f50550fbc180d927827d1c1d046da2af1c139cfad26c9a35,9:evidence_guard_hardening:8db8ce3707901062c7b79bccdf91651c5d4e4007a9f5618db444f475c73fdccc,10:source_registry_and_data_contract:1808294d1a98be0bcf20031d290c01e49edae748d9a94c3946dc9ec592f9ecd5,11:entitlement_certification_gate:41fe3f882bf096f1630756ef44aa13181cb169cd8df748198c8a747a42f6594b,12:edgar_connector:3c35915f3a3f9d552a097bffb809c90ac5cf43cf1a99e143b2173ed1bfb2d3e2,13:eod_corporate_actions_connector:cf74796a895070dd8c56adb47c54525295e2017b476a10466b485096a10258b0,14:earnings_estimates_reconciliation:c3440579a40717f31b551f7b096d31252cccfa36ae87c69f91f4011f22a240d2,15:historical_options_connector:fcbec5ea359e1362d1f0ecc75d8485429206bc19f24a1f2a3644ca91a781a45a,16:snapshot_manifest:445dfa433924c4c2d43872bedc96eefec9690da819c274d3460209cebcf3d75e,17:post_close_orchestrator:49373bb135e488902547e22469080155776d09f3a5001019b0a5ca486a61b529,18:evidence_profiles:5c6a1ddfb918f69a0de3fd3cf79152b54477b8c14a6bdda6c062ca8001e826ba,19:evidence_deltas:b05f8e50845241d4b4cebfd78a0543e6df2a9831e44a239aa86acfb0205c5762,20:event_delta_cycles:46d6732a52ac1a54f28d1884e5b1461a8150b583baaacaf6f398540984bd203a,21:final_interrogate_hardening:cad7bcf68ebb0d404540acec22572e37f0d56bd5a27d7a838659ec9b01af50c5",
+    "fingerprint": "cd8a558049c0393f6edea493f83623ad",
     "evidence_tables": [
       "audit_checkpoint",
-      "audit_event"
+      "audit_event",
+      "connector_field_binding",
+      "corporate_action_case",
+      "corporate_action_state_observation",
+      "corporate_action_terms_adjustment",
+      "corporate_action_terms_version",
+      "data_contract",
+      "data_contract_field",
+      "data_contract_version",
+      "data_entitlement",
+      "data_entitlement_version",
+      "earnings_actual_reconciliation",
+      "earnings_estimate_observation",
+      "edgar_filing",
+      "edgar_xbrl_actual",
+      "entitled_use_receipt",
+      "entitlement_gate_decision",
+      "eod_corporate_action_observation",
+      "eod_price_observation",
+      "eod_vendor_selection",
+      "evaluation_result",
+      "exchange_listing",
+      "experiment_preregistration",
+      "instrument_mapping",
+      "instrument_mapping_transition",
+      "issuer",
+      "issuer_symbol_alias",
+      "listing_symbol_alias",
+      "option_chain_contract",
+      "option_chain_snapshot",
+      "option_deliverable_version",
+      "research_cycle_manifest",
+      "research_cycle_manifest_entry",
+      "research_event_delta_cycle",
+      "research_evidence_contract_rule",
+      "research_evidence_delta",
+      "research_evidence_delta_prose",
+      "research_evidence_obligation",
+      "research_evidence_profile_resolution",
+      "research_evidence_profile_route",
+      "research_evidence_profile_version",
+      "research_evidence_proof_artifact",
+      "research_post_close_cycle",
+      "research_post_close_cycle_dependency",
+      "research_snapshot",
+      "research_snapshot_revision",
+      "security",
+      "security_symbol_alias",
+      "source_connector",
+      "source_registry",
+      "source_registry_version"
     ]
   },
   "second_apply": {
@@ -44,13 +196,30 @@
       1,
       2,
       3,
-      4
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
     ],
-    "head_version": 4,
+    "head_version": 21,
     "noop": true
   },
   "second_state": {
-    "head_version": 4,
+    "head_version": 21,
     "applied": [
       {
         "version": 1,
@@ -71,13 +240,148 @@
         "version": 4,
         "name": "signed_checkpoint_receipts",
         "checksum": "d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80"
+      },
+      {
+        "version": 5,
+        "name": "tracer_contracts",
+        "checksum": "bf3691749b9218dee86b9142e99547154b2880830111cc16b7c99a9f49d52455"
+      },
+      {
+        "version": 6,
+        "name": "security_master",
+        "checksum": "c660231a5d607e61278dbfd4cfc47c77ba3a0107a07dc774b1411972771bb822"
+      },
+      {
+        "version": 7,
+        "name": "instrument_mapping",
+        "checksum": "4698f8d1fe90a213e9799322dca742b504b4844f02ddd8810b8ae7641c57e4ed"
+      },
+      {
+        "version": 8,
+        "name": "corporate_actions",
+        "checksum": "ea83954f442e8870f50550fbc180d927827d1c1d046da2af1c139cfad26c9a35"
+      },
+      {
+        "version": 9,
+        "name": "evidence_guard_hardening",
+        "checksum": "8db8ce3707901062c7b79bccdf91651c5d4e4007a9f5618db444f475c73fdccc"
+      },
+      {
+        "version": 10,
+        "name": "source_registry_and_data_contract",
+        "checksum": "1808294d1a98be0bcf20031d290c01e49edae748d9a94c3946dc9ec592f9ecd5"
+      },
+      {
+        "version": 11,
+        "name": "entitlement_certification_gate",
+        "checksum": "41fe3f882bf096f1630756ef44aa13181cb169cd8df748198c8a747a42f6594b"
+      },
+      {
+        "version": 12,
+        "name": "edgar_connector",
+        "checksum": "3c35915f3a3f9d552a097bffb809c90ac5cf43cf1a99e143b2173ed1bfb2d3e2"
+      },
+      {
+        "version": 13,
+        "name": "eod_corporate_actions_connector",
+        "checksum": "cf74796a895070dd8c56adb47c54525295e2017b476a10466b485096a10258b0"
+      },
+      {
+        "version": 14,
+        "name": "earnings_estimates_reconciliation",
+        "checksum": "c3440579a40717f31b551f7b096d31252cccfa36ae87c69f91f4011f22a240d2"
+      },
+      {
+        "version": 15,
+        "name": "historical_options_connector",
+        "checksum": "fcbec5ea359e1362d1f0ecc75d8485429206bc19f24a1f2a3644ca91a781a45a"
+      },
+      {
+        "version": 16,
+        "name": "snapshot_manifest",
+        "checksum": "445dfa433924c4c2d43872bedc96eefec9690da819c274d3460209cebcf3d75e"
+      },
+      {
+        "version": 17,
+        "name": "post_close_orchestrator",
+        "checksum": "49373bb135e488902547e22469080155776d09f3a5001019b0a5ca486a61b529"
+      },
+      {
+        "version": 18,
+        "name": "evidence_profiles",
+        "checksum": "5c6a1ddfb918f69a0de3fd3cf79152b54477b8c14a6bdda6c062ca8001e826ba"
+      },
+      {
+        "version": 19,
+        "name": "evidence_deltas",
+        "checksum": "b05f8e50845241d4b4cebfd78a0543e6df2a9831e44a239aa86acfb0205c5762"
+      },
+      {
+        "version": 20,
+        "name": "event_delta_cycles",
+        "checksum": "46d6732a52ac1a54f28d1884e5b1461a8150b583baaacaf6f398540984bd203a"
+      },
+      {
+        "version": 21,
+        "name": "final_interrogate_hardening",
+        "checksum": "cad7bcf68ebb0d404540acec22572e37f0d56bd5a27d7a838659ec9b01af50c5"
       }
     ],
-    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80",
-    "fingerprint": "8b0a906416494e49b6defe0cdd4fad4c",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80,5:tracer_contracts:bf3691749b9218dee86b9142e99547154b2880830111cc16b7c99a9f49d52455,6:security_master:c660231a5d607e61278dbfd4cfc47c77ba3a0107a07dc774b1411972771bb822,7:instrument_mapping:4698f8d1fe90a213e9799322dca742b504b4844f02ddd8810b8ae7641c57e4ed,8:corporate_actions:ea83954f442e8870f50550fbc180d927827d1c1d046da2af1c139cfad26c9a35,9:evidence_guard_hardening:8db8ce3707901062c7b79bccdf91651c5d4e4007a9f5618db444f475c73fdccc,10:source_registry_and_data_contract:1808294d1a98be0bcf20031d290c01e49edae748d9a94c3946dc9ec592f9ecd5,11:entitlement_certification_gate:41fe3f882bf096f1630756ef44aa13181cb169cd8df748198c8a747a42f6594b,12:edgar_connector:3c35915f3a3f9d552a097bffb809c90ac5cf43cf1a99e143b2173ed1bfb2d3e2,13:eod_corporate_actions_connector:cf74796a895070dd8c56adb47c54525295e2017b476a10466b485096a10258b0,14:earnings_estimates_reconciliation:c3440579a40717f31b551f7b096d31252cccfa36ae87c69f91f4011f22a240d2,15:historical_options_connector:fcbec5ea359e1362d1f0ecc75d8485429206bc19f24a1f2a3644ca91a781a45a,16:snapshot_manifest:445dfa433924c4c2d43872bedc96eefec9690da819c274d3460209cebcf3d75e,17:post_close_orchestrator:49373bb135e488902547e22469080155776d09f3a5001019b0a5ca486a61b529,18:evidence_profiles:5c6a1ddfb918f69a0de3fd3cf79152b54477b8c14a6bdda6c062ca8001e826ba,19:evidence_deltas:b05f8e50845241d4b4cebfd78a0543e6df2a9831e44a239aa86acfb0205c5762,20:event_delta_cycles:46d6732a52ac1a54f28d1884e5b1461a8150b583baaacaf6f398540984bd203a,21:final_interrogate_hardening:cad7bcf68ebb0d404540acec22572e37f0d56bd5a27d7a838659ec9b01af50c5",
+    "fingerprint": "cd8a558049c0393f6edea493f83623ad",
     "evidence_tables": [
       "audit_checkpoint",
-      "audit_event"
+      "audit_event",
+      "connector_field_binding",
+      "corporate_action_case",
+      "corporate_action_state_observation",
+      "corporate_action_terms_adjustment",
+      "corporate_action_terms_version",
+      "data_contract",
+      "data_contract_field",
+      "data_contract_version",
+      "data_entitlement",
+      "data_entitlement_version",
+      "earnings_actual_reconciliation",
+      "earnings_estimate_observation",
+      "edgar_filing",
+      "edgar_xbrl_actual",
+      "entitled_use_receipt",
+      "entitlement_gate_decision",
+      "eod_corporate_action_observation",
+      "eod_price_observation",
+      "eod_vendor_selection",
+      "evaluation_result",
+      "exchange_listing",
+      "experiment_preregistration",
+      "instrument_mapping",
+      "instrument_mapping_transition",
+      "issuer",
+      "issuer_symbol_alias",
+      "listing_symbol_alias",
+      "option_chain_contract",
+      "option_chain_snapshot",
+      "option_deliverable_version",
+      "research_cycle_manifest",
+      "research_cycle_manifest_entry",
+      "research_event_delta_cycle",
+      "research_evidence_contract_rule",
+      "research_evidence_delta",
+      "research_evidence_delta_prose",
+      "research_evidence_obligation",
+      "research_evidence_profile_resolution",
+      "research_evidence_profile_route",
+      "research_evidence_profile_version",
+      "research_evidence_proof_artifact",
+      "research_post_close_cycle",
+      "research_post_close_cycle_dependency",
+      "research_snapshot",
+      "research_snapshot_revision",
+      "security",
+      "security_symbol_alias",
+      "source_connector",
+      "source_registry",
+      "source_registry_version"
     ]
   },
   "fresh_apply": {
@@ -85,14 +389,31 @@
       1,
       2,
       3,
-      4
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
     ],
     "already_applied_versions": [],
-    "head_version": 4,
+    "head_version": 21,
     "noop": false
   },
   "fresh_state": {
-    "head_version": 4,
+    "head_version": 21,
     "applied": [
       {
         "version": 1,
@@ -113,13 +434,148 @@
         "version": 4,
         "name": "signed_checkpoint_receipts",
         "checksum": "d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80"
+      },
+      {
+        "version": 5,
+        "name": "tracer_contracts",
+        "checksum": "bf3691749b9218dee86b9142e99547154b2880830111cc16b7c99a9f49d52455"
+      },
+      {
+        "version": 6,
+        "name": "security_master",
+        "checksum": "c660231a5d607e61278dbfd4cfc47c77ba3a0107a07dc774b1411972771bb822"
+      },
+      {
+        "version": 7,
+        "name": "instrument_mapping",
+        "checksum": "4698f8d1fe90a213e9799322dca742b504b4844f02ddd8810b8ae7641c57e4ed"
+      },
+      {
+        "version": 8,
+        "name": "corporate_actions",
+        "checksum": "ea83954f442e8870f50550fbc180d927827d1c1d046da2af1c139cfad26c9a35"
+      },
+      {
+        "version": 9,
+        "name": "evidence_guard_hardening",
+        "checksum": "8db8ce3707901062c7b79bccdf91651c5d4e4007a9f5618db444f475c73fdccc"
+      },
+      {
+        "version": 10,
+        "name": "source_registry_and_data_contract",
+        "checksum": "1808294d1a98be0bcf20031d290c01e49edae748d9a94c3946dc9ec592f9ecd5"
+      },
+      {
+        "version": 11,
+        "name": "entitlement_certification_gate",
+        "checksum": "41fe3f882bf096f1630756ef44aa13181cb169cd8df748198c8a747a42f6594b"
+      },
+      {
+        "version": 12,
+        "name": "edgar_connector",
+        "checksum": "3c35915f3a3f9d552a097bffb809c90ac5cf43cf1a99e143b2173ed1bfb2d3e2"
+      },
+      {
+        "version": 13,
+        "name": "eod_corporate_actions_connector",
+        "checksum": "cf74796a895070dd8c56adb47c54525295e2017b476a10466b485096a10258b0"
+      },
+      {
+        "version": 14,
+        "name": "earnings_estimates_reconciliation",
+        "checksum": "c3440579a40717f31b551f7b096d31252cccfa36ae87c69f91f4011f22a240d2"
+      },
+      {
+        "version": 15,
+        "name": "historical_options_connector",
+        "checksum": "fcbec5ea359e1362d1f0ecc75d8485429206bc19f24a1f2a3644ca91a781a45a"
+      },
+      {
+        "version": 16,
+        "name": "snapshot_manifest",
+        "checksum": "445dfa433924c4c2d43872bedc96eefec9690da819c274d3460209cebcf3d75e"
+      },
+      {
+        "version": 17,
+        "name": "post_close_orchestrator",
+        "checksum": "49373bb135e488902547e22469080155776d09f3a5001019b0a5ca486a61b529"
+      },
+      {
+        "version": 18,
+        "name": "evidence_profiles",
+        "checksum": "5c6a1ddfb918f69a0de3fd3cf79152b54477b8c14a6bdda6c062ca8001e826ba"
+      },
+      {
+        "version": 19,
+        "name": "evidence_deltas",
+        "checksum": "b05f8e50845241d4b4cebfd78a0543e6df2a9831e44a239aa86acfb0205c5762"
+      },
+      {
+        "version": 20,
+        "name": "event_delta_cycles",
+        "checksum": "46d6732a52ac1a54f28d1884e5b1461a8150b583baaacaf6f398540984bd203a"
+      },
+      {
+        "version": 21,
+        "name": "final_interrogate_hardening",
+        "checksum": "cad7bcf68ebb0d404540acec22572e37f0d56bd5a27d7a838659ec9b01af50c5"
       }
     ],
-    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80",
-    "fingerprint": "8b0a906416494e49b6defe0cdd4fad4c",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80,5:tracer_contracts:bf3691749b9218dee86b9142e99547154b2880830111cc16b7c99a9f49d52455,6:security_master:c660231a5d607e61278dbfd4cfc47c77ba3a0107a07dc774b1411972771bb822,7:instrument_mapping:4698f8d1fe90a213e9799322dca742b504b4844f02ddd8810b8ae7641c57e4ed,8:corporate_actions:ea83954f442e8870f50550fbc180d927827d1c1d046da2af1c139cfad26c9a35,9:evidence_guard_hardening:8db8ce3707901062c7b79bccdf91651c5d4e4007a9f5618db444f475c73fdccc,10:source_registry_and_data_contract:1808294d1a98be0bcf20031d290c01e49edae748d9a94c3946dc9ec592f9ecd5,11:entitlement_certification_gate:41fe3f882bf096f1630756ef44aa13181cb169cd8df748198c8a747a42f6594b,12:edgar_connector:3c35915f3a3f9d552a097bffb809c90ac5cf43cf1a99e143b2173ed1bfb2d3e2,13:eod_corporate_actions_connector:cf74796a895070dd8c56adb47c54525295e2017b476a10466b485096a10258b0,14:earnings_estimates_reconciliation:c3440579a40717f31b551f7b096d31252cccfa36ae87c69f91f4011f22a240d2,15:historical_options_connector:fcbec5ea359e1362d1f0ecc75d8485429206bc19f24a1f2a3644ca91a781a45a,16:snapshot_manifest:445dfa433924c4c2d43872bedc96eefec9690da819c274d3460209cebcf3d75e,17:post_close_orchestrator:49373bb135e488902547e22469080155776d09f3a5001019b0a5ca486a61b529,18:evidence_profiles:5c6a1ddfb918f69a0de3fd3cf79152b54477b8c14a6bdda6c062ca8001e826ba,19:evidence_deltas:b05f8e50845241d4b4cebfd78a0543e6df2a9831e44a239aa86acfb0205c5762,20:event_delta_cycles:46d6732a52ac1a54f28d1884e5b1461a8150b583baaacaf6f398540984bd203a,21:final_interrogate_hardening:cad7bcf68ebb0d404540acec22572e37f0d56bd5a27d7a838659ec9b01af50c5",
+    "fingerprint": "cd8a558049c0393f6edea493f83623ad",
     "evidence_tables": [
       "audit_checkpoint",
-      "audit_event"
+      "audit_event",
+      "connector_field_binding",
+      "corporate_action_case",
+      "corporate_action_state_observation",
+      "corporate_action_terms_adjustment",
+      "corporate_action_terms_version",
+      "data_contract",
+      "data_contract_field",
+      "data_contract_version",
+      "data_entitlement",
+      "data_entitlement_version",
+      "earnings_actual_reconciliation",
+      "earnings_estimate_observation",
+      "edgar_filing",
+      "edgar_xbrl_actual",
+      "entitled_use_receipt",
+      "entitlement_gate_decision",
+      "eod_corporate_action_observation",
+      "eod_price_observation",
+      "eod_vendor_selection",
+      "evaluation_result",
+      "exchange_listing",
+      "experiment_preregistration",
+      "instrument_mapping",
+      "instrument_mapping_transition",
+      "issuer",
+      "issuer_symbol_alias",
+      "listing_symbol_alias",
+      "option_chain_contract",
+      "option_chain_snapshot",
+      "option_deliverable_version",
+      "research_cycle_manifest",
+      "research_cycle_manifest_entry",
+      "research_event_delta_cycle",
+      "research_evidence_contract_rule",
+      "research_evidence_delta",
+      "research_evidence_delta_prose",
+      "research_evidence_obligation",
+      "research_evidence_profile_resolution",
+      "research_evidence_profile_route",
+      "research_evidence_profile_version",
+      "research_evidence_proof_artifact",
+      "research_post_close_cycle",
+      "research_post_close_cycle_dependency",
+      "research_snapshot",
+      "research_snapshot_revision",
+      "security",
+      "security_symbol_alias",
+      "source_connector",
+      "source_registry",
+      "source_registry_version"
     ]
   },
   "conventions": {
@@ -132,17 +588,17 @@
   "out_of_order": {
     "exit_status": 1,
     "failed_closed": true,
-    "output": "migration sequence failed closed: versions must be contiguous from 1; expected 2, found 3"
+    "output": "{\"allowed_config\":[\"CUSTODY_URL\"],\"event\":\"config.startup_scan_passed\",\"level\":\"info\",\"local_database_config\":[\"DATABASE_URL\"],\"profile\":\"local_research\",\"result\":\"pass\",\"scanned_at\":\"2026-08-30T01:13:57.399820Z\",\"service\":\"backend\",\"surface\":\"environment\",\"system_variables\":[\"HOME\",\"HOSTNAME\",\"PATH\"],\"ts\":\"2026-08-30T01:13:57.399926Z\",\"unrecognized_variables\":[],\"variables_scanned\":5,\"violations\":[]}\n{\"detail\":\"migration sequence failed closed: versions must be contiguous from 1; expected 2, found 3\",\"event\":\"migrate.migrations_unloadable\",\"level\":\"error\",\"service\":\"backend\",\"ts\":\"2026-08-30T01:13:57.403915Z\"}"
   },
   "checksum_mismatch": {
     "exit_status": 1,
     "failed_closed": true,
-    "output": "migration sequence failed closed: checksum mismatch for version 1 (applied b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007, file 93a588997a7112abcc60c74584eab8326d9f5fa1bae5cf94b92f8b50718dba5e)"
+    "output": "{\"allowed_config\":[\"CUSTODY_URL\"],\"event\":\"config.startup_scan_passed\",\"level\":\"info\",\"local_database_config\":[\"DATABASE_URL\"],\"profile\":\"local_research\",\"result\":\"pass\",\"scanned_at\":\"2026-08-30T01:13:58.322406Z\",\"service\":\"backend\",\"surface\":\"environment\",\"system_variables\":[\"HOME\",\"HOSTNAME\",\"PATH\"],\"ts\":\"2026-08-30T01:13:58.322468Z\",\"unrecognized_variables\":[],\"variables_scanned\":5,\"violations\":[]}\n{\"detail\":\"migration sequence failed closed: checksum mismatch for version 1 (applied [REDACTED:secret-shaped], file [REDACTED:secret-shaped])\",\"event\":\"migrate.apply_failed\",\"level\":\"error\",\"service\":\"backend\",\"ts\":\"2026-08-30T01:13:58.339310Z\"}"
   },
   "unregistered": {
     "exit_status": 1,
-    "rolled_back_to": 4,
-    "output": "migration SQL failed closed: public base tables are not registered in schema_object: {sneak}"
+    "rolled_back_to": 21,
+    "output": "{\"allowed_config\":[\"CUSTODY_URL\"],\"event\":\"config.startup_scan_passed\",\"level\":\"info\",\"local_database_config\":[\"DATABASE_URL\"],\"profile\":\"local_research\",\"result\":\"pass\",\"scanned_at\":\"2026-08-30T01:13:59.660954Z\",\"service\":\"backend\",\"surface\":\"environment\",\"system_variables\":[\"HOME\",\"HOSTNAME\",\"PATH\"],\"ts\":\"2026-08-30T01:13:59.661039Z\",\"unrecognized_variables\":[],\"variables_scanned\":5,\"violations\":[]}\n{\"detail\":\"migration SQL failed closed: public base tables are not registered in schema_object: {sneak}\",\"event\":\"migrate.apply_failed\",\"level\":\"error\",\"service\":\"backend\",\"ts\":\"2026-08-30T01:14:00.057530Z\"}"
   },
   "postgres": {
     "pgvector_version": "0.8.6",

@@ -76,8 +76,10 @@ probe_result=$("${PSQL[@]}" -c "BEGIN;" -f /tmp/wu18-probe.sql \
 for key in \
   universal_profile_resolved options_profile_resolved holding_profile_resolved portfolio_profile_resolved \
   profiles_are_typed_and_distinct proof_artifact_bound not_applicable_has_proved_rule \
+  overlapping_route_blocked \
   no_default_substitution_in_profiles unproved_not_applicable_blocked unverified_proof_blocked \
   proof_expression_binding_blocked proof_artifact_update_blocked resolution_update_blocked \
+  verified_artifact_direct_insert_blocked \
   obligation_update_blocked; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
     || fail "probe assertion $key failed: $probe_result"
@@ -105,7 +107,7 @@ jq -n \
   '{
     captured_at: $captured_at,
     profiles: {universal: $probe.universal_profile_resolved, options: $probe.options_profile_resolved, holding: $probe.holding_profile_resolved, portfolio: $probe.portfolio_profile_resolved, typed_and_distinct: $probe.profiles_are_typed_and_distinct},
-    obligations: {not_applicable_has_proved_rule: $probe.not_applicable_has_proved_rule, proof_artifact_bound: $probe.proof_artifact_bound, no_default_substitution: $probe.no_default_substitution_in_profiles, unproved_not_applicable_blocked: $probe.unproved_not_applicable_blocked, unverified_proof_blocked: $probe.unverified_proof_blocked, proof_expression_binding_blocked: $probe.proof_expression_binding_blocked},
+    obligations: {not_applicable_has_proved_rule: $probe.not_applicable_has_proved_rule, proof_artifact_bound: $probe.proof_artifact_bound, no_default_substitution: $probe.no_default_substitution_in_profiles, overlapping_route_blocked: $probe.overlapping_route_blocked, unproved_not_applicable_blocked: $probe.unproved_not_applicable_blocked, unverified_proof_blocked: $probe.unverified_proof_blocked, proof_expression_binding_blocked: $probe.proof_expression_binding_blocked, verified_artifact_direct_insert_blocked: $probe.verified_artifact_direct_insert_blocked},
     append_only: {proof_artifact_update_blocked: $probe.proof_artifact_update_blocked, resolution_update_blocked: $probe.resolution_update_blocked, obligation_update_blocked: $probe.obligation_update_blocked},
     audit_chain: $chain,
     audit_positions: {profile: $audit_position_profile, obligation: $audit_position_obligation}
@@ -119,9 +121,11 @@ jq -e '
   and .obligations.proof_artifact_bound == true
   and .obligations.not_applicable_has_proved_rule == true
   and .obligations.no_default_substitution == true
+  and .obligations.overlapping_route_blocked == true
   and .obligations.unproved_not_applicable_blocked == true
   and .obligations.unverified_proof_blocked == true
   and .obligations.proof_expression_binding_blocked == true
+  and .obligations.verified_artifact_direct_insert_blocked == true
   and .append_only.proof_artifact_update_blocked == true
   and .append_only.resolution_update_blocked == true
   and .append_only.obligation_update_blocked == true

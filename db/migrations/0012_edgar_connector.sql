@@ -244,6 +244,7 @@ DECLARE
     filing_row edgar_filing%ROWTYPE;
     created edgar_xbrl_actual%ROWTYPE;
     actual_receipt_time timestamptz := clock_timestamp();
+    xbrl_use_key_value text;
 BEGIN
     IF coalesce(btrim(concept_value), '') = ''
        OR coalesce(btrim(fact_value_value), '') = ''
@@ -269,8 +270,24 @@ BEGIN
             USING ERRCODE = '22023';
     END IF;
 
+    xbrl_use_key_value := 'wu12-edgar-xbrl-use:' || filing_row.accession_number || ':'
+        || encode(
+            digest(
+                'market-mate-edgar-xbrl-use-v1|' || jsonb_build_array(
+                    concept_value,
+                    unit_value,
+                    period_start_value,
+                    period_end_value,
+                    fact_value_value,
+                    raw_fact_value
+                )::text,
+                'sha256'
+            ),
+            'hex'
+        );
+
     PERFORM record_entitled_use(
-        'wu12-edgar-xbrl-use:' || filing_row.accession_number || ':' || concept_value,
+        xbrl_use_key_value,
         filing_row.gate_decision_id,
         'edgar-xbrl-consumer',
         source_lineage_value

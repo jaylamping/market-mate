@@ -107,8 +107,8 @@ probe_result=$("${PSQL[@]}" \
   || fail "entitlement certification gate probe failed: $probe_result"
 
 for key in \
-  uncertified_use_denied uncertified_denial_recorded certified_use_allowed \
-  expired_use_denied expired_allowed_use_denied certified_use_recorded provenance_source_attached \
+  uncertified_use_denied uncertified_denial_recorded denied_request_retry_allowed certified_use_allowed \
+  expired_use_denied expired_allowed_use_denied certified_use_recorded entitlement_successor_closes_open_range provenance_source_attached \
   provenance_entitlement_attached provenance_receipt_time_attached \
   decision_log_append_only denied_use_blocked; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
@@ -151,9 +151,11 @@ jq -n \
     entitlement_gate: {
       uncertified_use_denied: $probe.uncertified_use_denied,
       denial_recorded: $probe.uncertified_denial_recorded,
+      denied_request_retry_allowed: $probe.denied_request_retry_allowed,
       certified_use_allowed: $probe.certified_use_allowed,
       expired_use_denied: $probe.expired_use_denied,
       expired_allowed_use_denied: $probe.expired_allowed_use_denied,
+      entitlement_successor_closes_open_range: $probe.entitlement_successor_closes_open_range,
       decision_log_append_only: $probe.decision_log_append_only,
       denied_use_blocked: $probe.denied_use_blocked
     },
@@ -174,9 +176,11 @@ jq -n \
 jq -e '
   .entitlement_gate.uncertified_use_denied == true
   and .entitlement_gate.denial_recorded == true
+  and .entitlement_gate.denied_request_retry_allowed == true
   and .entitlement_gate.certified_use_allowed == true
   and .entitlement_gate.expired_use_denied == true
   and .entitlement_gate.expired_allowed_use_denied == true
+  and .entitlement_gate.entitlement_successor_closes_open_range == true
   and .entitlement_gate.decision_log_append_only == true
   and .entitlement_gate.denied_use_blocked == true
   and .provenance.use_receipt_recorded == true

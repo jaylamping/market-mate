@@ -114,6 +114,7 @@ for key in \
   unregistered_source_rejected versioned_records_append_only \
   contract_source_range_rejected overlapping_contract_version_rejected \
   source_version_mismatch_rejected connector_binding_version_mismatch_rejected \
+  source_successor_closes_open_range contract_successor_closes_open_range \
   source_connector_update_blocked source_connector_delete_blocked; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
     || fail "probe assertion $key failed: $probe_result"
@@ -164,6 +165,7 @@ jq -n \
       versions_point_in_time: $probe.source_versions_point_in_time,
       overlapping_version_rejected: $probe.overlapping_source_version_rejected,
       unregistered_source_rejected: $probe.unregistered_source_rejected,
+      successor_closes_open_range: $probe.source_successor_closes_open_range,
       versioned_records_append_only: $probe.versioned_records_append_only
     },
     data_contract: {
@@ -176,6 +178,7 @@ jq -n \
       overlapping_version_rejected: $probe.overlapping_contract_version_rejected,
       source_version_mismatch_rejected: $probe.source_version_mismatch_rejected,
       connector_binding_version_mismatch_rejected: $probe.connector_binding_version_mismatch_rejected,
+      successor_closes_open_range: $probe.contract_successor_closes_open_range,
       bound_field_keys: $probe.bound_field_keys
     },
     source_connector: {
@@ -195,6 +198,7 @@ jq -e '
   and .source_registry.versions_point_in_time == true
   and .source_registry.overlapping_version_rejected == true
   and .source_registry.unregistered_source_rejected == true
+  and .source_registry.successor_closes_open_range == true
   and .source_registry.versioned_records_append_only == true
   and .data_contract.contract_registered == true
   and .data_contract.versions_effectively_dated == true
@@ -205,6 +209,7 @@ jq -e '
   and .data_contract.overlapping_version_rejected == true
   and .data_contract.source_version_mismatch_rejected == true
   and .data_contract.connector_binding_version_mismatch_rejected == true
+  and .data_contract.successor_closes_open_range == true
   and .source_connector.update_blocked == true
   and .source_connector.delete_blocked == true
   and .audit_chain.valid == true

@@ -6,6 +6,7 @@ CREATE TEMP TABLE wu20_probe_result (result jsonb NOT NULL);
 DO $probe$
 DECLARE
   v_lineage jsonb := '{"source":"wu20-probe","entitlement_version":"event-delta-v1"}';
+  v_now timestamptz := clock_timestamp();
   v_parent_snapshot research_snapshot%ROWTYPE;
   v_earnings_snapshot research_snapshot%ROWTYPE;
   v_filing_snapshot research_snapshot%ROWTYPE;
@@ -43,7 +44,7 @@ BEGIN
     'dependency_scope', jsonb_build_array('security_daily')
   ));
   SELECT * INTO v_parent FROM publish_post_close_cycle(
-    '2026-08-05', '2026-08-05T18:00:00Z', '2026-08-05T19:15:00Z',
+    '2026-08-05', v_now - interval '30 minutes', v_now + interval '5 minutes',
     v_parent_expected, v_lineage
   );
 
@@ -57,7 +58,7 @@ BEGIN
   ));
   SELECT * INTO v_earnings FROM publish_event_delta_cycle(
     'earnings_announcement', 'WU20-earnings-date-reached',
-    '2026-08-05T20:00:00Z', '2026-08-05T20:01:00Z', v_parent.cycle_id,
+    '2026-08-05T20:00:00Z', v_now + interval '10 minutes', v_parent.cycle_id,
     v_source_estimate_id, NULL,
     v_earnings_expected,
     '{"trigger":"announced_date_reached","source_event_ref":"WU14-EPS-2026Q2","announcement_at":"2026-08-05T20:00:00Z"}'::jsonb,
@@ -74,7 +75,7 @@ BEGIN
   ));
   SELECT * INTO v_filing FROM publish_event_delta_cycle(
     'edgar_8k', 'WU20-8K-detected',
-    '2026-08-05T20:00:00Z', '2026-08-05T20:02:00Z', v_parent.cycle_id,
+    '2026-08-05T20:00:00Z', v_now + interval '15 minutes', v_parent.cycle_id,
     NULL, v_source_filing_id,
     v_filing_expected,
     '{"trigger":"8k_detected","form_type":"8-K","source_event_ref":"0000140000-26-000001","filed_at":"2026-08-05T20:00:00Z"}'::jsonb,
@@ -109,13 +110,14 @@ BEGIN
     'event_cycle_update_blocked', false,
     'event_manifest_update_blocked', false,
     'source_ref_mismatch_rejected', false,
+    'duplicate_source_ref_blocked', false,
     'malformed_timestamp_rejected', false
   );
 
   BEGIN
     PERFORM publish_event_delta_cycle(
       'edgar_8k', 'WU20-fabricated-source-ref',
-      '2026-08-05T20:00:00Z', '2026-08-05T20:03:00Z', v_parent.cycle_id,
+      '2026-08-05T20:00:00Z', v_now + interval '25 minutes', v_parent.cycle_id,
       NULL, v_source_filing_id, v_filing_expected,
       '{"trigger":"8k_detected","form_type":"8-K","source_event_ref":"fabricated","filed_at":"2026-08-05T20:00:00Z"}'::jsonb,
       v_lineage
@@ -130,7 +132,7 @@ BEGIN
   BEGIN
     PERFORM publish_event_delta_cycle(
       'edgar_8k', 'WU20-malformed-timestamp',
-      '2026-08-05T20:00:00Z', '2026-08-05T20:04:00Z', v_parent.cycle_id,
+      '2026-08-05T20:00:00Z', v_now + interval '20 minutes', v_parent.cycle_id,
       NULL, v_source_filing_id, v_filing_expected,
       '{"trigger":"8k_detected","form_type":"8-K","source_event_ref":"0000140000-26-000001","filed_at":"not-a-timestamp"}'::jsonb,
       v_lineage
@@ -144,8 +146,22 @@ BEGIN
 
   BEGIN
     PERFORM publish_event_delta_cycle(
+      'edgar_8k', 'WU20-second-source-key',
+      '2026-08-05T20:00:00Z', v_now + interval '25 minutes', v_parent.cycle_id,
+      NULL, v_source_filing_id, v_filing_expected,
+      '{"trigger":"8k_detected","form_type":"8-K","source_event_ref":"0000140000-26-000001","filed_at":"2026-08-05T20:00:00Z"}'::jsonb,
+      v_lineage
+    );
+    RAISE EXCEPTION 'probe corrupted: source filing was reused by a second event key';
+  EXCEPTION
+    WHEN unique_violation THEN
+      v_results := v_results || jsonb_build_object('duplicate_source_ref_blocked', true);
+  END;
+
+  BEGIN
+    PERFORM publish_event_delta_cycle(
       'earnings_announcement', 'WU20-earnings-date-reached',
-      '2026-08-05T20:00:00Z', '2026-08-05T20:01:00Z', v_parent.cycle_id,
+      '2026-08-05T20:00:00Z', v_now + interval '30 minutes', v_parent.cycle_id,
       v_source_estimate_id, NULL,
       v_earnings_expected,
       '{"trigger":"announced_date_reached","source_event_ref":"WU14-EPS-2026Q2","announcement_at":"2026-08-05T20:00:00Z"}'::jsonb,

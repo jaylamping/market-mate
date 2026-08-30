@@ -1,11 +1,13 @@
 {
-  "captured_at": "2026-08-29T23:32:09Z",
+  "captured_at": "2026-08-30T01:04:44Z",
   "entitlement_gate": {
     "uncertified_use_denied": true,
     "denial_recorded": true,
+    "denied_request_retry_allowed": true,
     "certified_use_allowed": true,
     "expired_use_denied": true,
     "expired_allowed_use_denied": true,
+    "entitlement_successor_closes_open_range": true,
     "decision_log_append_only": true,
     "denied_use_blocked": true
   },

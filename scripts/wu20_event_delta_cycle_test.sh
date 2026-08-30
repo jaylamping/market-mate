@@ -79,7 +79,7 @@ probe_result=$("${PSQL[@]}" -c "BEGIN;" -f /tmp/wu14-source-probe.sql -f /tmp/wu
 for key in \
   earnings_date_triggered eight_k_triggered event_manifests_are_own event_cycles_link_parent \
   event_manifests_recorded event_source_refs_bound source_ref_mismatch_rejected \
-  malformed_timestamp_rejected duplicate_event_blocked event_cycle_update_blocked \
+  malformed_timestamp_rejected duplicate_source_ref_blocked duplicate_event_blocked event_cycle_update_blocked \
   event_manifest_update_blocked; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
     || fail "probe assertion $key failed: $probe_result"
@@ -89,7 +89,7 @@ pass "event cycles link to the authoritative post-close parent cycle"
 pass "event sources are typed, reference-bound, and timestamp-validated"
 pass "duplicate event and event-manifest mutation probes fail closed"
 
-event_payload=$(jq -c '{earnings_date: .earnings_date_triggered, eight_k: .eight_k_triggered, own_manifests: .event_manifests_are_own, parent_link: .event_cycles_link_parent, source_refs_bound: .event_source_refs_bound, source_ref_mismatch_rejected: .source_ref_mismatch_rejected, malformed_timestamp_rejected: .malformed_timestamp_rejected}' <<<"$probe_result")
+event_payload=$(jq -c '{earnings_date: .earnings_date_triggered, eight_k: .eight_k_triggered, own_manifests: .event_manifests_are_own, parent_link: .event_cycles_link_parent, source_refs_bound: .event_source_refs_bound, source_ref_mismatch_rejected: .source_ref_mismatch_rejected, duplicate_source_ref_blocked: .duplicate_source_ref_blocked, malformed_timestamp_rejected: .malformed_timestamp_rejected}' <<<"$probe_result")
 chain_event=$(append_audit_event "wu20-event-$(date +%s)" "research.event_delta_cycle_published" "$(jq -nc --argjson evidence "$event_payload" '{probe: "wu20_event_delta_cycle_probe", evidence: $evidence}')")
 chain_link=$(append_audit_event "wu20-link-$(date +%s)" "research.event_delta_cycle_parent_linked" "$(jq -nc --argjson evidence "$event_payload" '{probe: "wu20_event_delta_cycle_probe", evidence: $evidence}')")
 [[ "$chain_link" -gt "$chain_event" ]] || fail "audit chain positions did not advance: $chain_event -> $chain_link"
@@ -108,7 +108,7 @@ jq -n \
     captured_at: $captured_at,
     triggers: {earnings_date_reached: $probe.earnings_date_triggered, eight_k_detected: $probe.eight_k_triggered},
     manifests: {own_event_manifests: $probe.event_manifests_are_own, parent_cycle_linked: $probe.event_cycles_link_parent, both_recorded: $probe.event_manifests_recorded},
-    provenance: {event_source_refs_bound: $probe.event_source_refs_bound, source_ref_mismatch_rejected: $probe.source_ref_mismatch_rejected, malformed_timestamp_rejected: $probe.malformed_timestamp_rejected},
+    provenance: {event_source_refs_bound: $probe.event_source_refs_bound, source_ref_mismatch_rejected: $probe.source_ref_mismatch_rejected, duplicate_source_ref_blocked: $probe.duplicate_source_ref_blocked, malformed_timestamp_rejected: $probe.malformed_timestamp_rejected},
     append_only: {duplicate_event_blocked: $probe.duplicate_event_blocked, event_cycle_update_blocked: $probe.event_cycle_update_blocked, event_manifest_update_blocked: $probe.event_manifest_update_blocked},
     audit_chain: $chain,
     audit_positions: {event: $audit_position_event, parent_link: $audit_position_link}
@@ -121,6 +121,7 @@ jq -e '
   and .manifests.both_recorded == true
   and .provenance.event_source_refs_bound == true
   and .provenance.source_ref_mismatch_rejected == true
+  and .provenance.duplicate_source_ref_blocked == true
   and .provenance.malformed_timestamp_rejected == true
   and .append_only.duplicate_event_blocked == true
   and .append_only.event_cycle_update_blocked == true

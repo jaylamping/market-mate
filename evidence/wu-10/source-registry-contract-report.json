@@ -1,11 +1,12 @@
 {
-  "captured_at": "2026-08-29T23:31:22Z",
+  "captured_at": "2026-08-30T01:03:57Z",
   "source_registry": {
     "source_key": "licensed-eod-primary",
     "required_terms_recorded": true,
     "versions_point_in_time": true,
     "overlapping_version_rejected": true,
     "unregistered_source_rejected": true,
+    "successor_closes_open_range": true,
     "versioned_records_append_only": true
   },
   "data_contract": {
@@ -18,6 +19,7 @@
     "overlapping_version_rejected": true,
     "source_version_mismatch_rejected": true,
     "connector_binding_version_mismatch_rejected": true,
+    "successor_closes_open_range": true,
     "bound_field_keys": [
       "close_price",
       "volume"

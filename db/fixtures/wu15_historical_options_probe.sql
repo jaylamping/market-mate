@@ -9,6 +9,13 @@ DECLARE
   v_source_v1 uuid := '60000000-0000-0000-0000-000000000101';
   v_entitlement_id uuid := '60000000-0000-0000-0000-000000000201';
   v_entitlement_v1 uuid := '60000000-0000-0000-0000-000000000301';
+  v_contract_id uuid := '60000000-0000-0000-0000-000000000501';
+  v_contract_v1 uuid := '60000000-0000-0000-0000-000000000502';
+  v_snapshot_field uuid := '60000000-0000-0000-0000-000000000601';
+  v_available_field uuid := '60000000-0000-0000-0000-000000000602';
+  v_received_field uuid := '60000000-0000-0000-0000-000000000603';
+  v_deliverable_field uuid := '60000000-0000-0000-0000-000000000604';
+  v_connector_id uuid := '60000000-0000-0000-0000-000000000701';
   v_issuer_id uuid := '60000000-0000-0000-0000-000000000401';
   v_security_id uuid := '60000000-0000-0000-0000-000000000402';
   v_mapping instrument_mapping%ROWTYPE;
@@ -65,6 +72,52 @@ BEGIN
     '{"authority":"principal-approved-paper-plan","certificate":"historical-options-wu15-2026.1"}',
     v_lineage, '2026-01-01T00:00:00Z', 'local_research'
   );
+
+  INSERT INTO data_contract (
+    contract_id, contract_key, contract_kind, description,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_contract_id, 'historical-options-contract-wu15', 'market',
+    'Historical options chain and immutable deliverable contract',
+    v_lineage, now(), 'local_research'
+  );
+  INSERT INTO data_contract_version (
+    contract_version_id, contract_id, contract_version, source_registry_version_id,
+    effective_from, effective_to, availability_time_rules,
+    instrument_identity_rules, provenance_requirements,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_contract_v1, v_contract_id, 1, v_source_v1,
+    '2020-01-01T00:00:00Z', NULL,
+    '{"as_of_required":true,"receipt_time_required":true,"availability_time_required":true,"data_mode":"historical"}',
+    '{"security_id_required":true,"mapping_must_be_certified":true}',
+    '{"source_registry_version":true,"entitlement_version":true,"receipt_time":true}',
+    v_lineage, now(), 'local_research'
+  );
+  INSERT INTO data_contract_field (
+    field_id, contract_version_id, field_key, value_type,
+    observation_states, field_semantics, source_lineage, receipt_time, record_environment
+  ) VALUES
+    (v_snapshot_field, v_contract_v1, 'snapshot_at', 'timestamp', ARRAY['current','stale','missing'], '{"required":true,"point_in_time":true}'::jsonb, v_lineage, now(), 'local_research'),
+    (v_available_field, v_contract_v1, 'available_at', 'timestamp', ARRAY['current','stale','missing'], '{"required":true,"point_in_time":true}'::jsonb, v_lineage, now(), 'local_research'),
+    (v_received_field, v_contract_v1, 'received_at', 'timestamp', ARRAY['current'], '{"required":true}'::jsonb, v_lineage, now(), 'local_research'),
+    (v_deliverable_field, v_contract_v1, 'deliverable_version', 'json', ARRAY['current','stale','missing'], '{"required":true,"immutable":true}'::jsonb, v_lineage, now(), 'local_research');
+  INSERT INTO source_connector (
+    connector_id, connector_key, connector_kind,
+    source_registry_version_id, contract_version_id, lifecycle,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_connector_id, 'historical-options-connector-wu15', 'historical_options', v_source_v1, v_contract_v1,
+    'active', v_lineage, now(), 'local_research'
+  );
+  INSERT INTO connector_field_binding (
+    connector_id, contract_version_id, field_id,
+    source_lineage, receipt_time, record_environment
+  ) VALUES
+    (v_connector_id, v_contract_v1, v_snapshot_field, v_lineage, now(), 'local_research'),
+    (v_connector_id, v_contract_v1, v_available_field, v_lineage, now(), 'local_research'),
+    (v_connector_id, v_contract_v1, v_received_field, v_lineage, now(), 'local_research'),
+    (v_connector_id, v_contract_v1, v_deliverable_field, v_lineage, now(), 'local_research');
 
   PERFORM set_config('market_mate.security_master_write', 'on', true);
   INSERT INTO issuer (
@@ -142,6 +195,10 @@ BEGIN
     'point_in_time_provenance_preserved', v_first_snapshot.snapshot_at IS NOT NULL
       AND v_first_snapshot.available_at IS NOT NULL
       AND v_first_snapshot.receipt_time IS NOT NULL,
+    'connector_contract_bound', v_first_snapshot.connector_id = v_connector_id
+      AND v_first_snapshot.contract_version_id = v_contract_v1
+      AND v_first_contract.connector_id = v_connector_id
+      AND v_first_deliverable.contract_version_id = v_contract_v1,
     'certified_mapping_attached', (
       SELECT m.lifecycle = 'certified' AND s.security_id = v_security_id
       FROM option_chain_snapshot o

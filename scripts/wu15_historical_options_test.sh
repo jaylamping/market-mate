@@ -74,7 +74,7 @@ probe_result=$("${PSQL[@]}" -c "BEGIN;" -f /tmp/wu15-probe.sql \
   || fail "WU-15 connector probe failed: $probe_result"
 
 for key in \
-  snapshot_dates_preserved historical_mode_only point_in_time_provenance_preserved \
+  snapshot_dates_preserved historical_mode_only point_in_time_provenance_preserved connector_contract_bound \
   certified_mapping_attached contracts_mapped_to_snapshots deliverable_semantics_attached \
   entitlement_gate_allowed historical_use_receipts_recorded snapshot_source_lineage_attached \
   contract_source_lineage_attached realtime_rejected snapshot_update_blocked \
@@ -109,6 +109,7 @@ jq -n \
       dates_preserved: $probe.snapshot_dates_preserved,
       historical_mode_only: $probe.historical_mode_only,
       point_in_time_provenance_preserved: $probe.point_in_time_provenance_preserved,
+      connector_contract_bound: $probe.connector_contract_bound,
       certified_mapping_attached: $probe.certified_mapping_attached,
       source_lineage_attached: $probe.snapshot_source_lineage_attached
     },
@@ -134,6 +135,7 @@ jq -e '
   .snapshots.dates_preserved == true
   and .snapshots.historical_mode_only == true
   and .snapshots.point_in_time_provenance_preserved == true
+  and .snapshots.connector_contract_bound == true
   and .snapshots.certified_mapping_attached == true
   and .snapshots.source_lineage_attached == true
   and .contracts.mapped_to_snapshots == true

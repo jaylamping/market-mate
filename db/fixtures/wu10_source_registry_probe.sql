@@ -8,9 +8,13 @@ DECLARE
   v_source_id uuid := '10000000-0000-0000-0000-000000000001';
   v_source_v1 uuid := '10000000-0000-0000-0000-000000000101';
   v_source_v2 uuid := '10000000-0000-0000-0000-000000000102';
+  v_secondary_source_id uuid := '10000000-0000-0000-0000-000000000010';
+  v_secondary_source_v1 uuid := '10000000-0000-0000-0000-000000000011';
+  v_secondary_source_v2 uuid := '10000000-0000-0000-0000-000000000012';
   v_contract_id uuid := '10000000-0000-0000-0000-000000000201';
   v_contract_v1 uuid := '10000000-0000-0000-0000-000000000202';
   v_contract_v2 uuid := '10000000-0000-0000-0000-000000000203';
+  v_contract_v3 uuid := '10000000-0000-0000-0000-000000000205';
   v_other_contract_id uuid := '10000000-0000-0000-0000-000000000204';
   v_close_v1 uuid := '10000000-0000-0000-0000-000000000301';
   v_close_v2 uuid := '10000000-0000-0000-0000-000000000302';
@@ -190,11 +194,74 @@ BEGIN
     'overlapping_contract_version_rejected', false,
     'source_version_mismatch_rejected', false,
     'connector_binding_version_mismatch_rejected', false,
+    'source_successor_closes_open_range', false,
+    'contract_successor_closes_open_range', false,
     'bound_field_keys', (
       SELECT jsonb_agg(f.field_key ORDER BY f.field_key)
       FROM connector_field_binding b
       JOIN data_contract_field f ON f.field_id = b.field_id
       WHERE b.connector_id = v_connector_id
+    )
+  );
+
+  INSERT INTO source_registry (
+    source_id, source_key, source_name, source_kind,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_secondary_source_id, 'successor-probe-source', 'Successor Probe Source', 'market_data',
+    v_lineage, now(), 'local_research'
+  );
+  INSERT INTO source_registry_version (
+    source_version_id, source_id, registry_version, lifecycle,
+    license_terms, permitted_use, lineage_rules, observation_states,
+    correction_semantics, effective_from, effective_to,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_secondary_source_v1, v_secondary_source_id, 1, 'retired',
+    '{"name":"Successor Probe Terms","version":"2026.1"}',
+    '{"purposes":["local_research"]}',
+    '{"required_fields":["received_at"]}', ARRAY['current'],
+    ARRAY['factual_correction'], '2026-01-01T00:00:00Z', NULL,
+    v_lineage, now(), 'local_research'
+  );
+  INSERT INTO source_registry_version (
+    source_version_id, source_id, registry_version, lifecycle,
+    license_terms, permitted_use, lineage_rules, observation_states,
+    correction_semantics, effective_from, effective_to,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_secondary_source_v2, v_secondary_source_id, 2, 'active',
+    '{"name":"Successor Probe Terms","version":"2027.1"}',
+    '{"purposes":["local_research"]}',
+    '{"required_fields":["received_at"]}', ARRAY['current'],
+    ARRAY['factual_correction'], '2027-01-01T00:00:00Z', NULL,
+    v_lineage, now(), 'local_research'
+  );
+  v_results := v_results || jsonb_build_object(
+    'source_successor_closes_open_range', (
+      SELECT effective_to = '2027-01-01T00:00:00Z'::timestamptz
+      FROM source_registry_version
+      WHERE source_version_id = v_secondary_source_v1
+    )
+  );
+
+  INSERT INTO data_contract_version (
+    contract_version_id, contract_id, contract_version, source_registry_version_id,
+    effective_from, effective_to, availability_time_rules,
+    instrument_identity_rules, provenance_requirements,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_contract_v3, v_contract_id, 3, v_source_v2,
+    '2027-01-01T00:00:00Z', NULL, '{"as_of_required":true}',
+    '{"security_id_required":true}',
+    '{"source_registry_version":true,"entitlement_version":true,"receipt_time":true}',
+    v_lineage, now(), 'local_research'
+  );
+  v_results := v_results || jsonb_build_object(
+    'contract_successor_closes_open_range', (
+      SELECT effective_to = '2027-01-01T00:00:00Z'::timestamptz
+      FROM data_contract_version
+      WHERE contract_version_id = v_contract_v2
     )
   );
 
@@ -233,8 +300,8 @@ BEGIN
       instrument_identity_rules, provenance_requirements,
       source_lineage, receipt_time, record_environment
     ) VALUES (
-      '10000000-0000-0000-0000-000000000205', v_contract_id, 3, v_source_v2,
-      '2026-08-01T00:00:00Z', '2026-09-01T00:00:00Z',
+      '10000000-0000-0000-0000-000000000208', v_contract_id, 4, v_source_v2,
+      '2026-07-01T00:00:00Z', '2026-09-01T00:00:00Z',
       '{"as_of_required":true}', '{"security_id_required":true}',
       '{"source_registry_version":true,"entitlement_version":true,"receipt_time":true}',
       v_lineage, now(), 'local_research'
@@ -394,6 +461,8 @@ BEGIN
     'overlapping_contract_version_rejected', coalesce(v_results->>'overlapping_contract_version_rejected', 'false')::boolean,
     'source_version_mismatch_rejected', coalesce(v_results->>'source_version_mismatch_rejected', 'false')::boolean,
     'connector_binding_version_mismatch_rejected', coalesce(v_results->>'connector_binding_version_mismatch_rejected', 'false')::boolean,
+    'source_successor_closes_open_range', coalesce(v_results->>'source_successor_closes_open_range', 'false')::boolean,
+    'contract_successor_closes_open_range', coalesce(v_results->>'contract_successor_closes_open_range', 'false')::boolean,
     'source_connector_update_blocked', coalesce(v_results->>'source_connector_update_blocked', 'false')::boolean,
     'source_connector_delete_blocked', coalesce(v_results->>'source_connector_delete_blocked', 'false')::boolean
   ));

@@ -306,6 +306,7 @@ BEGIN
         manifest_evidence_state := 'failed';
     END IF;
 
+    PERFORM set_config('market_mate.research_cycle_manifest_write', 'on', true);
     INSERT INTO research_cycle_manifest (
         cycle_key, cycle_kind, cycle_as_of, expected_snapshot_count,
         completed_snapshot_count, completion_state, evidence_state,
@@ -334,6 +335,7 @@ BEGIN
             source_lineage_value, cycle_receipt_time, 'local_research'
         );
     END LOOP;
+    PERFORM set_config('market_mate.research_cycle_manifest_write', 'off', true);
 
     PERFORM set_config('market_mate.event_delta_cycle_write', 'on', true);
     BEGIN

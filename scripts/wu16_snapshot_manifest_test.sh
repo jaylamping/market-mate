@@ -76,7 +76,7 @@ probe_result=$("${PSQL[@]}" -c "BEGIN;" -f /tmp/wu16-probe.sql \
 for key in \
   snapshot_successor_linked snapshot_correction_recorded snapshot_payload_digest_bound \
   manifest_indexes_expected_snapshots manifest_records_degraded_stale_state \
-  manifest_superseding_delta_linked snapshot_update_blocked snapshot_revision_update_blocked manifest_update_blocked \
+  manifest_superseding_delta_linked snapshot_update_blocked snapshot_revision_update_blocked manifest_update_blocked manifest_insert_workflow_blocked \
   manifest_entry_truncate_blocked; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
     || fail "probe assertion $key failed: $probe_result"
@@ -118,7 +118,8 @@ jq -n \
       snapshot_update_blocked: $probe.snapshot_update_blocked,
       snapshot_revision_update_blocked: $probe.snapshot_revision_update_blocked,
       manifest_update_blocked: $probe.manifest_update_blocked,
-      manifest_entry_truncate_blocked: $probe.manifest_entry_truncate_blocked
+      manifest_entry_truncate_blocked: $probe.manifest_entry_truncate_blocked,
+      manifest_insert_workflow_blocked: $probe.manifest_insert_workflow_blocked
     },
     audit_chain: $chain,
     audit_positions: {snapshot: $audit_position_snapshot, manifest: $audit_position_manifest}
@@ -133,6 +134,7 @@ jq -e '
   and .append_only.snapshot_update_blocked == true
   and .append_only.snapshot_revision_update_blocked == true
   and .append_only.manifest_update_blocked == true
+  and .append_only.manifest_insert_workflow_blocked == true
   and .append_only.manifest_entry_truncate_blocked == true
   and .audit_chain.valid == true
   and .audit_positions.snapshot > 0

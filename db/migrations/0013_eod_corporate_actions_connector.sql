@@ -415,6 +415,7 @@ AS $$
     FROM eod_price_observation o
     WHERE o.instrument_mapping_id = instrument_mapping_id_value
       AND o.trading_date = trading_date_value
+      AND o.available_at <= as_of_value
       AND o.receipt_time <= as_of_value
     ORDER BY o.receipt_time DESC, o.revision DESC
     LIMIT 1;
@@ -521,9 +522,19 @@ BEGIN
         );
     ELSE
         case_row.case_id := previous_observation.case_id;
+        IF previous_observation.action_type <> action_type_value THEN
+            RAISE EXCEPTION
+                'corporate-action action type cannot change within case %', case_row.case_id
+                USING ERRCODE = '55000';
+        END IF;
         current_state := corporate_action_case_state(case_row.case_id, action_receipt_time);
         IF current_state IS NULL THEN
             RAISE EXCEPTION 'corporate-action case % has no observable state', case_row.case_id
+                USING ERRCODE = '55000';
+        END IF;
+        IF current_state = 'final' THEN
+            RAISE EXCEPTION
+                'corporate-action terms cannot change after case % is final', case_row.case_id
                 USING ERRCODE = '55000';
         END IF;
         IF current_state <> observed_state_value THEN

@@ -9,19 +9,34 @@ DECLARE
   v_earnings_source_v1 uuid := '50000000-0000-0000-0000-000000000101';
   v_earnings_entitlement_id uuid := '50000000-0000-0000-0000-000000000201';
   v_earnings_entitlement_v1 uuid := '50000000-0000-0000-0000-000000000301';
+  v_earnings_contract_id uuid := '50000000-0000-0000-0000-000000000501';
+  v_earnings_contract_v1 uuid := '50000000-0000-0000-0000-000000000502';
+  v_earnings_observation_field uuid := '50000000-0000-0000-0000-000000000601';
+  v_earnings_as_of_field uuid := '50000000-0000-0000-0000-000000000602';
+  v_earnings_announcement_field uuid := '50000000-0000-0000-0000-000000000603';
+  v_earnings_received_field uuid := '50000000-0000-0000-0000-000000000604';
+  v_earnings_connector_id uuid := '50000000-0000-0000-0000-000000000701';
   v_edgar_source_id uuid := '50000000-0000-0000-0000-000000000002';
   v_edgar_source_v1 uuid := '50000000-0000-0000-0000-000000000102';
   v_edgar_entitlement_id uuid := '50000000-0000-0000-0000-000000000202';
   v_edgar_entitlement_v1 uuid := '50000000-0000-0000-0000-000000000302';
+  v_edgar_contract_id uuid := '50000000-0000-0000-0000-000000000503';
+  v_edgar_contract_v1 uuid := '50000000-0000-0000-0000-000000000504';
+  v_edgar_accession_field uuid := '50000000-0000-0000-0000-000000000605';
+  v_edgar_filed_field uuid := '50000000-0000-0000-0000-000000000606';
+  v_edgar_received_field uuid := '50000000-0000-0000-0000-000000000607';
+  v_edgar_connector_id uuid := '50000000-0000-0000-0000-000000000702';
   v_issuer_id uuid := '50000000-0000-0000-0000-000000000401';
   v_security_id uuid := '50000000-0000-0000-0000-000000000402';
   v_security_mapping instrument_mapping%ROWTYPE;
   v_issuer_mapping instrument_mapping%ROWTYPE;
   v_estimate earnings_estimate_observation%ROWTYPE;
+  v_unit_mismatch_estimate earnings_estimate_observation%ROWTYPE;
   v_mismatched_estimate earnings_estimate_observation%ROWTYPE;
   v_missing_estimate earnings_estimate_observation%ROWTYPE;
   v_filing edgar_filing%ROWTYPE;
   v_actual edgar_xbrl_actual%ROWTYPE;
+  v_mismatched_actual edgar_xbrl_actual%ROWTYPE;
   v_reconciliation earnings_actual_reconciliation%ROWTYPE;
   v_lineage jsonb := '{"source":"wu14-probe","entitlement_version":"earnings-v1"}';
   v_results jsonb;
@@ -67,6 +82,73 @@ BEGIN
     '{"source":"sec-edgar-wu14","entitlement_version":"edgar-v1"}',
     '2026-01-01T00:00:00Z', 'local_research'
   );
+
+  INSERT INTO data_contract (
+    contract_id, contract_key, contract_kind, description,
+    source_lineage, receipt_time, record_environment
+  ) VALUES
+  (
+    v_earnings_contract_id, 'earnings-consensus-contract-wu14', 'market',
+    'Point-in-time as-of earnings estimate delivery contract', v_lineage, now(), 'local_research'
+  ),
+  (
+    v_edgar_contract_id, 'edgar-actual-contract-wu14', 'event',
+    'Point-in-time EDGAR actual delivery contract',
+    '{"source":"sec-edgar-wu14","entitlement_version":"edgar-v1"}'::jsonb,
+    now(), 'local_research'
+  );
+  INSERT INTO data_contract_version (
+    contract_version_id, contract_id, contract_version, source_registry_version_id,
+    effective_from, effective_to, availability_time_rules,
+    instrument_identity_rules, provenance_requirements,
+    source_lineage, receipt_time, record_environment
+  ) VALUES
+  (
+    v_earnings_contract_v1, v_earnings_contract_id, 1, v_earnings_source_v1,
+    '2026-01-01T00:00:00Z', NULL,
+    '{"as_of_required":true,"receipt_time_required":true}',
+    '{"security_id_required":true,"mapping_must_be_certified":true}',
+    '{"source_registry_version":true,"entitlement_version":true,"receipt_time":true}',
+    v_lineage, now(), 'local_research'
+  ),
+  (
+    v_edgar_contract_v1, v_edgar_contract_id, 1, v_edgar_source_v1,
+    '2026-01-01T00:00:00Z', NULL,
+    '{"as_of_required":true,"receipt_time_required":true}',
+    '{"security_id_required":true,"mapping_must_be_certified":true}',
+    '{"source_registry_version":true,"entitlement_version":true,"receipt_time":true}',
+    '{"source":"sec-edgar-wu14","entitlement_version":"edgar-v1"}'::jsonb,
+    now(), 'local_research'
+  );
+  INSERT INTO data_contract_field (
+    field_id, contract_version_id, field_key, value_type,
+    observation_states, field_semantics, source_lineage, receipt_time, record_environment
+  ) VALUES
+    (v_earnings_observation_field, v_earnings_contract_v1, 'vendor_observation_key', 'text', ARRAY['current','stale','missing'], '{"required":true}'::jsonb, v_lineage, now(), 'local_research'),
+    (v_earnings_as_of_field, v_earnings_contract_v1, 'as_of_at', 'timestamp', ARRAY['current','stale','missing'], '{"required":true,"point_in_time":true}'::jsonb, v_lineage, now(), 'local_research'),
+    (v_earnings_announcement_field, v_earnings_contract_v1, 'announcement_at', 'timestamp', ARRAY['current','stale','missing'], '{"required":true}'::jsonb, v_lineage, now(), 'local_research'),
+    (v_earnings_received_field, v_earnings_contract_v1, 'received_at', 'timestamp', ARRAY['current'], '{"required":true}'::jsonb, v_lineage, now(), 'local_research'),
+    (v_edgar_accession_field, v_edgar_contract_v1, 'accession_number', 'text', ARRAY['current','stale','missing'], '{"required":true}'::jsonb, v_lineage, now(), 'local_research'),
+    (v_edgar_filed_field, v_edgar_contract_v1, 'filed_at', 'timestamp', ARRAY['current','stale','missing'], '{"required":true}'::jsonb, v_lineage, now(), 'local_research'),
+    (v_edgar_received_field, v_edgar_contract_v1, 'received_at', 'timestamp', ARRAY['current'], '{"required":true}'::jsonb, v_lineage, now(), 'local_research');
+  INSERT INTO source_connector (
+    connector_id, connector_key, connector_kind,
+    source_registry_version_id, contract_version_id, lifecycle,
+    source_lineage, receipt_time, record_environment
+  ) VALUES
+    (v_earnings_connector_id, 'earnings-consensus-connector-wu14', 'earnings_consensus', v_earnings_source_v1, v_earnings_contract_v1, 'active', v_lineage, now(), 'local_research'),
+    (v_edgar_connector_id, 'sec-edgar-connector-wu14', 'edgar', v_edgar_source_v1, v_edgar_contract_v1, 'active', v_lineage, now(), 'local_research');
+  INSERT INTO connector_field_binding (
+    connector_id, contract_version_id, field_id,
+    source_lineage, receipt_time, record_environment
+  ) VALUES
+    (v_earnings_connector_id, v_earnings_contract_v1, v_earnings_observation_field, v_lineage, now(), 'local_research'),
+    (v_earnings_connector_id, v_earnings_contract_v1, v_earnings_as_of_field, v_lineage, now(), 'local_research'),
+    (v_earnings_connector_id, v_earnings_contract_v1, v_earnings_announcement_field, v_lineage, now(), 'local_research'),
+    (v_earnings_connector_id, v_earnings_contract_v1, v_earnings_received_field, v_lineage, now(), 'local_research'),
+    (v_edgar_connector_id, v_edgar_contract_v1, v_edgar_accession_field, v_lineage, now(), 'local_research'),
+    (v_edgar_connector_id, v_edgar_contract_v1, v_edgar_filed_field, v_lineage, now(), 'local_research'),
+    (v_edgar_connector_id, v_edgar_contract_v1, v_edgar_received_field, v_lineage, now(), 'local_research');
 
   INSERT INTO data_entitlement (
     entitlement_id, entitlement_key, account_scope, plan_name,
@@ -176,8 +258,21 @@ BEGIN
     '<xbrl><fact name="eps_basic">2.35</fact></xbrl>',
     '{"source":"sec-edgar-wu14","entitlement_version":"edgar-v1"}'::jsonb
   );
+  SELECT * INTO v_mismatched_actual FROM ingest_edgar_xbrl_actual(
+    v_filing.filing_id, 'eps_basic', '2.35', 'EUR_PER_SHARE',
+    '2026-04-01T00:00:00Z', '2026-06-30T00:00:00Z',
+    '<xbrl><fact name="eps_basic" unit="EUR_PER_SHARE">2.35</fact></xbrl>',
+    '{"source":"sec-edgar-wu14","entitlement_version":"edgar-v1"}'::jsonb
+  );
   SELECT * INTO v_reconciliation FROM reconcile_earnings_actual(
     v_estimate.estimate_id, v_actual.actual_id, 0.0001, v_lineage
+  );
+  SELECT * INTO v_unit_mismatch_estimate FROM ingest_earnings_estimate(
+    v_security_mapping.mapping_id, v_earnings_source_v1, v_earnings_entitlement_v1,
+    'WU14-EPS-2026Q2-unit-check', '2026-06-30', 'eps_basic', 2.50, 'USD_PER_SHARE', 'USD',
+    '2026-08-05T20:00:00Z', '2026-07-15T12:00:00Z',
+    '{"metric":"eps_basic","estimate":2.50,"as_of":"2026-07-15T12:00:00Z","check":"unit"}'::jsonb,
+    v_lineage
   );
 
   v_results := jsonb_build_object(
@@ -207,14 +302,20 @@ BEGIN
       AND v_reconciliation.estimate_entitlement_version_id = v_earnings_entitlement_v1
       AND v_reconciliation.edgar_source_registry_version_id = v_edgar_source_v1
       AND v_reconciliation.edgar_entitlement_version_id = v_edgar_entitlement_v1,
+    'connector_contract_bound', v_estimate.connector_id = v_earnings_connector_id
+      AND v_estimate.contract_version_id = v_earnings_contract_v1
+      AND v_filing.connector_id = v_edgar_connector_id
+      AND v_reconciliation.estimate_connector_id = v_earnings_connector_id
+      AND v_reconciliation.edgar_connector_id = v_edgar_connector_id,
     'mismatched_period_rejected', false,
+    'unit_currency_mismatch_rejected', false,
     'entitlement_gate_allowed', (
       SELECT decision = 'allowed'
       FROM entitlement_gate_decision
       WHERE request_key LIKE 'wu14-earnings:WU14-EPS-2026Q2:%'
     ),
     'entitled_uses_recorded', (
-      SELECT count(*) = 4
+      SELECT count(*) = 6
       FROM entitled_use_receipt r
       JOIN entitlement_gate_decision d ON d.decision_id = r.decision_id
       WHERE d.source_registry_version_id IN (v_earnings_source_v1, v_edgar_source_v1)
@@ -241,6 +342,17 @@ BEGIN
     WHEN others THEN
       IF SQLERRM NOT LIKE '%period end does not match%' THEN RAISE; END IF;
       v_results := v_results || jsonb_build_object('mismatched_period_rejected', true);
+  END;
+
+  BEGIN
+    PERFORM reconcile_earnings_actual(
+      v_unit_mismatch_estimate.estimate_id, v_mismatched_actual.actual_id, 0.0001, v_lineage
+    );
+    RAISE EXCEPTION 'probe corrupted: incompatible unit and currency were reconciled';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%unit/currency is incompatible%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('unit_currency_mismatch_rejected', true);
   END;
 
   BEGIN

@@ -78,8 +78,10 @@ for key in \
   vendor_selection_recorded daily_bar_ingested missing_observation_ingested \
   revision_appended point_in_time_preserved corporate_action_ingested \
   corporate_action_revision_appended corporate_action_terms_revised \
+  future_availability_hidden \
   entitlement_gate_allowed allowed_use_receipts_recorded denied_use_has_no_observation \
   denial_recorded price_source_lineage_attached corporate_action_source_lineage_attached \
+  connector_contract_bound \
   price_update_blocked corporate_action_update_blocked price_truncate_blocked; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
     || fail "probe assertion $key failed: $probe_result"
@@ -119,6 +121,7 @@ jq -n \
       missing_observation_ingested: $probe.missing_observation_ingested,
       revision_appended: $probe.revision_appended,
       point_in_time_preserved: $probe.point_in_time_preserved,
+      future_availability_hidden: $probe.future_availability_hidden,
       corporate_action_ingested: $probe.corporate_action_ingested,
       corporate_action_revision_appended: $probe.corporate_action_revision_appended,
       corporate_action_terms_revised: $probe.corporate_action_terms_revised,
@@ -131,7 +134,8 @@ jq -n \
     },
     provenance: {
       price_source_lineage_attached: $probe.price_source_lineage_attached,
-      corporate_action_source_lineage_attached: $probe.corporate_action_source_lineage_attached
+      corporate_action_source_lineage_attached: $probe.corporate_action_source_lineage_attached,
+      connector_contract_bound: $probe.connector_contract_bound
     },
     append_only: {
       price_update_blocked: $probe.price_update_blocked,
@@ -146,7 +150,8 @@ jq -e '
   and .ingestion.daily_bar_ingested == true
   and .ingestion.missing_observation_ingested == true
   and .ingestion.revision_appended == true
-  and .ingestion.point_in_time_preserved == true
+      and .ingestion.point_in_time_preserved == true
+      and .ingestion.future_availability_hidden == true
   and .ingestion.corporate_action_ingested == true
   and .ingestion.corporate_action_revision_appended == true
   and .ingestion.corporate_action_terms_revised == true
@@ -154,8 +159,9 @@ jq -e '
   and .ingestion.allowed_use_receipts_recorded == true
   and .entitlement_gate.denial_recorded == true
   and .entitlement_gate.denied_use_has_no_observation == true
-  and .provenance.price_source_lineage_attached == true
-  and .provenance.corporate_action_source_lineage_attached == true
+      and .provenance.price_source_lineage_attached == true
+      and .provenance.corporate_action_source_lineage_attached == true
+      and .provenance.connector_contract_bound == true
   and .append_only.price_update_blocked == true
   and .append_only.corporate_action_update_blocked == true
   and .append_only.price_truncate_blocked == true

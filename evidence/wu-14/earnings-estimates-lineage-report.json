@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T23:34:31Z",
+  "captured_at": "2026-08-30T01:07:06Z",
   "estimates": {
     "ingested": true,
     "as_of_timestamp_attached": true,
@@ -11,7 +11,9 @@
     "announcement_linked": true,
     "disagreement_surfaced": true,
     "mismatched_period_rejected": true,
-    "provenance_attached": true
+    "unit_currency_mismatch_rejected": true,
+    "provenance_attached": true,
+    "connector_contract_bound": true
   },
   "entitlement": {
     "gate_allowed": true,
