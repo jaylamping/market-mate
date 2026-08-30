@@ -35,7 +35,11 @@ DECLARE
   v_universe coverage_universe_version%ROWTYPE;
   v_failed_universe coverage_universe_version%ROWTYPE;
   v_core indicator_definition_version%ROWTYPE;
+  v_core_v2 indicator_definition_version%ROWTYPE;
   v_experimental indicator_definition_version%ROWTYPE;
+  v_zero_screen discovery_screen_run%ROWTYPE;
+  v_zero_fitness coverage_fitness_run%ROWTYPE;
+  v_zero_universe coverage_universe_version%ROWTYPE;
   v_mapping instrument_mapping%ROWTYPE;
   v_issuer_id uuid;
   v_security_id uuid;
@@ -51,6 +55,7 @@ DECLARE
   v_volume bigint;
   v_twin_flat_id uuid;
   v_twin_rally_id uuid;
+  v_nogics_a_id uuid;
   v_nogics_late_id uuid;
   v_otc_id uuid;
   v_flat_fitness numeric;
@@ -275,6 +280,7 @@ BEGIN
     v_security_ids := v_security_ids || v_security_id;
     IF v_labels[v_i] = 'twin_flat' THEN v_twin_flat_id := v_security_id; END IF;
     IF v_labels[v_i] = 'twin_rally' THEN v_twin_rally_id := v_security_id; END IF;
+    IF v_labels[v_i] = 'nogics_a' THEN v_nogics_a_id := v_security_id; END IF;
     IF v_labels[v_i] = 'nogics_late' THEN v_nogics_late_id := v_security_id; END IF;
     IF v_labels[v_i] = 'otc_enh' THEN v_otc_id := v_security_id; END IF;
   END LOOP;
@@ -477,6 +483,52 @@ BEGIN
   SELECT * INTO v_empty_fitness FROM run_coverage_fitness_score(
     v_policy.policy_version_id, v_empty_screen.run_id, clock_timestamp(), v_lineage);
 
+  SELECT * INTO v_core_v2 FROM append_indicator_definition_version(
+    'close_return_20d_wu24', 2, 'core',
+    '{
+      "purpose": "Descriptive 20-session close-to-close return; semantic change for retirement probe.",
+      "units": "fraction",
+      "formula": "close[t] / close[t-20] - 1 with volume confirmation",
+      "timestamp_semantics": "session close, point-in-time at cycle as_of",
+      "adjustment_semantics": "split-adjusted, dividend-unadjusted",
+      "calendar": "NYSE trading sessions",
+      "missingness": "missing sessions are skipped",
+      "ownership": "research-engine",
+      "inputs": [{"name": "session_close", "source": "licensed-eod-wu24"}, {"name": "session_volume", "source": "licensed-eod-wu24"}],
+      "certified_sources": ["licensed-eod-wu24"],
+      "precision": 12,
+      "freshness": {"max_receipt_lag_sessions": 1},
+      "valid_ranges": {"min": -1.0, "max": 25.0},
+      "golden_cases": [{"name": "flat_series", "inputs": {"close": [100, 100, 100]}, "expected": 0.0}],
+      "canonical_horizons": [1, 20]
+    }'::jsonb,
+    v_core.definition_version_id, clock_timestamp(), v_lineage
+  );
+  PERFORM record_indicator_definition_lifecycle(
+    v_core_v2.definition_version_id, 'retired',
+    'WU-24 retirement must not resurrect v1 as Core', NULL, v_lineage);
+
+  PERFORM ingest_eod_price_observation(
+    v_selection.selection_id, v_mapping_ids[array_position(v_labels, 'nogics_a')],
+    'WU24-nogics_a-2026-08-24', DATE '2026-08-24', 'complete',
+    98.00, 105.00, 95.00, 100.00, 100000,
+    '2026-08-24T21:00:00Z'::timestamptz,
+    '{"open": 98.00, "high": 105.00, "low": 95.00, "close": 100.00, "volume": 100000}'::jsonb,
+    v_lineage);
+  PERFORM ingest_eod_price_observation(
+    v_selection.selection_id, v_mapping_ids[array_position(v_labels, 'otc_enh')],
+    'WU24-otc_enh-2026-08-24', DATE '2026-08-24', 'complete',
+    19.60, 21.00, 19.00, 20.00, 500000,
+    '2026-08-24T21:00:00Z'::timestamptz,
+    '{"open": 19.60, "high": 21.00, "low": 19.00, "close": 20.00, "volume": 500000}'::jsonb,
+    v_lineage);
+  SELECT * INTO v_zero_screen FROM run_discovery_screen(
+    v_config.config_version_id, DATE '2026-08-24', clock_timestamp(), v_lineage);
+  SELECT * INTO v_zero_fitness FROM run_coverage_fitness_score(
+    v_policy.policy_version_id, v_zero_screen.run_id, clock_timestamp(), v_lineage);
+  SELECT * INTO v_zero_universe FROM run_coverage_universe_first_seed(
+    v_zero_fitness.run_id, 'coverage-universe', 2, v_lineage);
+
   BEGIN
     PERFORM run_coverage_fitness_score(
       v_policy.policy_version_id, v_screen.run_id,
@@ -565,6 +617,34 @@ BEGIN
     'core_definition_bound',
       v_universe.core_indicator_definition_ids = ARRAY[v_core.definition_version_id]
       AND NOT (v_experimental.definition_version_id = ANY (v_universe.core_indicator_definition_ids)),
+    'retired_core_does_not_fallback',
+      coverage_core_indicator_ids_as_of(v_fitness.as_of_at)
+        = ARRAY[v_core.definition_version_id]
+      AND coverage_core_indicator_ids_as_of(clock_timestamp()) = '{}'::uuid[]
+      AND NOT (v_core.definition_version_id = ANY (coverage_core_indicator_ids_as_of(clock_timestamp())))
+      AND NOT (v_core_v2.definition_version_id = ANY (coverage_core_indicator_ids_as_of(clock_timestamp()))),
+    'zero_admit_persists_rejections',
+      v_zero_universe.admission_state = 'complete'
+      AND v_zero_universe.admitted_count = 0
+      AND v_zero_universe.profile_resolution_id IS NOT NULL
+      AND v_zero_fitness.scored_count >= 2
+      AND (
+        SELECT count(*) FROM coverage_universe_membership
+        WHERE universe_version_id = v_zero_universe.universe_version_id) = v_zero_fitness.scored_count
+      AND NOT EXISTS (
+        SELECT 1 FROM coverage_universe_membership
+        WHERE universe_version_id = v_zero_universe.universe_version_id
+          AND admission_decision = 'admitted')
+      AND EXISTS (
+        SELECT 1 FROM coverage_universe_membership
+        WHERE universe_version_id = v_zero_universe.universe_version_id
+          AND security_id = v_nogics_a_id
+          AND 'below_quality_floor' = ANY (rejection_reasons))
+      AND EXISTS (
+        SELECT 1 FROM coverage_universe_membership
+        WHERE universe_version_id = v_zero_universe.universe_version_id
+          AND security_id = v_otc_id
+          AND 'enhanced_risk_gates_incomplete' = ANY (rejection_reasons)),
     'missing_gics_below_floor', (
       SELECT NOT quality_floor_pass
       FROM coverage_fitness_score

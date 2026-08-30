@@ -98,6 +98,7 @@ for key in \
   fitness_run_complete fitness_counts_consistent fitness_digest_valid \
   twins_equal_fitness twins_ignore_returns \
   experimental_excluded_from_observability core_definition_bound \
+  retired_core_does_not_fallback zero_admit_persists_rejections \
   missing_gics_below_floor late_gics_invisible_at_run_as_of late_gics_visible_after_receipt \
   otc_scored_not_admitted_enhanced_gates \
   universe_complete admitted_count_is_40 all_admitted_research_candidates \
@@ -132,8 +133,8 @@ public_write_revoked=$("${PSQL[@]}" -c "
 [[ "$public_write_revoked" == "t" ]] || fail "public coverage-fitness write privileges were not revoked"
 pass "public coverage-fitness writes are revoked; workflow guards remain the measured local boundary"
 
-score_payload=$(jq -c '{fitness_run_complete, fitness_counts_consistent, fitness_digest_valid, twins_equal_fitness, twins_ignore_returns, experimental_excluded_from_observability, core_definition_bound, missing_gics_below_floor, late_gics_invisible_at_run_as_of, late_gics_visible_after_receipt, predictive_fields_absent}' <<<"$probe_result")
-admission_payload=$(jq -c '{otc_scored_not_admitted_enhanced_gates, universe_complete, admitted_count_is_40, all_admitted_research_candidates, admitted_stock_eligible, obligations_active, tech_admitted_at_ceiling, tech_excess_rejected_sector_ceiling, others_admitted, quality_floor_never_admitted}' <<<"$probe_result")
+score_payload=$(jq -c '{fitness_run_complete, fitness_counts_consistent, fitness_digest_valid, twins_equal_fitness, twins_ignore_returns, experimental_excluded_from_observability, core_definition_bound, retired_core_does_not_fallback, missing_gics_below_floor, late_gics_invisible_at_run_as_of, late_gics_visible_after_receipt, predictive_fields_absent}' <<<"$probe_result")
+admission_payload=$(jq -c '{otc_scored_not_admitted_enhanced_gates, universe_complete, admitted_count_is_40, all_admitted_research_candidates, admitted_stock_eligible, obligations_active, tech_admitted_at_ceiling, tech_excess_rejected_sector_ceiling, others_admitted, quality_floor_never_admitted, zero_admit_persists_rejections}' <<<"$probe_result")
 replay_payload=$(jq -c '{deterministic_score_replay_matches, deterministic_seed_replay_matches, duplicate_fitness_blocked, duplicate_seed_blocked, unapproved_policy_seed_blocked, empty_pool_fails_closed, future_as_of_blocked}' <<<"$probe_result")
 guard_payload=$(jq -c '{invalid_gics_blocked, direct_gics_insert_blocked, direct_fitness_insert_blocked, fitness_update_blocked, universe_delete_blocked, membership_truncate_blocked, fitness_audited, seed_audited}' <<<"$probe_result")
 chain_score=$(append_audit_event "wu24-fitness-$(date +%s)" "research.coverage_fitness_proved" "$(jq -nc --argjson evidence "$score_payload" '{probe: "wu24_coverage_fitness_probe", evidence: $evidence}')") \
@@ -183,6 +184,7 @@ jq -n \
       twins_ignore_returns: $probe.twins_ignore_returns,
       experimental_excluded_from_observability: $probe.experimental_excluded_from_observability,
       core_definition_bound: $probe.core_definition_bound,
+      retired_core_does_not_fallback: $probe.retired_core_does_not_fallback,
       missing_gics_below_floor: $probe.missing_gics_below_floor,
       late_gics_invisible_at_run_as_of: $probe.late_gics_invisible_at_run_as_of,
       late_gics_visible_after_receipt: $probe.late_gics_visible_after_receipt,
@@ -198,7 +200,8 @@ jq -n \
       tech_admitted_at_ceiling: $probe.tech_admitted_at_ceiling,
       tech_excess_rejected_sector_ceiling: $probe.tech_excess_rejected_sector_ceiling,
       others_admitted: $probe.others_admitted,
-      quality_floor_never_admitted: $probe.quality_floor_never_admitted
+      quality_floor_never_admitted: $probe.quality_floor_never_admitted,
+      zero_admit_persists_rejections: $probe.zero_admit_persists_rejections
     },
     replay_and_fail_closed: {
       deterministic_score_replay_matches: $probe.deterministic_score_replay_matches,
@@ -243,6 +246,7 @@ jq -e '
   and .scoring.twins_ignore_returns == true
   and .scoring.experimental_excluded_from_observability == true
   and .scoring.core_definition_bound == true
+  and .scoring.retired_core_does_not_fallback == true
   and .scoring.missing_gics_below_floor == true
   and .scoring.late_gics_invisible_at_run_as_of == true
   and .scoring.late_gics_visible_after_receipt == true
@@ -257,6 +261,7 @@ jq -e '
   and .first_coverage_universe.tech_excess_rejected_sector_ceiling == true
   and .first_coverage_universe.others_admitted == true
   and .first_coverage_universe.quality_floor_never_admitted == true
+  and .first_coverage_universe.zero_admit_persists_rejections == true
   and .replay_and_fail_closed.deterministic_score_replay_matches == true
   and .replay_and_fail_closed.deterministic_seed_replay_matches == true
   and .replay_and_fail_closed.duplicate_fitness_blocked == true

@@ -98,25 +98,28 @@ LANGUAGE sql
 STABLE
 SET search_path = pg_catalog, public
 AS $$
-    SELECT coalesce(array_agg(s.definition_version_id ORDER BY s.indicator_key), '{}')
+    SELECT coalesce(array_agg(kept.definition_version_id ORDER BY kept.indicator_key), '{}')
     FROM (
-        SELECT DISTINCT ON (v.indicator_key)
-            v.indicator_key, v.definition_version_id
-        FROM indicator_definition_version v
-        WHERE v.indicator_kind = 'core'
-          AND v.effective_from <= as_of_value
-          AND v.receipt_time <= as_of_value
-          AND coalesce(
+        SELECT latest.indicator_key, latest.definition_version_id
+        FROM (
+            SELECT DISTINCT ON (v.indicator_key)
+                v.indicator_key, v.definition_version_id, v.definition_state
+            FROM indicator_definition_version v
+            WHERE v.indicator_kind = 'core'
+              AND v.effective_from <= as_of_value
+              AND v.receipt_time <= as_of_value
+            ORDER BY v.indicator_key, v.version DESC
+        ) latest
+        WHERE coalesce(
                 (SELECT l.to_state
                  FROM indicator_definition_lifecycle l
-                 WHERE l.definition_version_id = v.definition_version_id
+                 WHERE l.definition_version_id = latest.definition_version_id
                    AND l.receipt_time <= as_of_value
                  ORDER BY l.receipt_time DESC, l.transition_id DESC
                  LIMIT 1),
-                v.definition_state
+                latest.definition_state
               ) = 'declared'
-        ORDER BY v.indicator_key, v.version DESC
-    ) s;
+    ) kept;
 $$;
 
 CREATE TABLE issuer_gics_classification (
@@ -664,7 +667,7 @@ BEGIN
             THEN (SELECT stddev_pop(v) FROM unnest(dollar_volumes) AS v)
             ELSE 0 END;
 
-        -- Returns are intentionally absent: close paths never enter a score.
+        -- Returns never enter the score; close is used only as an ADV input.
         data_quality := coverage_score_clip(
             session_frac * 50
             + CASE WHEN coalesce(array_length(certified_ids, 1), 0) = 1 THEN 25 ELSE 0 END
@@ -772,7 +775,11 @@ BEGIN
             'sector_pool_fraction', sector_frac,
             'core_definition_count', core_count,
             'experimental_definition_count', experimental_count,
-            'experimental_excluded', true,
+            'experimental_excluded', NOT EXISTS (
+                SELECT 1
+                FROM unnest(core_ids) AS cid(id)
+                JOIN indicator_definition_version d ON d.definition_version_id = cid.id
+                WHERE d.indicator_kind = 'experimental'),
             'listing_age_days', round(listing_days, 4),
             'weights', jsonb_build_object(
                 'data_quality', w_dq, 'stock_liquidity', w_liq,
@@ -1128,8 +1135,7 @@ BEGIN
             USING ERRCODE = '55000';
     END IF;
 
-    -- Serialize the one-seed-per-(policy, date) slot, not the universe_key,
-    -- so two keys cannot race the unique constraint.
+    PERFORM pg_advisory_xact_lock(hashtextextended(universe_key_value, 26025));
     PERFORM pg_advisory_xact_lock(hashtextextended(
         policy_row.policy_version_id::text || ':' || fitness_row.trading_date::text || ':first_seed',
         26024));
@@ -1162,10 +1168,6 @@ BEGIN
         SELECT count(*) FILTER (WHERE admission_decision = 'admitted')
         INTO admitted_count_value
         FROM coverage_first_seed_stage;
-
-        IF admitted_count_value = 0 THEN
-            failure_reason_value := 'no_qualifying_members';
-        END IF;
     END IF;
 
     IF failure_reason_value IS NULL THEN
