@@ -46,7 +46,30 @@ BEGIN
         RETURN false;
     END IF;
 
-    IF (definition_value->'precision')::numeric < 0 THEN
+    IF (definition_value->'precision')::numeric <= 0
+       OR (definition_value->'precision')::numeric
+          <> floor((definition_value->'precision')::numeric) THEN
+        RETURN false;
+    END IF;
+
+    -- Freshness and valid-ranges contracts must actually be fixed, not vacuous.
+    IF NOT EXISTS (
+        SELECT 1 FROM jsonb_object_keys(definition_value->'freshness')
+    ) OR NOT EXISTS (
+        SELECT 1 FROM jsonb_object_keys(definition_value->'valid_ranges')
+    ) THEN
+        RETURN false;
+    END IF;
+
+    -- Golden reference cases are named, structured fixtures.
+    IF EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(definition_value->'golden_cases') g
+        WHERE jsonb_typeof(g.value) IS DISTINCT FROM 'object'
+           OR jsonb_typeof(g.value->'name') IS DISTINCT FROM 'string'
+           OR coalesce(btrim(g.value->>'name'), '') = ''
+           OR NOT (g.value ? 'expected')
+    ) THEN
         RETURN false;
     END IF;
 
@@ -60,6 +83,26 @@ BEGIN
         SELECT 1
         FROM jsonb_array_elements_text(definition_value->'certified_sources') s
         WHERE coalesce(btrim(s.value), '') = ''
+    ) THEN
+        RETURN false;
+    END IF;
+
+    -- Every input naming a source must cite one of the certified sources,
+    -- so an unregistered provider cannot sneak in through the inputs list.
+    IF EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(definition_value->'inputs') i
+        WHERE jsonb_typeof(i.value) IS DISTINCT FROM 'object'
+           OR jsonb_typeof(i.value->'name') IS DISTINCT FROM 'string'
+           OR coalesce(btrim(i.value->>'name'), '') = ''
+           OR (
+                i.value ? 'source'
+                AND (
+                  jsonb_typeof(i.value->'source') IS DISTINCT FROM 'string'
+                  OR NOT ((i.value->>'source') IN (
+                        SELECT jsonb_array_elements_text(definition_value->'certified_sources')))
+                )
+           )
     ) THEN
         RETURN false;
     END IF;
@@ -163,12 +206,52 @@ CREATE TRIGGER indicator_definition_lifecycle_append_only
     BEFORE UPDATE OR DELETE OR TRUNCATE ON indicator_definition_lifecycle
     FOR EACH STATEMENT EXECUTE FUNCTION guard_indicator_definition_lifecycle_write();
 
+-- The owning role still owns these tables in stage 1 (issue #97), so direct
+-- INSERTs are gated behind the same session flag the workflow functions set,
+-- mirroring the coverage-policy registry: no smuggled versions, lineages, or
+-- unaudited lifecycle rows.
+CREATE FUNCTION guard_indicator_definition_version_insert() RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog, public
+AS $$
+BEGIN
+    IF coalesce(current_setting('market_mate.indicator_definition_write', true), '') <> 'on' THEN
+        RAISE EXCEPTION
+            'indicator_definition_version writes must go through append_indicator_definition_version'
+            USING ERRCODE = '55000';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE FUNCTION guard_indicator_definition_lifecycle_insert() RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog, public
+AS $$
+BEGIN
+    IF coalesce(current_setting('market_mate.indicator_definition_lifecycle_write', true), '') <> 'on' THEN
+        RAISE EXCEPTION
+            'indicator_definition_lifecycle writes must go through record_indicator_definition_lifecycle'
+            USING ERRCODE = '55000';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER indicator_definition_version_insert_guard
+    BEFORE INSERT ON indicator_definition_version
+    FOR EACH ROW EXECUTE FUNCTION guard_indicator_definition_version_insert();
+CREATE TRIGGER indicator_definition_lifecycle_insert_guard
+    BEFORE INSERT ON indicator_definition_lifecycle
+    FOR EACH ROW EXECUTE FUNCTION guard_indicator_definition_lifecycle_insert();
+
 CREATE FUNCTION indicator_definition_transition_is_legal(
     from_state_value text,
     to_state_value text
 ) RETURNS boolean
 LANGUAGE sql
 IMMUTABLE
+SET search_path = pg_catalog, public
 AS $$
     SELECT (from_state_value, to_state_value) IN (
         VALUES ('declared', 'retired'),
@@ -181,6 +264,7 @@ CREATE FUNCTION indicator_definition_current_state(
 ) RETURNS text
 LANGUAGE sql
 STABLE
+SET search_path = pg_catalog, public
 AS $$
     SELECT coalesce(
         (SELECT to_state
@@ -194,6 +278,10 @@ AS $$
     );
 $$;
 
+-- The corrected-research view: the latest version per indicator with its
+-- current lifecycle state.  This is deliberately "latest version", not
+-- "in effect now" -- use indicator_definition_at for the decision-time view
+-- of what a historical evaluation actually resolved.
 CREATE VIEW current_indicator_definition AS
     SELECT DISTINCT ON (v.indicator_key)
         v.indicator_key,
@@ -253,6 +341,12 @@ BEGIN
         END IF;
     END LOOP;
 
+    -- Serialize per-key version allocation and enforce the #40 contracts:
+    -- consecutive versions, an unchanging indicator kind (an experiment can
+    -- never be re-versioned into a core indicator), and a strictly advancing
+    -- effective_from so a later append can never rewrite decision-time
+    -- resolution of earlier as-of moments.
+    PERFORM pg_advisory_xact_lock(hashtextextended(indicator_key_value, 25023));
     SELECT * INTO latest_row
     FROM indicator_definition_version
     WHERE indicator_key = indicator_key_value
@@ -283,6 +377,17 @@ BEGIN
                 version_value
                 USING ERRCODE = '22023';
         END IF;
+        IF indicator_kind_value <> latest_row.indicator_kind THEN
+            RAISE EXCEPTION
+                'indicator % cannot change kind from % to %; a successful experiment never becomes a core indicator and a new experiment needs a new indicator key',
+                indicator_key_value, latest_row.indicator_kind, indicator_kind_value
+                USING ERRCODE = '22023';
+        END IF;
+        IF effective_from_value <= latest_row.effective_from THEN
+            RAISE EXCEPTION
+                'indicator definition effective_from must advance past the previous version; backdating would rewrite decision-time resolution'
+                USING ERRCODE = '22023';
+        END IF;
     END IF;
 
     IF indicator_kind_value = 'core' THEN
@@ -291,18 +396,26 @@ BEGIN
         initial_state_value := 'experimental';
     END IF;
 
-    INSERT INTO indicator_definition_version (
-        indicator_key, version, indicator_kind, definition_state,
-        definition, definition_digest, successor_of, effective_from,
-        source_lineage, receipt_time, record_environment
-    ) VALUES (
-        indicator_key_value, version_value, indicator_kind_value, initial_state_value,
-        definition_value,
-        encode(digest(convert_to(definition_value::text, 'UTF8'), 'sha256'), 'hex'),
-        successor_of_value, effective_from_value,
-        source_lineage_value, now(), 'local_research'
-    )
-    RETURNING * INTO created;
+    PERFORM set_config('market_mate.indicator_definition_write', 'on', true);
+    BEGIN
+        INSERT INTO indicator_definition_version (
+            indicator_key, version, indicator_kind, definition_state,
+            definition, definition_digest, successor_of, effective_from,
+            source_lineage, receipt_time, record_environment
+        ) VALUES (
+            indicator_key_value, version_value, indicator_kind_value, initial_state_value,
+            definition_value,
+            encode(digest(convert_to(definition_value::text, 'UTF8'), 'sha256'), 'hex'),
+            successor_of_value, effective_from_value,
+            source_lineage_value, now(), 'local_research'
+        )
+        RETURNING * INTO created;
+    EXCEPTION
+        WHEN OTHERS THEN
+            PERFORM set_config('market_mate.indicator_definition_write', 'off', true);
+            RAISE;
+    END;
+    PERFORM set_config('market_mate.indicator_definition_write', 'off', true);
 
     PERFORM append_audit_event(
         'indicator-definition:' || indicator_key_value || ':' || version_value::text,
@@ -365,16 +478,25 @@ BEGIN
             USING ERRCODE = '22023';
     END IF;
 
-    INSERT INTO indicator_definition_lifecycle (
-        definition_version_id, from_state, to_state, reason,
-        preregistration_ref,
-        source_lineage, receipt_time, record_environment
-    ) VALUES (
-        definition_version_id_value, from_state_value, to_state_value, reason_value,
-        preregistration_ref_value,
-        source_lineage_value, now(), 'local_research'
-    )
-    RETURNING * INTO created;
+    PERFORM pg_advisory_xact_lock(hashtextextended(definition_version_id_value::text, 25024));
+    PERFORM set_config('market_mate.indicator_definition_lifecycle_write', 'on', true);
+    BEGIN
+        INSERT INTO indicator_definition_lifecycle (
+            definition_version_id, from_state, to_state, reason,
+            preregistration_ref,
+            source_lineage, receipt_time, record_environment
+        ) VALUES (
+            definition_version_id_value, from_state_value, to_state_value, reason_value,
+            preregistration_ref_value,
+            source_lineage_value, now(), 'local_research'
+        )
+        RETURNING * INTO created;
+    EXCEPTION
+        WHEN OTHERS THEN
+            PERFORM set_config('market_mate.indicator_definition_lifecycle_write', 'off', true);
+            RAISE;
+    END;
+    PERFORM set_config('market_mate.indicator_definition_lifecycle_write', 'off', true);
 
     PERFORM append_audit_event(
         'indicator-lifecycle:' || definition_version_id_value::text || ':' || to_state_value,
@@ -404,6 +526,7 @@ CREATE FUNCTION indicator_definition_at(
 ) RETURNS indicator_definition_version
 LANGUAGE sql
 STABLE
+SET search_path = pg_catalog, public
 AS $$
     SELECT v
     FROM indicator_definition_version v

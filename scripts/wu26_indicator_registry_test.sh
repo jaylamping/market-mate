@@ -97,7 +97,9 @@ for key in \
   core_v1_declared digest_content_addressed experimental_starts_experimental \
   semantic_change_creates_new_version successor_lineage_recorded \
   missing_golden_cases_blocked noncanonical_horizon_blocked \
-  unregistered_source_blocked duplicate_version_blocked version_skip_blocked \
+  unregistered_source_blocked uncertified_input_source_blocked kind_flip_blocked \
+  backdated_effective_from_blocked direct_insert_blocked direct_lifecycle_insert_blocked \
+  duplicate_version_blocked version_skip_blocked \
   wrong_successor_blocked experimental_to_declared_blocked \
   unknown_definition_lifecycle_blocked retirement_is_lifecycle_record \
   retired_never_revisible historical_evaluation_keeps_its_version \
@@ -123,7 +125,7 @@ public_write_revoked=$("${PSQL[@]}" -c "
 pass "public indicator registry writes are revoked; workflow guards remain the measured local boundary"
 
 definition_payload=$(jq -c '{core_v1_declared, digest_content_addressed, experimental_starts_experimental, semantic_change_creates_new_version, successor_lineage_recorded, historical_evaluation_keeps_its_version, later_as_of_resolves_new_version, retired_definition_still_resolvable_by_version, current_view_latest_versions}' <<<"$probe_result")
-gate_payload=$(jq -c '{missing_golden_cases_blocked, noncanonical_horizon_blocked, unregistered_source_blocked, duplicate_version_blocked, version_skip_blocked, wrong_successor_blocked, experimental_to_declared_blocked, unknown_definition_lifecycle_blocked, retirement_is_lifecycle_record, retired_never_revisible}' <<<"$probe_result")
+gate_payload=$(jq -c '{missing_golden_cases_blocked, noncanonical_horizon_blocked, unregistered_source_blocked, uncertified_input_source_blocked, kind_flip_blocked, backdated_effective_from_blocked, direct_insert_blocked, direct_lifecycle_insert_blocked, duplicate_version_blocked, version_skip_blocked, wrong_successor_blocked, experimental_to_declared_blocked, unknown_definition_lifecycle_blocked, retirement_is_lifecycle_record, retired_never_revisible}' <<<"$probe_result")
 guard_payload=$(jq -c '{definition_update_blocked, definition_delete_blocked, lifecycle_truncate_blocked, appends_audited, retirement_audited}' <<<"$probe_result")
 chain_definition=$(append_audit_event "wu26-definitions-$(date +%s)" "research.indicator_definitions_proved" "$(jq -nc --argjson evidence "$definition_payload" '{probe: "wu26_indicator_registry_probe", evidence: $evidence}')")
 chain_gate=$(append_audit_event "wu26-gates-$(date +%s)" "research.indicator_registry_gates_proved" "$(jq -nc --argjson evidence "$gate_payload" '{probe: "wu26_indicator_registry_probe", evidence: $evidence}')")
@@ -173,6 +175,11 @@ jq -n \
       missing_golden_cases_blocked: $probe.missing_golden_cases_blocked,
       noncanonical_horizon_blocked: $probe.noncanonical_horizon_blocked,
       unregistered_source_blocked: $probe.unregistered_source_blocked,
+      uncertified_input_source_blocked: $probe.uncertified_input_source_blocked,
+      kind_flip_blocked: $probe.kind_flip_blocked,
+      backdated_effective_from_blocked: $probe.backdated_effective_from_blocked,
+      direct_insert_blocked: $probe.direct_insert_blocked,
+      direct_lifecycle_insert_blocked: $probe.direct_lifecycle_insert_blocked,
       duplicate_version_blocked: $probe.duplicate_version_blocked,
       version_skip_blocked: $probe.version_skip_blocked,
       wrong_successor_blocked: $probe.wrong_successor_blocked,
@@ -212,6 +219,11 @@ jq -e '
   and .gates.missing_golden_cases_blocked == true
   and .gates.noncanonical_horizon_blocked == true
   and .gates.unregistered_source_blocked == true
+  and .gates.uncertified_input_source_blocked == true
+  and .gates.kind_flip_blocked == true
+  and .gates.backdated_effective_from_blocked == true
+  and .gates.direct_insert_blocked == true
+  and .gates.direct_lifecycle_insert_blocked == true
   and .gates.duplicate_version_blocked == true
   and .gates.version_skip_blocked == true
   and .gates.wrong_successor_blocked == true

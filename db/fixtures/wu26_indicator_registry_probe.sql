@@ -121,53 +121,152 @@ BEGIN
       v_core_v2.successor_of = v_core_v1.definition_version_id
   );
 
-  -- Historical evaluations keep their definition versions: the decision-time
-  -- view before v2's effective date still resolves v1.
-  SELECT * INTO v_early_row
-  FROM indicator_definition_version v
-  WHERE v.indicator_key = 'close_return_20d'
-    AND v.effective_from <= '2026-02-01T00:00:00Z'::timestamptz
-  ORDER BY v.version DESC LIMIT 1;
-  SELECT * INTO v_late_row
-  FROM indicator_definition_version v
-  WHERE v.indicator_key = 'close_return_20d'
-    AND v.effective_from <= '2026-04-01T00:00:00Z'::timestamptz
-  ORDER BY v.version DESC LIMIT 1;
+  -- Decision-time view: an evaluation pinned before version 2 resolves v1;
+  -- a later as-of resolves v2; retired definitions still resolve by version.
+  v_early_row := indicator_definition_at('close_return_20d', '2026-02-01T00:00:00Z'::timestamptz);
+  v_late_row := indicator_definition_at('close_return_20d', '2026-04-01T00:00:00Z'::timestamptz);
   v_results := v_results || jsonb_build_object(
     'historical_evaluation_keeps_its_version', v_early_row.version = 1,
     'later_as_of_resolves_new_version', v_late_row.version = 2
   );
 
-  -- The current view resolves the latest version per indicator.
+  -- The current view resolves the latest version per indicator, scoped to
+  -- this probe's keys.
   v_results := v_results || jsonb_build_object('current_view_latest_versions', (
     SELECT count(*) = 2
       AND count(*) FILTER (WHERE indicator_key = 'close_return_20d' AND version = 2) = 1
       AND count(*) FILTER (WHERE indicator_key = 'experimental_earnings_gap_bias' AND version = 1) = 1
     FROM current_indicator_definition
+    WHERE indicator_key IN ('close_return_20d', 'experimental_earnings_gap_bias')
   ));
 
-  -- Invalid definitions fail closed.
+  -- An experiment can never be re-versioned into a core indicator, and a
+  -- core never silently demotes into an experiment (issue #40).
+  BEGIN
+    PERFORM append_indicator_definition_version(
+      'experimental_earnings_gap_bias', 2, 'core',
+      '{
+        "purpose": "Kind-flip attempt: the same key re-declared as core.",
+        "units": "fraction", "formula": "x", "timestamp_semantics": "s",
+        "adjustment_semantics": "s", "calendar": "c", "missingness": "m",
+        "ownership": "o", "inputs": [{"name": "x", "source": "licensed-eod-wu26"}],
+        "certified_sources": ["licensed-eod-wu26"],
+        "precision": 1, "freshness": {"max_receipt_lag_sessions": 1},
+        "valid_ranges": {"min": -1.0},
+        "golden_cases": [{"name": "g", "expected": 1}],
+        "canonical_horizons": [5]
+      }'::jsonb,
+      v_experimental.definition_version_id, '2026-05-01T00:00:00Z', v_lineage);
+    RAISE EXCEPTION 'probe corrupted: experimental -> core version flip was accepted';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%cannot change kind from experimental to core%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('kind_flip_blocked', true);
+  END;
+
+  -- A later version cannot backdate its effective_from: decision-time
+  -- resolution of earlier as-of moments must stay stable.
+  BEGIN
+    PERFORM append_indicator_definition_version(
+      'close_return_20d', 3, 'core',
+      '{
+        "purpose": "Backdating attempt.",
+        "units": "fraction", "formula": "x", "timestamp_semantics": "s",
+        "adjustment_semantics": "s", "calendar": "c", "missingness": "m",
+        "ownership": "o", "inputs": [{"name": "x", "source": "licensed-eod-wu26"}],
+        "certified_sources": ["licensed-eod-wu26"],
+        "precision": 1, "freshness": {"max_receipt_lag_sessions": 1},
+        "valid_ranges": {"min": -1.0},
+        "golden_cases": [{"name": "g", "expected": 1}],
+        "canonical_horizons": [5]
+      }'::jsonb,
+      v_core_v2.definition_version_id, '2026-02-15T00:00:00Z', v_lineage);
+    RAISE EXCEPTION 'probe corrupted: backdated effective_from was accepted';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%effective_from must advance%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('backdated_effective_from_blocked', true);
+  END;
+
+  -- Direct table INSERTs are gated behind the workflow session flag.
+  BEGIN
+    INSERT INTO indicator_definition_version (
+      indicator_key, version, indicator_kind, definition_state,
+      definition, definition_digest, effective_from,
+      source_lineage, receipt_time, record_environment
+    ) VALUES (
+      'smuggled_indicator', 1, 'core', 'declared',
+      '{"purpose":"smuggled"}'::jsonb, repeat('a', 64),
+      '2026-01-01T00:00:00Z', v_lineage, now(), 'local_research'
+    );
+    RAISE EXCEPTION 'probe corrupted: direct definition INSERT was accepted';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%must go through append_indicator_definition_version%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('direct_insert_blocked', true);
+  END;
+
+  BEGIN
+    INSERT INTO indicator_definition_lifecycle (
+      definition_version_id, from_state, to_state, reason,
+      source_lineage, receipt_time, record_environment
+    ) VALUES (
+      v_core_v1.definition_version_id, 'declared', 'retired', 'smuggled retirement',
+      v_lineage, now(), 'local_research'
+    );
+    RAISE EXCEPTION 'probe corrupted: direct lifecycle INSERT was accepted';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%must go through record_indicator_definition_lifecycle%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('direct_lifecycle_insert_blocked', true);
+  END;
+
+  -- Invalid definitions fail closed: missing golden cases and a noncanonical
+  -- horizon are probed separately so neither gate can mask the other.
   BEGIN
     PERFORM append_indicator_definition_version(
       'invalid_indicator', 1, 'core',
       '{
-        "purpose": "Missing golden cases and horizon discipline.",
+        "purpose": "Missing golden cases.",
         "units": "fraction", "formula": "x", "timestamp_semantics": "s",
         "adjustment_semantics": "s", "calendar": "c", "missingness": "m",
-        "ownership": "o", "inputs": [{"name": "x"}], "certified_sources": ["licensed-eod-wu26"],
-        "precision": 1, "freshness": {}, "valid_ranges": {},
-        "golden_cases": [], "canonical_horizons": [13]
+        "ownership": "o", "inputs": [{"name": "x", "source": "licensed-eod-wu26"}],
+        "certified_sources": ["licensed-eod-wu26"],
+        "precision": 1, "freshness": {"max_receipt_lag_sessions": 1},
+        "valid_ranges": {"min": -1.0},
+        "golden_cases": [], "canonical_horizons": [5]
       }'::jsonb,
       NULL, '2026-01-01T00:00:00Z', v_lineage);
-    RAISE EXCEPTION 'probe corrupted: invalid definition was accepted';
+    RAISE EXCEPTION 'probe corrupted: definition without golden cases was accepted';
   EXCEPTION
     WHEN others THEN
       IF SQLERRM NOT LIKE '%incomplete, mistyped, or uses a noncanonical horizon%' THEN RAISE; END IF;
-      v_results := v_results || jsonb_build_object(
-        'missing_golden_cases_blocked', true, 'noncanonical_horizon_blocked', true);
+      v_results := v_results || jsonb_build_object('missing_golden_cases_blocked', true);
   END;
 
-  -- Unregistered sources fail closed.
+  BEGIN
+    PERFORM append_indicator_definition_version(
+      'invalid_horizon_indicator', 1, 'core',
+      '{
+        "purpose": "Noncanonical horizon.",
+        "units": "fraction", "formula": "x", "timestamp_semantics": "s",
+        "adjustment_semantics": "s", "calendar": "c", "missingness": "m",
+        "ownership": "o", "inputs": [{"name": "x", "source": "licensed-eod-wu26"}],
+        "certified_sources": ["licensed-eod-wu26"],
+        "precision": 1, "freshness": {"max_receipt_lag_sessions": 1},
+        "valid_ranges": {"min": -1.0},
+        "golden_cases": [{"name": "g", "expected": 1}],
+        "canonical_horizons": [13]
+      }'::jsonb,
+      NULL, '2026-01-01T00:00:00Z', v_lineage);
+    RAISE EXCEPTION 'probe corrupted: noncanonical horizon was accepted';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%incomplete, mistyped, or uses a noncanonical horizon%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('noncanonical_horizon_blocked', true);
+  END;
+
+  -- Unregistered sources fail closed, both in certified_sources and in inputs.
   BEGIN
     PERFORM append_indicator_definition_version(
       'bad_source_indicator', 1, 'core',
@@ -177,7 +276,8 @@ BEGIN
         "adjustment_semantics": "s", "calendar": "c", "missingness": "m",
         "ownership": "o", "inputs": [{"name": "x", "source": "not-registered"}],
         "certified_sources": ["not-registered"],
-        "precision": 1, "freshness": {}, "valid_ranges": {},
+        "precision": 1, "freshness": {"max_receipt_lag_sessions": 1},
+        "valid_ranges": {"min": -1.0},
         "golden_cases": [{"name": "g", "expected": 1}],
         "canonical_horizons": [5]
       }'::jsonb,
@@ -189,6 +289,28 @@ BEGIN
       v_results := v_results || jsonb_build_object('unregistered_source_blocked', true);
   END;
 
+  BEGIN
+    PERFORM append_indicator_definition_version(
+      'bad_input_source_indicator', 1, 'core',
+      '{
+        "purpose": "Cites an uncertified source through an input.",
+        "units": "fraction", "formula": "x", "timestamp_semantics": "s",
+        "adjustment_semantics": "s", "calendar": "c", "missingness": "m",
+        "ownership": "o", "inputs": [{"name": "x", "source": "licensed-eod-wu26"}, {"name": "y", "source": "never-registered"}],
+        "certified_sources": ["licensed-eod-wu26"],
+        "precision": 1, "freshness": {"max_receipt_lag_sessions": 1},
+        "valid_ranges": {"min": -1.0},
+        "golden_cases": [{"name": "g", "expected": 1}],
+        "canonical_horizons": [5]
+      }'::jsonb,
+      NULL, '2026-01-01T00:00:00Z', v_lineage);
+    RAISE EXCEPTION 'probe corrupted: uncertified input source was accepted';
+  EXCEPTION
+    WHEN others THEN
+      IF SQLERRM NOT LIKE '%incomplete, mistyped%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('uncertified_input_source_blocked', true);
+  END;
+
   -- Duplicate versions and version skips fail closed.
   BEGIN
     PERFORM append_indicator_definition_version(
@@ -197,8 +319,10 @@ BEGIN
         "purpose": "Duplicate of an immutable version.",
         "units": "fraction", "formula": "x", "timestamp_semantics": "s",
         "adjustment_semantics": "s", "calendar": "c", "missingness": "m",
-        "ownership": "o", "inputs": [{"name": "x"}], "certified_sources": ["licensed-eod-wu26"],
-        "precision": 1, "freshness": {}, "valid_ranges": {},
+        "ownership": "o", "inputs": [{"name": "x", "source": "licensed-eod-wu26"}],
+        "certified_sources": ["licensed-eod-wu26"],
+        "precision": 1, "freshness": {"max_receipt_lag_sessions": 1},
+        "valid_ranges": {"min": -1.0},
         "golden_cases": [{"name": "g", "expected": 1}],
         "canonical_horizons": [5]
       }'::jsonb,
@@ -217,8 +341,10 @@ BEGIN
         "purpose": "Version skip.",
         "units": "fraction", "formula": "x", "timestamp_semantics": "s",
         "adjustment_semantics": "s", "calendar": "c", "missingness": "m",
-        "ownership": "o", "inputs": [{"name": "x"}], "certified_sources": ["licensed-eod-wu26"],
-        "precision": 1, "freshness": {}, "valid_ranges": {},
+        "ownership": "o", "inputs": [{"name": "x", "source": "licensed-eod-wu26"}],
+        "certified_sources": ["licensed-eod-wu26"],
+        "precision": 1, "freshness": {"max_receipt_lag_sessions": 1},
+        "valid_ranges": {"min": -1.0},
         "golden_cases": [{"name": "g", "expected": 1}],
         "canonical_horizons": [5]
       }'::jsonb,
@@ -238,8 +364,10 @@ BEGIN
         "purpose": "Wrong successor lineage.",
         "units": "fraction", "formula": "x", "timestamp_semantics": "s",
         "adjustment_semantics": "s", "calendar": "c", "missingness": "m",
-        "ownership": "o", "inputs": [{"name": "x"}], "certified_sources": ["licensed-eod-wu26"],
-        "precision": 1, "freshness": {}, "valid_ranges": {},
+        "ownership": "o", "inputs": [{"name": "x", "source": "licensed-eod-wu26"}],
+        "certified_sources": ["licensed-eod-wu26"],
+        "precision": 1, "freshness": {"max_receipt_lag_sessions": 1},
+        "valid_ranges": {"min": -1.0},
         "golden_cases": [{"name": "g", "expected": 1}],
         "canonical_horizons": [5]
       }'::jsonb,
