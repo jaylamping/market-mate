@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-08-29T12:57:06Z",
+  "captured_at": "2026-08-30T01:14:48Z",
   "backend_ready": {
     "status": "ok",
     "service": "backend",
@@ -10,7 +10,7 @@
     "checkpoint_failure": null
   },
   "schema": {
-    "head_version": 4,
+    "head_version": 21,
     "registered_kind": "evidence",
     "pgcrypto_installed": true
   },
@@ -30,8 +30,8 @@
       },
       "receipt_time": "2026-08-28T20:00:01+00:00",
       "record_environment": "local_research",
-      "previous_hash": "88cf4a50b6763aa15f4fe1f5aa27087d095fb0e4f3ab1c4754f693ea37415de2",
-      "event_hash": "128688539bca2ccde528d2b44a6208434e7a7de0c3d602c8b1e04581a677ed8e"
+      "previous_hash": "613a683c0d6a390d629c51997c8eb26472046cd1e279d5191de12b3403a5344e",
+      "event_hash": "34cda77488f2be3d7ced9661da954185c1d18eeb932b641aafdbdc987f8c6db4"
     },
     {
       "chain_position": 3,
@@ -48,8 +48,8 @@
       },
       "receipt_time": "2026-08-28T20:00:03+00:00",
       "record_environment": "local_research",
-      "previous_hash": "128688539bca2ccde528d2b44a6208434e7a7de0c3d602c8b1e04581a677ed8e",
-      "event_hash": "f234af6ea19fac25846a27b3fa3fe4ef636a9fc6b8c9fadbf2f846a8608ded49"
+      "previous_hash": "34cda77488f2be3d7ced9661da954185c1d18eeb932b641aafdbdc987f8c6db4",
+      "event_hash": "4f4de3ecc27338211ec60c2ab69510fcad93c2cec54c6863a20a590e64b68471"
     },
     {
       "chain_position": 4,
@@ -66,8 +66,8 @@
       },
       "receipt_time": "2026-08-28T20:00:05+00:00",
       "record_environment": "local_research",
-      "previous_hash": "f234af6ea19fac25846a27b3fa3fe4ef636a9fc6b8c9fadbf2f846a8608ded49",
-      "event_hash": "abb67aa099c5f854c7e061fa662c9f18a33e7f5cd815e1925ce99039909fda3b"
+      "previous_hash": "4f4de3ecc27338211ec60c2ab69510fcad93c2cec54c6863a20a590e64b68471",
+      "event_hash": "65416f4db7606c4b36c24196dff31e073a988655dabed423be4d3691ad75b459"
     }
   ],
   "valid_verification": {
@@ -85,10 +85,10 @@
     "checked_events": 2,
     "break_position": 3,
     "reason": "event_hash_mismatch",
-    "expected_previous_hash": "128688539bca2ccde528d2b44a6208434e7a7de0c3d602c8b1e04581a677ed8e",
-    "actual_previous_hash": "128688539bca2ccde528d2b44a6208434e7a7de0c3d602c8b1e04581a677ed8e",
-    "expected_event_hash": "8d3e4b1ea166a2d417800c65852ef7875d2e702877c881e1b795a3993749d009",
-    "actual_event_hash": "f234af6ea19fac25846a27b3fa3fe4ef636a9fc6b8c9fadbf2f846a8608ded49"
+    "expected_previous_hash": "34cda77488f2be3d7ced9661da954185c1d18eeb932b641aafdbdc987f8c6db4",
+    "actual_previous_hash": "34cda77488f2be3d7ced9661da954185c1d18eeb932b641aafdbdc987f8c6db4",
+    "expected_event_hash": "b02b9f9ba7689cf5dc92244ce704beeb009ae03b2de766ef47b64a29648a8604",
+    "actual_event_hash": "4f4de3ecc27338211ec60c2ab69510fcad93c2cec54c6863a20a590e64b68471"
   },
   "mutation_guards": {
     "update_failed_closed": true,

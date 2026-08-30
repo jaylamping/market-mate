@@ -1,0 +1,46 @@
+{
+  "captured_at": "2026-08-30T01:03:57Z",
+  "source_registry": {
+    "source_key": "licensed-eod-primary",
+    "required_terms_recorded": true,
+    "versions_point_in_time": true,
+    "overlapping_version_rejected": true,
+    "unregistered_source_rejected": true,
+    "successor_closes_open_range": true,
+    "versioned_records_append_only": true
+  },
+  "data_contract": {
+    "contract_registered": true,
+    "versions_effectively_dated": true,
+    "consumed_fields_bound_to_version": true,
+    "connector_fields_match_contract_version": true,
+    "mismatched_field_version_rejected": true,
+    "contract_source_range_rejected": true,
+    "overlapping_version_rejected": true,
+    "source_version_mismatch_rejected": true,
+    "connector_binding_version_mismatch_rejected": true,
+    "successor_closes_open_range": true,
+    "bound_field_keys": [
+      "close_price",
+      "volume"
+    ]
+  },
+  "source_connector": {
+    "update_blocked": true,
+    "delete_blocked": true
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 3,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  },
+  "audit_positions": {
+    "source_registry": 2,
+    "data_contract": 3
+  }
+}

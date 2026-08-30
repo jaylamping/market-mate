@@ -1,9 +1,9 @@
 {
-  "captured_at": "2026-08-29T18:28:26Z",
+  "captured_at": "2026-08-30T01:17:24Z",
   "environment_scan": {
     "profile": "local_research",
     "surface": "environment",
-    "scanned_at": "2026-08-29T18:28:19.534693Z",
+    "scanned_at": "2026-08-30T01:17:17.814896Z",
     "variables_scanned": 5,
     "allowed_config": [
       "CUSTODY_URL"
@@ -23,7 +23,7 @@
   "compose_config_scan": {
     "profile": "local_research",
     "surface": "json-input",
-    "scanned_at": "2026-08-29T18:28:20.432879Z",
+    "scanned_at": "2026-08-30T01:17:18.770283Z",
     "variables_scanned": 6,
     "allowed_config": [
       "CUSTODY_DATA_DIR",
@@ -52,7 +52,7 @@
       "event": "config.redact_demo",
       "level": "info",
       "service": "backend",
-      "ts": "2026-08-29T18:28:22.223856Z"
+      "ts": "2026-08-30T01:17:20.636533Z"
     }
   },
   "negative_probes": [
@@ -62,7 +62,7 @@
       "report": {
         "profile": "local_research",
         "surface": "environment",
-        "scanned_at": "2026-08-29T18:28:22.708189Z",
+        "scanned_at": "2026-08-30T01:17:21.252074Z",
         "variables_scanned": 6,
         "allowed_config": [
           "CUSTODY_URL"
@@ -94,7 +94,7 @@
       "report": {
         "profile": "local_research",
         "surface": "environment",
-        "scanned_at": "2026-08-29T18:28:23.238811Z",
+        "scanned_at": "2026-08-30T01:17:21.857964Z",
         "variables_scanned": 6,
         "allowed_config": [
           "CUSTODY_URL"
@@ -126,7 +126,7 @@
       "report": {
         "profile": "local_research",
         "surface": "environment",
-        "scanned_at": "2026-08-29T18:28:23.798013Z",
+        "scanned_at": "2026-08-30T01:17:22.468383Z",
         "variables_scanned": 6,
         "allowed_config": [
           "CUSTODY_URL"
@@ -166,7 +166,7 @@
       ],
       "profile": "local_research",
       "result": "blocked",
-      "scanned_at": "2026-08-29T18:28:24.311323Z",
+      "scanned_at": "2026-08-30T01:17:23.034822Z",
       "service": "backend",
       "surface": "environment",
       "system_variables": [
@@ -174,7 +174,7 @@
         "HOSTNAME",
         "PATH"
       ],
-      "ts": "2026-08-29T18:28:24.311414Z",
+      "ts": "2026-08-30T01:17:23.034908Z",
       "unrecognized_variables": [
         "ALPACA_API_KEY"
       ],

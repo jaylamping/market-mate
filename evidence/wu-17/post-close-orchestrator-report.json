@@ -1,0 +1,36 @@
+{
+  "captured_at": "2026-08-30T01:09:31Z",
+  "sample_days": {
+    "recorded": true,
+    "exactly_one_authoritative_cycle": true
+  },
+  "deadline": {
+    "targeted_90_minutes": true,
+    "on_time_published": true
+  },
+  "stale_and_degraded": {
+    "late_interval_visible": true,
+    "partial_failure_degraded": true,
+    "dependency_scope_restricted": true
+  },
+  "append_only": {
+    "duplicate_publish_blocked": true,
+    "cycle_update_blocked": true,
+    "manifest_update_blocked": true,
+    "dependency_truncate_blocked": true
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 3,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  },
+  "audit_positions": {
+    "cycle": 2,
+    "stale_interval": 3
+  }
+}

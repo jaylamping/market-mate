@@ -1,0 +1,40 @@
+{
+  "captured_at": "2026-08-30T01:07:54Z",
+  "snapshots": {
+    "dates_preserved": true,
+    "historical_mode_only": true,
+    "point_in_time_provenance_preserved": true,
+    "connector_contract_bound": true,
+    "certified_mapping_attached": true,
+    "source_lineage_attached": true
+  },
+  "contracts": {
+    "mapped_to_snapshots": true,
+    "deliverable_semantics_attached": true,
+    "source_lineage_attached": true
+  },
+  "entitlement": {
+    "gate_allowed": true,
+    "historical_use_receipts_recorded": true,
+    "realtime_rejected": true
+  },
+  "append_only": {
+    "snapshot_update_blocked": true,
+    "deliverable_update_blocked": true,
+    "contract_truncate_blocked": true
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 3,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  },
+  "audit_positions": {
+    "snapshot": 2,
+    "contract": 3
+  }
+}

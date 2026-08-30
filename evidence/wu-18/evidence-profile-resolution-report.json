@@ -1,0 +1,39 @@
+{
+  "captured_at": "2026-08-30T01:10:20Z",
+  "profiles": {
+    "universal": true,
+    "options": true,
+    "holding": true,
+    "portfolio": true,
+    "typed_and_distinct": true
+  },
+  "obligations": {
+    "not_applicable_has_proved_rule": true,
+    "proof_artifact_bound": true,
+    "no_default_substitution": true,
+    "overlapping_route_blocked": true,
+    "unproved_not_applicable_blocked": true,
+    "unverified_proof_blocked": true,
+    "proof_expression_binding_blocked": true,
+    "verified_artifact_direct_insert_blocked": true
+  },
+  "append_only": {
+    "proof_artifact_update_blocked": true,
+    "resolution_update_blocked": true,
+    "obligation_update_blocked": true
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 3,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  },
+  "audit_positions": {
+    "profile": 2,
+    "obligation": 3
+  }
+}

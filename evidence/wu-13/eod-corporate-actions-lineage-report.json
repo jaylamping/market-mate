@@ -1,0 +1,46 @@
+{
+  "captured_at": "2026-08-30T01:06:18Z",
+  "vendor_selection": {
+    "recorded": true
+  },
+  "ingestion": {
+    "daily_bar_ingested": true,
+    "missing_observation_ingested": true,
+    "revision_appended": true,
+    "point_in_time_preserved": true,
+    "future_availability_hidden": true,
+    "corporate_action_ingested": true,
+    "corporate_action_revision_appended": true,
+    "corporate_action_terms_revised": true,
+    "entitlement_gate_allowed": true,
+    "allowed_use_receipts_recorded": true
+  },
+  "entitlement_gate": {
+    "denial_recorded": true,
+    "denied_use_has_no_observation": true
+  },
+  "provenance": {
+    "price_source_lineage_attached": true,
+    "corporate_action_source_lineage_attached": true,
+    "connector_contract_bound": true
+  },
+  "append_only": {
+    "price_update_blocked": true,
+    "corporate_action_update_blocked": true,
+    "price_truncate_blocked": true
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 3,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  },
+  "audit_positions": {
+    "ingestion": 2,
+    "revision": 3
+  }
+}

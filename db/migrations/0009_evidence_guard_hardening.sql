@@ -402,6 +402,7 @@ DECLARE
     max_version integer;
     previous_terms corporate_action_terms_version%ROWTYPE;
     created corporate_action_terms_version%ROWTYPE;
+    terms_version_time timestamptz := clock_timestamp();
 BEGIN
     PERFORM pg_advisory_xact_lock(8706);
 
@@ -421,7 +422,7 @@ BEGIN
         PERFORM set_config('market_mate.ca_write', 'on', true);
         BEGIN
             UPDATE corporate_action_terms_version
-               SET known_to = clock_timestamp(),
+               SET known_to = terms_version_time,
                    superseded_by_terms_id = NULL
              WHERE terms_id = previous_terms.terms_id;
         EXCEPTION
@@ -439,7 +440,7 @@ BEGIN
             terms, terms_digest, superseded_by_terms_id,
             source_lineage, receipt_time, record_environment
         ) VALUES (
-            case_id_value, max_version + 1, clock_timestamp(), NULL,
+            case_id_value, max_version + 1, terms_version_time, NULL,
             terms_value, encode(digest(terms_value::text, 'sha256'), 'hex'), NULL,
             source_lineage_value, now(), 'local_research'
         ) RETURNING * INTO created;
