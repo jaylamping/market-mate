@@ -7,7 +7,7 @@
 -- is the only stage effect. Overlay membership is a parallel evidence
 -- set; it does not insert system_selected rows into coverage_universe_membership.
 
--- A pin cannot grant Trade Eligible: promotion_allowed requires NOT pinned.
+-- Promotion of a pinned subject is refused.
 CREATE OR REPLACE FUNCTION evaluate_coverage_policy(
     policy_version_id_value uuid,
     subject_key_value text,
@@ -746,6 +746,10 @@ BEGIN
             RAISE EXCEPTION 'principal pin successor_of must be the same overlay security'
                 USING ERRCODE = '22023';
         END IF;
+        IF nomination_id_value = predecessor.nomination_id THEN
+            RAISE EXCEPTION 'pin renewal requires a new nomination with a recorded reason'
+                USING ERRCODE = '22023';
+        END IF;
         IF principal_pin_current_state(successor_of_value) <> 'active' THEN
             RAISE EXCEPTION 'only an active pin can be superseded by renewal'
                 USING ERRCODE = '22023';
@@ -786,7 +790,7 @@ BEGIN
     IF successor_of_value IS NOT NULL THEN
         PERFORM record_principal_pin_lifecycle(
             successor_of_value, 'superseded',
-            'renewed with recorded reason', NULL, source_lineage_value);
+            nomination_row.reason, NULL, source_lineage_value);
     END IF;
 
     PERFORM set_config('market_mate.principal_pin_write', 'on', true);

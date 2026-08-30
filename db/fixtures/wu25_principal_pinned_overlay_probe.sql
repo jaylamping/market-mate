@@ -388,8 +388,9 @@ BEGIN
       IF SQLSTATE = '22023' THEN v_expire_early_blocked := true; END IF;
   END;
   BEGIN
-    PERFORM nominate_principal_candidate(
-      v_pin_ids[3], 'wu25-principal', '', v_lineage);
+    PERFORM pin_principal_overlay(
+      v_noms[3].nomination_id, v_universe.universe_version_id,
+      'principal-pinned-overlay', clock_timestamp(), v_pins[3].pin_id, v_lineage);
   EXCEPTION
     WHEN others THEN
       IF SQLSTATE = '22023' THEN v_renew_no_reason_blocked := true; END IF;
