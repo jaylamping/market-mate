@@ -47,18 +47,19 @@ append_audit_event() {
   local event_id="$1" event_type="$2" payload="$3"
   "${PSQL[@]}" -c "
     SELECT chain_position FROM append_audit_event(
-      '$event_id', '$event_type', now(), '$payload'::jsonb,
+      \$a\$${event_id}\$a\$, \$a\$${event_type}\$a\$, now(),
+      \$a\$${payload}\$a\$::jsonb,
       '{\"source\":\"wu23-acceptance\",\"entitlement_version\":\"coverage-policy-v1\"}'::jsonb,
       now(), 'local_research'
     );
-  " || fail "audit append $event_type failed"
+  "
 }
 
 require_command docker
 require_command jq
 log "== WU-23 Discovery Pool screener test $(date -u +%FT%TZ) (project: $WU23_PROJECT_NAME) =="
 "${COMPOSE[@]}" config --quiet >>"$BRING_UP_LOG" 2>&1 || fail "Compose configuration is invalid"
-for sibling in market-mate-wu01 market-mate-wu02 market-mate-wu03 market-mate-wu04 market-mate-wu05 market-mate-wu06 market-mate-wu07 market-mate-wu08 market-mate-wu09 market-mate-wu10 market-mate-wu11 market-mate-wu12 market-mate-wu13 market-mate-wu14 market-mate-wu15 market-mate-wu16 market-mate-wu17 market-mate-wu18 market-mate-wu19 market-mate-wu20 market-mate-wu21 market-mate-wu22; do
+for sibling in market-mate-wu01 market-mate-wu02 market-mate-wu03 market-mate-wu04 market-mate-wu05 market-mate-wu06 market-mate-wu07 market-mate-wu08 market-mate-wu09 market-mate-wu10 market-mate-wu11 market-mate-wu12 market-mate-wu13 market-mate-wu14 market-mate-wu15 market-mate-wu16 market-mate-wu17 market-mate-wu18 market-mate-wu19 market-mate-wu20 market-mate-wu21 market-mate-wu22 market-mate-wu24 market-mate-wu25 market-mate-wu26; do
   [[ "$sibling" == "$WU23_PROJECT_NAME" ]] && continue
   docker compose --project-name "$sibling" down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
 done
@@ -103,8 +104,14 @@ for key in \
   retired_membership_excluded_from_universe thin_rejected_for_liquidity \
   late_membership_invisible_at_run_as_of pricefail_rejected_for_price \
   membership_facts_recorded late_member_hidden_before_receipt \
-  late_member_visible_after_receipt deterministic_replay_matches \
+  late_member_visible_after_receipt   deterministic_replay_matches \
   duplicate_run_blocked insufficient_calendar_fails_closed \
+  empty_universe_fails_closed \
+  otcprice_rejected_for_price_without_crash \
+  pennythin_rejected_for_liquidity_without_crash \
+  backdated_otc_listing_invisible_at_run_as_of \
+  replay_stable_after_identity_lifecycle_change \
+  later_suspension_visible_after_receipt \
   future_as_of_blocked invalid_definition_blocked unknown_policy_blocked \
   config_update_blocked run_update_blocked membership_delete_blocked \
   universe_truncate_blocked run_audited; do
@@ -128,12 +135,15 @@ public_write_revoked=$("${PSQL[@]}" -c "
 [[ "$public_write_revoked" == "t" ]] || fail "public discovery write privileges were not revoked"
 pass "public discovery writes are revoked; workflow guards remain the measured local boundary"
 
-screen_payload=$(jq -c '{config_digest_valid, config_binds_governing_policy, run_complete, run_counts_consistent, run_digest_valid, clean_common_stock_included, preferred_rejected_for_class, sparse_rejected_for_data, otc_tagged_enhanced_risk_not_rejected_by_label, uncertified_identity_rejected, conflicting_identity_rejected, penny_tagged_enhanced_risk_not_rejected_by_price, retired_membership_excluded_from_universe, thin_rejected_for_liquidity, late_membership_invisible_at_run_as_of, pricefail_rejected_for_price, membership_facts_recorded}' <<<"$probe_result")
-replay_payload=$(jq -c '{late_member_hidden_before_receipt, late_member_visible_after_receipt, deterministic_replay_matches, duplicate_run_blocked, insufficient_calendar_fails_closed, future_as_of_blocked}' <<<"$probe_result")
+screen_payload=$(jq -c '{config_digest_valid, config_binds_governing_policy, run_complete, run_counts_consistent, run_digest_valid, clean_common_stock_included, preferred_rejected_for_class, sparse_rejected_for_data, otc_tagged_enhanced_risk_not_rejected_by_label, uncertified_identity_rejected, conflicting_identity_rejected, penny_tagged_enhanced_risk_not_rejected_by_price, retired_membership_excluded_from_universe, thin_rejected_for_liquidity, late_membership_invisible_at_run_as_of, pricefail_rejected_for_price, otcprice_rejected_for_price_without_crash, pennythin_rejected_for_liquidity_without_crash, backdated_otc_listing_invisible_at_run_as_of, membership_facts_recorded}' <<<"$probe_result")
+replay_payload=$(jq -c '{late_member_hidden_before_receipt, late_member_visible_after_receipt, deterministic_replay_matches, replay_stable_after_identity_lifecycle_change, later_suspension_visible_after_receipt, duplicate_run_blocked, insufficient_calendar_fails_closed, empty_universe_fails_closed, future_as_of_blocked}' <<<"$probe_result")
 guard_payload=$(jq -c '{invalid_definition_blocked, unknown_policy_blocked, config_update_blocked, run_update_blocked, membership_delete_blocked, universe_truncate_blocked, run_audited}' <<<"$probe_result")
-chain_screen=$(append_audit_event "wu23-screen-$(date +%s)" "research.discovery_pool_screener_proved" "$(jq -nc --argjson evidence "$screen_payload" '{probe: "wu23_discovery_pool_probe", evidence: $evidence}')")
-chain_replay=$(append_audit_event "wu23-replay-$(date +%s)" "research.discovery_pool_replay_proved" "$(jq -nc --argjson evidence "$replay_payload" '{probe: "wu23_discovery_pool_probe", evidence: $evidence}')")
-chain_guard=$(append_audit_event "wu23-guards-$(date +%s)" "research.discovery_pool_guards_probed" "$(jq -nc --argjson evidence "$guard_payload" '{probe: "wu23_discovery_pool_probe", evidence: $evidence}')")
+chain_screen=$(append_audit_event "wu23-screen-$(date +%s)" "research.discovery_pool_screener_proved" "$(jq -nc --argjson evidence "$screen_payload" '{probe: "wu23_discovery_pool_probe", evidence: $evidence}')") \
+  || fail "audit append discovery_pool_screener_proved failed"
+chain_replay=$(append_audit_event "wu23-replay-$(date +%s)" "research.discovery_pool_replay_proved" "$(jq -nc --argjson evidence "$replay_payload" '{probe: "wu23_discovery_pool_probe", evidence: $evidence}')") \
+  || fail "audit append discovery_pool_replay_proved failed"
+chain_guard=$(append_audit_event "wu23-guards-$(date +%s)" "research.discovery_pool_guards_probed" "$(jq -nc --argjson evidence "$guard_payload" '{probe: "wu23_discovery_pool_probe", evidence: $evidence}')") \
+  || fail "audit append discovery_pool_guards_probed failed"
 [[ "$chain_replay" -gt "$chain_screen" && "$chain_guard" -gt "$chain_replay" ]] \
   || fail "audit chain positions did not advance: $chain_screen -> $chain_replay -> $chain_guard"
 chain_ok=$("${PSQL[@]}" -c "SELECT row_to_json(v) FROM verify_audit_event_chain() v;") \
@@ -181,14 +191,20 @@ jq -n \
       thin_rejected_for_liquidity: $probe.thin_rejected_for_liquidity,
       late_membership_invisible_at_run_as_of: $probe.late_membership_invisible_at_run_as_of,
       pricefail_rejected_for_price: $probe.pricefail_rejected_for_price,
+      otcprice_rejected_for_price_without_crash: $probe.otcprice_rejected_for_price_without_crash,
+      pennythin_rejected_for_liquidity_without_crash: $probe.pennythin_rejected_for_liquidity_without_crash,
+      backdated_otc_listing_invisible_at_run_as_of: $probe.backdated_otc_listing_invisible_at_run_as_of,
       membership_facts_recorded: $probe.membership_facts_recorded
     },
     replay_and_fail_closed: {
       late_member_hidden_before_receipt: $probe.late_member_hidden_before_receipt,
       late_member_visible_after_receipt: $probe.late_member_visible_after_receipt,
       deterministic_replay_matches: $probe.deterministic_replay_matches,
+      replay_stable_after_identity_lifecycle_change: $probe.replay_stable_after_identity_lifecycle_change,
+      later_suspension_visible_after_receipt: $probe.later_suspension_visible_after_receipt,
       duplicate_run_blocked: $probe.duplicate_run_blocked,
       insufficient_calendar_fails_closed: $probe.insufficient_calendar_fails_closed,
+      empty_universe_fails_closed: $probe.empty_universe_fails_closed,
       future_as_of_blocked: $probe.future_as_of_blocked
     },
     append_only_and_fail_closed: {
@@ -228,12 +244,18 @@ jq -e '
   and .screening.thin_rejected_for_liquidity == true
   and .screening.late_membership_invisible_at_run_as_of == true
   and .screening.pricefail_rejected_for_price == true
+  and .screening.otcprice_rejected_for_price_without_crash == true
+  and .screening.pennythin_rejected_for_liquidity_without_crash == true
+  and .screening.backdated_otc_listing_invisible_at_run_as_of == true
   and .screening.membership_facts_recorded == true
   and .replay_and_fail_closed.late_member_hidden_before_receipt == true
   and .replay_and_fail_closed.late_member_visible_after_receipt == true
   and .replay_and_fail_closed.deterministic_replay_matches == true
+  and .replay_and_fail_closed.replay_stable_after_identity_lifecycle_change == true
+  and .replay_and_fail_closed.later_suspension_visible_after_receipt == true
   and .replay_and_fail_closed.duplicate_run_blocked == true
   and .replay_and_fail_closed.insufficient_calendar_fails_closed == true
+  and .replay_and_fail_closed.empty_universe_fails_closed == true
   and .replay_and_fail_closed.future_as_of_blocked == true
   and .append_only_and_fail_closed.invalid_definition_blocked == true
   and .append_only_and_fail_closed.unknown_policy_blocked == true

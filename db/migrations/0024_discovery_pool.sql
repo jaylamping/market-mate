@@ -306,6 +306,7 @@ SET search_path = pg_catalog, public
 AS $$
 DECLARE
     created discovery_screen_config_version%ROWTYPE;
+    expected_version_value integer;
 BEGIN
     IF coalesce(btrim(config_key_value), '') = ''
        OR version_value IS NULL OR version_value < 1
@@ -333,6 +334,18 @@ BEGIN
             USING ERRCODE = '22023';
     END IF;
 
+    -- Serialize per-key version allocation, mirroring the coverage-policy
+    -- registry, and require consecutive versions from 1.
+    PERFORM pg_advisory_xact_lock(hashtextextended(config_key_value, 24023));
+    SELECT coalesce(max(version), 0) + 1 INTO expected_version_value
+    FROM discovery_screen_config_version
+    WHERE config_key = config_key_value;
+    IF version_value <> expected_version_value THEN
+        RAISE EXCEPTION
+            'discovery screen config versions must advance consecutively: expected %, received %',
+            expected_version_value, version_value
+            USING ERRCODE = '55000';
+    END IF;
     INSERT INTO discovery_screen_config_version (
         config_key, version, governing_policy_version_id,
         definition, definition_digest, effective_from,
@@ -348,6 +361,24 @@ BEGIN
     RETURN created;
 END;
 $$;
+
+CREATE FUNCTION validate_discovery_screen_config_content() RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = pg_catalog, public
+AS $$
+BEGIN
+    IF NOT discovery_screen_definition_is_valid(NEW.definition) THEN
+        RAISE EXCEPTION
+            'discovery screen config definition is incomplete or out of bounds'
+            USING ERRCODE = '22023';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER discovery_screen_config_content_guard
+    BEFORE INSERT ON discovery_screen_config_version
+    FOR EACH ROW EXECUTE FUNCTION validate_discovery_screen_config_content();
 
 CREATE FUNCTION discovery_screen_decision_preview(
     config_version_id_value uuid,
@@ -445,15 +476,44 @@ BEGIN
 
         SELECT s.security_class INTO class_value
         FROM security s
-        WHERE s.security_id = security_id_value;
+        WHERE s.security_id = security_id_value
+          AND s.receipt_time <= as_of_value;
 
-        SELECT array_agg(m.mapping_id ORDER BY m.mapping_id)
+        -- Identity is reconstructed from the transition history as of the
+        -- run's cutoff: a mapping is certified-as-of only when its latest
+        -- transition received by as_of is a certification, so later
+        -- certifications and later suspensions can never leak across the
+        -- point-in-time boundary.
+        SELECT array_agg(m2.mapping_id ORDER BY m2.mapping_id)
         INTO certified_mapping_ids
-        FROM certified_instrument_mapping m
-        WHERE m.security_id = security_id_value
-          AND m.object_kind = 'security'
-          AND m.valid_from <= as_of_value
-          AND (m.valid_to IS NULL OR m.valid_to > as_of_value);
+        FROM (
+            SELECT m.mapping_id
+            FROM instrument_mapping m
+            WHERE m.security_id = security_id_value
+              AND m.object_kind = 'security'
+              AND m.receipt_time <= as_of_value
+              AND m.valid_from <= as_of_value
+              AND (m.valid_to IS NULL OR m.valid_to > as_of_value)
+              AND (
+                -- Deterministic, fail-closed tie-break: transitions can share
+                -- a receipt_time (same transaction), so the more restrictive
+                -- state always wins the tie and certification can never be
+                -- asserted from an ambiguous ordering.
+                SELECT t.to_lifecycle
+                FROM instrument_mapping_transition t
+                WHERE t.mapping_id = m.mapping_id
+                  AND t.receipt_time <= as_of_value
+                ORDER BY t.receipt_time DESC,
+                         (CASE t.to_lifecycle
+                            WHEN 'retired' THEN 4
+                            WHEN 'suspended' THEN 3
+                            WHEN 'certified' THEN 2
+                            WHEN 'corroborated' THEN 1
+                            ELSE 0 END) DESC,
+                         t.transition_id
+                LIMIT 1
+              ) = 'certified'
+        ) m2;
 
         facts := facts
             || jsonb_build_object('security_class', class_value)
@@ -464,6 +524,7 @@ BEGIN
         FROM exchange_listing l
         WHERE l.security_id = security_id_value
           AND l.listing_status = 'active'
+          AND l.receipt_time <= as_of_value
           AND l.valid_from <= as_of_value
           AND (l.valid_to IS NULL OR l.valid_to > as_of_value)
         ORDER BY l.listing_id
@@ -501,8 +562,20 @@ BEGIN
         IF listing_found THEN
             venue_value := listing_row.venue;
             facts := facts || jsonb_build_object('venue', venue_value, 'listing_status', 'active');
-            IF NOT (venue_value = ANY (
-                    SELECT jsonb_array_elements_text(definition_value->'ordinary_venues'))) THEN
+            -- Tag enhanced-risk when ANY active-as-of listing sits outside
+            -- the ordinary venues, so a secondary OTC listing cannot hide
+            -- behind a primary exchange listing.
+            IF EXISTS (
+                SELECT 1
+                FROM exchange_listing l2
+                WHERE l2.security_id = security_id_value
+                  AND l2.listing_status = 'active'
+                  AND l2.receipt_time <= as_of_value
+                  AND l2.valid_from <= as_of_value
+                  AND (l2.valid_to IS NULL OR l2.valid_to > as_of_value)
+                  AND l2.venue <> ALL (
+                        SELECT jsonb_array_elements_text(definition_value->'ordinary_venues'))
+            ) THEN
                 enhanced_risk_value := true;
             END IF;
         ELSE
@@ -540,7 +613,10 @@ BEGIN
 
         security_id := security_id_value;
         decision := CASE WHEN cardinality(reasons) = 0 THEN 'included' ELSE 'rejected' END;
-        enhanced_risk := enhanced_risk_value;
+        -- Enhanced-risk tagging is a property of included members only; a
+        -- rejected member's rejection reasons carry the full picture and the
+        -- membership CHECK would otherwise abort the whole run.
+        enhanced_risk := enhanced_risk_value AND cardinality(reasons) = 0;
         screen_facts := facts;
         rejection_reasons := reasons;
         RETURN NEXT;
@@ -614,19 +690,31 @@ BEGIN
     END IF;
 
     IF failure_reason_value IS NULL THEN
-        FOR decision_row IN
+        -- Materialize the decision core once: a single statement gives every
+        -- downstream count, digest byte, and membership insert the same
+        -- snapshot, so the stored run can never contradict itself.
+        DROP TABLE IF EXISTS discovery_preview_stage;
+        CREATE TEMP TABLE discovery_preview_stage ON COMMIT DROP AS
             SELECT * FROM discovery_screen_decision_preview(
-                config_version_id_value, trading_date_value, as_of_value)
+                config_version_id_value, trading_date_value, as_of_value);
+
+        SELECT count(*),
+               count(*) FILTER (WHERE decision = 'included'),
+               count(*) FILTER (WHERE decision = 'included' AND enhanced_risk),
+               count(*) FILTER (WHERE decision = 'rejected')
+        INTO universe_count_value, included_count_value,
+             enhanced_risk_count_value, rejected_count_value
+        FROM discovery_preview_stage;
+
+        IF universe_count_value = 0 THEN
+            failure_reason_value := 'empty_universe';
+        END IF;
+    END IF;
+
+    IF failure_reason_value IS NULL THEN
+        FOR decision_row IN
+            SELECT * FROM discovery_preview_stage ORDER BY security_id
         LOOP
-            universe_count_value := universe_count_value + 1;
-            IF decision_row.decision = 'included' THEN
-                included_count_value := included_count_value + 1;
-                IF decision_row.enhanced_risk THEN
-                    enhanced_risk_count_value := enhanced_risk_count_value + 1;
-                END IF;
-            ELSE
-                rejected_count_value := rejected_count_value + 1;
-            END IF;
             decisions_payload := decisions_payload || jsonb_build_array(jsonb_build_object(
                 'security_id', decision_row.security_id,
                 'decision', decision_row.decision,
@@ -636,10 +724,14 @@ BEGIN
         END LOOP;
     END IF;
 
+    -- The digest hashes a canonical UTC rendering so verifiers under any
+    -- session TimeZone reproduce the same value.
     run_digest_value := encode(
         digest(convert_to(
             decisions_payload::text || '|' || coalesce(failure_reason_value, '') || '|'
-                || trading_date_value::text || '|' || as_of_value::text,
+                || trading_date_value::text || '|'
+                || to_char(as_of_value AT TIME ZONE 'UTC',
+                           'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
             'UTF8'), 'sha256'), 'hex');
 
     INSERT INTO discovery_screen_run (
@@ -658,8 +750,7 @@ BEGIN
 
     IF failure_reason_value IS NULL THEN
         FOR decision_row IN
-            SELECT * FROM discovery_screen_decision_preview(
-                config_version_id_value, trading_date_value, as_of_value)
+            SELECT * FROM discovery_preview_stage ORDER BY security_id
         LOOP
             INSERT INTO discovery_pool_membership (
                 run_id, security_id, decision, enhanced_risk,
@@ -671,6 +762,7 @@ BEGIN
                 source_lineage_value, now(), 'local_research'
             );
         END LOOP;
+        DROP TABLE discovery_preview_stage;
     END IF;
 
     PERFORM append_audit_event(

@@ -31,20 +31,24 @@ DECLARE
   v_as_of timestamptz;
   v_type text[] := ARRAY[
     'clean', 'preferred', 'sparse', 'otc', 'uncertified',
-    'conflict', 'penny', 'lowprice', 'thin', 'late', 'pricefail'];
+    'conflict', 'penny', 'lowprice', 'thin', 'late', 'pricefail',
+    'early', 'otcprice', 'pennythin'];
   v_class text[] := ARRAY[
     'common_stock', 'preferred_stock', 'common_stock', 'common_stock', 'common_stock',
     'common_stock', 'common_stock', 'common_stock', 'common_stock', 'common_stock',
-    'common_stock'];
+    'common_stock', 'common_stock', 'common_stock', 'common_stock'];
   v_venue text[] := ARRAY[
     'NASDAQ', 'NASDAQ', 'NASDAQ', 'OTCMKTS', 'NASDAQ',
-    'NASDAQ', 'NASDAQ', 'NYSE', 'NASDAQ', 'NASDAQ', 'NYSE'];
+    'NASDAQ', 'NASDAQ', 'NYSE', 'NASDAQ', 'NASDAQ', 'NYSE',
+    'NASDAQ', 'OTCMKTS', 'NASDAQ'];
   v_close numeric[] := ARRAY[
     120.00, 60.00, 80.00, 20.00, 90.00,
-    70.00, 0.80, 50.00, 50.00, 110.00, 3.00];
+    70.00, 0.80, 50.00, 50.00, 110.00, 3.00,
+    90.00, 3.00, 0.80];
   v_volume bigint[] := ARRAY[
     2000000, 3000000, 1000000, 500000, 4000000,
-    2000000, 8000000, 2000000, 10000, 2500000, 2000000];
+    2000000, 8000000, 2000000, 10000, 2500000, 2000000,
+    2000000, 2000000, 1000];
   v_security_ids uuid[];
   v_mapping_ids uuid[];
   v_type_index integer;
@@ -181,6 +185,18 @@ BEGIN
       '2026-01-01T00:00:00Z', 'local_research'
     );
   END LOOP;
+
+  -- A secondary OTC listing for clean whose evidence arrives after the run's
+  -- as_of: it must be invisible to the run, not tag clean enhanced-risk, and
+  -- never flip the replay.
+  INSERT INTO exchange_listing (
+    security_id, venue, currency, listing_status,
+    valid_from, valid_to, source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_security_ids[1], 'OTCMKTS', 'USD', 'active',
+    '2026-01-01T00:00:00Z', NULL, v_lineage,
+    now() + interval '2 hours', 'local_research'
+  );
   PERFORM set_config('market_mate.security_master_write', 'off', true);
 
   -- Identity mappings.  uncertified stays proposed; conflict is certified
@@ -252,11 +268,26 @@ BEGIN
     END LOOP;
   END LOOP;
 
+  -- early carries a 2025 session history with no universe membership: it
+  -- feeds the calendar for the empty-universe probe without joining the pool.
+  FOR v_session_index IN 1 .. 5 LOOP
+    PERFORM ingest_eod_price_observation(
+      v_selection.selection_id, v_mapping_ids[12],
+      'WU23-early-' || (DATE '2025-11-17' + v_session_index - 1)::text,
+      DATE '2025-11-17' + v_session_index - 1, 'complete',
+      88.00, 92.00, 87.00, 90.00, 3000000,
+      (DATE '2025-11-17' + v_session_index - 1)::timestamptz + interval '21 hours',
+      jsonb_build_object('open', 88.00, 'high', 92.00, 'low', 87.00, 'close', 90.00, 'volume', 3000000),
+      v_lineage);
+    v_bar_count := v_bar_count + 1;
+  END LOOP;
+
   -- Universe entries.  Every security joins the S&P-500-style seed except
-  -- lowprice, whose only membership is retired before the run date; late's
-  -- membership evidence arrives after the run's as_of.
+  -- lowprice, whose only membership is retired before the run date, and
+  -- early, which has no membership at all; late's membership evidence
+  -- arrives after the run's as_of.
   FOR v_type_index IN 1 .. array_length(v_type, 1) LOOP
-    CONTINUE WHEN v_type[v_type_index] = 'lowprice';
+    CONTINUE WHEN v_type[v_type_index] IN ('lowprice', 'early');
     INSERT INTO discovery_universe_entry (
       universe_key, membership_kind, security_id,
       known_from, known_to, universe_evidence_key,
@@ -282,7 +313,7 @@ BEGIN
       DATE '2026-06-01', NULL, 'holdings-wu23:pricefail', v_lineage,
       now() - interval '1 minute', 'local_research'),
     ('sp500-wu23', 'index_constituent', v_security_ids[8],
-      DATE '2025-01-01', DATE '2026-07-01', 'sp500-wu23:lowprice-retired', v_lineage,
+      DATE '2026-01-01', DATE '2026-07-01', 'sp500-wu23:lowprice-retired', v_lineage,
       now() - interval '1 minute', 'local_research');
 
   SELECT * INTO v_policy
@@ -368,7 +399,7 @@ BEGIN
         SELECT 1 FROM discovery_pool_membership
         WHERE run_id = v_run.run_id AND security_id = v_security_ids[8]
       )
-      AND v_run.universe_count = 9
+      AND v_run.universe_count = 11
     ),
     'thin_rejected_for_liquidity', (
       SELECT decision = 'rejected'
@@ -386,6 +417,26 @@ BEGIN
         AND NOT enhanced_risk
       FROM discovery_pool_membership
       WHERE run_id = v_run.run_id AND security_id = v_security_ids[11]
+    ),
+    'otcprice_rejected_for_price_without_crash', (
+      SELECT decision = 'rejected'
+        AND 'price_below_minimum' = ANY (rejection_reasons)
+        AND NOT enhanced_risk
+      FROM discovery_pool_membership
+      WHERE run_id = v_run.run_id AND security_id = v_security_ids[13]
+    ),
+    'pennythin_rejected_for_liquidity_without_crash', (
+      SELECT decision = 'rejected'
+        AND 'liquidity_below_floor' = ANY (rejection_reasons)
+        AND NOT enhanced_risk
+      FROM discovery_pool_membership
+      WHERE run_id = v_run.run_id AND security_id = v_security_ids[14]
+    ),
+    'backdated_otc_listing_invisible_at_run_as_of', (
+      SELECT decision = 'included' AND NOT enhanced_risk
+        AND screen_facts->>'venue' = 'NASDAQ'
+      FROM discovery_pool_membership
+      WHERE run_id = v_run.run_id AND security_id = v_security_ids[1]
     ),
     'membership_facts_recorded', (
       SELECT count(*) = v_run.universe_count
@@ -415,7 +466,8 @@ BEGIN
       AND v_late_preview.decision = 'included');
 
   -- Deterministic replay: the read-only preview reproduces every stored
-  -- decision (same evidence, same as_of).
+  -- decision (same evidence, same as_of) with no missing or extra rows in
+  -- either direction.
   FOR v_replay_row IN
     SELECT p.security_id, p.decision, p.enhanced_risk,
            p.screen_facts, p.rejection_reasons,
@@ -433,8 +485,56 @@ BEGIN
       v_replay_matches := false;
     END IF;
   END LOOP;
+  IF EXISTS (
+    SELECT 1 FROM discovery_screen_decision_preview(
+      v_config.config_version_id, v_run_date, v_run.as_of_at) p
+    WHERE NOT EXISTS (
+      SELECT 1 FROM discovery_pool_membership m
+      WHERE m.run_id = v_run.run_id AND m.security_id = p.security_id)
+  ) OR EXISTS (
+    SELECT 1 FROM discovery_pool_membership m
+    WHERE m.run_id = v_run.run_id
+      AND NOT EXISTS (
+        SELECT 1 FROM discovery_screen_decision_preview(
+          v_config.config_version_id, v_run_date, v_run.as_of_at) p
+        WHERE p.security_id = m.security_id)
+  ) THEN
+    v_replay_matches := false;
+  END IF;
   v_results := v_results || jsonb_build_object(
     'deterministic_replay_matches', v_replay_matches);
+
+  -- Identity lifecycle received after the as_of boundary must not change
+  -- the replay.  A suspension transition whose evidence arrives two hours
+  -- after the run's as_of stays invisible to replay and becomes visible
+  -- once its receipt time passes (the tie-break then prefers the
+  -- restriction, so a same-timestamp certification can never mask it).
+  INSERT INTO instrument_mapping_transition (
+    mapping_id, from_lifecycle, to_lifecycle, reason,
+    source_lineage, receipt_time, record_environment
+  ) VALUES (
+    v_mapping_ids[1], 'certified', 'suspended',
+    'post-run suspension received after the as_of boundary',
+    v_lineage, v_as_of + interval '2 hours', 'local_research'
+  );
+  SELECT * INTO v_hidden_preview
+  FROM discovery_screen_decision_preview(
+    v_config.config_version_id, v_run_date, v_run.as_of_at)
+  WHERE security_id = v_security_ids[1];
+  v_results := v_results || jsonb_build_object(
+    'replay_stable_after_identity_lifecycle_change',
+      v_hidden_preview.decision = 'included'
+      AND v_hidden_preview.screen_facts->>'certified_identity_count' = '1'
+  );
+  SELECT * INTO v_late_preview
+  FROM discovery_screen_decision_preview(
+    v_config.config_version_id, v_run_date, v_as_of + interval '3 hours')
+  WHERE security_id = v_security_ids[1];
+  v_results := v_results || jsonb_build_object(
+    'later_suspension_visible_after_receipt',
+      v_late_preview.decision = 'rejected'
+      AND 'identity_not_certified' = ANY (v_late_preview.rejection_reasons)
+  );
 
   -- One authoritative run per config and trading date.
   BEGIN
@@ -448,11 +548,22 @@ BEGIN
 
   -- A calendar too short to meet the lookback fails closed with no members.
   v_failed_run := run_discovery_screen(
-    v_config.config_version_id, DATE '2026-07-01', v_as_of, v_lineage);
+    v_config.config_version_id, DATE '2025-01-01', v_as_of, v_lineage);
   v_results := v_results || jsonb_build_object(
     'insufficient_calendar_fails_closed',
       v_failed_run.screen_state = 'failed'
       AND v_failed_run.failure_reason = 'insufficient_sessions'
+      AND NOT EXISTS (
+        SELECT 1 FROM discovery_pool_membership
+        WHERE run_id = v_failed_run.run_id));
+
+  -- A calendar with sessions but an empty as-of universe also fails closed.
+  v_failed_run := run_discovery_screen(
+    v_config.config_version_id, DATE '2025-11-24', v_as_of, v_lineage);
+  v_results := v_results || jsonb_build_object(
+    'empty_universe_fails_closed',
+      v_failed_run.screen_state = 'failed'
+      AND v_failed_run.failure_reason = 'empty_universe'
       AND NOT EXISTS (
         SELECT 1 FROM discovery_pool_membership
         WHERE run_id = v_failed_run.run_id));
