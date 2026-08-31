@@ -76,6 +76,7 @@ pub fn toy_evaluation_spec(symbols: &[&str]) -> Value {
         "symbols": symbols,
         "window": {"trading_days": TRADING_DAYS, "kind": "synthetic_chronological"},
         "estimator": "mean_return_difference_bps",
+        "budget": {"trials": 1},
         "groups": {"top": 2, "bottom": 2, "rank_by": "earnings_surprise_bps"},
         "comparator": "zero_difference",
         "stopping_rule": "single_pass",
@@ -84,7 +85,7 @@ pub fn toy_evaluation_spec(symbols: &[&str]) -> Value {
     })
 }
 
-pub fn evaluate_toy_spec(payload: &Value) -> Result<Value, String> {
+pub fn evaluate_toy_spec(payload: &Value, spec: &Value) -> Result<Value, String> {
     let symbols = payload
         .get("symbols")
         .and_then(Value::as_array)
@@ -157,13 +158,39 @@ pub fn evaluate_toy_spec(payload: &Value) -> Result<Value, String> {
         return Err("snapshot payload symbol coverage is incomplete".into());
     }
 
+    let groups = spec
+        .get("groups")
+        .ok_or("preregistration spec lacks groups")?;
+    let top_n = groups
+        .get("top")
+        .and_then(Value::as_u64)
+        .ok_or("preregistration spec lacks groups.top")? as usize;
+    let bottom_n = groups
+        .get("bottom")
+        .and_then(Value::as_u64)
+        .ok_or("preregistration spec lacks groups.bottom")? as usize;
+    let rank_by = groups
+        .get("rank_by")
+        .and_then(Value::as_str)
+        .ok_or("preregistration spec lacks groups.rank_by")?;
+    if rank_by != "earnings_surprise_bps" {
+        return Err(format!("unsupported rank_by {rank_by}"));
+    }
+    if top_n == 0 || bottom_n == 0 || top_n + bottom_n > surprise_by_symbol.len() {
+        return Err("preregistration group sizes are invalid for the tracer payload".into());
+    }
+
     let mut ranked: Vec<(&String, &i64)> = surprise_by_symbol.iter().collect();
     ranked.sort_by(|left, right| right.1.cmp(left.1).then(left.0.cmp(right.0)));
 
-    let top: Vec<&String> = ranked.iter().take(2).map(|(symbol, _)| *symbol).collect();
+    let top: Vec<&String> = ranked
+        .iter()
+        .take(top_n)
+        .map(|(symbol, _)| *symbol)
+        .collect();
     let bottom: Vec<&String> = ranked
         .iter()
-        .skip(ranked.len() - 2)
+        .skip(ranked.len() - bottom_n)
         .map(|(symbol, _)| *symbol)
         .collect();
 
@@ -267,15 +294,10 @@ pub async fn run_tracer<C: GenericClient>(client: &mut C) -> Result<TracerRun, S
     let spec = toy_evaluation_spec(&symbols);
     let registration_row = client
         .query_one(
-            "INSERT INTO experiment_preregistration (
-                experiment_key, spec, spec_digest,
-                source_lineage, receipt_time, record_environment
-            ) VALUES (
-                'wu06-tracer-toy',
-                $1,
-                encode(digest('market-mate-preregistration-v1|' || $1::jsonb::text, 'sha256'), 'hex'),
-                $2, now(), 'local_research'
-            ) RETURNING registration_id::text, spec_digest",
+            "SELECT registration_id::text, spec_digest
+             FROM register_experiment_preregistration(
+                'wu06-tracer-toy', $1, NULL, $2
+             )",
             &[&spec, &lineage],
         )
         .await
@@ -283,7 +305,7 @@ pub async fn run_tracer<C: GenericClient>(client: &mut C) -> Result<TracerRun, S
     let preregistration_id: String = registration_row.get(0);
     let spec_digest: String = registration_row.get(1);
 
-    let result = evaluate_toy_spec(&payload)?;
+    let result = evaluate_toy_spec(&payload, &spec)?;
     let evaluation_row = client
         .query_one(
             "INSERT INTO evaluation_result (
@@ -406,8 +428,9 @@ mod tests {
     #[test]
     fn toy_evaluation_is_deterministic_and_complete() {
         let payload = build_snapshot_payload(&TRACER_SYMBOLS);
-        let first = evaluate_toy_spec(&payload).unwrap();
-        let second = evaluate_toy_spec(&payload).unwrap();
+        let spec = toy_evaluation_spec(&TRACER_SYMBOLS);
+        let first = evaluate_toy_spec(&payload, &spec).unwrap();
+        let second = evaluate_toy_spec(&payload, &spec).unwrap();
         assert_eq!(first, second);
         assert!(first.get("group_top").is_some());
         assert!(first.get("group_bottom").is_some());
@@ -417,14 +440,37 @@ mod tests {
 
     #[test]
     fn toy_evaluation_fails_closed_on_incomplete_payload() {
-        assert!(evaluate_toy_spec(&json!({})).is_err());
-        assert!(evaluate_toy_spec(&json!({"symbols": ["A"]})).is_err());
+        let spec = toy_evaluation_spec(&TRACER_SYMBOLS);
+        let payload = build_snapshot_payload(&TRACER_SYMBOLS);
+        assert!(evaluate_toy_spec(&json!({}), &spec).is_err());
+        assert!(evaluate_toy_spec(&json!({"symbols": ["A"]}), &spec).is_err());
+        assert!(evaluate_toy_spec(&payload, &json!({})).is_err());
+    }
+
+    #[test]
+    fn toy_evaluation_reads_group_sizes_from_spec() {
+        let payload = build_snapshot_payload(&TRACER_SYMBOLS);
+        let mut spec = toy_evaluation_spec(&TRACER_SYMBOLS);
+        spec["groups"]["top"] = json!(1);
+        spec["groups"]["bottom"] = json!(1);
+        let result = evaluate_toy_spec(&payload, &spec).unwrap();
+        assert_eq!(result["group_top"]["symbols"].as_array().unwrap().len(), 1);
+        assert_eq!(
+            result["group_bottom"]["symbols"].as_array().unwrap().len(),
+            1
+        );
+        spec["groups"]["top"] = json!(0);
+        assert!(evaluate_toy_spec(&payload, &spec).is_err());
+        spec["groups"]["top"] = json!(3);
+        spec["groups"]["bottom"] = json!(3);
+        assert!(evaluate_toy_spec(&payload, &spec).is_err());
     }
 
     #[test]
     fn toy_evaluation_decision_tracks_group_difference() {
         let payload = build_snapshot_payload(&TRACER_SYMBOLS);
-        let result = evaluate_toy_spec(&payload).unwrap();
+        let spec = toy_evaluation_spec(&TRACER_SYMBOLS);
+        let result = evaluate_toy_spec(&payload, &spec).unwrap();
         let top = result["group_top"]["mean_cumulative_bps"].as_i64().unwrap();
         let bottom = result["group_bottom"]["mean_cumulative_bps"]
             .as_i64()

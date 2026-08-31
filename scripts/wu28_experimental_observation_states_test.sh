@@ -97,8 +97,8 @@ for key in \
   recorded_as_experimental experimental_excluded_from_core \
   unknown_preregistration_blocked incomplete_preregistration_blocked \
   incomplete_horizon_blocked incomplete_universe_blocked \
-  incomplete_stopping_rule_blocked incomplete_promotion_gate_blocked \
-  incomplete_testing_budget_blocked \
+  incomplete_promotion_gate_blocked incomplete_target_blocked \
+  incomplete_indicator_key_blocked \
   mismatched_preregistration_indicator_blocked lineage_missing_predecessor_blocked \
   lineage_digest_mismatch_blocked core_cannot_enter_experimental_stages \
   retired_experimental_register_blocked advance_without_preregistration_blocked \
@@ -129,7 +129,7 @@ public_write_revoked=$("${PSQL[@]}" -c "
 pass "public experimental indicator writes are revoked; workflow guards remain the measured local boundary"
 
 record_payload=$(jq -c '{recorded_as_experimental, experimental_excluded_from_core, registered_with_preregistration_and_lineage, full_stage_path_recorded, strategy_eligible_stays_experimental, strategy_eligible_still_excluded_from_core}' <<<"$probe_result")
-gate_payload=$(jq -c '{unknown_preregistration_blocked, incomplete_preregistration_blocked, incomplete_horizon_blocked, incomplete_universe_blocked, incomplete_stopping_rule_blocked, incomplete_promotion_gate_blocked, incomplete_testing_budget_blocked, mismatched_preregistration_indicator_blocked, lineage_missing_predecessor_blocked, lineage_digest_mismatch_blocked, core_cannot_enter_experimental_stages, retired_experimental_register_blocked, advance_without_preregistration_blocked, duplicate_registration_blocked, preregistration_cannot_bind_second_definition, stage_skip_blocked, stage_reverse_blocked, experimental_never_becomes_core, foreign_preregistration_advance_blocked, stale_predecessor_blocked}' <<<"$probe_result")
+gate_payload=$(jq -c '{unknown_preregistration_blocked, incomplete_preregistration_blocked, incomplete_horizon_blocked, incomplete_universe_blocked, incomplete_promotion_gate_blocked, incomplete_target_blocked, incomplete_indicator_key_blocked, mismatched_preregistration_indicator_blocked, lineage_missing_predecessor_blocked, lineage_digest_mismatch_blocked, core_cannot_enter_experimental_stages, retired_experimental_register_blocked, advance_without_preregistration_blocked, duplicate_registration_blocked, preregistration_cannot_bind_second_definition, stage_skip_blocked, stage_reverse_blocked, experimental_never_becomes_core, foreign_preregistration_advance_blocked, stale_predecessor_blocked}' <<<"$probe_result")
 guard_payload=$(jq -c '{direct_lineage_insert_blocked, direct_stage_insert_blocked, stage_update_blocked, lineage_delete_blocked, stage_truncate_blocked, appends_audited, advances_audited}' <<<"$probe_result")
 chain_record=$(append_audit_event "wu28-record-$(date +%s)" "research.experimental_indicator_record_proved" "$(jq -nc --argjson evidence "$record_payload" '{probe: "wu28_experimental_observation_states_probe", evidence: $evidence}')") \
   || fail "audit append experimental_indicator_record_proved failed"
@@ -180,9 +180,9 @@ jq -n \
       incomplete_preregistration_blocked: $probe.incomplete_preregistration_blocked,
       incomplete_horizon_blocked: $probe.incomplete_horizon_blocked,
       incomplete_universe_blocked: $probe.incomplete_universe_blocked,
-      incomplete_stopping_rule_blocked: $probe.incomplete_stopping_rule_blocked,
       incomplete_promotion_gate_blocked: $probe.incomplete_promotion_gate_blocked,
-      incomplete_testing_budget_blocked: $probe.incomplete_testing_budget_blocked,
+      incomplete_target_blocked: $probe.incomplete_target_blocked,
+      incomplete_indicator_key_blocked: $probe.incomplete_indicator_key_blocked,
       mismatched_preregistration_indicator_blocked: $probe.mismatched_preregistration_indicator_blocked,
       lineage_missing_predecessor_blocked: $probe.lineage_missing_predecessor_blocked,
       lineage_digest_mismatch_blocked: $probe.lineage_digest_mismatch_blocked,
@@ -229,9 +229,9 @@ jq -e '
   and .gates.incomplete_preregistration_blocked == true
   and .gates.incomplete_horizon_blocked == true
   and .gates.incomplete_universe_blocked == true
-  and .gates.incomplete_stopping_rule_blocked == true
   and .gates.incomplete_promotion_gate_blocked == true
-  and .gates.incomplete_testing_budget_blocked == true
+  and .gates.incomplete_target_blocked == true
+  and .gates.incomplete_indicator_key_blocked == true
   and .gates.advance_without_preregistration_blocked == true
   and .gates.experimental_never_becomes_core == true
   and .gates.stage_skip_blocked == true

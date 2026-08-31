@@ -113,64 +113,23 @@ BEGIN
     'estimators', jsonb_build_array('block_bootstrap_lcb'),
     'multiplicity_plan', 'Holm across the earnings-gap-bias family'
   );
-  v_incomplete_spec := v_spec - 'hypothesis';
+  v_incomplete_spec := v_spec - 'rationale';
   v_wrong_key_spec := jsonb_set(v_spec, '{indicator_key}', '"close_return_20d_wu28"'::jsonb);
 
-  INSERT INTO experiment_preregistration (
-    experiment_key, spec, spec_digest,
-    source_lineage, receipt_time, record_environment
-  ) VALUES (
-    'wu28-earnings-gap',
-    v_spec,
-    encode(digest('market-mate-preregistration-v1|' || v_spec::text, 'sha256'), 'hex'),
-    v_lineage, now(), 'local_research'
-  ) RETURNING * INTO v_prereg;
-
-  INSERT INTO experiment_preregistration (
-    experiment_key, spec, spec_digest,
-    source_lineage, receipt_time, record_environment
-  ) VALUES (
-    'wu28-earnings-gap-incomplete',
-    v_incomplete_spec,
-    encode(digest('market-mate-preregistration-v1|' || v_incomplete_spec::text, 'sha256'), 'hex'),
-    v_lineage, now(), 'local_research'
-  ) RETURNING * INTO v_incomplete_prereg;
-
-  INSERT INTO experiment_preregistration (
-    experiment_key, spec, spec_digest,
-    source_lineage, receipt_time, record_environment
-  ) VALUES (
-    'wu28-earnings-gap-wrong-key',
-    v_wrong_key_spec,
-    encode(digest('market-mate-preregistration-v1|' || v_wrong_key_spec::text, 'sha256'), 'hex'),
-    v_lineage, now(), 'local_research'
-  ) RETURNING * INTO v_wrong_key_prereg;
-
-  INSERT INTO experiment_preregistration (
-    experiment_key, spec, spec_digest,
-    source_lineage, receipt_time, record_environment
-  ) VALUES (
+  SELECT * INTO v_prereg FROM register_experiment_preregistration(
+    'wu28-earnings-gap', v_spec, NULL, v_lineage);
+  SELECT * INTO v_incomplete_prereg FROM register_experiment_preregistration(
+    'wu28-earnings-gap-incomplete', v_incomplete_spec, NULL, v_lineage);
+  SELECT * INTO v_wrong_key_prereg FROM register_experiment_preregistration(
+    'wu28-earnings-gap-wrong-key', v_wrong_key_spec, NULL, v_lineage);
+  SELECT * INTO v_other_prereg FROM register_experiment_preregistration(
     'wu28-volume-shock',
     jsonb_set(v_spec, '{indicator_key}', '"experimental_volume_shock_wu28"'::jsonb),
-    encode(digest(
-      'market-mate-preregistration-v1|'
-      || jsonb_set(v_spec, '{indicator_key}', '"experimental_volume_shock_wu28"'::jsonb)::text,
-      'sha256'), 'hex'),
-    v_lineage, now(), 'local_research'
-  ) RETURNING * INTO v_other_prereg;
-
-  INSERT INTO experiment_preregistration (
-    experiment_key, spec, spec_digest,
-    source_lineage, receipt_time, record_environment
-  ) VALUES (
+    NULL, v_lineage);
+  SELECT * INTO v_retired_prereg FROM register_experiment_preregistration(
     'wu28-retired-gap',
     jsonb_set(v_spec, '{indicator_key}', '"experimental_retired_gap_wu28"'::jsonb),
-    encode(digest(
-      'market-mate-preregistration-v1|'
-      || jsonb_set(v_spec, '{indicator_key}', '"experimental_retired_gap_wu28"'::jsonb)::text,
-      'sha256'), 'hex'),
-    v_lineage, now(), 'local_research'
-  ) RETURNING * INTO v_retired_prereg;
+    NULL, v_lineage);
 
   v_results := jsonb_build_object(
     'recorded_as_experimental',
@@ -234,19 +193,12 @@ BEGIN
   END;
 
   FOREACH v_omit IN ARRAY ARRAY[
-    'horizon', 'universe', 'stopping_rule', 'promotion_gate', 'testing_budget'
+    'horizon', 'universe', 'promotion_gate', 'target', 'indicator_key'
   ]
   LOOP
     v_omit_spec := v_spec - v_omit;
-    INSERT INTO experiment_preregistration (
-      experiment_key, spec, spec_digest,
-      source_lineage, receipt_time, record_environment
-    ) VALUES (
-      'wu28-omit-' || v_omit,
-      v_omit_spec,
-      encode(digest('market-mate-preregistration-v1|' || v_omit_spec::text, 'sha256'), 'hex'),
-      v_lineage, now(), 'local_research'
-    ) RETURNING * INTO v_omit_prereg;
+    SELECT * INTO v_omit_prereg FROM register_experiment_preregistration(
+      'wu28-omit-' || v_omit, v_omit_spec, NULL, v_lineage);
     BEGIN
       PERFORM register_experimental_indicator_use(
         v_experimental.definition_version_id,
