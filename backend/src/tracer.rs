@@ -282,7 +282,7 @@ pub async fn run_tracer<C: GenericClient>(client: &mut C) -> Result<TracerRun, S
                 source_lineage, receipt_time, record_environment
             ) VALUES (
                 $1, $2, encode(digest($2::jsonb::text, 'sha256'), 'hex'),
-                $3, now(), 'local_research'
+                $3, clock_timestamp(), 'local_research'
             ) RETURNING snapshot_id::text, payload_digest",
             &[&TRACER_SNAPSHOT_KIND, &payload, &lineage],
         )
@@ -314,7 +314,7 @@ pub async fn run_tracer<C: GenericClient>(client: &mut C) -> Result<TracerRun, S
             ) VALUES (
                 ($1::text)::uuid, ($2::text)::uuid, $3,
                 encode(digest($3::jsonb::text, 'sha256'), 'hex'),
-                $4, now(), 'local_research'
+                $4, clock_timestamp(), 'local_research'
             ) RETURNING result_id::text, result_digest",
             &[&preregistration_id, &snapshot_id, &result, &lineage],
         )
