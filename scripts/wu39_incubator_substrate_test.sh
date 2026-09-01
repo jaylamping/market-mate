@@ -75,17 +75,17 @@ pass "backend readiness confirms migration head"
 
 migration_head=$("${PSQL[@]}" -c "SELECT coalesce(max(version), 0) FROM schema_migration;") \
   || fail "could not read the applied migration head"
-[[ "$migration_head" == "41" ]] || fail "expected migration head 41, got $migration_head"
-migration_checksum=$("${PSQL[@]}" -c "SELECT checksum FROM schema_migration WHERE version = 41;") \
-  || fail "could not read migration 41 checksum"
+[[ "$migration_head" == "42" ]] || fail "expected migration head 42, got $migration_head"
+migration_checksum=$("${PSQL[@]}" -c "SELECT checksum FROM schema_migration WHERE version = 42;") \
+  || fail "could not read migration 42 checksum"
 migration_schema_head=$("${PSQL[@]}" -c "SELECT schema_head();") \
   || fail "could not read schema head"
 migration_fingerprint=$("${PSQL[@]}" -c "SELECT schema_fingerprint();") \
   || fail "could not read schema fingerprint"
-[[ "$migration_checksum" =~ ^[0-9a-f]{64}$ ]] || fail "migration 41 checksum is invalid: $migration_checksum"
+[[ "$migration_checksum" =~ ^[0-9a-f]{64}$ ]] || fail "migration 42 checksum is invalid: $migration_checksum"
 [[ -n "$migration_schema_head" && -n "$migration_fingerprint" ]] \
   || fail "schema identity evidence is incomplete"
-pass "migration 41 and schema identity are recorded"
+pass "migration 42 and schema identity are recorded"
 
 "${COMPOSE[@]}" cp "$PROBE_SQL" postgres:/tmp/wu39-incubator-substrate-probe.sql >>"$BRING_UP_LOG" 2>&1 \
   || fail "could not copy the WU-39 probe into the postgres container"
@@ -98,6 +98,8 @@ for key in \
   sentinel_allows_entitled_use sentinel_denies_non_entitled_use \
   manager_assignment_rejected risk_assignment_rejected compliance_assignment_rejected \
   paper_lane_rejected null_outcome_blocked empty_stopping_rule_blocked spec_mismatch_blocked \
+  failure_class_mismatch_blocked source_lineage_mismatch_blocked \
+  divergent_stopping_rule_blocked divergent_budget_blocked \
   direct_insert_blocked shot_update_blocked shot_delete_blocked \
   shot_truncate_blocked shot_audited no_authority_grant; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
@@ -117,7 +119,7 @@ public_write_revoked=$("${PSQL[@]}" -c "
 pass "public incubator writes are revoked; workflow guards remain the measured local boundary"
 
 record_payload=$(jq -c '{alpha_shot_recorded, failure_lineage, single_research_lane, record_is_idempotent, no_authority_grant}' <<<"$probe_result")
-gate_payload=$(jq -c '{sentinel_allows_entitled_use, sentinel_denies_non_entitled_use, manager_assignment_rejected, risk_assignment_rejected, compliance_assignment_rejected, paper_lane_rejected, null_outcome_blocked, empty_stopping_rule_blocked, spec_mismatch_blocked}' <<<"$probe_result")
+gate_payload=$(jq -c '{sentinel_allows_entitled_use, sentinel_denies_non_entitled_use, manager_assignment_rejected, risk_assignment_rejected, compliance_assignment_rejected, paper_lane_rejected, null_outcome_blocked, empty_stopping_rule_blocked, spec_mismatch_blocked, failure_class_mismatch_blocked, source_lineage_mismatch_blocked, divergent_stopping_rule_blocked, divergent_budget_blocked}' <<<"$probe_result")
 guard_payload=$(jq -c '{direct_insert_blocked, shot_update_blocked, shot_delete_blocked, shot_truncate_blocked, shot_audited}' <<<"$probe_result")
 chain_record=$(append_audit_event "wu39-record-$(date +%s)" "research.alpha_shot_lineage_proved" "$(jq -nc --argjson evidence "$record_payload" '{probe: "wu39_incubator_substrate_probe", evidence: $evidence}')") \
   || fail "audit append alpha_shot_lineage_proved failed"
@@ -148,9 +150,9 @@ jq -n \
     captured_at: $captured_at,
     migration: {
       head: $migration_head,
-      expected_head: 41,
-      version: 41,
-      name: "incubator_substrate",
+      expected_head: 42,
+      version: 42,
+      name: "incubator_shot_identity",
       checksum: $migration_checksum,
       schema_head: $migration_schema_head,
       fingerprint: $migration_fingerprint
@@ -171,7 +173,11 @@ jq -n \
       paper_lane_rejected: $probe.paper_lane_rejected,
       null_outcome_blocked: $probe.null_outcome_blocked,
       empty_stopping_rule_blocked: $probe.empty_stopping_rule_blocked,
-      spec_mismatch_blocked: $probe.spec_mismatch_blocked
+      spec_mismatch_blocked: $probe.spec_mismatch_blocked,
+      failure_class_mismatch_blocked: $probe.failure_class_mismatch_blocked,
+      source_lineage_mismatch_blocked: $probe.source_lineage_mismatch_blocked,
+      divergent_stopping_rule_blocked: $probe.divergent_stopping_rule_blocked,
+      divergent_budget_blocked: $probe.divergent_budget_blocked
     },
     append_only_and_fail_closed: {
       direct_insert_blocked: $probe.direct_insert_blocked,
@@ -189,9 +195,9 @@ jq -n \
     }
   }' >"$REPORT" || fail "could not write WU-39 evidence report"
 jq -e '
-  .migration.head == 41
-  and .migration.expected_head == 41
-  and .migration.name == "incubator_substrate"
+  .migration.head == 42
+  and .migration.expected_head == 42
+  and .migration.name == "incubator_shot_identity"
   and (.migration.checksum | test("^[0-9a-f]{64}$"))
   and .lineage.alpha_shot_recorded == true
   and .lineage.failure_lineage == true
@@ -199,6 +205,10 @@ jq -e '
   and .gates.manager_assignment_rejected == true
   and .gates.null_outcome_blocked == true
   and .gates.spec_mismatch_blocked == true
+  and .gates.failure_class_mismatch_blocked == true
+  and .gates.source_lineage_mismatch_blocked == true
+  and .gates.divergent_stopping_rule_blocked == true
+  and .gates.divergent_budget_blocked == true
   and .append_only_and_fail_closed.direct_insert_blocked == true
   and .append_only_and_fail_closed.public_write_revoked == true
   and .audit_chain.valid == true

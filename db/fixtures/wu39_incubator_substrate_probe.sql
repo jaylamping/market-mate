@@ -231,13 +231,66 @@ BEGIN
 
   BEGIN
     PERFORM engine_admit_research_assignment(
-      jsonb_set(v_spec, '{budget}', jsonb_build_object('family_trials', 9)),
+      jsonb_set(
+        jsonb_set(v_spec, '{budget}', jsonb_build_object('family_trials', 9)),
+        '{profit_contribution_hypothesis,cost_envelope}',
+        jsonb_build_object('family_trials', 9)
+      ),
       v_lineage);
     RAISE EXCEPTION 'probe corrupted: assignment spec mutation was admitted';
   EXCEPTION
     WHEN OTHERS THEN
       IF SQLERRM NOT LIKE '%already registered with a different spec%' THEN RAISE; END IF;
       v_results := v_results || jsonb_build_object('spec_mismatch_blocked', true);
+  END;
+
+  BEGIN
+    PERFORM record_alpha_shot(
+      v_spec, v_result, NULL, 'other_failure_class', v_lineage);
+    RAISE EXCEPTION 'probe corrupted: failure_class mutation was admitted';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%already recorded with a different result or lineage%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('failure_class_mismatch_blocked', true);
+  END;
+
+  BEGIN
+    PERFORM record_alpha_shot(
+      v_spec, v_result, NULL, 'insufficient_sample',
+      '{"source":"wu39-other-lineage","entitlement_version":"incubator-v1"}'::jsonb);
+    RAISE EXCEPTION 'probe corrupted: source_lineage mutation was admitted';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%already recorded with a different result or lineage%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('source_lineage_mismatch_blocked', true);
+  END;
+
+  BEGIN
+    PERFORM engine_admit_research_assignment(
+      jsonb_set(
+        jsonb_set(v_spec, '{assignment_key}', '"wu39-stop-diverge"'::jsonb),
+        '{stopping_rule}', '"stop after 100 trials"'::jsonb
+      ),
+      v_lineage);
+    RAISE EXCEPTION 'probe corrupted: divergent stopping_rule was admitted';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%nonconforming assignment%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('divergent_stopping_rule_blocked', true);
+  END;
+
+  BEGIN
+    PERFORM engine_admit_research_assignment(
+      jsonb_set(
+        jsonb_set(v_spec, '{assignment_key}', '"wu39-budget-diverge"'::jsonb),
+        '{budget}', jsonb_build_object('family_trials', 9)
+      ),
+      v_lineage);
+    RAISE EXCEPTION 'probe corrupted: divergent budget was admitted';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%nonconforming assignment%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('divergent_budget_blocked', true);
   END;
 
   v_paper := jsonb_set(v_spec, '{assignment_key}', '"wu39-paper"'::jsonb);
