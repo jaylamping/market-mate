@@ -69,11 +69,11 @@ export function CommandLedger({ ledger }: { ledger: CommandLedgerModel }) {
             <strong>Home / Dashboard</strong>
             <small>system truth + tape</small>
           </div>
-          <div className="side-nav-button is-disabled" aria-disabled="true">
+          <a href="/surfaces" className="side-nav-button">
             <span>02</span>
             <strong>Stage-1 surfaces</strong>
             <small>WU-46</small>
-          </div>
+          </a>
         </nav>
         <div className="sidebar-foot">
           <span className="env-label">LOCAL RESEARCH</span>
