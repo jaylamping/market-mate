@@ -259,6 +259,90 @@ async fn verify_until_valid_or_exhausted(state: &AppState, database_url: &str) {
     );
 }
 
+async fn command_ledger(State(state): State<AppState>) -> (StatusCode, Json<serde_json::Value>) {
+    let database_url = match database_url() {
+        Ok(url) => url,
+        Err(error) => {
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({ "error": error.to_string() })),
+            );
+        }
+    };
+    let (client, _connection) = match connect(&database_url).await {
+        Ok(pair) => pair,
+        Err(error) => {
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": format!("database connect failed: {error}")
+                })),
+            );
+        }
+    };
+
+    let checkpoint_count: i64 = match client
+        .query_one("SELECT count(*) FROM audit_checkpoint", &[])
+        .await
+    {
+        Ok(row) => row.get(0),
+        Err(error) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "error": format!("checkpoint count read failed: {error}")
+                })),
+            );
+        }
+    };
+
+    let verification = run_restore_verification(&client, &state.custody).await;
+    if checkpoint_count > 0 && (verification.pending || !verification.valid) {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "checkpoint verification has not passed; command ledger is unavailable",
+                "failure": verification.first_failure
+            })),
+        );
+    }
+
+    let verified_position: Option<i64> = if checkpoint_count == 0 {
+        None
+    } else {
+        match client
+            .query_one("SELECT max(chain_position) FROM audit_checkpoint", &[])
+            .await
+        {
+            Ok(row) => row.get(0),
+            Err(error) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({
+                        "error": format!("checkpoint coverage read failed: {error}")
+                    })),
+                );
+            }
+        }
+    };
+
+    match client
+        .query_one("SELECT read_command_ledger($1)", &[&verified_position])
+        .await
+    {
+        Ok(row) => {
+            let ledger: serde_json::Value = row.get(0);
+            (StatusCode::OK, Json(ledger))
+        }
+        Err(error) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "error": format!("command ledger read failed: {error}")
+            })),
+        ),
+    }
+}
+
 async fn create_checkpoint(State(state): State<AppState>) -> (StatusCode, Json<serde_json::Value>) {
     let verification = state.verification_snapshot();
     if verification.pending || !verification.valid {
@@ -575,6 +659,7 @@ async fn serve() {
     let app = Router::new()
         .route("/healthz", get(healthz))
         .route("/readyz", get(readyz))
+        .route("/command-ledger", get(command_ledger))
         .route("/checkpoints", post(create_checkpoint))
         .route("/restore-verification", post(restore_verification))
         .route("/tracer/run", post(run_tracer_endpoint))
