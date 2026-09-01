@@ -1,0 +1,49 @@
+{
+  "captured_at": "2026-09-01T02:49:26Z",
+  "migration": {
+    "head": 45,
+    "expected_head": 45,
+    "version": 45,
+    "name": "position_risk_model",
+    "checksum": "68b2af03bd9e71ae8e5d39f511399c84e758a6905b2c606576016e5bf6243451",
+    "schema_head": "1:schema_conventions:b80be9cd1f165f7502f6234059926ded281fa2a4b2e000d07a46d11146151007,2:convention_enforcement:3afe8bdaec98cb4ef9c7f3c473235219a11d15ecc5ff843f3134cf3a3059e42f,3:audit_event_hash_chain:29fb01d3ff0098dcd2aa0a5829088f672577aba2cefe70808ccad76037e1a125,4:signed_checkpoint_receipts:d3add070af4cbc6116ce45c73c61a976bc3b82787d547265339efc9a1bfc8c80,5:tracer_contracts:bf3691749b9218dee86b9142e99547154b2880830111cc16b7c99a9f49d52455,6:security_master:c660231a5d607e61278dbfd4cfc47c77ba3a0107a07dc774b1411972771bb822,7:instrument_mapping:4698f8d1fe90a213e9799322dca742b504b4844f02ddd8810b8ae7641c57e4ed,8:corporate_actions:ea83954f442e8870f50550fbc180d927827d1c1d046da2af1c139cfad26c9a35,9:evidence_guard_hardening:8db8ce3707901062c7b79bccdf91651c5d4e4007a9f5618db444f475c73fdccc,10:source_registry_and_data_contract:1808294d1a98be0bcf20031d290c01e49edae748d9a94c3946dc9ec592f9ecd5,11:entitlement_certification_gate:41fe3f882bf096f1630756ef44aa13181cb169cd8df748198c8a747a42f6594b,12:edgar_connector:3c35915f3a3f9d552a097bffb809c90ac5cf43cf1a99e143b2173ed1bfb2d3e2,13:eod_corporate_actions_connector:cf74796a895070dd8c56adb47c54525295e2017b476a10466b485096a10258b0,14:earnings_estimates_reconciliation:c3440579a40717f31b551f7b096d31252cccfa36ae87c69f91f4011f22a240d2,15:historical_options_connector:fcbec5ea359e1362d1f0ecc75d8485429206bc19f24a1f2a3644ca91a781a45a,16:snapshot_manifest:445dfa433924c4c2d43872bedc96eefec9690da819c274d3460209cebcf3d75e,17:post_close_orchestrator:49373bb135e488902547e22469080155776d09f3a5001019b0a5ca486a61b529,18:evidence_profiles:5c6a1ddfb918f69a0de3fd3cf79152b54477b8c14a6bdda6c062ca8001e826ba,19:evidence_deltas:b05f8e50845241d4b4cebfd78a0543e6df2a9831e44a239aa86acfb0205c5762,20:event_delta_cycles:46d6732a52ac1a54f28d1884e5b1461a8150b583baaacaf6f398540984bd203a,21:final_interrogate_hardening:cad7bcf68ebb0d404540acec22572e37f0d56bd5a27d7a838659ec9b01af50c5,22:cycle_scope_containment:9dd70c40862f882990e64f917fa1d1e908e8045b313ffbbfb1ed03bce532c2a7,23:coverage_policy:a782bf71f42915c3f501bc90d68b6a8c128e3c62aa100a1d3a077264f74fe73c,24:discovery_pool:8160e037c23088d31efef107b1e3cc72c21f8272ca87aaff1049524ff6376eaa,25:indicator_registry:7965107b509be900c16771f0fea8591daccd6a602b624295e229b754897fd64a,26:coverage_fitness_admission:4f6938a9a5e451e20edb9fe57b615b87c669ab60b13e21fac2ba3377623449cf,27:principal_pinned_overlay:1edc66803d59f8a4ab11a46b307401a0a0a2a79a2bfbe44d7366011b58fb264d,28:core_indicator_computation:c452eb372953a2cb35bf3a81d548b3f25733214012d51bb1575a9ea25524c750,29:experimental_observation_states:243af7d77f89fa286cc9ca8bcd706f9647513c7f19c8809d55a5db8fc21b3ea7,30:experiment_registry_preregistration:397cc3c5c02292b330d4b9812cd78cadf8d39b871b4966a3f1d46e16cf5c0ea1,31:release_holdout_custody:ed7706f53a9d185ecfbfaf9911747aeb532a8348da427792cd05853e71fc3e75,32:evidence_budgets_multiplicity:278b65d8b708f8bf508da87e3c72d2dace18fef4a401cec2d9a48b3f0227f8ba,33:cross_wu_thermo_nuclear_hardening:30fdf26732396c014536c3b5524d8be123be5987b17f37eb4c12a97f727a48aa,34:strategy_version_registry:0c06e6fab9b81f050b7f6aa9e07caca0af1157cbc4ced005e647e345a02467b0,35:strategy_sandbox_evaluation:77c94cb07bcdf7573a78648a79cf946a4af3a83872be5586c63eb2b22f9cadd9,36:walk_forward_engine:f27333016ae596cc4063b821b8971be59558c1c42bca7afaf37622837c6ee0bc,37:eis_estimator:1bfda0509930b6c8f29c15aad08a1156df029815b90ed38d9ebe992254fff180,38:block_bootstrap_lcb:1d995beab60f0f264c148f0552551f00e206eb4605b52db4c09874cf6ad693e5,39:research_cost_accounting:be9bfb1fcdb0f44f10b1aa0d10443168fc861fe192965c53e74f7f3eb4a046e6,40:qualification_report:afc58292e4080585fec7356557ab0b41afa0e279b1f97e3ad55dcfea83441408,41:incubator_substrate:ac68eb3bb0af9267f144af777ccb4035c4669e06f5ce232e62ddb5dae2b903dd,42:incubator_shot_identity:8b3359857fd6dbb9b4155d9b0e440391bb1b8b1456f4057849d390d2d6c4aced,43:incubator_charter_and_sentinel:c7e24903e04bc975c213a9a28d41d762d4e5491d2feb7d2c2eda85678d6fd9a2,44:capital_feasibility_assessor:08178a1b9cb58c3b177a110b86455763c9d49bf6a344f1310a77d3c356b937cb,45:position_risk_model:68b2af03bd9e71ae8e5d39f511399c84e758a6905b2c606576016e5bf6243451",
+    "fingerprint": "fd09c8f4bc914188eead5f41e3d2f073"
+  },
+  "model": {
+    "slippage_applied": true,
+    "assignment_exposure_recorded": true,
+    "admitted_within_floors": true,
+    "record_is_idempotent": true,
+    "no_authority_grant": true
+  },
+  "floors": {
+    "assignment_rejects_short_leg": true,
+    "bankroll_floor_holds": true,
+    "utilization_floor_holds": true,
+    "missing_slippage_blocked": true,
+    "missing_assessment_blocked": true
+  },
+  "append_only_and_fail_closed": {
+    "direct_insert_blocked": true,
+    "model_update_blocked": true,
+    "model_delete_blocked": true,
+    "model_truncate_blocked": true,
+    "model_audited": true,
+    "public_write_revoked": true
+  },
+  "audit_chain": {
+    "valid": true,
+    "checked_events": 4,
+    "break_position": null,
+    "reason": null,
+    "expected_previous_hash": null,
+    "actual_previous_hash": null,
+    "expected_event_hash": null,
+    "actual_event_hash": null
+  },
+  "audit_positions": {
+    "record": 2,
+    "gates": 3,
+    "guards": 4
+  }
+}
