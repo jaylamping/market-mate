@@ -241,6 +241,8 @@ jq -n \
   --arg public_exposure_refused "$public_exposure_refused" \
   --arg authority_refused "$authority_refused" \
   --arg source_digest "$(for file in backend/src/checkpoints.rs backend/src/main.rs docker-compose.yml db/fixtures/wu46_stage1_surfaces_probe.sql db/migrations/0052_stage1_surfaces.sql frontend/app/CommandLedger.tsx frontend/app/Stage1Surfaces.tsx frontend/app/command-ledger.css frontend/app/surfaces/page.tsx frontend/app/surfaces/stage1-surfaces-model.ts frontend/package.json frontend/start.mjs scripts/wu46_stage1_surfaces_test.sh; do printf '%s ' "$file"; git hash-object "$file"; done | shasum -a 256 | cut -d' ' -f1)" \
+  --arg empty_png "$EMPTY_PNG" \
+  --arg populated_png "$POPULATED_PNG" \
   --argjson audit_record "$chain_record" \
   --argjson audit_gates "$chain_gate" \
   '{
@@ -251,7 +253,7 @@ jq -n \
     probe: $probe,
     source: {digest: $source_digest},
     configuration: {loopback_only: ($loopback_only == "true"), public_exposure_refused: ($public_exposure_refused == "true"), authority_refused: ($authority_refused == "true"), public_execute_revoked: ($public_execute_revoked == "t")},
-    screenshots: {empty: "evidence/wu-46/stage1-surfaces-empty.png", populated: "evidence/wu-46/stage1-surfaces-populated.png"},
+    screenshots: {empty: $empty_png, populated: $populated_png},
     audit_chain: $chain,
     audit_positions: {record: $audit_record, gates: $audit_gates}
   }' >"$REPORT" || fail "could not write WU-46 evidence report"
