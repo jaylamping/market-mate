@@ -113,10 +113,11 @@ PY
 screenshot_url() {
   local url="$1" dest="$2"
   local chrome="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-  if [[ -x "$chrome" ]]; then
-    "$chrome" --headless --disable-gpu --hide-scrollbars --window-size=1440,900 \
-      --screenshot="$dest" "$url" >>"$BRING_UP_LOG" 2>&1 || true
-  fi
+  [[ -x "$chrome" ]] || fail "Google Chrome is required for screenshot evidence"
+  "$chrome" --headless --disable-gpu --hide-scrollbars --window-size=1440,900 \
+    --screenshot="$dest" "$url" >>"$BRING_UP_LOG" 2>&1 \
+    || fail "could not capture screenshot: $url"
+  [[ -s "$dest" ]] || fail "screenshot evidence is empty: $dest"
 }
 
 require_command docker
@@ -124,10 +125,6 @@ require_command jq
 require_command python3
 log "== WU-45 Command ledger test $(date -u +%FT%TZ) (project: $WU45_PROJECT_NAME) =="
 "${COMPOSE[@]}" config --quiet >>"$BRING_UP_LOG" 2>&1 || fail "Compose configuration is invalid"
-for sibling in market-mate market-mate-wu01 market-mate-wu02 market-mate-wu03 market-mate-wu04 market-mate-wu05 market-mate-wu06 market-mate-wu07 market-mate-wu08 market-mate-wu09 market-mate-wu10 market-mate-wu11 market-mate-wu12 market-mate-wu13 market-mate-wu14 market-mate-wu15 market-mate-wu16 market-mate-wu17 market-mate-wu18 market-mate-wu19 market-mate-wu20 market-mate-wu21 market-mate-wu22 market-mate-wu23 market-mate-wu24 market-mate-wu25 market-mate-wu26 market-mate-wu27 market-mate-wu28 market-mate-wu29 market-mate-wu30 market-mate-wu31 market-mate-wu32 market-mate-wu33 market-mate-wu34 market-mate-wu35 market-mate-wu36 market-mate-wu37 market-mate-wu38 market-mate-wu39 market-mate-wu40 market-mate-wu41 market-mate-wu42 market-mate-wu43 market-mate-wu44 market-mate-wu45 market-mate-wu46 market-mate-wu47 market-mate-wu48 market-mate-wu49 market-mate-wu50 market-mate-harden-wu28-31; do
-  [[ "$sibling" == "$WU45_PROJECT_NAME" ]] && continue
-  docker compose --project-name "$sibling" down --remove-orphans >>"$BRING_UP_LOG" 2>&1 || true
-done
 "${COMPOSE[@]}" down -v --remove-orphans >>"$BRING_UP_LOG" 2>&1 || fail "could not remove prior WU-45 Compose state"
 log "-- docker compose up -d --build"
 "${COMPOSE[@]}" up -d --build >>"$BRING_UP_LOG" 2>&1 || fail "Compose bring-up failed"
@@ -170,9 +167,10 @@ jq -e '
   and .order_authority == false
   and .checkpoints_verified == true
   and .chain.valid == true
-  and .system_truth.state == "CHAIN VERIFIED"
+  and .system_truth.state == "CHECKPOINT PENDING"
   and (.tape | length) >= 1
-  and all(.tape[]; .trusted == true)
+  and any(.tape[]; .trusted == true)
+  and any(.tape[]; .distrust_reason == "outside_verified_checkpoint")
 ' <<<"$trusted_ledger" >/dev/null \
   || fail "verified command ledger is not trusted variant A: $trusted_ledger"
 pass "signed chain projects variant A after checkpoint verification"
@@ -185,11 +183,11 @@ grep -q 'id="exception-rail"' "$TRUSTED_HTML" || fail "dashboard is missing the 
 grep -q 'data-variant="A"' "$TRUSTED_HTML" || fail "dashboard is not variant A"
 grep -q 'data-chain-valid="true"' "$TRUSTED_HTML" || fail "trusted dashboard does not mark the chain valid"
 grep -q 'data-checkpoints-verified="true"' "$TRUSTED_HTML" || fail "trusted dashboard does not mark checkpoints verified"
-grep -q 'CHAIN VERIFIED' "$TRUSTED_HTML" || fail "system-truth header does not show verified state"
+grep -q 'CHECKPOINT PENDING' "$TRUSTED_HTML" || fail "system-truth header does not show checkpoint coverage"
 pass "NextJS renders variant A from the signed audit chain"
 
 public_execute_revoked=$("${PSQL[@]}" -c "
-  SELECT NOT has_function_privilege('public', 'read_command_ledger()', 'EXECUTE');
+  SELECT NOT has_function_privilege('public', 'read_command_ledger(bigint)', 'EXECUTE');
 ") || fail "could not inspect public command-ledger execute privilege"
 [[ "$public_execute_revoked" == "t" ]] || fail "public execute on read_command_ledger was not revoked"
 
@@ -200,7 +198,8 @@ probe_result=$("${PSQL[@]}" -c "BEGIN;" -f /tmp/wu45-command-ledger-probe.sql \
   || fail "WU-45 command ledger probe failed: $probe_result"
 
 for key in variant_a local_research no_order_authority \
-  checkpoints_verified_before_display tamper_distrusts_affected_range; do
+  checkpoints_verified_before_display post_checkpoint_events_untrusted \
+  tamper_distrusts_affected_range; do
   [[ "$(jq -r --arg k "$key" '.[$k]' <<<"$probe_result")" == "true" ]] \
     || fail "probe assertion $key failed: $probe_result"
 done
@@ -220,7 +219,7 @@ if [[ -s "$TAMPERED_HTML" ]]; then
   screenshot_url "file://$PWD/$TAMPERED_HTML" "$TAMPERED_PNG"
 fi
 
-record_payload=$(jq -c '{variant_a, local_research, no_order_authority, checkpoints_verified_before_display}' <<<"$probe_result")
+record_payload=$(jq -c '{variant_a, local_research, no_order_authority, checkpoints_verified_before_display, post_checkpoint_events_untrusted}' <<<"$probe_result")
 gate_payload=$(jq -c '{tamper_distrusts_affected_range, break_position, tamper_position}' <<<"$probe_result")
 chain_record=$(append_audit_event "wu45-record-$(date +%s)" "research.command_ledger_traced" "$(jq -nc --argjson evidence "$record_payload" '{probe: "wu45_command_ledger_probe", evidence: $evidence}')") \
   || fail "audit append command_ledger_traced failed"
@@ -271,6 +270,7 @@ jq -n \
       local_research: $probe.local_research,
       no_order_authority: $probe.no_order_authority,
       checkpoints_verified_before_display: $probe.checkpoints_verified_before_display,
+      post_checkpoint_events_untrusted: $probe.post_checkpoint_events_untrusted,
       tamper_distrusts_affected_range: $probe.tamper_distrusts_affected_range
     },
     append_only_and_fail_closed: {
@@ -287,12 +287,14 @@ jq -e '
   and .migration.expected_head == 51
   and .ledger.variant_a == true
   and .ledger.checkpoints_verified_before_display == true
+  and .ledger.post_checkpoint_events_untrusted == true
   and .ledger.tamper_distrusts_affected_range == true
   and .append_only_and_fail_closed.public_execute_revoked == true
   and .audit_chain.valid == true
   and .audit_positions.gates > .audit_positions.record
 ' "$REPORT" >/dev/null || fail "WU-45 evidence report does not satisfy its schema"
-[[ -s "$BRING_UP_LOG" && -s "$REPORT" && -s "$TRUSTED_HTML" && -s "$TAMPERED_HTML" ]] \
+[[ -s "$BRING_UP_LOG" && -s "$REPORT" && -s "$TRUSTED_HTML" && -s "$TAMPERED_HTML" \
+  && -s "$TRUSTED_PNG" && -s "$TAMPERED_PNG" ]] \
   || fail "named WU-45 evidence is not retrievable"
 pass "valid evidence is retrievable at $REPORT"
 log "WU-45 COMPLETE"

@@ -4,7 +4,7 @@
 -- chain is displayed as distrusted from the break onward. Stage-1
 -- surfaces belong to WU-46.
 
-CREATE FUNCTION read_command_ledger()
+CREATE FUNCTION read_command_ledger(verified_position bigint)
 RETURNS jsonb
 LANGUAGE plpgsql
 STABLE
@@ -14,8 +14,7 @@ AS $$
 DECLARE
     chain record;
     break_at bigint;
-    ck record;
-    checkpoints_ok boolean := true;
+    checkpoints_ok boolean := verified_position IS NOT NULL;
     checkpoint_count integer;
     exceptions jsonb := '[]'::jsonb;
     tape jsonb := '[]'::jsonb;
@@ -26,7 +25,6 @@ DECLARE
     truth_detail text;
     as_of timestamptz;
     head bigint;
-    digest_at text;
 BEGIN
     SELECT * INTO chain FROM verify_audit_event_chain();
     SELECT max(chain_position), max(receipt_time)
@@ -46,8 +44,7 @@ BEGIN
     END IF;
 
     SELECT count(*) INTO checkpoint_count FROM audit_checkpoint;
-    IF checkpoint_count = 0 THEN
-        checkpoints_ok := false;
+    IF NOT checkpoints_ok THEN
         exceptions := exceptions || jsonb_build_array(jsonb_build_object(
             'kind', 'checkpoint_missing',
             'position', NULL,
@@ -56,25 +53,16 @@ BEGIN
         ));
     END IF;
 
-    FOR ck IN
-        SELECT checkpoint_index, chain_position, chain_digest
-        FROM audit_checkpoint
-        ORDER BY checkpoint_index
-    LOOP
-        digest_at := chain_digest_at(ck.chain_position);
-        IF digest_at IS DISTINCT FROM ck.chain_digest
-           OR (break_at IS NOT NULL AND ck.chain_position >= break_at) THEN
-            checkpoints_ok := false;
-            exceptions := exceptions || jsonb_build_array(jsonb_build_object(
-                'kind', 'checkpoint_mismatch',
-                'position', ck.chain_position,
-                'reason', 'checkpoint_unverified',
-                'detail', format(
-                    'checkpoint %s does not verify against the chain',
-                    ck.checkpoint_index)
-            ));
-        END IF;
-    END LOOP;
+    IF checkpoints_ok AND head > verified_position THEN
+        exceptions := exceptions || jsonb_build_array(jsonb_build_object(
+            'kind', 'checkpoint_pending',
+            'position', verified_position + 1,
+            'reason', 'outside_verified_checkpoint',
+            'detail', format(
+                'events after position %s are not covered by a signed checkpoint',
+                verified_position)
+        ));
+    END IF;
 
     FOR ev IN
         SELECT chain_position, event_id, event_type, event_time,
@@ -82,14 +70,17 @@ BEGIN
         FROM audit_event
         ORDER BY chain_position
     LOOP
-        IF NOT chain.valid
+        IF NOT checkpoints_ok THEN
+            trusted := false;
+            distrust_reason := 'checkpoint_unverified';
+        ELSIF NOT chain.valid
            AND break_at IS NOT NULL
            AND ev.chain_position >= break_at THEN
             trusted := false;
             distrust_reason := 'affected_range';
-        ELSIF NOT checkpoints_ok THEN
+        ELSIF ev.chain_position > verified_position THEN
             trusted := false;
-            distrust_reason := 'checkpoint_unverified';
+            distrust_reason := 'outside_verified_checkpoint';
         ELSE
             trusted := true;
             distrust_reason := NULL;
@@ -107,19 +98,24 @@ BEGIN
         ));
     END LOOP;
 
-    IF chain.valid AND checkpoints_ok THEN
+    IF chain.valid AND checkpoints_ok AND head <= verified_position THEN
         truth_state := 'CHAIN VERIFIED';
         truth_detail :=
             'Signed audit chain and checkpoints verified. Local Research. Zero order authority.';
+    ELSIF NOT checkpoints_ok THEN
+        truth_state := 'CHECKPOINT UNVERIFIED';
+        truth_detail :=
+            'Checkpoints were not verified; the tape is displayed as untrusted.';
     ELSIF NOT chain.valid THEN
         truth_state := 'CHAIN DISTRUSTED';
         truth_detail := format(
             'Break at position %s (%s). The dashboard distrusts the affected range.',
             chain.break_position, chain.reason);
     ELSE
-        truth_state := 'CHECKPOINT UNVERIFIED';
-        truth_detail :=
-            'Checkpoints were not verified; the tape is displayed as untrusted.';
+        truth_state := 'CHECKPOINT PENDING';
+        truth_detail := format(
+            'Signed checkpoint verifies through position %s. Later events remain untrusted.',
+            verified_position);
     END IF;
 
     RETURN jsonb_build_object(
@@ -150,6 +146,6 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION read_command_ledger() FROM PUBLIC;
+REVOKE ALL ON FUNCTION read_command_ledger(bigint) FROM PUBLIC;
 
 SELECT assert_all_evidence_table_conventions();

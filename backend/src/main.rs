@@ -259,19 +259,7 @@ async fn verify_until_valid_or_exhausted(state: &AppState, database_url: &str) {
     );
 }
 
-async fn command_ledger(
-    State(state): State<AppState>,
-) -> (StatusCode, Json<serde_json::Value>) {
-    let verification = state.verification_snapshot();
-    if verification.pending || !verification.valid {
-        return (
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(serde_json::json!({
-                "error": "restore verification has not passed; command ledger is unavailable"
-            })),
-        );
-    }
-
+async fn command_ledger(State(state): State<AppState>) -> (StatusCode, Json<serde_json::Value>) {
     let database_url = match database_url() {
         Ok(url) => url,
         Err(error) => {
@@ -293,7 +281,55 @@ async fn command_ledger(
         }
     };
 
-    match client.query_one("SELECT read_command_ledger()", &[]).await {
+    let checkpoint_count: i64 = match client
+        .query_one("SELECT count(*) FROM audit_checkpoint", &[])
+        .await
+    {
+        Ok(row) => row.get(0),
+        Err(error) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "error": format!("checkpoint count read failed: {error}")
+                })),
+            );
+        }
+    };
+
+    let verification = run_restore_verification(&client, &state.custody).await;
+    if checkpoint_count > 0 && (verification.pending || !verification.valid) {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "checkpoint verification has not passed; command ledger is unavailable",
+                "failure": verification.first_failure
+            })),
+        );
+    }
+
+    let verified_position: Option<i64> = if checkpoint_count == 0 {
+        None
+    } else {
+        match client
+            .query_one("SELECT max(chain_position) FROM audit_checkpoint", &[])
+            .await
+        {
+            Ok(row) => row.get(0),
+            Err(error) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({
+                        "error": format!("checkpoint coverage read failed: {error}")
+                    })),
+                );
+            }
+        }
+    };
+
+    match client
+        .query_one("SELECT read_command_ledger($1)", &[&verified_position])
+        .await
+    {
         Ok(row) => {
             let ledger: serde_json::Value = row.get(0);
             (StatusCode::OK, Json(ledger))

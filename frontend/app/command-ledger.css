@@ -36,7 +36,7 @@ body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
 
 .brand-sidebar { margin: 4px 5px 24px; font-family: ui-sans-serif, system-ui, sans-serif; }
 .brand-sidebar strong { display: block; font-size: 11px; letter-spacing: 0.08em; }
-.brand-sidebar small { display: block; margin-top: 4px; color: var(--muted); font-size: 7px; letter-spacing: 0.14em; }
+.brand-sidebar small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; letter-spacing: 0.14em; }
 
 .command-sidebar nav { display: grid; gap: 2px; }
 .side-nav-button {
@@ -48,7 +48,7 @@ body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
   border: 1px solid transparent;
   background: transparent;
   color: #738076;
-  font-size: 8px;
+  font-size: 12px;
 }
 .side-nav-button.is-active {
   border-color: #334038;
@@ -57,9 +57,9 @@ body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
   box-shadow: inset 2px 0 var(--acid);
 }
 .side-nav-button.is-disabled { opacity: 0.45; }
-.side-nav-button span { font-size: 6px; opacity: 0.6; }
-.side-nav-button strong { display: block; font-size: 8px; }
-.side-nav-button small { display: block; font-size: 6px; opacity: 0.48; }
+.side-nav-button span { font-size: 10px; opacity: 0.6; }
+.side-nav-button strong { display: block; font-size: 12px; }
+.side-nav-button small { display: block; font-size: 10px; opacity: 0.48; }
 
 .sidebar-foot {
   display: flex;
@@ -69,8 +69,8 @@ body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
   border: 1px solid rgba(182, 156, 255, 0.35);
   background: rgba(182, 156, 255, 0.04);
 }
-.sidebar-foot strong { margin-top: 8px; font-size: 9px; }
-.sidebar-foot small { margin-top: 4px; color: #738077; font-size: 6px; line-height: 1.4; }
+.sidebar-foot strong { margin-top: 8px; font-size: 12px; }
+.sidebar-foot small { margin-top: 4px; color: #738077; font-size: 11px; line-height: 1.4; }
 
 .command-main { min-width: 0; padding: 0 15px 90px; }
 .command-header {
@@ -87,12 +87,12 @@ body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
 }
 .eyebrow {
   display: block;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
-.command-header small { color: #66736a; font-size: 7px; }
+.command-header small { color: #66736a; font-size: 11px; }
 
 .env-label, .status-pill {
   display: inline-flex;
@@ -100,7 +100,7 @@ body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
   padding: 3px 7px;
   align-items: center;
   border: 1px solid currentColor;
-  font-size: 7px;
+  font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.1em;
 }
@@ -124,10 +124,10 @@ body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
   border-color: rgba(255, 98, 89, 0.55);
   background: rgba(255, 98, 89, 0.065);
 }
-.truth-bar p { margin: 0; color: #bec7bf; font-size: 9px; line-height: 1.45; }
+.truth-bar p { margin: 0; color: #bec7bf; font-size: 12px; line-height: 1.45; }
 .truth-bar dl { display: flex; gap: 18px; margin: 0; }
-.truth-bar dt { color: #657168; font-size: 6px; font-weight: 850; text-transform: uppercase; }
-.truth-bar dd { margin: 3px 0 0; font-size: 8px; }
+.truth-bar dt { color: #657168; font-size: 10px; font-weight: 850; text-transform: uppercase; }
+.truth-bar dd { margin: 3px 0 0; font-size: 12px; }
 
 .command-grid {
   display: grid;
@@ -149,13 +149,13 @@ body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
   justify-content: space-between;
   border-bottom: 1px solid rgba(127, 141, 130, 0.25);
 }
-.section-title span { font-size: 7px; font-weight: 900; letter-spacing: 0.15em; opacity: 0.56; }
+.section-title span { font-size: 10px; font-weight: 900; letter-spacing: 0.15em; opacity: 0.56; }
 .section-title h2 { margin: 4px 0 0; font-size: 16px; }
 
 .audit-tape { width: 100%; border-collapse: collapse; }
 .audit-tape th {
   padding: 8px 9px;
-  font-size: 6px;
+  font-size: 10px;
   letter-spacing: 0.1em;
   text-align: left;
   text-transform: uppercase;
@@ -164,7 +164,7 @@ body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
 .audit-tape td {
   padding: 9px;
   border-top: 1px solid rgba(127, 141, 130, 0.18);
-  font-size: 8px;
+  font-size: 12px;
 }
 .audit-tape tr.is-distrusted { background: rgba(255, 98, 89, 0.08); color: var(--red); }
 
@@ -174,13 +174,15 @@ body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
   border: 1px solid rgba(255, 98, 89, 0.35);
   background: rgba(255, 98, 89, 0.04);
 }
-.exception-rail article strong { display: block; font-size: 9px; }
-.exception-rail article small { display: block; margin-top: 4px; color: var(--muted); font-size: 7px; }
-.exception-rail .empty { margin: 8px 0 0; color: var(--muted); font-size: 8px; }
+.exception-rail article strong { display: block; font-size: 12px; }
+.exception-rail article small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; }
+.exception-rail .empty { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
 
 @media (max-width: 900px) {
   .variant-a { grid-template-columns: 1fr; }
   .command-sidebar { position: relative; height: auto; }
   .command-grid { grid-template-columns: 1fr; }
   .truth-bar { grid-template-columns: 1fr; }
+  .command-section { overflow-x: auto; }
+  .audit-tape { min-width: 620px; }
 }

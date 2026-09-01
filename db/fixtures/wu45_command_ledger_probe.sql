@@ -8,13 +8,12 @@ DECLARE
   v_lineage jsonb := '{"source":"wu45-probe","entitlement_version":"command-ledger-v1"}';
   v_results jsonb := '{}'::jsonb;
   v_clean jsonb;
-  v_unverified jsonb;
   v_tampered jsonb;
   v_head bigint;
   v_break bigint;
   v_appended bigint;
 BEGIN
-  SELECT read_command_ledger() INTO v_clean;
+  SELECT read_command_ledger((SELECT max(chain_position) FROM audit_checkpoint)) INTO v_clean;
 
   v_results := jsonb_build_object(
     'variant_a', v_clean->>'variant' = 'A',
@@ -23,13 +22,16 @@ BEGIN
       AND v_clean#>>'{system_truth,order_authority}' = 'none',
     'checkpoints_verified_before_display',
       (v_clean->>'checkpoints_verified')::boolean
-      AND v_clean#>>'{system_truth,state}' = 'CHAIN VERIFIED'
+      AND v_clean#>>'{system_truth,state}' = 'CHECKPOINT PENDING'
       AND (v_clean#>>'{chain,valid}')::boolean
-      AND jsonb_array_length(v_clean->'exceptions') = 0
       AND jsonb_array_length(v_clean->'tape') >= 1
-      AND NOT EXISTS (
+      AND EXISTS (
         SELECT 1 FROM jsonb_array_elements(v_clean->'tape') ev
-        WHERE (ev->>'trusted')::boolean IS NOT TRUE
+        WHERE (ev->>'trusted')::boolean
+      )
+      AND EXISTS (
+        SELECT 1 FROM jsonb_array_elements(v_clean->'tape') ev
+        WHERE ev->>'distrust_reason' = 'outside_verified_checkpoint'
       )
   );
 
@@ -45,13 +47,25 @@ BEGIN
   );
   SELECT max(chain_position) INTO v_appended FROM audit_event;
 
+  SELECT read_command_ledger((SELECT max(chain_position) FROM audit_checkpoint)) INTO v_tampered;
+  v_results := v_results || jsonb_build_object(
+    'post_checkpoint_events_untrusted',
+      v_tampered#>>'{system_truth,state}' = 'CHECKPOINT PENDING'
+      AND EXISTS (
+        SELECT 1 FROM jsonb_array_elements(v_tampered->'tape') ev
+        WHERE (ev->>'chain_position')::bigint = v_appended
+          AND (ev->>'trusted')::boolean IS NOT TRUE
+          AND ev->>'distrust_reason' = 'outside_verified_checkpoint'
+      )
+  );
+
   SET LOCAL session_replication_role = replica;
   UPDATE audit_event
      SET payload = jsonb_set(payload, '{tampered}', 'true'::jsonb)
    WHERE chain_position = v_appended;
   SET LOCAL session_replication_role = origin;
 
-  SELECT read_command_ledger() INTO v_tampered;
+  SELECT read_command_ledger((SELECT max(chain_position) FROM audit_checkpoint)) INTO v_tampered;
   v_break := (v_tampered#>>'{chain,break_position}')::bigint;
 
   v_results := v_results || jsonb_build_object(
@@ -66,7 +80,8 @@ BEGIN
       )
       AND EXISTS (
         SELECT 1 FROM jsonb_array_elements(v_tampered->'tape') ev
-        WHERE (ev->>'chain_position')::bigint = v_head
+        WHERE (ev->>'chain_position')::bigint = (
+            SELECT max(chain_position) FROM audit_checkpoint)
           AND (ev->>'trusted')::boolean
       )
       AND EXISTS (
@@ -77,7 +92,8 @@ BEGIN
       )
       AND NOT EXISTS (
         SELECT 1 FROM jsonb_array_elements(v_tampered->'tape') ev
-        WHERE (ev->>'chain_position')::bigint < v_appended
+        WHERE (ev->>'chain_position')::bigint <= (
+            SELECT max(chain_position) FROM audit_checkpoint)
           AND (ev->>'trusted')::boolean IS NOT TRUE
       )
   );
