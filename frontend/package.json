@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node start.mjs",
+    "start:container": "MM_DASHBOARD_CONTAINER_LOOPBACK_PUBLISHED=1 node start.mjs",
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {

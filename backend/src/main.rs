@@ -6,7 +6,8 @@ use axum::{
 };
 use backend::{
     checkpoints::{
-        execute_checkpoint_flow, run_restore_verification, CustodyClient, RestoreVerification,
+        execute_checkpoint_flow, run_restore_verification, run_restore_verification_read_only,
+        CustodyClient, RestoreVerification,
     },
     logging::log_event,
     migrate::{
@@ -259,77 +260,84 @@ async fn verify_until_valid_or_exhausted(state: &AppState, database_url: &str) {
     );
 }
 
-async fn command_ledger(State(state): State<AppState>) -> (StatusCode, Json<serde_json::Value>) {
-    let database_url = match database_url() {
-        Ok(url) => url,
-        Err(error) => {
-            return (
-                StatusCode::SERVICE_UNAVAILABLE,
-                Json(serde_json::json!({ "error": error.to_string() })),
-            );
-        }
-    };
-    let (client, _connection) = match connect(&database_url).await {
-        Ok(pair) => pair,
-        Err(error) => {
-            return (
-                StatusCode::SERVICE_UNAVAILABLE,
-                Json(serde_json::json!({
-                    "error": format!("database connect failed: {error}")
-                })),
-            );
-        }
-    };
-
-    let checkpoint_count: i64 = match client
-        .query_one("SELECT count(*) FROM audit_checkpoint", &[])
-        .await
-    {
-        Ok(row) => row.get(0),
-        Err(error) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "error": format!("checkpoint count read failed: {error}")
-                })),
-            );
-        }
-    };
-
-    let verification = run_restore_verification(&client, &state.custody).await;
-    if checkpoint_count > 0 && (verification.pending || !verification.valid) {
-        return (
+async fn verified_surface_client(
+    State(state): State<AppState>,
+    surface: &str,
+) -> Result<
+    (
+        tokio_postgres::Client,
+        tokio::task::JoinHandle<()>,
+        Option<i64>,
+    ),
+    (StatusCode, Json<serde_json::Value>),
+> {
+    let database_url = database_url().map_err(|error| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({ "error": error.to_string() })),
+        )
+    })?;
+    let (client, connection) = connect(&database_url).await.map_err(|error| {
+        (
             StatusCode::SERVICE_UNAVAILABLE,
             Json(serde_json::json!({
-                "error": "checkpoint verification has not passed; command ledger is unavailable",
+                "error": format!("database connect failed: {error}")
+            })),
+        )
+    })?;
+
+    client
+        .batch_execute("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        .await
+        .map_err(|error| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "error": format!("read-only transaction start failed: {error}")
+                })),
+            )
+        })?;
+
+    let verification = run_restore_verification_read_only(&client, &state.custody).await;
+    if verification.pending || !verification.valid {
+        let _ = client.batch_execute("ROLLBACK").await;
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": format!("checkpoint verification has not passed; {surface} is unavailable"),
                 "failure": verification.first_failure
             })),
-        );
+        ));
     }
 
-    let verified_position: Option<i64> = if checkpoint_count == 0 {
-        None
-    } else {
-        match client
-            .query_one("SELECT max(chain_position) FROM audit_checkpoint", &[])
-            .await
-        {
-            Ok(row) => row.get(0),
-            Err(error) => {
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({
-                        "error": format!("checkpoint coverage read failed: {error}")
-                    })),
-                );
-            }
-        }
-    };
-
-    match client
-        .query_one("SELECT read_command_ledger($1)", &[&verified_position])
+    let verified_position: Option<i64> = client
+        .query_one("SELECT max(chain_position) FROM audit_checkpoint", &[])
         .await
-    {
+        .map_err(|error| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "error": format!("checkpoint coverage read failed: {error}")
+                })),
+            )
+        })?
+        .get(0);
+
+    Ok((client, connection, verified_position))
+}
+
+async fn command_ledger(State(state): State<AppState>) -> (StatusCode, Json<serde_json::Value>) {
+    let (client, _connection, verified_position) =
+        match verified_surface_client(State(state), "command ledger").await {
+            Ok(pair) => pair,
+            Err(response) => return response,
+        };
+
+    let result = client
+        .query_one("SELECT read_command_ledger($1)", &[&verified_position])
+        .await;
+    let _ = client.batch_execute("ROLLBACK").await;
+    match result {
         Ok(row) => {
             let ledger: serde_json::Value = row.get(0);
             (StatusCode::OK, Json(ledger))
@@ -338,6 +346,53 @@ async fn command_ledger(State(state): State<AppState>) -> (StatusCode, Json<serd
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({
                 "error": format!("command ledger read failed: {error}")
+            })),
+        ),
+    }
+}
+
+async fn stage1_surfaces(State(state): State<AppState>) -> (StatusCode, Json<serde_json::Value>) {
+    let (client, _connection, verified_position) =
+        match verified_surface_client(State(state), "stage-1 surfaces").await {
+            Ok(pair) => pair,
+            Err(response) => return response,
+        };
+
+    let result = client.query_one("SELECT read_stage1_surfaces()", &[]).await;
+    let _ = client.batch_execute("ROLLBACK").await;
+    match result {
+        Ok(row) => {
+            let mut surfaces: serde_json::Value = row.get(0);
+            let pack = surfaces
+                .get_mut("checkpoint_pack")
+                .and_then(serde_json::Value::as_object_mut)
+                .expect("stage-1 checkpoint pack projection must be an object");
+            let pending_material = pack
+                .get("pending_material_events")
+                .and_then(serde_json::Value::as_i64);
+            let verified = verified_position.is_some();
+            pack.insert(
+                "verified_position".into(),
+                serde_json::json!(verified_position),
+            );
+            pack.insert(
+                "state".into(),
+                serde_json::json!(match (verified, pending_material) {
+                    (false, _) => "CHECKPOINT UNVERIFIED",
+                    (true, Some(0)) => "CHECKPOINT VERIFIED",
+                    (true, _) => "CHECKPOINT PENDING",
+                }),
+            );
+            surfaces
+                .as_object_mut()
+                .expect("stage-1 projection must be an object")
+                .insert("checkpoints_verified".into(), serde_json::json!(verified));
+            (StatusCode::OK, Json(surfaces))
+        }
+        Err(error) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "error": format!("stage-1 surfaces read failed: {error}")
             })),
         ),
     }
@@ -660,6 +715,7 @@ async fn serve() {
         .route("/healthz", get(healthz))
         .route("/readyz", get(readyz))
         .route("/command-ledger", get(command_ledger))
+        .route("/stage1-surfaces", get(stage1_surfaces))
         .route("/checkpoints", post(create_checkpoint))
         .route("/restore-verification", post(restore_verification))
         .route("/tracer/run", post(run_tracer_endpoint))

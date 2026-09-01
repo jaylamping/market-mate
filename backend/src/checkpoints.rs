@@ -298,9 +298,10 @@ fn failure(
     }
 }
 
-pub async fn run_restore_verification(
+async fn run_restore_verification_with_reconciliation(
     client: &Client,
     custody: &CustodyClient,
+    reconcile_missing_mirrors: bool,
 ) -> RestoreVerification {
     let custody_public_key = match custody.public_key().await {
         Ok(public_key) => public_key,
@@ -423,6 +424,14 @@ pub async fn run_restore_verification(
             mirror_row.as_ref(),
         ) {
             Ok(Some(_to_backfill)) => {
+                if !reconcile_missing_mirrors {
+                    return failure(
+                        Some(checkpoint_index),
+                        "mirror_missing",
+                        "custody receipt has no matching audit_checkpoint row".to_string(),
+                        &base,
+                    );
+                }
                 // Auto-reconcile missing mirror row
                 let parsed_time = match parse_checkpoint_time(&receipt.checkpoint_time) {
                     Ok(time) => time,
@@ -508,19 +517,34 @@ pub async fn run_restore_verification(
     }
 }
 
+pub async fn run_restore_verification(
+    client: &Client,
+    custody: &CustodyClient,
+) -> RestoreVerification {
+    run_restore_verification_with_reconciliation(client, custody, true).await
+}
+
+pub async fn run_restore_verification_read_only(
+    client: &Client,
+    custody: &CustodyClient,
+) -> RestoreVerification {
+    run_restore_verification_with_reconciliation(client, custody, false).await
+}
+
 pub async fn current_head(client: &Client) -> Result<(i64, String), String> {
     let row = client
         .query_one(
-            "SELECT max(chain_position), current_chain_digest() FROM audit_event",
+            "SELECT chain_position, event_hash
+               FROM audit_event
+              ORDER BY chain_position DESC
+              LIMIT 1",
             &[],
         )
         .await
         .map_err(|error| format!("chain head query failed: {error}"))?;
-    let position: Option<i64> = row.get(0);
-    let digest: Option<String> = row.get(1);
-    let position = position.ok_or("the audit chain is empty; nothing to checkpoint")?;
-    let digest = digest.ok_or("the audit chain is empty; nothing to checkpoint")?;
-    Ok((position, digest))
+    let position: i64 = row.get(0);
+    let head_hash: String = row.get(1);
+    Ok((position, chain_digest(position, &head_hash)))
 }
 
 pub async fn execute_checkpoint_flow(
