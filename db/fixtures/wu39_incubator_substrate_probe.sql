@@ -13,6 +13,8 @@ DECLARE
   v_ent_ok uuid := '39000000-0000-0000-0000-000000000302';
   v_ent_bad_id uuid := '39000000-0000-0000-0000-000000000303';
   v_ent_bad uuid := '39000000-0000-0000-0000-000000000304';
+  v_ent_exp_id uuid := '39000000-0000-0000-0000-000000000305';
+  v_ent_exp uuid := '39000000-0000-0000-0000-000000000306';
   v_prereg jsonb;
   v_reg experiment_preregistration%ROWTYPE;
   v_spec jsonb;
@@ -59,6 +61,9 @@ BEGIN
   ), (
     v_ent_bad_id, 'wu39-uncertified-entitlement', 'local-research-account',
     'WU-39 uncertified plan', v_lineage, '2026-01-01T00:00:00Z', 'local_research'
+  ), (
+    v_ent_exp_id, 'wu39-expired-entitlement', 'local-research-account',
+    'WU-39 expired plan', v_lineage, '2026-01-01T00:00:00Z', 'local_research'
   );
   INSERT INTO data_entitlement_version (
     entitlement_version_id, entitlement_id, entitlement_version,
@@ -74,6 +79,11 @@ BEGIN
     v_ent_bad, v_ent_bad_id, 1, v_source_v, 'uncertified',
     ARRAY['local_research'], '2026-01-01T00:00:00Z', NULL,
     '{"authority":"pending","certificate":"not-issued"}',
+    v_lineage, '2026-01-01T00:00:00Z', 'local_research'
+  ), (
+    v_ent_exp, v_ent_exp_id, 1, v_source_v, 'certified',
+    ARRAY['local_research'], '2026-01-01T00:00:00Z', '2026-08-15T00:00:00Z',
+    '{"authority":"principal-approved-research-plan","certificate":"wu39-expired-cert"}',
     v_lineage, '2026-01-01T00:00:00Z', 'local_research'
   );
 
@@ -156,6 +166,14 @@ BEGIN
   v_results := v_results || jsonb_build_object(
     'sentinel_allows_entitled_use',
       v_decision.decision = 'allowed'
+      AND v_decision.requested_purpose = 'local_research'
+      AND v_decision.request_key LIKE
+        ('alpha-shot-evidence:' || v_shot.shot_id::text || '%')
+      AND EXISTS (
+        SELECT 1 FROM entitled_use_receipt r
+        WHERE r.decision_id = v_decision.decision_id
+          AND r.consumer_key = 'incubator-sentinel'
+      )
   );
 
   BEGIN
@@ -167,6 +185,40 @@ BEGIN
     WHEN OTHERS THEN
       IF SQLERRM NOT LIKE '%sentinel denied non-entitled evidence use%' THEN RAISE; END IF;
       v_results := v_results || jsonb_build_object('sentinel_denies_non_entitled_use', true);
+  END;
+
+  BEGIN
+    PERFORM sentinel_allow_alpha_shot_evidence(
+      v_shot.shot_id, v_ent_ok, 'paper_execution',
+      '2026-08-01T00:00:00Z'::timestamptz, v_lineage);
+    RAISE EXCEPTION 'probe corrupted: paper_execution purpose was allowed';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%sentinel denied non-entitled evidence use%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('sentinel_denies_paper_purpose', true);
+  END;
+
+  BEGIN
+    PERFORM sentinel_allow_alpha_shot_evidence(
+      v_shot.shot_id, v_ent_ok, 'local_research',
+      '2026-08-01T00:00:00Z'::timestamptz,
+      '{"source":"wu39-other","entitlement_version":"incubator-v1"}'::jsonb);
+    RAISE EXCEPTION 'probe corrupted: lineage-mismatched evidence use was allowed';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%sentinel denied non-entitled evidence use%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('sentinel_denies_lineage_mismatch', true);
+  END;
+
+  BEGIN
+    PERFORM sentinel_allow_alpha_shot_evidence(
+      v_shot.shot_id, v_ent_exp, 'local_research',
+      '2026-08-01T00:00:00Z'::timestamptz, v_lineage);
+    RAISE EXCEPTION 'probe corrupted: expired entitlement was allowed via backdated requested_at';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%sentinel denied non-entitled evidence use%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('sentinel_denies_expired_as_of_now', true);
   END;
 
   v_manager := jsonb_set(v_spec, '{assignment_key}', '"wu39-manager"'::jsonb);
@@ -201,6 +253,34 @@ BEGIN
     WHEN OTHERS THEN
       IF SQLERRM NOT LIKE '%nonconforming assignment%' THEN RAISE; END IF;
       v_results := v_results || jsonb_build_object('compliance_assignment_rejected', true);
+  END;
+
+  BEGIN
+    PERFORM engine_admit_research_assignment(
+      jsonb_set(
+        jsonb_set(v_spec, '{assignment_key}', '"wu39-desk-head"'::jsonb),
+        '{desk_role}', '"desk_head"'::jsonb
+      ),
+      v_lineage);
+    RAISE EXCEPTION 'probe corrupted: desk_head assignment was admitted';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%nonconforming assignment%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('desk_head_assignment_rejected', true);
+  END;
+
+  BEGIN
+    PERFORM engine_admit_research_assignment(
+      jsonb_set(
+        jsonb_set(v_spec, '{assignment_key}', '"wu39-execution-edge"'::jsonb),
+        '{desk_role}', '"execution_edge_and_paper_trading"'::jsonb
+      ),
+      v_lineage);
+    RAISE EXCEPTION 'probe corrupted: execution_edge_and_paper_trading was admitted';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%nonconforming assignment%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('execution_edge_assignment_rejected', true);
   END;
 
   BEGIN
@@ -293,6 +373,35 @@ BEGIN
       v_results := v_results || jsonb_build_object('divergent_budget_blocked', true);
   END;
 
+  BEGIN
+    PERFORM record_alpha_shot(
+      v_spec, jsonb_build_object('outcome', 'completed'),
+      NULL, 'insufficient_sample', v_lineage);
+    RAISE EXCEPTION 'probe corrupted: different outcome was admitted as identity';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%already recorded with a different result or lineage%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('result_mismatch_blocked', true);
+  END;
+
+  BEGIN
+    PERFORM engine_admit_research_assignment(
+      jsonb_set(
+        jsonb_set(
+          jsonb_set(v_spec, '{assignment_key}', '"wu39-paper-eligible"'::jsonb),
+          '{budget}', jsonb_build_object('family_trials', 1, 'paper_eligible', true)
+        ),
+        '{profit_contribution_hypothesis,cost_envelope}',
+        jsonb_build_object('family_trials', 1, 'paper_eligible', true)
+      ),
+      v_lineage);
+    RAISE EXCEPTION 'probe corrupted: nested paper_eligible was admitted';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%nonconforming assignment%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('nested_authority_blocked', true);
+  END;
+
   v_paper := jsonb_set(v_spec, '{assignment_key}', '"wu39-paper"'::jsonb);
   v_paper := jsonb_set(v_paper, '{lane}', '"paper"'::jsonb);
   BEGIN
@@ -317,6 +426,32 @@ BEGIN
     WHEN OTHERS THEN
       IF SQLERRM NOT LIKE '%must go through the incubator workflow%' THEN RAISE; END IF;
       v_results := v_results || jsonb_build_object('direct_insert_blocked', true);
+  END;
+
+  BEGIN
+    INSERT INTO incubator_assignment (
+      assignment_key, lane, desk_role, spec, state,
+      source_lineage, receipt_time, record_environment
+    ) VALUES (
+      'wu39-direct-assignment', 'research',
+      'quantitative_research_and_experimentation', v_spec, 'scheduled',
+      v_lineage, now(), 'local_research'
+    );
+    RAISE EXCEPTION 'probe corrupted: direct incubator_assignment INSERT was accepted';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%must go through the incubator workflow%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('assignment_insert_blocked', true);
+  END;
+
+  BEGIN
+    UPDATE incubator_assignment SET spec = v_spec
+     WHERE assignment_id = v_shot.assignment_id;
+    RAISE EXCEPTION 'probe corrupted: incubator assignment was mutable';
+  EXCEPTION
+    WHEN OTHERS THEN
+      IF SQLERRM NOT LIKE '%append-only%' THEN RAISE; END IF;
+      v_results := v_results || jsonb_build_object('assignment_update_blocked', true);
   END;
 
   BEGIN
@@ -357,6 +492,7 @@ BEGIN
       v_shot.record_environment = 'local_research'
       AND (SELECT bool_and(record_environment = 'local_research')
            FROM incubator_assignment)
+      AND coalesce((v_results->>'nested_authority_blocked')::boolean, false)
   );
 
   INSERT INTO wu39_probe_result (result) VALUES (v_results);
