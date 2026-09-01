@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-09-01T18:44:42Z",
+  "captured_at": "2026-09-01T18:48:41Z",
   "migration": {
     "head": 52,
     "expected_head": 52,
@@ -66,7 +66,7 @@
     },
     "checkpoints_verified": true,
     "cost": {
-      "as_of": "2026-09-01T18:44:35.103724Z",
+      "as_of": "2026-09-01T18:48:34.317374Z",
       "envelope_key": "wu44-stage-1",
       "recorded": true,
       "register": {
@@ -82,7 +82,7 @@
       }
     },
     "cost_model": {
-      "as_of": "2026-09-01T18:44:34.200010Z",
+      "as_of": "2026-09-01T18:48:33.333602Z",
       "model_key": "wu44-over-cap-named",
       "monthly_escalation": "exceeded",
       "monthly_hard_ceiling_cents": 25000,
@@ -98,7 +98,7 @@
     "environment": "local_research",
     "order_authority": false,
     "qualification": {
-      "as_of": "2026-09-01T18:44:33.546043Z",
+      "as_of": "2026-09-01T18:48:32.672011Z",
       "cluster_count": 32,
       "eis": 32,
       "eis_floor": 32,
@@ -109,12 +109,12 @@
       "meets_eis_floor": true,
       "meets_sp500_floor": true,
       "net_mean_return_bps": 74,
-      "receipt_time": "2026-09-01T18:44:33.546043Z",
+      "receipt_time": "2026-09-01T18:48:32.672011Z",
       "recorded": true,
-      "result_digest": "22827a22bc004bd83034ee8c130f4df53542831d98f08531c4bbbd1ed627d11c",
+      "result_digest": "dda383811da1e78937239ca3e93cce87fc49e5eeee9735850621b75c1fe3e52c",
       "sp500_comparator_required": true,
       "status": "passed",
-      "strategy_version_digest": "60a461ff35f2b7e6be219ed747a263b6ad5129f7ceee9815631d3c63832fe61b",
+      "strategy_version_digest": "d6f411591af185ed7806fc50d0ede541bf012a642b8019db37dcf1b1715c659b",
       "window_count": 3,
       "window_plan": {
         "folds": [
@@ -190,14 +190,14 @@
       "latest_snapshots": [
         {
           "payload_digest": "5fc419a4fe7a5b8651c7677070d019965f76c0f2d67bf3af3d151c2b17e7351d",
-          "receipt_time": "2026-09-01T18:44:34.823509Z",
-          "snapshot_id": "80d4b079-ac81-4cc0-9110-bc2ba2513573",
+          "receipt_time": "2026-09-01T18:48:33.999636Z",
+          "snapshot_id": "c95a517f-f525-44e0-93eb-fda7fee43ed2",
           "snapshot_kind": "security_daily"
         },
         {
           "payload_digest": "182aab87f6ddb757421bc22f6bdc7d47ece96088c0168d5456d9afb9ad4f3f19",
-          "receipt_time": "2026-09-01T18:44:32.557621Z",
-          "snapshot_id": "f9196284-3294-45af-903b-3303e31c8f9b",
+          "receipt_time": "2026-09-01T18:48:31.718897Z",
+          "snapshot_id": "a5a428c4-08f7-4321-8313-3205b0c8dcd1",
           "snapshot_kind": "walk_forward_v1"
         }
       ],
@@ -224,8 +224,7 @@
     "projection_does_not_claim_verification": true
   },
   "source": {
-    "base_head": "201e4b8742c139b772424ec372684c0b07833147",
-    "digest": "7f55a52543482f4a02c21d98eda33787e0ce17b083a19f85ff0c515a05c2c474"
+    "digest": "b28de9e4582f601919d077b12baefa9775585308ed5f85addf6c43574cc914c9"
   },
   "configuration": {
     "loopback_only": true,
