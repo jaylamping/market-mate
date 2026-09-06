@@ -1,0 +1,1 @@
+Components installed from the official shadcn/ui new-york-v4 registry on 2026-09-06. Upstream MIT license: https://github.com/shadcn-ui/ui/blob/main/LICENSE.md. The registry cn import is mapped to @/lib/utils. Theme tokens are in app/globals.css.

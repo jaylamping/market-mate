@@ -1,0 +1,44 @@
+{
+  "title": "Choose the dashboard composition",
+  "question": "Pick the first-view structure to build, or tell me what to combine.",
+  "options": [
+    {
+      "id": "balanced",
+      "label": "Balanced Overview",
+      "kicker": "OPTION 1",
+      "lineage": "Linear-caliber institutional dashboard",
+      "thesis": "Attention, posture, performance, capital, costs, and evidence receive balanced first-view weight.",
+      "palette": ["#071019", "#111A22", "#E7EBEF", "#3478F6", "#F59E0B"],
+      "materials": ["recessed sidebar", "quiet panels", "precise charts", "soft dividers"],
+      "viewport": "Two balanced upper columns lead into performance, capital, costs, and evidence panels.",
+      "risk": "Balanced coverage can make the Principal decide what matters most instead of the interface deciding.",
+      "comp": ".impeccable/mocks/dashboard-balanced-dark.png"
+    },
+    {
+      "id": "attention",
+      "label": "Attention First",
+      "kicker": "OPTION 2",
+      "lineage": "Linear inbox hierarchy plus institutional risk operations",
+      "thesis": "What needs the Principal appears first, with the system posture beside it and everything else immediately below.",
+      "palette": ["#071019", "#111A22", "#E7EBEF", "#3478F6", "#F59E0B"],
+      "materials": ["ranked queue", "explainable rows", "calm posture rail", "compact metric band"],
+      "viewport": "A dominant attention workspace explains severity, consequence, due state, and evidence before the compact overview band.",
+      "risk": "On quiet days, the dashboard may feel more issue-driven than performance-driven.",
+      "comp": ".impeccable/mocks/dashboard-attention-dark.png"
+    },
+    {
+      "id": "matrix",
+      "label": "Heads-Up Matrix",
+      "kicker": "OPTION 3",
+      "lineage": "executive risk matrix with Linear-level restraint",
+      "thesis": "Four explicit answers dominate the first scan, then performance and attention deepen below them.",
+      "palette": ["#071019", "#111A22", "#E7EBEF", "#3478F6", "#F59E0B"],
+      "materials": ["answer columns", "wide evidence chart", "ranked attention rail", "custody ribbon"],
+      "viewport": "Safe and trusted, needs attention, after-cost performance, and capital and cost form the first row of answers.",
+      "risk": "The large answer columns consume space and require disciplined copy as more states are added.",
+      "comp": ".impeccable/mocks/dashboard-matrix-dark.png"
+    }
+  ],
+  "reroll": false,
+  "steer": true
+}

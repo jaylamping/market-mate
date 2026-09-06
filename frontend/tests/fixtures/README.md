@@ -1,0 +1,1 @@
+Stage-1 frontend test fixture captured from local WU acceptance records on 2026-09-06. These are synthetic research acceptance data, not trading performance. Tests clone this projection and alter individual states without writing to the database.

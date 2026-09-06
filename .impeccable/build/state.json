@@ -1,0 +1,23 @@
+{
+  "tool": "build-phase",
+  "version": 2,
+  "startedAt": "2026-09-06T22:01:26.508Z",
+  "comp": null,
+  "direction": "3e7f0a7d",
+  "breakpoint": null,
+  "artifact": "http://127.0.0.1:3000",
+  "phase": "complete",
+  "phases": {},
+  "finish": {
+    "disposition": "ship",
+    "reviewer": "spectral_finish",
+    "resolved": [
+      "mobile detail wrapping",
+      "acceptance-test evidence labeling",
+      "direction persistence"
+    ]
+  },
+  "buildPath": "code",
+  "userSelection": "Existing overview functionality and layout, Spectral Edge design language, actual shadcn components, light and dark themes; selected in chat.",
+  "directionContract": ".impeccable/spectral-direction.md"
+}

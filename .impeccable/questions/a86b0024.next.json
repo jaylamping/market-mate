@@ -1,0 +1,74 @@
+{
+  "title": "Spectral Edge × shadcn",
+  "question": "One visual direction, three layouts. Choose what to carry forward, or describe a combination. All previews are illustrative; implementation will use verified backend fields.",
+  "options": [
+    {
+      "id": "overview",
+      "label": "Spectral Overview",
+      "thesis": "A calm overview of health, attention, and research.",
+      "viewport": "Slim sidebar, compact health row, attention beside qualification, evidence below.",
+      "risk": "Broadest overview; detailed investigation opens a second view.",
+      "comp": ".impeccable/mocks/spectral/overview.png",
+      "palette": [
+        "#ffffff",
+        "#f4f5f8",
+        "#39434f",
+        "#7c63bb",
+        "#cdefe6",
+        "#ffd6e6"
+      ],
+      "materials": [
+        "cloud white",
+        "spectral hairline edges",
+        "shadcn-style controls"
+      ]
+    },
+    {
+      "id": "attention",
+      "label": "Spectral Attention",
+      "thesis": "Start with the exception, then inspect its evidence beside it.",
+      "viewport": "Attention queue and persistent inspector, with a research register underneath.",
+      "risk": "Best for daily triage; research has a supporting role.",
+      "comp": ".impeccable/mocks/spectral/attention.png",
+      "palette": [
+        "#ffffff",
+        "#f4f5f8",
+        "#39434f",
+        "#7c63bb",
+        "#cdefe6",
+        "#ffd6e6"
+      ],
+      "materials": [
+        "cloud white",
+        "spectral hairline edges",
+        "shadcn-style controls"
+      ]
+    },
+    {
+      "id": "research",
+      "label": "Spectral Research",
+      "thesis": "Browse research cycles with their evidence always in view.",
+      "viewport": "Health strip, spacious cycle table, and a right-hand evidence inspector.",
+      "risk": "Strongest research workspace; less room for the full exception list.",
+      "comp": ".impeccable/mocks/spectral/research.png",
+      "palette": [
+        "#ffffff",
+        "#f4f5f8",
+        "#39434f",
+        "#7c63bb",
+        "#cdefe6",
+        "#ffd6e6"
+      ],
+      "materials": [
+        "cloud white",
+        "spectral hairline edges",
+        "shadcn-style controls"
+      ]
+    }
+  ],
+  "steer": true,
+  "buildPath": {
+    "value": "comp",
+    "toggle": true
+  }
+}

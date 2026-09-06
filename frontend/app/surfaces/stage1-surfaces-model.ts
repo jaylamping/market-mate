@@ -63,6 +63,7 @@ function notRecorded(value: JsonObject, name: string): NotRecorded {
 function qualification(value: unknown): Qualification {
   const item = object(value, "qualification");
   if (item.recorded === false) return notRecorded(item, "qualification");
+  if (item.recorded !== true) throw new Error("qualification.recorded must be a boolean");
   const status = string(item.status, "qualification.status");
   if (status !== "passed" && status !== "failed") {
     throw new Error("qualification.status must be passed or failed");
@@ -98,6 +99,7 @@ function qualification(value: unknown): Qualification {
 function cost(value: unknown): Cost {
   const item = object(value, "cost");
   if (item.recorded === false) return notRecorded(item, "cost");
+  if (item.recorded !== true) throw new Error("cost.recorded must be a boolean");
   const register = object(item.register, "cost.register");
   return {
     recorded: true,
@@ -118,6 +120,7 @@ function cost(value: unknown): Cost {
 function costModel(value: unknown): CostModel {
   const item = object(value, "cost_model");
   if (item.recorded === false) return notRecorded(item, "cost_model");
+  if (item.recorded !== true) throw new Error("cost_model.recorded must be a boolean");
   return {
     recorded: true,
     model_key: string(item.model_key, "cost_model.model_key"),
@@ -139,6 +142,8 @@ export function parseStage1Surfaces(value: unknown): Stage1SurfacesModel {
   const stage = object(root.stage, "stage");
   const snapshots = object(root.snapshots, "snapshots");
   const manifests = snapshots.latest_manifests;
+  const latestSnapshots = snapshots.latest_snapshots;
+  if (!Array.isArray(latestSnapshots)) throw new Error("snapshots.latest_snapshots must be an array");
   const checkpoint = object(root.checkpoint_pack, "checkpoint_pack");
   if (root.environment !== "local_research" || root.order_authority !== false) {
     throw new Error("stage-1 surfaces must be local_research with zero authority");
@@ -167,6 +172,10 @@ export function parseStage1Surfaces(value: unknown): Stage1SurfacesModel {
       recorded: boolean(snapshots.recorded, "snapshots.recorded"),
       manifest_count: number(snapshots.manifest_count, "snapshots.manifest_count"),
       snapshot_count: number(snapshots.snapshot_count, "snapshots.snapshot_count"),
+      latest_snapshots: latestSnapshots.map((entry) => {
+        const item = object(entry, "snapshot");
+        return { snapshot_id: string(item.snapshot_id, "snapshot.snapshot_id"), snapshot_kind: string(item.snapshot_kind, "snapshot.snapshot_kind"), receipt_time: string(item.receipt_time, "snapshot.receipt_time"), payload_digest: string(item.payload_digest, "snapshot.payload_digest") };
+      }),
       latest_manifests: manifests.map((entry, index) => {
         const item = object(entry, `snapshots.latest_manifests[${index}]`);
         return {

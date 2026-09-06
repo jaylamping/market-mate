@@ -1,0 +1,156 @@
+{
+  "title": "Choose Market Mate's visual world",
+  "question": "Choose the world that should govern the full supervisory dashboard and every deeper surface.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Authority Topography",
+      "kicker": "THE ROLL",
+      "lineage": "survey maps, plotting tables, and transparent operational overlays",
+      "thesis": "The whole system becomes one navigable terrain whose contours reveal trust, attention, performance, and capital at once.",
+      "palette": ["#0B1110", "#E7E0CF", "#8FBFC0", "#C8F26B", "#F05A47"],
+      "materials": ["survey paper", "etched contour lines", "transparent plotting overlays", "coordinate stamps"],
+      "viewport": "A full-screen operational map centers the Trust Zone, with four surrounding territories—Attention, Performance, Capital, and Evidence—and one red cost-over-cap contour immediately visible.",
+      "risk": "The map must remain an exact information model; decorative geography would obscure rather than clarify authority.",
+      "raised": [
+        {
+          "from": "Phosphor Terminal",
+          "raise": "History remains a continuous inspectable trail beneath every current-state mark."
+        },
+        {
+          "from": "Parametric Identity",
+          "raise": "The terrain is derived only from auditable system state, never decorative randomness."
+        },
+        {
+          "from": "Caption Field",
+          "raise": "Urgency changes scale and prominence before it changes color."
+        },
+        {
+          "from": "Archive Wall",
+          "raise": "Opening a territory preserves the surrounding heads-up context."
+        }
+      ],
+      "comp": ".impeccable/mocks/decision/authority-topography.webp"
+    },
+    {
+      "id": "model-pick",
+      "label": "Interlocking Board",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "railway signal boxes and route-interlocking diagrams",
+      "thesis": "Market Mate reads as a governed route network where no state can appear open unless every upstream gate aligns.",
+      "palette": ["#101311", "#E8E2CF", "#82C341", "#E3A72F", "#C84432"],
+      "materials": ["vitreous enamel", "brass labels", "illuminated route lamps", "painted track lines"],
+      "viewport": "One schematic routes Incubator evidence through Sentinel gates toward Engine state, while performance, cash, costs, approvals, and emergencies branch as inspectable signal stations.",
+      "risk": "Its infrastructural precision can feel cold, and its familiarity makes it the direction most safety-critical dashboards naturally converge on.",
+      "comp": ".impeccable/mocks/decision/interlocking-board.webp"
+    },
+    {
+      "id": "challenger-emission-rail",
+      "label": "Evidence Spectrum",
+      "verdict": "competitive",
+      "lineage": "calibrated spectrograms and atomic emission-line plates",
+      "thesis": "Every domain registers on one calibrated rail, with freshness, trust, and urgency expressed through line form before color.",
+      "palette": ["#121516", "#D9D3C4", "#7B8586", "#6BD4D0", "#E9C85B"],
+      "materials": ["banded charcoal continuum", "hairline emissions", "flat ash plates", "calibration ticks"],
+      "viewport": "A single off-center rail spans the first view; doubled and full-height marks expose what needs attention while a selected domain blooms into a large evidence plate without leaving the rail.",
+      "case": "It beats the map on scan discipline and dense-state elegance, but identifies less strongly with Market Mate's explicit governance topology.",
+      "risk": "Its restraint can become cryptic unless every line form has a persistent plain-language legend.",
+      "comp": ".impeccable/mocks/decision/evidence-spectrum.webp",
+      "hero": "https://impeccable.style/worlds/cards/operate-c-emission-line-rail-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/operate-c-emission-line-rail.webp"
+    },
+    {
+      "id": "challenger-phosphor",
+      "label": "Phosphor Transcript",
+      "verdict": "declined",
+      "lineage": "green-phosphor terminals in midnight machine rooms",
+      "thesis": "The system explains itself as a continuous, keyboard-first operational transcript.",
+      "palette": ["#050806", "#9BF26E", "#3D7D42"],
+      "materials": ["curved glass", "phosphor bloom", "afterimage history"],
+      "viewport": "Current truth prints above a searchable transcript of every consequential state transition.",
+      "case": "It identifies with technical operations but cannot provide the requested everything-at-once overview without becoming a conventional terminal dashboard.",
+      "kept": "Continuous history is treated as part of the current state, not a separate archive.",
+      "risk": "It repeats the incumbent aesthetic and the trading-terminal category rut.",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-phosphor-terminal-midnight-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/signals-instruments-phosphor-terminal-midnight.webp"
+    },
+    {
+      "id": "challenger-parametric",
+      "label": "Living State Mark",
+      "verdict": "declined",
+      "lineage": "generative parametric identity systems",
+      "thesis": "One deterministic mark changes with trust, authority, performance, and cost, then tunes every surface around it.",
+      "palette": ["#F2F0E8", "#171A1C", "#4568F2", "#F05E4F"],
+      "materials": ["flat vectors", "seeded geometry", "derived rhythm"],
+      "viewport": "A state-derived mark occupies the center while its four parameters unfold into the dashboard's major domains.",
+      "case": "It is memorable but makes visual identity carry too much audit meaning and risks confusing change with authority.",
+      "kept": "Every visual variation must derive from an explainable, deterministic state.",
+      "risk": "A changing identity can undermine the stable recognition required during emergencies.",
+      "hero": "https://impeccable.style/worlds/cards/generative-parametric-identity-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/generative-parametric-identity.webp"
+    },
+    {
+      "id": "challenger-archive",
+      "label": "Evidence Archive Wall",
+      "verdict": "declined",
+      "lineage": "indexed specimen drawers and stacked archive boxes",
+      "thesis": "Each system domain is an indexed evidence container that opens without losing the whole collection.",
+      "palette": ["#B95F30", "#F3E9D2", "#1B1A17", "#73988B"],
+      "materials": ["box board", "tissue paper", "printed end labels", "specimen tabs"],
+      "viewport": "A wall of labeled domains exposes state on each spine; the selected one slides forward and opens into evidence.",
+      "case": "It supports drill-down beautifully but frames a live safety system as stored material rather than an active governed process.",
+      "kept": "Depth opens in place so the Principal never loses the surrounding overview.",
+      "risk": "The collection metaphor makes urgent state feel too passive.",
+      "hero": "https://impeccable.style/worlds/cards/textiles-weave-drape-fashion-sneaker-box-stacks-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/textiles-weave-drape-fashion-sneaker-box-stacks.webp"
+    },
+    {
+      "id": "challenger-weather",
+      "label": "State Weather",
+      "verdict": "declined",
+      "lineage": "semantic weather maps and typographic storm systems",
+      "thesis": "System language gathers into visible fronts, warnings, and clear zones across one field.",
+      "palette": ["#F5F2E9", "#151719", "#A8B0B4", "#D7E44A"],
+      "materials": ["paper field", "typographic particles", "silver transition marks"],
+      "viewport": "Trust, performance, cost, and risk form readable fronts whose movement reveals the changing system.",
+      "case": "It dramatizes change but sacrifices the stable coordinates and exact provenance required for audit.",
+      "kept": "Motion should express a state transition's cause and direction, not decorate a refresh.",
+      "risk": "Metaphorical movement can imply uncertainty that the evidence does not support.",
+      "hero": "https://impeccable.style/worlds/cards/dream-surreal-impossible-worlds-alphabet-storm-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/dream-surreal-impossible-worlds-alphabet-storm.webp"
+    },
+    {
+      "id": "challenger-caption",
+      "label": "Priority Caption Field",
+      "verdict": "declined",
+      "lineage": "live variety-show telop systems",
+      "thesis": "Operational events announce themselves in a field where typographic scale equals urgency.",
+      "palette": ["#141414", "#F2EEDE", "#F4D43A", "#EF4D3B"],
+      "materials": ["outlined captions", "hard shadows", "free-positioned labels"],
+      "viewport": "The dominant issue lands large while quieter system truths remain pinned around it.",
+      "case": "It makes attention unmistakable but cannot carry the calm, persistent overview needed when nothing is wrong.",
+      "kept": "Urgency must change hierarchy and scale before relying on color.",
+      "risk": "Emotional visual language is too volatile for routine supervision.",
+      "hero": "https://impeccable.style/worlds/cards/variety-telop-caption-field-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/variety-telop-caption-field.webp"
+    }
+  ],
+  "reroll": {
+    "registers": ["safer", "bolder"]
+  },
+  "buildPath": {
+    "value": "comp",
+    "toggle": true
+  },
+  "canon": true,
+  "canonCard": {
+    "label": "Institutional Risk Dashboard",
+    "thesis": "A conventional sidebar, metric strip, alert queue, charts, and drill-down tables executed with exceptional restraint.",
+    "palette": ["#F7F8FA", "#111827", "#3157C8", "#D97706", "#B42318"],
+    "materials": ["clean grid", "quiet cards", "precise charts", "neutral controls"],
+    "viewport": "A persistent sidebar frames a top status strip, attention queue, after-cost performance chart, cash position, operating costs, and evidence freshness.",
+    "risk": "It is immediately usable but deliberately indistinguishable from mature financial and observability software.",
+    "comp": ".impeccable/mocks/decision/institutional-dashboard.webp"
+  },
+  "steer": true
+}

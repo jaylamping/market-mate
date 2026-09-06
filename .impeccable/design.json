@@ -1,0 +1,772 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-06T22:30:54.803736+00:00",
+  "title": "Design System: Market Mate Spectral Edge",
+  "extensions": {
+    "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "Background",
+        "tonalRamp": [
+          "oklch(15.00% 0.0029 264.54)",
+          "oklch(26.43% 0.0029 264.54)",
+          "oklch(37.86% 0.0029 264.54)",
+          "oklch(49.29% 0.0029 264.54)",
+          "oklch(60.71% 0.0029 264.54)",
+          "oklch(72.14% 0.0029 264.54)",
+          "oklch(83.57% 0.0029 264.54)",
+          "oklch(95.00% 0.0029 264.54)"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Foreground",
+        "tonalRamp": [
+          "oklch(15.00% 0.0244 255.69)",
+          "oklch(26.43% 0.0244 255.69)",
+          "oklch(37.86% 0.0244 255.69)",
+          "oklch(49.29% 0.0244 255.69)",
+          "oklch(60.71% 0.0244 255.69)",
+          "oklch(72.14% 0.0244 255.69)",
+          "oklch(83.57% 0.0244 255.69)",
+          "oklch(95.00% 0.0244 255.69)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Card",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95.00% 0.0000 89.88)"
+        ]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.1439 295.17)",
+          "oklch(26.43% 0.1439 295.17)",
+          "oklch(37.86% 0.1439 295.17)",
+          "oklch(49.29% 0.1439 295.17)",
+          "oklch(60.71% 0.1439 295.17)",
+          "oklch(72.14% 0.1439 295.17)",
+          "oklch(83.57% 0.1439 295.17)",
+          "oklch(95.00% 0.1439 295.17)"
+        ]
+      },
+      "primary-foreground": {
+        "role": "neutral",
+        "displayName": "Primary Foreground",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95.00% 0.0000 89.88)"
+        ]
+      },
+      "secondary": {
+        "role": "neutral",
+        "displayName": "Secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0058 264.53)",
+          "oklch(26.43% 0.0058 264.53)",
+          "oklch(37.86% 0.0058 264.53)",
+          "oklch(49.29% 0.0058 264.53)",
+          "oklch(60.71% 0.0058 264.53)",
+          "oklch(72.14% 0.0058 264.53)",
+          "oklch(83.57% 0.0058 264.53)",
+          "oklch(95.00% 0.0058 264.53)"
+        ]
+      },
+      "secondary-foreground": {
+        "role": "neutral",
+        "displayName": "Secondary Foreground",
+        "tonalRamp": [
+          "oklch(15.00% 0.0239 262.84)",
+          "oklch(26.43% 0.0239 262.84)",
+          "oklch(37.86% 0.0239 262.84)",
+          "oklch(49.29% 0.0239 262.84)",
+          "oklch(60.71% 0.0239 262.84)",
+          "oklch(72.14% 0.0239 262.84)",
+          "oklch(83.57% 0.0239 262.84)",
+          "oklch(95.00% 0.0239 262.84)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "oklch(15.00% 0.0054 274.96)",
+          "oklch(26.43% 0.0054 274.96)",
+          "oklch(37.86% 0.0054 274.96)",
+          "oklch(49.29% 0.0054 274.96)",
+          "oklch(60.71% 0.0054 274.96)",
+          "oklch(72.14% 0.0054 274.96)",
+          "oklch(83.57% 0.0054 274.96)",
+          "oklch(95.00% 0.0054 274.96)"
+        ]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Muted Foreground",
+        "tonalRamp": [
+          "oklch(15.00% 0.0247 259.19)",
+          "oklch(26.43% 0.0247 259.19)",
+          "oklch(37.86% 0.0247 259.19)",
+          "oklch(49.29% 0.0247 259.19)",
+          "oklch(60.71% 0.0247 259.19)",
+          "oklch(72.14% 0.0247 259.19)",
+          "oklch(83.57% 0.0247 259.19)",
+          "oklch(95.00% 0.0247 259.19)"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Accent",
+        "tonalRamp": [
+          "oklch(15.00% 0.0194 302.20)",
+          "oklch(26.43% 0.0194 302.20)",
+          "oklch(37.86% 0.0194 302.20)",
+          "oklch(49.29% 0.0194 302.20)",
+          "oklch(60.71% 0.0194 302.20)",
+          "oklch(72.14% 0.0194 302.20)",
+          "oklch(83.57% 0.0194 302.20)",
+          "oklch(95.00% 0.0194 302.20)"
+        ]
+      },
+      "accent-foreground": {
+        "role": "primary",
+        "displayName": "Accent Foreground",
+        "tonalRamp": [
+          "oklch(15.00% 0.1392 295.49)",
+          "oklch(26.43% 0.1392 295.49)",
+          "oklch(37.86% 0.1392 295.49)",
+          "oklch(49.29% 0.1392 295.49)",
+          "oklch(60.71% 0.1392 295.49)",
+          "oklch(72.14% 0.1392 295.49)",
+          "oklch(83.57% 0.1392 295.49)",
+          "oklch(95.00% 0.1392 295.49)"
+        ]
+      },
+      "destructive": {
+        "role": "secondary",
+        "displayName": "Destructive",
+        "tonalRamp": [
+          "oklch(15.00% 0.1565 13.65)",
+          "oklch(26.43% 0.1565 13.65)",
+          "oklch(37.86% 0.1565 13.65)",
+          "oklch(49.29% 0.1565 13.65)",
+          "oklch(60.71% 0.1565 13.65)",
+          "oklch(72.14% 0.1565 13.65)",
+          "oklch(83.57% 0.1565 13.65)",
+          "oklch(95.00% 0.1565 13.65)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "tonalRamp": [
+          "oklch(15.00% 0.0105 261.79)",
+          "oklch(26.43% 0.0105 261.79)",
+          "oklch(37.86% 0.0105 261.79)",
+          "oklch(49.29% 0.0105 261.79)",
+          "oklch(60.71% 0.0105 261.79)",
+          "oklch(72.14% 0.0105 261.79)",
+          "oklch(83.57% 0.0105 261.79)",
+          "oklch(95.00% 0.0105 261.79)"
+        ]
+      },
+      "input": {
+        "role": "neutral",
+        "displayName": "Input",
+        "tonalRamp": [
+          "oklch(15.00% 0.0148 264.49)",
+          "oklch(26.43% 0.0148 264.49)",
+          "oklch(37.86% 0.0148 264.49)",
+          "oklch(49.29% 0.0148 264.49)",
+          "oklch(60.71% 0.0148 264.49)",
+          "oklch(72.14% 0.0148 264.49)",
+          "oklch(83.57% 0.0148 264.49)",
+          "oklch(95.00% 0.0148 264.49)"
+        ]
+      },
+      "ring": {
+        "role": "primary",
+        "displayName": "Ring",
+        "tonalRamp": [
+          "oklch(15.00% 0.1031 298.88)",
+          "oklch(26.43% 0.1031 298.88)",
+          "oklch(37.86% 0.1031 298.88)",
+          "oklch(49.29% 0.1031 298.88)",
+          "oklch(60.71% 0.1031 298.88)",
+          "oklch(72.14% 0.1031 298.88)",
+          "oklch(83.57% 0.1031 298.88)",
+          "oklch(95.00% 0.1031 298.88)"
+        ]
+      },
+      "good": {
+        "role": "secondary",
+        "displayName": "Good",
+        "tonalRamp": [
+          "oklch(15.00% 0.0874 162.77)",
+          "oklch(26.43% 0.0874 162.77)",
+          "oklch(37.86% 0.0874 162.77)",
+          "oklch(49.29% 0.0874 162.77)",
+          "oklch(60.71% 0.0874 162.77)",
+          "oklch(72.14% 0.0874 162.77)",
+          "oklch(83.57% 0.0874 162.77)",
+          "oklch(95.00% 0.0874 162.77)"
+        ]
+      },
+      "warning": {
+        "role": "secondary",
+        "displayName": "Warning",
+        "tonalRamp": [
+          "oklch(15.00% 0.1031 69.57)",
+          "oklch(26.43% 0.1031 69.57)",
+          "oklch(37.86% 0.1031 69.57)",
+          "oklch(49.29% 0.1031 69.57)",
+          "oklch(60.71% 0.1031 69.57)",
+          "oklch(72.14% 0.1031 69.57)",
+          "oklch(83.57% 0.1031 69.57)",
+          "oklch(95.00% 0.1031 69.57)"
+        ]
+      },
+      "spectral-mint": {
+        "role": "secondary",
+        "displayName": "Spectral Mint",
+        "tonalRamp": [
+          "oklch(15.00% 0.0549 184.56)",
+          "oklch(26.43% 0.0549 184.56)",
+          "oklch(37.86% 0.0549 184.56)",
+          "oklch(49.29% 0.0549 184.56)",
+          "oklch(60.71% 0.0549 184.56)",
+          "oklch(72.14% 0.0549 184.56)",
+          "oklch(83.57% 0.0549 184.56)",
+          "oklch(95.00% 0.0549 184.56)"
+        ]
+      },
+      "spectral-rose": {
+        "role": "secondary",
+        "displayName": "Spectral Rose",
+        "tonalRamp": [
+          "oklch(15.00% 0.0620 346.38)",
+          "oklch(26.43% 0.0620 346.38)",
+          "oklch(37.86% 0.0620 346.38)",
+          "oklch(49.29% 0.0620 346.38)",
+          "oklch(60.71% 0.0620 346.38)",
+          "oklch(72.14% 0.0620 346.38)",
+          "oklch(83.57% 0.0620 346.38)",
+          "oklch(95.00% 0.0620 346.38)"
+        ]
+      },
+      "spectral-violet": {
+        "role": "secondary",
+        "displayName": "Spectral Violet",
+        "tonalRamp": [
+          "oklch(15.00% 0.0972 299.14)",
+          "oklch(26.43% 0.0972 299.14)",
+          "oklch(37.86% 0.0972 299.14)",
+          "oklch(49.29% 0.0972 299.14)",
+          "oklch(60.71% 0.0972 299.14)",
+          "oklch(72.14% 0.0972 299.14)",
+          "oklch(83.57% 0.0972 299.14)",
+          "oklch(95.00% 0.0972 299.14)"
+        ]
+      },
+      "sidebar-bg": {
+        "role": "neutral",
+        "displayName": "Sidebar Bg",
+        "tonalRamp": [
+          "oklch(15.00% 0.0026 286.35)",
+          "oklch(26.43% 0.0026 286.35)",
+          "oklch(37.86% 0.0026 286.35)",
+          "oklch(49.29% 0.0026 286.35)",
+          "oklch(60.71% 0.0026 286.35)",
+          "oklch(72.14% 0.0026 286.35)",
+          "oklch(83.57% 0.0026 286.35)",
+          "oklch(95.00% 0.0026 286.35)"
+        ]
+      },
+      "background-dark": {
+        "role": "neutral",
+        "displayName": "Background Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0144 272.55)",
+          "oklch(26.43% 0.0144 272.55)",
+          "oklch(37.86% 0.0144 272.55)",
+          "oklch(49.29% 0.0144 272.55)",
+          "oklch(60.71% 0.0144 272.55)",
+          "oklch(72.14% 0.0144 272.55)",
+          "oklch(83.57% 0.0144 272.55)",
+          "oklch(95.00% 0.0144 272.55)"
+        ]
+      },
+      "foreground-dark": {
+        "role": "neutral",
+        "displayName": "Foreground Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0084 271.32)",
+          "oklch(26.43% 0.0084 271.32)",
+          "oklch(37.86% 0.0084 271.32)",
+          "oklch(49.29% 0.0084 271.32)",
+          "oklch(60.71% 0.0084 271.32)",
+          "oklch(72.14% 0.0084 271.32)",
+          "oklch(83.57% 0.0084 271.32)",
+          "oklch(95.00% 0.0084 271.32)"
+        ]
+      },
+      "card-dark": {
+        "role": "neutral",
+        "displayName": "Card Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0178 270.57)",
+          "oklch(26.43% 0.0178 270.57)",
+          "oklch(37.86% 0.0178 270.57)",
+          "oklch(49.29% 0.0178 270.57)",
+          "oklch(60.71% 0.0178 270.57)",
+          "oklch(72.14% 0.0178 270.57)",
+          "oklch(83.57% 0.0178 270.57)",
+          "oklch(95.00% 0.0178 270.57)"
+        ]
+      },
+      "primary-dark": {
+        "role": "primary",
+        "displayName": "Primary Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0913 301.05)",
+          "oklch(26.43% 0.0913 301.05)",
+          "oklch(37.86% 0.0913 301.05)",
+          "oklch(49.29% 0.0913 301.05)",
+          "oklch(60.71% 0.0913 301.05)",
+          "oklch(72.14% 0.0913 301.05)",
+          "oklch(83.57% 0.0913 301.05)",
+          "oklch(95.00% 0.0913 301.05)"
+        ]
+      },
+      "primary-foreground-dark": {
+        "role": "neutral",
+        "displayName": "Primary Foreground Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0409 300.83)",
+          "oklch(26.43% 0.0409 300.83)",
+          "oklch(37.86% 0.0409 300.83)",
+          "oklch(49.29% 0.0409 300.83)",
+          "oklch(60.71% 0.0409 300.83)",
+          "oklch(72.14% 0.0409 300.83)",
+          "oklch(83.57% 0.0409 300.83)",
+          "oklch(95.00% 0.0409 300.83)"
+        ]
+      },
+      "secondary-dark": {
+        "role": "neutral",
+        "displayName": "Secondary Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0208 269.41)",
+          "oklch(26.43% 0.0208 269.41)",
+          "oklch(37.86% 0.0208 269.41)",
+          "oklch(49.29% 0.0208 269.41)",
+          "oklch(60.71% 0.0208 269.41)",
+          "oklch(72.14% 0.0208 269.41)",
+          "oklch(83.57% 0.0208 269.41)",
+          "oklch(95.00% 0.0208 269.41)"
+        ]
+      },
+      "secondary-foreground-dark": {
+        "role": "neutral",
+        "displayName": "Secondary Foreground Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0084 271.32)",
+          "oklch(26.43% 0.0084 271.32)",
+          "oklch(37.86% 0.0084 271.32)",
+          "oklch(49.29% 0.0084 271.32)",
+          "oklch(60.71% 0.0084 271.32)",
+          "oklch(72.14% 0.0084 271.32)",
+          "oklch(83.57% 0.0084 271.32)",
+          "oklch(95.00% 0.0084 271.32)"
+        ]
+      },
+      "muted-dark": {
+        "role": "neutral",
+        "displayName": "Muted Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0211 269.35)",
+          "oklch(26.43% 0.0211 269.35)",
+          "oklch(37.86% 0.0211 269.35)",
+          "oklch(49.29% 0.0211 269.35)",
+          "oklch(60.71% 0.0211 269.35)",
+          "oklch(72.14% 0.0211 269.35)",
+          "oklch(83.57% 0.0211 269.35)",
+          "oklch(95.00% 0.0211 269.35)"
+        ]
+      },
+      "muted-foreground-dark": {
+        "role": "neutral",
+        "displayName": "Muted Foreground Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0248 264.41)",
+          "oklch(26.43% 0.0248 264.41)",
+          "oklch(37.86% 0.0248 264.41)",
+          "oklch(49.29% 0.0248 264.41)",
+          "oklch(60.71% 0.0248 264.41)",
+          "oklch(72.14% 0.0248 264.41)",
+          "oklch(83.57% 0.0248 264.41)",
+          "oklch(95.00% 0.0248 264.41)"
+        ]
+      },
+      "accent-dark": {
+        "role": "primary",
+        "displayName": "Accent Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0452 298.43)",
+          "oklch(26.43% 0.0452 298.43)",
+          "oklch(37.86% 0.0452 298.43)",
+          "oklch(49.29% 0.0452 298.43)",
+          "oklch(60.71% 0.0452 298.43)",
+          "oklch(72.14% 0.0452 298.43)",
+          "oklch(83.57% 0.0452 298.43)",
+          "oklch(95.00% 0.0452 298.43)"
+        ]
+      },
+      "accent-foreground-dark": {
+        "role": "primary",
+        "displayName": "Accent Foreground Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0672 302.45)",
+          "oklch(26.43% 0.0672 302.45)",
+          "oklch(37.86% 0.0672 302.45)",
+          "oklch(49.29% 0.0672 302.45)",
+          "oklch(60.71% 0.0672 302.45)",
+          "oklch(72.14% 0.0672 302.45)",
+          "oklch(83.57% 0.0672 302.45)",
+          "oklch(95.00% 0.0672 302.45)"
+        ]
+      },
+      "destructive-dark": {
+        "role": "secondary",
+        "displayName": "Destructive Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.1169 8.73)",
+          "oklch(26.43% 0.1169 8.73)",
+          "oklch(37.86% 0.1169 8.73)",
+          "oklch(49.29% 0.1169 8.73)",
+          "oklch(60.71% 0.1169 8.73)",
+          "oklch(72.14% 0.1169 8.73)",
+          "oklch(83.57% 0.1169 8.73)",
+          "oklch(95.00% 0.1169 8.73)"
+        ]
+      },
+      "border-dark": {
+        "role": "neutral",
+        "displayName": "Border Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0255 269.61)",
+          "oklch(26.43% 0.0255 269.61)",
+          "oklch(37.86% 0.0255 269.61)",
+          "oklch(49.29% 0.0255 269.61)",
+          "oklch(60.71% 0.0255 269.61)",
+          "oklch(72.14% 0.0255 269.61)",
+          "oklch(83.57% 0.0255 269.61)",
+          "oklch(95.00% 0.0255 269.61)"
+        ]
+      },
+      "input-dark": {
+        "role": "neutral",
+        "displayName": "Input Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0298 267.51)",
+          "oklch(26.43% 0.0298 267.51)",
+          "oklch(37.86% 0.0298 267.51)",
+          "oklch(49.29% 0.0298 267.51)",
+          "oklch(60.71% 0.0298 267.51)",
+          "oklch(72.14% 0.0298 267.51)",
+          "oklch(83.57% 0.0298 267.51)",
+          "oklch(95.00% 0.0298 267.51)"
+        ]
+      },
+      "ring-dark": {
+        "role": "primary",
+        "displayName": "Ring Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0983 300.45)",
+          "oklch(26.43% 0.0983 300.45)",
+          "oklch(37.86% 0.0983 300.45)",
+          "oklch(49.29% 0.0983 300.45)",
+          "oklch(60.71% 0.0983 300.45)",
+          "oklch(72.14% 0.0983 300.45)",
+          "oklch(83.57% 0.0983 300.45)",
+          "oklch(95.00% 0.0983 300.45)"
+        ]
+      },
+      "good-dark": {
+        "role": "secondary",
+        "displayName": "Good Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0872 165.28)",
+          "oklch(26.43% 0.0872 165.28)",
+          "oklch(37.86% 0.0872 165.28)",
+          "oklch(49.29% 0.0872 165.28)",
+          "oklch(60.71% 0.0872 165.28)",
+          "oklch(72.14% 0.0872 165.28)",
+          "oklch(83.57% 0.0872 165.28)",
+          "oklch(95.00% 0.0872 165.28)"
+        ]
+      },
+      "warning-dark": {
+        "role": "secondary",
+        "displayName": "Warning Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0945 80.63)",
+          "oklch(26.43% 0.0945 80.63)",
+          "oklch(37.86% 0.0945 80.63)",
+          "oklch(49.29% 0.0945 80.63)",
+          "oklch(60.71% 0.0945 80.63)",
+          "oklch(72.14% 0.0945 80.63)",
+          "oklch(83.57% 0.0945 80.63)",
+          "oklch(95.00% 0.0945 80.63)"
+        ]
+      },
+      "spectral-mint-dark": {
+        "role": "secondary",
+        "displayName": "Spectral Mint Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0488 190.87)",
+          "oklch(26.43% 0.0488 190.87)",
+          "oklch(37.86% 0.0488 190.87)",
+          "oklch(49.29% 0.0488 190.87)",
+          "oklch(60.71% 0.0488 190.87)",
+          "oklch(72.14% 0.0488 190.87)",
+          "oklch(83.57% 0.0488 190.87)",
+          "oklch(95.00% 0.0488 190.87)"
+        ]
+      },
+      "spectral-rose-dark": {
+        "role": "secondary",
+        "displayName": "Spectral Rose Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0707 343.92)",
+          "oklch(26.43% 0.0707 343.92)",
+          "oklch(37.86% 0.0707 343.92)",
+          "oklch(49.29% 0.0707 343.92)",
+          "oklch(60.71% 0.0707 343.92)",
+          "oklch(72.14% 0.0707 343.92)",
+          "oklch(83.57% 0.0707 343.92)",
+          "oklch(95.00% 0.0707 343.92)"
+        ]
+      },
+      "spectral-violet-dark": {
+        "role": "secondary",
+        "displayName": "Spectral Violet Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0927 300.23)",
+          "oklch(26.43% 0.0927 300.23)",
+          "oklch(37.86% 0.0927 300.23)",
+          "oklch(49.29% 0.0927 300.23)",
+          "oklch(60.71% 0.0927 300.23)",
+          "oklch(72.14% 0.0927 300.23)",
+          "oklch(83.57% 0.0927 300.23)",
+          "oklch(95.00% 0.0927 300.23)"
+        ]
+      },
+      "sidebar-bg-dark": {
+        "role": "neutral",
+        "displayName": "Sidebar Bg Dark",
+        "tonalRamp": [
+          "oklch(15.00% 0.0163 268.92)",
+          "oklch(26.43% 0.0163 268.92)",
+          "oklch(37.86% 0.0163 268.92)",
+          "oklch(49.29% 0.0163 268.92)",
+          "oklch(60.71% 0.0163 268.92)",
+          "oklch(72.14% 0.0163 268.92)",
+          "oklch(83.57% 0.0163 268.92)",
+          "oklch(95.00% 0.0163 268.92)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Summary Reading",
+        "purpose": "Summary values; Geist, not mono."
+      },
+      "mono": {
+        "displayName": "Evidence Data",
+        "purpose": "Identifiers, timestamps, and measured detail."
+      }
+    },
+    "shadows": [
+      {
+        "name": "control-xs",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Outline Button resting shadow from Tailwind shadow-xs."
+      },
+      {
+        "name": "active-tab-sm",
+        "value": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+        "purpose": "Selected default Tabs trigger from Tailwind shadow-sm."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-feedback",
+        "value": "140ms",
+        "purpose": "Navigation and attention hover."
+      },
+      {
+        "name": "measure-settle",
+        "value": "500ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "Signed bars grow from zero; disabled with reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "1600px"
+      },
+      {
+        "name": "compact",
+        "value": "1180px"
+      },
+      {
+        "name": "mobile",
+        "value": "720px"
+      },
+      {
+        "name": "narrow",
+        "value": "360px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "description": "Shipped Button library variant; use only for authorized interface actions.",
+      "html": "<button class=\"ds-button-primary\">Primary</button>",
+      "css": ".ds-button-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:calc(var(--radius) - 2px);font:500 14px var(--font-overview),sans-serif;height:36px;padding:8px 16px;cursor:pointer;transition:all 150ms;background:var(--primary);color:var(--primary-foreground);border:0;}.ds-button-primary:hover{background:color-mix(in srgb,var(--primary) 90%,transparent);}.ds-button-primary:focus-visible{outline:2px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}.ds-button-primary:disabled{pointer-events:none;opacity:.5}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "description": "Shipped Button library variant; use only for authorized interface actions.",
+      "html": "<button class=\"ds-button-outline\">Refresh evidence</button>",
+      "css": ".ds-button-outline{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:calc(var(--radius) - 2px);font:500 14px var(--font-overview),sans-serif;height:36px;padding:8px 16px;cursor:pointer;transition:all 150ms;background:var(--background);color:var(--foreground);border:1px solid var(--border);box-shadow:0 1px 2px 0 rgb(0 0 0 / .05);}.ds-button-outline:hover{background:var(--accent);color:var(--accent-foreground);}.ds-button-outline:focus-visible{outline:2px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}.ds-button-outline:disabled{pointer-events:none;opacity:.5}:host-context(.dark) .ds-button-outline{border-color:var(--input);background:color-mix(in srgb,var(--input) 30%,transparent)}:host-context(.dark) .ds-button-outline:hover{background:color-mix(in srgb,var(--input) 50%,transparent)}",
+      "refersTo": "button-outline"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "description": "Shipped Button library variant; use only for authorized interface actions.",
+      "html": "<button class=\"ds-button-secondary\">Secondary</button>",
+      "css": ".ds-button-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:calc(var(--radius) - 2px);font:500 14px var(--font-overview),sans-serif;height:36px;padding:8px 16px;cursor:pointer;transition:all 150ms;background:var(--secondary);color:var(--secondary-foreground);border:0;}.ds-button-secondary:hover{background:color-mix(in srgb,var(--secondary) 80%,transparent);}.ds-button-secondary:focus-visible{outline:2px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}.ds-button-secondary:disabled{pointer-events:none;opacity:.5}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "description": "Shipped Button library variant; use only for authorized interface actions.",
+      "html": "<button class=\"ds-button-ghost\">Ghost</button>",
+      "css": ".ds-button-ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:calc(var(--radius) - 2px);font:500 14px var(--font-overview),sans-serif;height:36px;padding:8px 16px;cursor:pointer;transition:all 150ms;background:transparent;color:var(--foreground);border:0;}.ds-button-ghost:hover{background:var(--accent);color:var(--accent-foreground);}.ds-button-ghost:focus-visible{outline:2px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}.ds-button-ghost:disabled{pointer-events:none;opacity:.5}"
+    },
+    {
+      "name": "Link Button",
+      "kind": "button",
+      "description": "Shipped Button library variant; use only for authorized interface actions.",
+      "html": "<button class=\"ds-button-link\">Link</button>",
+      "css": ".ds-button-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:calc(var(--radius) - 2px);font:500 14px var(--font-overview),sans-serif;height:36px;padding:8px 16px;cursor:pointer;transition:all 150ms;background:transparent;color:var(--primary);border:0;text-underline-offset:4px;}.ds-button-link:hover{text-decoration:underline;}.ds-button-link:focus-visible{outline:2px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}.ds-button-link:disabled{pointer-events:none;opacity:.5}"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "description": "Shipped Button library variant; use only for authorized interface actions.",
+      "html": "<button class=\"ds-button-destructive\">Destructive</button>",
+      "css": ".ds-button-destructive{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:calc(var(--radius) - 2px);font:500 14px var(--font-overview),sans-serif;height:36px;padding:8px 16px;cursor:pointer;transition:all 150ms;background:var(--destructive);color:white;border:0;}.ds-button-destructive:hover{background:color-mix(in srgb,var(--destructive) 90%,transparent);}.ds-button-destructive:focus-visible{outline:2px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}.ds-button-destructive:disabled{pointer-events:none;opacity:.5}:host-context(.dark) .ds-button-destructive{background:color-mix(in srgb,var(--destructive) 60%,transparent)}"
+    },
+    {
+      "name": "Evidence Filter",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Local filter of displayed evidence.",
+      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input aria-label=\"Filter displayed evidence\" placeholder=\"Filter displayed evidence\u2026\"/></label>",
+      "css": ".ds-search{display:block;position:relative;width:250px;color:var(--muted-foreground)}.ds-search svg{position:absolute;left:10px;top:11px;width:14px;height:14px}.ds-search input{width:100%;height:36px;border:1px solid var(--input);border-radius:calc(var(--radius) - 2px);background:transparent;color:var(--foreground);font:400 12px var(--font-overview),sans-serif;padding:4px 12px 4px 32px;box-shadow:none;caret-color:var(--primary)}.ds-search input::placeholder{color:var(--muted-foreground)}.ds-search input:focus-visible{outline:2px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}:host-context(.dark) .ds-search input{background:color-mix(in srgb,var(--input) 30%,transparent)}"
+    },
+    {
+      "name": "Selected Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Selected labeled navigation with retained keyboard focus.",
+      "html": "<a class=\"ds-nav\" href=\"#overview\" aria-current=\"page\">Overview</a>",
+      "css": ".ds-nav{display:flex;align-items:center;min-height:42px;padding:9px 12px;border-radius:7px;font:550 13px var(--font-overview),sans-serif;text-decoration:none;background:var(--accent);color:var(--accent-foreground);transition:background-color 140ms,color 140ms}.ds-nav:hover{background:var(--muted);color:var(--foreground)}.ds-nav:focus-visible{outline:2px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}"
+    },
+    {
+      "name": "Custody Chip",
+      "kind": "chip",
+      "refersTo": "state-chip",
+      "description": "Visible trust label paired with semantic tone and icon.",
+      "html": "<span class=\"ds-chip\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m9 12 2 2 4-4\"/><path d=\"M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11\"/></svg>Custody verified</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border:1px solid currentColor;border-radius:9999px;background:transparent;color:var(--good);font:500 12px var(--font-overview),sans-serif}.ds-chip svg{width:12px;height:12px}"
+    },
+    {
+      "name": "Summary Panel",
+      "kind": "card",
+      "refersTo": "summary-card",
+      "description": "Flat reading panel with an inspection link.",
+      "html": "<section class=\"ds-panel\"><h2>Evidence trust</h2><strong>Pending</strong><p>Verification and coverage are separate checks.</p><a href=\"#custody\">Inspect evidence trust</a></section>",
+      "css": ".ds-panel{background:var(--card);color:var(--foreground);border:1px solid var(--border);border-radius:10px;padding:18px;font-family:var(--font-overview),sans-serif}.ds-panel h2{margin:0;color:var(--muted-foreground);font-size:12px;font-weight:500}.ds-panel strong{display:block;margin-top:14px;font-size:clamp(20px,1.8vw,27px);font-weight:450;line-height:1.25;letter-spacing:-.025em}.ds-panel p{font-size:11px;line-height:1.55;color:var(--muted-foreground)}.ds-panel a{display:block;padding-top:12px;margin-top:15px;border-top:1px solid var(--border);font-size:11px;color:var(--primary);text-decoration:none}.ds-panel a:hover{text-decoration:underline}.ds-panel a:focus-visible{outline:2px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Spectral Edge",
+    "overview": "A calm working console with cloud-white and mist surfaces in light mode, charcoal and soft white in dark mode. Violet identifies selection and inspection links; a narrow mint\u2013rose\u2013violet edge supplies the distinctive atmospheric detail. The interface keeps evidence, timing, and authority readable without adopting the reference's hairline display type.\n\nThis refresh records the implemented frontend and supersedes the Night Desk palette and density. The incumbent commitments to display-only authority, visible distrust, and preserved evidence remain. Source authority is `frontend/app/globals.css`, the final cascade in `supervisory-overview.css`, and the shipped shadcn components; `command-ledger.css` supplies surviving Stage-1 layout rules.",
+    "keyCharacteristics": [
+      "Paired light and dark themes with persistent system, light, or dark preference.",
+      "Softly rounded, bordered panels with restrained violet selection.",
+      "Geist for reading, Geist Mono for identifiers and measured detail.",
+      "Explicit trust labels, contained evidence tables, and stable record links."
+    ],
+    "rules": [
+      {
+        "name": "The State-Is-Text Rule",
+        "body": "Semantic color accompanies a visible state label or signed measurement; color alone never establishes trust.",
+        "section": "colors"
+      },
+      {
+        "name": "The Spectral Edge Rule",
+        "body": "Keep the decorative spectrum distinct from semantic status and use violet consistently for selection and inspection links.",
+        "section": "colors"
+      },
+      {
+        "name": "The Data Voice Rule",
+        "body": "Use tabular figures throughout the console and Geist Mono for identifiers, timestamps, and measured detail; summary readings remain Geist.",
+        "section": "typography"
+      },
+      {
+        "name": "The Quiet Panel Rule",
+        "body": "Keep content panels flat; reserve subtle shadow and focus treatment for controls and selected tabs.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** apply both theme values through semantic CSS custom properties.",
+      "**Do** pair semantic color with visible state labels or signed values.",
+      "**Do** retain labeled mobile navigation and contain wide evidence tables.",
+      "**Do** preserve explicit environment, distrust, and zero-authority information.",
+      "**Do** compose controls from the shipped shadcn primitives and retain keyboard focus."
+    ],
+    "donts": [
+      "**Don't** add kickers or eyebrows above headings.",
+      "**Don't** use the decorative spectrum as evidence of a successful or trusted state.",
+      "**Don't** turn research measurements into claims of realized profit or executable orders.",
+      "**Don't** inherit stale Night Desk microtype or unused legacy colors as new system tokens."
+    ]
+  }
+}

@@ -1,3 +1,5 @@
+import { AppSidebar } from "./AppSidebar";
+
 export type NotRecorded = {
   recorded: false;
   state: "not_recorded";
@@ -78,6 +80,7 @@ export type Stage1SurfacesModel = {
     recorded: boolean;
     manifest_count: number;
     snapshot_count: number;
+    latest_snapshots: Array<{ snapshot_id: string; snapshot_kind: string; receipt_time: string; payload_digest: string }>;
     latest_manifests: Array<{
       cycle_key: string;
       cycle_kind: string;
@@ -144,41 +147,17 @@ export function Stage1Surfaces({ surfaces }: { surfaces: Stage1SurfacesModel }) 
       data-checkpoints-verified={String(surfaces.checkpoints_verified)}
       data-trusted={String(trusted)}
     >
-      <aside className="command-sidebar" aria-label="Dashboard views">
-        <div className="brand-sidebar">
-          <strong>MARKET MATE</strong>
-          <small>STAGE-1 SURFACES</small>
-        </div>
-        <nav aria-label="Control room views">
-          <a href="/" className="side-nav-button">
-            <span>01</span>
-            <strong>Home / Dashboard</strong>
-            <small>system truth + tape</small>
-          </a>
-          <div className="side-nav-button is-active">
-            <span>02</span>
-            <strong>Stage-1 surfaces</strong>
-            <small>qualification + evidence</small>
-          </div>
-        </nav>
-        <div className="sidebar-foot">
-          <span className="env-label">LOCAL RESEARCH</span>
-          <strong>Zero order authority</strong>
-          <small>
-            Display-only surfaces. Read-only, localhost-bound, and unable to
-            submit orders or write evidence.
-          </small>
-        </div>
-      </aside>
+      <a className="skip-link" href="#command-main">Skip to evidence</a>
+      <AppSidebar details />
 
       <main id="command-main" className="command-main" tabIndex={-1}>
         <header className="command-header">
           <div>
-            <span className="eyebrow">STAGE-1 SURFACES / DISPLAY ONLY</span>
-            <h1>Qualification, cost, and custody at a glance.</h1>
+            <h1>Evidence details</h1>
+            <small>Local Research and acceptance-test evidence · display only</small>
           </div>
           <div className="header-status">
-            <strong>{surfaces.environment}</strong>
+            <strong>Local Research</strong>
             <small>Read-only / localhost-bound / zero order authority</small>
           </div>
         </header>
@@ -222,7 +201,6 @@ export function Stage1Surfaces({ surfaces }: { surfaces: Stage1SurfacesModel }) 
           >
             <div className="section-title">
               <div>
-                <span>RESEARCH QUALIFICATION</span>
                 <h2>Qualification progress</h2>
               </div>
               {qualification.recorded ? (
@@ -261,7 +239,7 @@ export function Stage1Surfaces({ surfaces }: { surfaces: Stage1SurfacesModel }) 
                     <th>LCB vs S&amp;P 500</th>
                     <td data-meets={String(qualification.meets_sp500_floor)}>
                       {qualification.sp500_comparator_required
-                        ? `${qualification.lcb_vs_sp500_bps} bps / hard floor 0`
+                        ? `${qualification.lcb_vs_sp500_bps ?? "unavailable"} bps / hard floor 0`
                         : "not applicable"}
                     </td>
                   </tr>
@@ -270,6 +248,9 @@ export function Stage1Surfaces({ surfaces }: { surfaces: Stage1SurfacesModel }) 
                     <td>{qualification.net_mean_return_bps} bps</td>
                   </tr>
                   <tr><th>Report as of</th><td>{qualification.as_of}</td></tr>
+                  <tr><th>Strategy version digest</th><td><code>{qualification.strategy_version_digest}</code></td></tr>
+                  <tr><th>Result digest</th><td><code>{qualification.result_digest}</code></td></tr>
+                  <tr><th>Failure reasons</th><td>{qualification.failure_reasons.join("; ") || "None recorded"}</td></tr>
                 </tbody>
               </table>
             ) : (
@@ -286,7 +267,6 @@ export function Stage1Surfaces({ surfaces }: { surfaces: Stage1SurfacesModel }) 
           >
             <div className="section-title">
               <div>
-                <span>CHECKPOINT PACK</span>
                 <h2>Custody coverage</h2>
               </div>
               <span className={`status-pill ${toneFor(pack.state)}`}>{pack.state}</span>
@@ -308,7 +288,6 @@ export function Stage1Surfaces({ surfaces }: { surfaces: Stage1SurfacesModel }) 
           >
             <div className="section-title">
               <div>
-                <span>OPERATING COSTS</span>
                 <h2>Cost vs caps</h2>
               </div>
               {costModel.recorded ? (
@@ -319,9 +298,10 @@ export function Stage1Surfaces({ surfaces }: { surfaces: Stage1SurfacesModel }) 
                 <b>no model</b>
               )}
             </div>
-            {cost.recorded ? (
+            {cost.recorded || costModel.recorded ? (
               <table className="surface-table">
                 <tbody>
+                  {cost.recorded && <>
                   <tr><th>Envelope</th><td>{cost.envelope_key}</td></tr>
                   <tr><th>Register as of</th><td>{cost.as_of}</td></tr>
                   <tr data-surface="register-month">
@@ -336,6 +316,7 @@ export function Stage1Surfaces({ surfaces }: { surfaces: Stage1SurfacesModel }) 
                       {money(cost.register.year_one_spent_cents)} / {money(cost.register.year_one_hard_ceiling_cents)}
                     </td>
                   </tr>
+                  </>}
                   {costModel.recorded ? (
                     <>
                       <tr data-surface="model-month">
@@ -376,7 +357,6 @@ export function Stage1Surfaces({ surfaces }: { surfaces: Stage1SurfacesModel }) 
           >
             <div className="section-title">
               <div>
-                <span>RESEARCH SNAPSHOTS</span>
                 <h2>Snapshot browser</h2>
               </div>
               <b>{surfaces.snapshots.manifest_count} cycles</b>
@@ -391,10 +371,11 @@ export function Stage1Surfaces({ surfaces }: { surfaces: Stage1SurfacesModel }) 
                   {surfaces.snapshots.latest_manifests.map((manifest) => (
                     <tr
                       key={manifest.cycle_key}
+                      id={`cycle-${manifest.cycle_key}`}
                       data-cycle-key={manifest.cycle_key}
                       data-completion-state={manifest.completion_state}
                     >
-                      <td>{manifest.cycle_key}</td>
+                      <td><code>{manifest.cycle_key}</code></td>
                       <td>{manifest.cycle_kind}</td>
                       <td>{manifest.cycle_as_of}</td>
                       <td>{manifest.completed_snapshot_count}/{manifest.expected_snapshot_count} {manifest.completion_state}</td>
@@ -406,7 +387,11 @@ export function Stage1Surfaces({ surfaces }: { surfaces: Stage1SurfacesModel }) 
             ) : (
               <p className="empty" data-recorded="false">No research cycle manifests have been recorded yet.</p>
             )}
-            <p className="surface-note">{surfaces.snapshots.snapshot_count} snapshots on record</p>
+            <p className="surface-note">{surfaces.snapshots.snapshot_count} snapshots on record. Snapshot inventory below is global; no cycle association is inferred.</p>
+            <h3 id="snapshot-inventory">Preserved snapshots</h3>
+            {surfaces.snapshots.latest_snapshots.length ? <table className="surface-table"><caption>Latest preserved snapshots</caption><thead><tr><th>Snapshot</th><th>Kind</th><th>Received</th><th>Payload digest</th></tr></thead><tbody>
+              {surfaces.snapshots.latest_snapshots.map(snapshot => <tr key={snapshot.snapshot_id} id={`snapshot-${snapshot.snapshot_id}`}><td><code>{snapshot.snapshot_id}</code></td><td>{snapshot.snapshot_kind}</td><td>{snapshot.receipt_time}</td><td><code>{snapshot.payload_digest}</code></td></tr>)}
+            </tbody></table> : <p className="empty">No snapshots have been recorded.</p>}
           </section>
         </div>
       </main>

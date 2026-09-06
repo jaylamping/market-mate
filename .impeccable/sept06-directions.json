@@ -1,0 +1,217 @@
+{
+  "title": "Market Mate: choose the working experience",
+  "question": "Compare the three previews. Choose one, or say what to combine or change. Concepts use labeled fixture evidence.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Research Workbench",
+      "lineage": "Laboratory analysis workstations",
+      "thesis": "Follow system state into the research evidence behind it.",
+      "palette": [
+        "#f4f5f3",
+        "#172934",
+        "#315ce8",
+        "#ad642b"
+      ],
+      "materials": [
+        "warm white workspace",
+        "ink navigation",
+        "fine rules"
+      ],
+      "viewport": "Health strip above research runs, with an evidence inspector beside the selected run.",
+      "risk": "Less dense than the current console; deep tables need a dedicated view.",
+      "comp": ".impeccable/mocks/decision/sept06/workbench.png",
+      "raised": [
+        {
+          "from": "clouds-storms-auroras-iridescent-cloud-edge",
+          "raise": "Keep secondary regions quiet."
+        },
+        {
+          "from": "dream-surreal-impossible-worlds-alphabet-storm",
+          "raise": "Make the main state unmistakable."
+        },
+        {
+          "from": "rw-centre-rail-reference-setting",
+          "raise": "Place provenance next to the claim."
+        },
+        {
+          "from": "notation-diagram-systems-orienteering-map",
+          "raise": "Keep navigation distinct from evidence state."
+        },
+        {
+          "from": "signals-instruments-drum-machine-step-row",
+          "raise": "Make missing and completed steps explicit."
+        },
+        {
+          "from": "operate-c-depot-blind-courses",
+          "raise": "Give the top exception structural priority."
+        }
+      ]
+    },
+    {
+      "id": "model-pick",
+      "label": "Attention Desk",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Incident response consoles",
+      "thesis": "See what needs attention, why, and where to inspect it.",
+      "palette": [
+        "#11151a",
+        "#1a2027",
+        "#e7edf2",
+        "#6f9eff"
+      ],
+      "materials": [
+        "charcoal workspace",
+        "crisp white type",
+        "restrained status color"
+      ],
+      "viewport": "A ranked exception list leads beside a contextual research and custody inspector.",
+      "risk": "A familiar professional console; quieter days need a strong research entry point.",
+      "comp": ".impeccable/mocks/decision/sept06/attention.png"
+    },
+    {
+      "id": "clouds-storms-auroras-iridescent-cloud-edge",
+      "label": "Spectral edge",
+      "verdict": "declined",
+      "thesis": "Uncertainty bands frame evidence.",
+      "palette": [
+        "#ffffff",
+        "#475569",
+        "#a78bfa"
+      ],
+      "materials": [
+        "White fields and spectral margins"
+      ],
+      "viewport": "Uncertainty bands frame evidence.",
+      "risk": "Spectral accents compete with status colors.",
+      "case": "Weaker fit for daily supervision and precise inspection than the workbench.",
+      "kept": "Keep secondary regions quiet.",
+      "hero": "https://impeccable.style/worlds/cards/clouds-storms-auroras-iridescent-cloud-edge-hero.webp"
+    },
+    {
+      "id": "dream-surreal-impossible-worlds-alphabet-storm",
+      "label": "Typographic field",
+      "verdict": "declined",
+      "thesis": "A large status word leads the register.",
+      "palette": [
+        "#ffffff",
+        "#111111",
+        "#999999"
+      ],
+      "materials": [
+        "Black type on white"
+      ],
+      "viewport": "A large status word leads the register.",
+      "risk": "Animated language slows precise inspection.",
+      "case": "Weaker fit for daily supervision and precise inspection than the workbench.",
+      "kept": "Make the main state unmistakable.",
+      "hero": "https://impeccable.style/worlds/cards/dream-surreal-impossible-worlds-alphabet-storm-hero.webp"
+    },
+    {
+      "id": "rw-centre-rail-reference-setting",
+      "label": "Annotated reference",
+      "verdict": "declined",
+      "thesis": "Claims and references sit side by side.",
+      "palette": [
+        "#eee8da",
+        "#191919",
+        "#b43c30"
+      ],
+      "materials": [
+        "Bone paper and ruled columns"
+      ],
+      "viewport": "Claims and references sit side by side.",
+      "risk": "Book conventions slow daily health scanning.",
+      "case": "Weaker fit for daily supervision and precise inspection than the workbench.",
+      "kept": "Place provenance next to the claim.",
+      "hero": "https://impeccable.style/worlds/cards/rw-centre-rail-reference-setting-hero.webp"
+    },
+    {
+      "id": "notation-diagram-systems-orienteering-map",
+      "label": "Evidence atlas",
+      "verdict": "declined",
+      "thesis": "Trace qualification through mapped evidence.",
+      "palette": [
+        "#ffffff",
+        "#6b7548",
+        "#7949a6"
+      ],
+      "materials": [
+        "Fixed symbol grammar"
+      ],
+      "viewport": "Trace qualification through mapped evidence.",
+      "risk": "Spatial navigation complicates simple checks.",
+      "case": "Weaker fit for daily supervision and precise inspection than the workbench.",
+      "kept": "Keep navigation distinct from evidence state.",
+      "hero": "https://impeccable.style/worlds/cards/notation-diagram-systems-orienteering-map-hero.webp"
+    },
+    {
+      "id": "signals-instruments-drum-machine-step-row",
+      "label": "Cycle instrument",
+      "verdict": "declined",
+      "thesis": "Research cycles form an inspection timeline.",
+      "palette": [
+        "#222222",
+        "#e76c38",
+        "#f5cd52"
+      ],
+      "materials": [
+        "Charcoal instrument panel"
+      ],
+      "viewport": "Research cycles form an inspection timeline.",
+      "risk": "Instrument controls could imply run authority.",
+      "case": "Weaker fit for daily supervision and precise inspection than the workbench.",
+      "kept": "Make missing and completed steps explicit.",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-drum-machine-step-row-hero.webp"
+    },
+    {
+      "id": "operate-c-depot-blind-courses",
+      "label": "Status board",
+      "verdict": "declined",
+      "thesis": "Stacked status courses focus the exception.",
+      "palette": [
+        "#173d32",
+        "#f4cf44",
+        "#f0eadc"
+      ],
+      "materials": [
+        "Green fields and pale prose"
+      ],
+      "viewport": "Stacked status courses focus the exception.",
+      "risk": "Clipped fault legends obscure exact states.",
+      "case": "Weaker fit for daily supervision and precise inspection than the workbench.",
+      "kept": "Give the top exception structural priority.",
+      "hero": "https://impeccable.style/worlds/cards/operate-c-depot-blind-courses-hero.webp"
+    }
+  ],
+  "canon": true,
+  "canonCard": {
+    "label": "Current Console, Refined",
+    "thesis": "Keep the overview matrix with readable text and working drill-downs.",
+    "palette": [
+      "#0a0c0f",
+      "#101318",
+      "#f1f3f5",
+      "#5e9bff"
+    ],
+    "materials": [
+      "near-black desk",
+      "compact tables",
+      "blue selection"
+    ],
+    "viewport": "Four summaries above research and attention, followed by an evidence register.",
+    "risk": "Preserves familiarity, but spreads attention across more panels.",
+    "comp": ".impeccable/mocks/decision/sept06/refined.png"
+  },
+  "reroll": {
+    "registers": [
+      "safer",
+      "bolder"
+    ]
+  },
+  "steer": true,
+  "buildPath": {
+    "value": "comp",
+    "toggle": true
+  }
+}

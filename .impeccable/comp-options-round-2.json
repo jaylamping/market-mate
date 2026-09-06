@@ -1,0 +1,44 @@
+{
+  "title": "Lock the heads-up dashboard",
+  "question": "All three preserve Option 3. Choose the refinement to build, or describe a final combination.",
+  "options": [
+    {
+      "id": "tight",
+      "label": "Tight Matrix",
+      "kicker": "REFINEMENT A",
+      "lineage": "Heads-Up Matrix, compressed",
+      "thesis": "The original matrix becomes calmer and denser without changing its information topology.",
+      "palette": ["#061019", "#111A22", "#E8EBEE", "#367DF6", "#F59E0B"],
+      "materials": ["compact answer sections", "wide performance chart", "ranked attention rail", "custody ribbon"],
+      "viewport": "Four concise answers lead immediately into performance and attention, with evidence held in a quiet bottom ribbon.",
+      "risk": "The evidence ribbon remains summary-level and requires a drill-down for cycle comparison.",
+      "comp": ".impeccable/mocks/dashboard-matrix-tight.png"
+    },
+    {
+      "id": "attention-explained",
+      "label": "Attention Explained",
+      "kicker": "REFINEMENT B",
+      "lineage": "Heads-Up Matrix plus decision-grade issue detail",
+      "thesis": "The matrix keeps its ten-second scan while the attention rail explains consequence, timing, and evidence.",
+      "palette": ["#061019", "#111A22", "#E8EBEE", "#367DF6", "#F59E0B"],
+      "materials": ["answer sections", "evidence-backed issue table", "comparison chart", "custody ribbon"],
+      "viewport": "The performance chart and explanation-rich attention table share the center, with a concise evidence ribbon below.",
+      "risk": "The attention table adds density and must collapse carefully on smaller screens.",
+      "comp": ".impeccable/mocks/dashboard-matrix-attention.png"
+    },
+    {
+      "id": "evidence-dock",
+      "label": "Evidence Dock",
+      "kicker": "REFINEMENT C",
+      "lineage": "Heads-Up Matrix plus persistent custody table",
+      "thesis": "The matrix keeps overview and performance above a first-class evidence and lineage dock.",
+      "palette": ["#061019", "#111A22", "#E8EBEE", "#367DF6", "#F59E0B"],
+      "materials": ["answer sections", "wide performance chart", "compact attention rail", "cycle evidence table"],
+      "viewport": "Two evidence cycles, trust, freshness, checkpoints, lineage, and consequential events remain visible without leaving the dashboard.",
+      "risk": "The evidence dock claims substantial first-view height and reduces breathing room around the main chart.",
+      "comp": ".impeccable/mocks/dashboard-matrix-evidence.png"
+    }
+  ],
+  "reroll": false,
+  "steer": true
+}

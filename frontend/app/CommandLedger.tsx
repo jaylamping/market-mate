@@ -1,3 +1,5 @@
+import { FlaskConical, LayoutDashboard } from "lucide-react";
+
 export type LedgerEvent = {
   chain_position: number;
   event_id: string;
@@ -60,19 +62,16 @@ export function CommandLedger({ ledger }: { ledger: CommandLedgerModel }) {
     >
       <aside className="command-sidebar" aria-label="Command ledger views">
         <div className="brand-sidebar">
-          <strong>MARKET MATE</strong>
-          <small>COMMAND LEDGER</small>
+          <strong>Market Mate</strong>
         </div>
         <nav aria-label="Control room views">
-          <div className="side-nav-button is-active">
-            <span>01</span>
+          <div className="side-nav-button is-active" aria-current="page">
+            <LayoutDashboard aria-hidden="true" />
             <strong>Home / Dashboard</strong>
-            <small>system truth + tape</small>
           </div>
-          <a href="/surfaces" className="side-nav-button">
-            <span>02</span>
+          <a href="/surfaces" className="side-nav-button" aria-label="Stage-1 surfaces">
+            <FlaskConical aria-hidden="true" />
             <strong>Stage-1 surfaces</strong>
-            <small>WU-46</small>
           </a>
         </nav>
         <div className="sidebar-foot">
@@ -84,8 +83,8 @@ export function CommandLedger({ ledger }: { ledger: CommandLedgerModel }) {
       <main id="command-main" className="command-main" tabIndex={-1}>
         <header className="command-header">
           <div>
-            <span className="eyebrow">VARIANT A / COMMAND LEDGER</span>
             <h1>System truth before activity.</h1>
+            <small>Command ledger · display only</small>
           </div>
           <div>
             <strong>{ledger.system_truth.as_of}</strong>
@@ -124,7 +123,6 @@ export function CommandLedger({ ledger }: { ledger: CommandLedgerModel }) {
           <section className="command-section" aria-label="Dense audit tape">
             <div className="section-title">
               <div>
-                <span>SIGNED AUDIT TAPE</span>
                 <h2>Dense command ledger</h2>
               </div>
               <b>{ledger.tape.length} events</b>
@@ -170,7 +168,6 @@ export function CommandLedger({ ledger }: { ledger: CommandLedgerModel }) {
           >
             <div className="section-title">
               <div>
-                <span>EXCEPTION RAIL</span>
                 <h2>Distrusted range</h2>
               </div>
               <b>{ledger.exceptions.length}</b>
