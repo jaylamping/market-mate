@@ -183,6 +183,8 @@ At 1180px and below, the sidebar narrows to 180px while keeping labels; summarie
 
 Evidence tables retain their tabular shape and scroll within their containers: the overview has a 710px minimum table width; mobile detailed inventory retains 750px. Full identifiers wrap in the detail cells. Record anchors highlight the exact destination row.
 
+The Paper workspace extends this shell with a three-column account summary above a records/activity grid (1.8fr with a 320px-minimum 1fr activity column; 20px gap). Its grid stacks at 1150px. At 600px, balances stack, panel insets narrow to 16px, and records tables retain a contained 540px minimum width. The account strip uses 24px spacing and 27px Geist balance readings with tabular figures; Paper metadata and table text use 12px, while empty-state explanations use 14px. These are local composite rules from `frontend/app/paper/paper.css`, not a new global type ramp.
+
 ## Elevation & Depth
 
 Panels are flat, separated by tone and 1px borders. Shadcn controls retain subtle elevation: outline buttons use the library's extra-small shadow, and active tabs use its small shadow. This replaces the incumbent blanket prohibition on shadows, which no longer describes the build. Search explicitly removes its resting shadow. Keyboard focus uses the ring token: global outlines are 2px with a 3px offset, and shadcn controls add their 3px translucent ring.
@@ -221,6 +223,14 @@ Labeled Lucide links are muted at rest, foreground on muted hover, and accent fo
 
 Real shadcn Tabs, Input, Badge, and Table compose the overview inventory. Tabs switch between research cycles and snapshots; active tabs use a raised neutral surface and violet text. Tables use quiet header fields, separated rows, mono identifiers, and explicit inspection links. Empty inventory and no matching results are separate labeled states. Details reuse the theme and shell, retain WU-46 acceptance IDs and display-only attributes, and expose full identifiers and digests at stable row anchors. The details route preserves its no-button/no-form contract.
 
+### Paper Account Workspace
+
+A simulated-account composite using the existing card, border, accent, and semantic tokens in both themes. The account card groups equity, cash, and buying power with explicit source context and a separated status footer. Records reuse shadcn Tabs, Input, Table, and Badge: symbol search applies to positions and orders, a native status select narrows orders, and an independent activity select narrows the timeline. Native selects use the input border, background surface, 7px radius, and 8px by 12px padding. Account restrictions and rejected-order notices use a warning border with explanatory text.
+
+The activity list uses a narrow violet icon column beside event type, amount, time precision, and optional instrument details. Orders and activity share native `details`/`summary` disclosures: violet summary text, visible keyboard focus, and wrapping provider identifiers. Date-only activity remains explicitly labeled as date-only; currency follows the account, and unreported values stay unreported. Paper table amounts use tabular Geist; provider identifiers retain the inherited mono treatment.
+
+Empty positions, empty orders, and filters with no matches have distinct explanations. Empty record panels use a small accent icon tile, a 14px medium-weight heading, and centered copy constrained to 42ch; a clear-filter action appears only for a filtered result. Persistent footer text separates simulated results from qualification and realized profit, and cash journals from trading profit. No invented history chart or order-submission control is part of this first-pass composite. Implementation evidence: `PaperWorkspace.tsx`, `paper.css`, and `.impeccable/review/paper/`.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -228,7 +238,7 @@ Real shadcn Tabs, Input, Badge, and Table compose the overview inventory. Tabs s
 - **Do** pair semantic color with visible state labels or signed values.
 - **Do** retain labeled mobile navigation and contain wide evidence tables.
 - **Do** preserve explicit environment, distrust, and zero-authority information.
-- **Do** compose controls from the shipped shadcn primitives and retain keyboard focus.
+- **Do** compose controls from the shipped shadcn primitives and retain keyboard focus. Use Tailwind utilities for layout and component styling, backed by the shared light/dark tokens. Add scoped CSS only where it meaningfully supplements a component; do not establish page-specific competing style systems.
 
 ### Don't:
 - **Don't** add kickers or eyebrows above headings.

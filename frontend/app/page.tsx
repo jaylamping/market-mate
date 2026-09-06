@@ -1,8 +1,4 @@
-import { SupervisoryOverview } from "./SupervisoryOverview";
-import { loadSurfaces } from "./surfaces/load-surfaces";
-
+import { ApiHydration } from "./ApiHydration";
+import { ResearchPage } from "./ResearchPage";
 export const dynamic = "force-dynamic";
-
-export default async function Page() {
-  return <SupervisoryOverview surfaces={await loadSurfaces()} />;
-}
+export default function Page() { return <ApiHydration source="surfaces"><ResearchPage /></ApiHydration>; }

@@ -1,8 +1,4 @@
-import { Stage1Surfaces } from "../Stage1Surfaces";
-import { loadSurfaces } from "./load-surfaces";
-
+import { ApiHydration } from "../ApiHydration";
+import { ResearchPage } from "../ResearchPage";
 export const dynamic = "force-dynamic";
-
-export default async function Page() {
-  return <Stage1Surfaces surfaces={await loadSurfaces()} />;
-}
+export default function Page() { return <ApiHydration source="surfaces"><ResearchPage details /></ApiHydration>; }

@@ -13,6 +13,7 @@ RUN apt-get update \
     && useradd --system --uid 10001 --home /nonexistent --shell /usr/sbin/nologin app
 COPY --from=build /app/target/release/backend /usr/local/bin/backend
 COPY --from=build /app/target/release/custody /usr/local/bin/custody
+COPY --from=build /app/target/release/paper-connector /usr/local/bin/paper-connector
 RUN mkdir -p /var/lib/custody && chown app /var/lib/custody
 USER app
 EXPOSE 8080

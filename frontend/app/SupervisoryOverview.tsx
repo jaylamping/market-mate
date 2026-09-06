@@ -23,7 +23,7 @@ function PerformanceGraphic({ surfaces }: { surfaces: Stage1SurfacesModel }) {
   return <div className="performance-visual"><div className="chart-axis" aria-hidden="true"><span>Below zero</span><span>0 bps</span><span>Above zero</span></div><dl className="performance-bars">{measures.map(m => <div className="performance-row" key={m.label}><dt>{m.label}</dt><dd><div className="bar-track" aria-hidden="true">{m.value !== null && <span className={`bar-fill${m.value < 0 ? " bar-negative" : ""}`} style={{ left: `${m.value < 0 ? 50 - Math.abs(m.value) / maximum * 50 : 50}%`, width: `${Math.abs(m.value) / maximum * 50}%` }}/>}</div><span className="bar-value">{m.value === null ? m.unavailable : `${m.value > 0 ? "+" : ""}${m.value} bps`}</span></dd></div>)}</dl></div>;
 }
 
-export function SupervisoryOverview({ surfaces }: { surfaces: Stage1SurfacesModel }) {
+export function SupervisoryOverview({ surfaces, loadedAt }: { surfaces: Stage1SurfacesModel; loadedAt: string }) {
   const trusted = custodyTrusted(surfaces);
   const attention = attentionItems(surfaces);
   const q = surfaces.qualification;
@@ -31,7 +31,6 @@ export function SupervisoryOverview({ surfaces }: { surfaces: Stage1SurfacesMode
   const model = surfaces.cost_model;
   const pack = surfaces.checkpoint_pack;
   const trustLabel = trusted ? "Verified" : pack.state === "CHECKPOINT PENDING" && surfaces.checkpoints_verified ? "Pending" : "Unverified";
-  const loadedAt = new Date().toISOString();
   return <div className="supervisory-overview" id="supervisory-overview" data-environment="local_research" data-display-only="true" data-order-authority="none" data-trusted={String(trusted)}>
     <a className="skip-link" href="#overview-main">Skip to overview</a><AppSidebar/>
     <main className="overview-main" id="overview-main" tabIndex={-1}>

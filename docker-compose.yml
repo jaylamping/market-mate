@@ -56,16 +56,47 @@ services:
       timeout: 3s
       retries: 20
 
+  paper-connector:
+    image: market-mate-paper-connector
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["paper-connector"]
+    volumes:
+      - alpaca-paper-secrets:/var/lib/alpaca-paper:ro
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8082/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  paper-credentials:
+    image: market-mate-paper-connector
+    profiles: [setup]
+    user: "0:0"
+    volumes:
+      - alpaca-paper-secrets:/var/lib/alpaca-paper
+    entrypoint: ["sh", "-ec"]
+    command:
+      - 'umask 077; cat > /var/lib/alpaca-paper/credentials.json.new; chown 10001:10001 /var/lib/alpaca-paper/credentials.json.new; chmod 600 /var/lib/alpaca-paper/credentials.json.new; mv /var/lib/alpaca-paper/credentials.json.new /var/lib/alpaca-paper/credentials.json'
+
   frontend:
     build: ./frontend
     command: ["npm", "run", "start:container"]
     environment:
       BACKEND_URL: http://backend:8080
+      PAPER_CONNECTOR_URL: http://paper-connector:8082
     ports:
       - "127.0.0.1:${MARKET_MATE_FRONTEND_PORT:-3000}:3000"
     restart: unless-stopped
     depends_on:
       backend:
+        condition: service_healthy
+      paper-connector:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:3000/api/health || exit 1"]
@@ -76,3 +107,4 @@ services:
 volumes:
   pgdata:
   custodydata:
+  alpaca-paper-secrets:

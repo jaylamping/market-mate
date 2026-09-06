@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-06T22:30:54.803736+00:00",
+  "generatedAt": "2026-09-06T23:49:57.194581+00:00",
   "title": "Design System: Market Mate Spectral Edge",
   "extensions": {
     "colorMeta": {
@@ -643,6 +643,14 @@
       {
         "name": "narrow",
         "value": "360px"
+      },
+      {
+        "name": "paper-stack",
+        "value": "1150px"
+      },
+      {
+        "name": "paper-mobile",
+        "value": "600px"
       }
     ]
   },
@@ -722,6 +730,13 @@
       "description": "Flat reading panel with an inspection link.",
       "html": "<section class=\"ds-panel\"><h2>Evidence trust</h2><strong>Pending</strong><p>Verification and coverage are separate checks.</p><a href=\"#custody\">Inspect evidence trust</a></section>",
       "css": ".ds-panel{background:var(--card);color:var(--foreground);border:1px solid var(--border);border-radius:10px;padding:18px;font-family:var(--font-overview),sans-serif}.ds-panel h2{margin:0;color:var(--muted-foreground);font-size:12px;font-weight:500}.ds-panel strong{display:block;margin-top:14px;font-size:clamp(20px,1.8vw,27px);font-weight:450;line-height:1.25;letter-spacing:-.025em}.ds-panel p{font-size:11px;line-height:1.55;color:var(--muted-foreground)}.ds-panel a{display:block;padding-top:12px;margin-top:15px;border-top:1px solid var(--border);font-size:11px;color:var(--primary);text-decoration:none}.ds-panel a:hover{text-decoration:underline}.ds-panel a:focus-visible{outline:2px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}"
+    },
+    {
+      "name": "Paper Record Disclosure",
+      "kind": "custom",
+      "description": "Shared order and activity disclosure in Paper; retains native keyboard behavior and provider identifier wrapping.",
+      "html": "<details class=\"ds-paper-record\"><summary>View record</summary><p>Provider type: Not reported</p><code>Provider identifier appears here</code></details>",
+      "css": ".ds-paper-record{font:400 12px var(--font-overview),sans-serif;color:var(--foreground)}.ds-paper-record summary{color:var(--primary);cursor:pointer}.ds-paper-record summary:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-paper-record p{margin:8px 0}.ds-paper-record code{display:block;max-width:240px;overflow-wrap:anywhere;white-space:normal;color:var(--muted-foreground);margin-top:8px;font-family:var(--font-overview-mono),monospace}"
     }
   ],
   "narrative": {
@@ -760,7 +775,7 @@
       "**Do** pair semantic color with visible state labels or signed values.",
       "**Do** retain labeled mobile navigation and contain wide evidence tables.",
       "**Do** preserve explicit environment, distrust, and zero-authority information.",
-      "**Do** compose controls from the shipped shadcn primitives and retain keyboard focus."
+      "**Do** compose controls from the shipped shadcn primitives and retain keyboard focus. Use Tailwind utilities with shared theme tokens; scoped CSS supplements components only."
     ],
     "donts": [
       "**Don't** add kickers or eyebrows above headings.",

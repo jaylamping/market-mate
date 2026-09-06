@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./command-ledger.css";
 import "./supervisory-overview.css";
+import { QueryProvider } from "./QueryProvider";
 import { ThemeProvider } from "./ThemeProvider";
 
 const overviewFont = Geist({
@@ -24,7 +25,7 @@ export const metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${overviewFont.variable} ${overviewMono.variable}`}><ThemeProvider>{children}</ThemeProvider></body>
+      <body className={`${overviewFont.variable} ${overviewMono.variable}`}><ThemeProvider><QueryProvider>{children}</QueryProvider></ThemeProvider></body>
     </html>
   );
 }
