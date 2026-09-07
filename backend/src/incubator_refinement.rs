@@ -16,7 +16,7 @@ fn completion(v: Value, model: &str) -> (&'static str, Value) {
         .as_str()
         .unwrap_or_default();
     let mut detail = json!({"generation_id":v["id"],"returned_model":v["model"],"usage":v["usage"],"response_text":raw});
-    if v["usage"]["cost"].as_f64().is_some_and(|c| c > 0.0) {
+    if model.ends_with(":free") && v["usage"]["cost"].as_f64().is_some_and(|c| c > 0.0) {
         detail["reason"] = json!("unexpected_provider_charge");
         return ("indeterminate", detail);
     }
@@ -120,6 +120,20 @@ async fn tick() -> Result<(), String> {
         .unwrap_or_else(|_| {
             crate::incubator::payload("unavailable/model:free", "No dispatch: preparation failed.")
         });
+    if let Ok((provider, request)) = &prepared {
+        if !provider
+            .admit(
+                &db.client,
+                &format!("refinement:{id}"),
+                request,
+                "refinement",
+            )
+            .await
+            .map_err(str::to_string)?
+        {
+            return Ok(());
+        }
+    }
     db.client
         .query_one(
             "SELECT begin_incubator_refinement($1,$2)",

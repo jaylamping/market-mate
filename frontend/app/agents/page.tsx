@@ -17,6 +17,7 @@ export default function Page() {
       <div className="grid min-w-0 gap-5 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3"><OpenRouterBalance/><a href="/system#integrations" className="text-link">Manage connections</a></div>
         <OpenRouterLimits/>
+        <a href="/settings#ai-usage" className="text-link">Request limits and automated spending settings</a>
         <IntegrationDisclosure title="Configure models"><ModelsTable/></IntegrationDisclosure>
       </div>
     </section>

@@ -31,7 +31,7 @@ fn completion(v: Value, model: &str, clarification: bool) -> (&'static str, Valu
         .as_str()
         .unwrap_or_default();
     let mut detail = json!({"generation_id":v["id"],"usage":v["usage"],"returned_model":v["model"],"response_text":raw});
-    if v["usage"]["cost"].as_f64().is_some_and(|c| c > 0.0) {
+    if model.ends_with(":free") && v["usage"]["cost"].as_f64().is_some_and(|c| c > 0.0) {
         detail["reason"] = json!("unexpected_provider_charge");
         return ("indeterminate", detail);
     }
@@ -90,6 +90,14 @@ fn payload(model: &str, job: &Value, run: &Value, kind: &str) -> Result<Value, &
 }
 type Future<'a, T> = std::pin::Pin<Box<dyn std::future::Future<Output = T> + Send + 'a>>;
 trait Dispatch: Send + Sync {
+    fn admit<'a>(
+        &'a self,
+        _db: &'a tokio_postgres::Client,
+        _key: &'a str,
+        _request: &'a Value,
+    ) -> Future<'a, Result<bool, String>> {
+        Box::pin(async { Ok(true) })
+    }
     fn adapt_request(&self, request: &Value) -> Result<Value, &'static str> {
         Ok(request.clone())
     }
@@ -97,6 +105,18 @@ trait Dispatch: Send + Sync {
     fn send<'a>(&'a self, request: &'a Value, kind: &'a str) -> Future<'a, (&'static str, Value)>;
 }
 impl Dispatch for crate::incubator::OpenRouter {
+    fn admit<'a>(
+        &'a self,
+        db: &'a tokio_postgres::Client,
+        key: &'a str,
+        request: &'a Value,
+    ) -> Future<'a, Result<bool, String>> {
+        Box::pin(async move {
+            self.admit(db, key, request, "evaluation")
+                .await
+                .map_err(str::to_string)
+        })
+    }
     fn adapt_request(&self, request: &Value) -> Result<Value, &'static str> {
         self.adapt_request(request)
     }
@@ -234,6 +254,15 @@ async fn tick(models: &dyn Models) -> Result<(), String> {
     let mut recorded = record_request.clone();
     if let Ok((_, metadata)) = &prepared {
         recorded["preflight"] = metadata.clone();
+    }
+    if let Ok((provider, _)) = &prepared {
+        let key = format!(
+            "evaluation:{id}:{}",
+            job["steps"].as_array().unwrap().len() + 1
+        );
+        if !provider.admit(&db.client, &key, &record_request).await? {
+            return Ok(());
+        }
     }
     let seq: i32 = db
         .client
