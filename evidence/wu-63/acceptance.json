@@ -21,8 +21,8 @@
   "source_sha256": {
     "db/migrations/0067_market_data_setup_refresh.sql": "85696548553458b2faa070a2aa9e5f2101ef22ab18268fcb196a09c33d12a2f6",
     "db/fixtures/wu63_market_data_setup_probe.sql": "dae8bcae3aa52893db370c68e08ab6a1d3042207cdbf7b809e8a602db0acfa2c",
-    "backend/src/market_data_connection.rs": "ef1840c96af6a9ffeae3665da97dfd3a54b6aeefd810a4f0d1d78f801c3c9b60",
-    "backend/src/market_data_connection/tests.rs": "18d15579976b63b626bcfc6f33ea261f76767565be3fdc0a7dbba85facb3404b",
+    "backend/src/market_data_connection.rs": "7b9d475412cac2523d7eed610a780b90884e12a4cadb95a967d0337aa3026677",
+    "backend/src/market_data_connection/tests.rs": "dd6287210bad2d8ae3b3bc47e7ddd14676bebd48f24076ccd8be1ca5bb6219f5",
     "backend/src/market_data_acquisition.rs": "def91930345d25b96b7eb912177e5e4a95aed1150b4aa060e66fae0337549a19",
     "scripts/wu63_market_data_test.sh": "df7c4faf61338d23f3b4f5f94c1d63a2048a742c0565c45e6e69c1a3b0c5e2a9"
   },

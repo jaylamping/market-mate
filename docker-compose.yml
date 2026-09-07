@@ -227,6 +227,7 @@ services:
       DATABASE_URL: postgres://market_data_service:local-data-only@postgres:5432/market_mate
     volumes:
       - market-data-secrets:/var/lib/market-data
+      - alpaca-paper-secrets:/var/lib/alpaca-paper:ro
     restart: unless-stopped
     read_only: true
     cap_drop: [ALL]

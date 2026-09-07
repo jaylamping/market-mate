@@ -12,4 +12,4 @@ async function proxy(request:Request,path:string,method:"GET"|"POST") {
  }catch{return Response.json({error:"Market data service unavailable. Check its status before retrying."},{status:503,headers});}
 }
 export async function GET(request:Request,{params}:Context){const {path=[]}=await params;return path.length===0?proxy(request,"status","GET"):new Response(null,{status:404});}
-export async function POST(request:Request,{params}:Context){const {path=[]}=await params;return path.length===1&&["setup","settings"].includes(path[0])?proxy(request,path[0],"POST"):new Response(null,{status:404});}
+export async function POST(request:Request,{params}:Context){const {path=[]}=await params;return path.length===1&&["setup","reuse","settings"].includes(path[0])?proxy(request,path[0],"POST"):new Response(null,{status:404});}

@@ -30,6 +30,19 @@ async fn setup_and_refresh() {
     let dir = std::env::temp_dir().join(format!("wu63-secrets-{}", rand::random::<u64>()));
     let mut s = Connection::new(dir.join("credentials.json"));
     s.endpoint = Some(format!("http://{addr}/bars"));
+    let existing = dir.join("paper.json");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        &existing,
+        br#"{"key_id":"fixture-key","secret_key":"fixture-secret"}"#,
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&existing, std::fs::Permissions::from_mode(0o600)).unwrap();
+    }
+    s = s.with_existing_credentials(existing.clone());
     let s = Arc::new(s);
     let input = || Setup {
         key_id: "fixture-key".into(),
@@ -40,8 +53,46 @@ async fn setup_and_refresh() {
     rejected.rights_confirmed = false;
     assert!(setup(State(s.clone()), Json(rejected)).await.is_err());
     assert!(!s.path.exists());
+    let before = std::fs::read(&existing).unwrap();
+    assert!(reuse(
+        State(s.clone()),
+        Json(ReuseSetup {
+            rights_confirmed: false
+        })
+    )
+    .await
+    .is_err());
+    assert!(!s.path.exists());
+    reuse(
+        State(s.clone()),
+        Json(ReuseSetup {
+            rights_confirmed: true,
+        }),
+    )
+    .await
+    .unwrap();
+    assert_eq!(std::fs::read(&existing).unwrap(), before);
+    assert_eq!(std::fs::read(&s.path).unwrap(), before);
+    std::fs::rename(&existing, dir.join("paper.saved")).unwrap();
+    let missing = reuse(
+        State(s.clone()),
+        Json(ReuseSetup {
+            rights_confirmed: true,
+        }),
+    )
+    .await
+    .unwrap_err();
+    assert_eq!(missing.1 .0["error"], "existing_connection_unavailable");
+    assert_eq!(std::fs::read(&s.path).unwrap(), before);
+    std::fs::rename(dir.join("paper.saved"), &existing).unwrap();
+    assert!(serde_json::from_value::<ReuseSetup>(
+        json!({"rights_confirmed":true,"path":"/arbitrary"})
+    )
+    .is_err());
+
     setup(State(s.clone()), Json(input())).await.unwrap();
     let json = status(State(s.clone())).await.unwrap().0;
+    assert_eq!(json["existing_alpaca_available"], true);
     assert!(!json.to_string().contains("fixture-secret"));
     assert!(!json.to_string().contains("fixture-key"));
     #[cfg(unix)]
