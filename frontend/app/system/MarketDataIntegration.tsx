@@ -22,7 +22,7 @@ export function MarketDataIntegration(){
  {!cfg&&q.data?.existing_alpaca_available&&<p className="text-sm text-muted-foreground">Your existing Alpaca credentials are available. Confirm the account terms below to activate price collection; you do not need to enter the keys again.</p>}
  <IntegrationDisclosure title={cfg?"Replace market data credentials":q.data?.existing_alpaca_available?"Activate with existing Alpaca connection":"Connect Alpaca market data"}>
  <form className="grid max-w-xl gap-4" onSubmit={e=>{e.preventDefault();save.mutate();}}>
- {q.data?.existing_alpaca_available&&<label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={!manual} onChange={e=>setManual(!e.target.checked)}/>Use credentials from my connected Alpaca Paper account</label>}
+ {q.data?.existing_alpaca_available&&<label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={!manual} onChange={e=>setManual(!e.target.checked)}/>Use my saved Alpaca Paper credentials</label>}
  {!reuse&&<><label className="grid gap-2 text-sm">API key ID<Input type="password" autoComplete="off" required value={key} onChange={e=>setKey(e.target.value)}/></label>
  <label className="grid gap-2 text-sm">Secret key<Input type="password" autoComplete="new-password" required value={secret} onChange={e=>setSecret(e.target.value)}/></label></>}
  <label className="flex items-start gap-3 text-sm"><input type="checkbox" required checked={rights} onChange={e=>setRights(e.target.checked)} className="mt-1 size-4 shrink-0"/>I have reviewed my Alpaca account terms and can retain historical data locally for personal research.</label>
