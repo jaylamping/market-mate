@@ -193,7 +193,6 @@ pub async fn worker(s: Arc<Connection>) {
     }
 }
 async fn work(s: &Connection) -> Result<(), &'static str> {
-    let _gate = s.gate.lock().await;
     let db = db().await.map_err(|_| "database_unavailable")?;
     db.client
         .query_one("SELECT run_market_data_housekeeping()", &[])

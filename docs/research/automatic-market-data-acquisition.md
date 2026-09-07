@@ -35,7 +35,7 @@ MARKET_DATA_CREDENTIALS_FILE='/absolute/private/path/alpaca.json' \
 cargo run --locked --bin market-data-acquire
 ```
 
-`--once` drains at most one job. Normal operation listens to the existing `incubator_experiment` notification channel and polls every 30 seconds for missed notifications and expired leases. Database reconnects back off five seconds. This executable is included in the backend Docker image. Source setup UI and a managed Compose service are WU-63; no production credentials or real downloads were configured by WU-62.
+`--once` drains at most one job. Normal operation listens to the existing `incubator_experiment` notification channel and polls every 30 seconds for missed notifications and expired leases. Database reconnects back off five seconds. This executable is included in the backend Docker image. [Source setup UI and a managed Compose service](market-data-setup.md) are WU-63; no production credentials or real downloads were configured by WU-62.
 
 ## Recovery and control
 
@@ -43,7 +43,7 @@ One job per ticket freezes the request and source. Claims serialize on the sourc
 
 Transient network, rate-limit and provider-availability failures retry after 60 seconds. There are three acquisition attempts total, including expired leases. Permanent failures wait for explicit retry with the same request and remaining budget. Exhausted or invalid requests need a new experiment; parameters are never changed by Retry.
 
-The local Incubator API exposes `GET /workflow/{id}/acquisition` and `POST /workflow/{id}/acquisition` with `{"action":"retry"}` or `{"action":"cancel"}`. The new UI controls follow in WU-63. Cancellation fences attachment immediately; an already in-flight, bounded download may finish but its response cannot be stored or attached. Manual binding or research supersession also blocks an outstanding acquisition's commit. Completed jobs cannot be cancelled or rebound.
+The local Incubator API exposes `GET /workflow/{id}/acquisition` and `POST /workflow/{id}/acquisition` with `{"action":"retry"}` or `{"action":"cancel"}`. WU-63 exposes these controls in experiment details. Cancellation fences attachment immediately; an already in-flight, bounded download may finish but its response cannot be stored or attached. Manual binding or research supersession also blocks an outstanding acquisition's commit. Completed jobs cannot be cancelled or rebound.
 
 ## Cache and retention
 

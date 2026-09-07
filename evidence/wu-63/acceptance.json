@@ -20,8 +20,8 @@
   ],
   "source_sha256": {
     "db/migrations/0067_market_data_setup_refresh.sql": "85696548553458b2faa070a2aa9e5f2101ef22ab18268fcb196a09c33d12a2f6",
-    "backend/src/market_data_connection.rs": "e519fafeeac8a1800aeff6fc5da8b16bc38b99e6aaf9511cd14b0a2ca17dc1dd",
-    "backend/src/market_data_connection/tests.rs": "50442047373788104ac457e7f07cc939d6797e83747248c843af4975d4e4fd42",
+    "backend/src/market_data_connection.rs": "ef1840c96af6a9ffeae3665da97dfd3a54b6aeefd810a4f0d1d78f801c3c9b60",
+    "backend/src/market_data_connection/tests.rs": "18d15579976b63b626bcfc6f33ea261f76767565be3fdc0a7dbba85facb3404b",
     "backend/src/market_data_acquisition.rs": "def91930345d25b96b7eb912177e5e4a95aed1150b4aa060e66fae0337549a19",
     "scripts/wu63_market_data_test.sh": "224a872d802c070acb19825aa14b7c4f5f87b46a9ef337dce876204cb057001d"
   },

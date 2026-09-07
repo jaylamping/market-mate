@@ -256,6 +256,25 @@ async fn setup_and_refresh() {
         )
         .await
         .unwrap();
+    let archived_error = admin
+        .client
+        .query_one(
+            "SELECT finish_market_data_refresh($1,$2::text::date,$3::text::uuid,$4)",
+            &[
+                &id,
+                &lease["session_end"].as_str().unwrap(),
+                &lease["token"].as_str().unwrap(),
+                &bundle,
+            ],
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(
+        archived_error.as_db_error().unwrap().message(),
+        "refresh_no_longer_active"
+    );
+    // Remove the lease as an alternative reason for refusing this archived job.
+    admin.client.execute("UPDATE market_data_refresh SET state='queued',token=NULL,lease_until=NULL WHERE experiment_id=$1 AND state='leased'", &[&id]).await.unwrap();
     let n: i32 = admin
         .client
         .query_one(
@@ -304,6 +323,13 @@ async fn setup_and_refresh() {
     );
     let safe:bool=admin.client.query_one("SELECT NOT EXISTS(SELECT 1 FROM audit_event WHERE payload::text LIKE '%fixture-secret%') AND (SELECT valid FROM verify_audit_event_chain())",&[]).await.unwrap().get(0);
     assert!(safe);
+    // Setup serializes only credential writers. Holding its lock cannot stall the worker.
+    let setup_gate = s.gate.lock().await;
+    tokio::time::timeout(Duration::from_secs(3), work(&s))
+        .await
+        .expect("worker shares setup gate")
+        .unwrap();
+    drop(setup_gate);
     server.abort();
     std::fs::remove_dir_all(dir).unwrap();
 }
