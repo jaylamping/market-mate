@@ -1,5 +1,5 @@
 //! Bounded advisory phases within one research assignment; no experiment execution.
-use crate::incubator_requests::{database, selected_model};
+use crate::incubator_requests::{database, selected_role_model};
 use axum::{
     extract::Path,
     http::StatusCode,
@@ -113,7 +113,7 @@ trait Models: Send + Sync {
 struct LiveModels;
 impl Models for LiveModels {
     fn resolve(&self, choice: &str) -> Result<String, String> {
-        selected_model(choice).map_err(|(_, v)| {
+        selected_role_model(choice, "research").map_err(|(_, v)| {
             v.0["error"]
                 .as_str()
                 .unwrap_or("model_unavailable")

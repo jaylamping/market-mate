@@ -1,48 +1,34 @@
 "use client";
 import { ArrowDown, ArrowUp, ArrowUpDown, Info } from "lucide-react";
 import { catalogDate, type Sort, type SortKey } from "./model-sort";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Tooltip } from "radix-ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ModelLink } from "@/components/ModelLink";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cursorModelsQuery, cursorStatusQuery, openrouterModelsQuery, modelRoutingQuery } from "@/lib/api-queries";
+import { cursorModelsQuery, cursorStatusQuery, openrouterModelsQuery } from "@/lib/api-queries";
 import { isFree, tokenPrice, type ModelPricing } from "@/lib/openrouter";
-import { referenceMetadata, groupModels, moveRoute, parseRouting, setRoutes, type Provider, type RoutingPolicy, type ModelRoute } from "@/lib/model-routing";
+import { referenceMetadata, groupModels, moveRoute, setRoutes, type Provider, type ModelRoute } from "@/lib/model-routing";
 
 const names = {openrouter:"OpenRouter",cursor:"Cursor"};
 type Offer = {provider:Provider;id:string;name:string;pricing?:ModelPricing;context?:number;created?:number;free:boolean;retired?:boolean};
+import {useRoutingEditor} from "./RoutingEditor";
 export function ModelsTable() {
-  const client=useQueryClient(),query=useQuery(modelRoutingQuery);
+  const {query,policy,save,draft,persist,conflict,reload}=useRoutingEditor();
   const orModels=useQuery(openrouterModelsQuery),status=useQuery(cursorStatusQuery);
   const cursorModels=useQuery({...cursorModelsQuery,enabled:status.data?.state==="connected"});
   const [executionHelpOpen,setExecutionHelpOpen]=useState(false);
-  const [draft,setDraft]=useState<RoutingPolicy|null>(null);
-  const saveInFlight=useRef(false);
-  const policy=draft??query.data;
   const [search,setSearch]=useState(""),[provider,setProvider]=useState("all"),[filter,setFilter]=useState("all");
   const [sort,setSort]=useState<Sort>({key:"selected",direction:"desc"});
   const epoch=`${orModels.dataUpdatedAt}:${cursorModels.dataUpdatedAt}`;
   const [pageState,setPageState]=useState({index:0,epoch:""});
   const page=pageState.epoch===epoch?pageState.index:0;
   const setPage=(index:number)=>setPageState({index,epoch});
-  const save=useMutation({retry:false,mutationFn:async(next:RoutingPolicy)=>{
-    const response=await fetch("/api/openrouter/routing",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(next),signal:AbortSignal.timeout(20_000)});
-    if(!response.ok)throw new Error(response.status===409?"Preferences changed elsewhere. Load the latest preferences before editing again.":"Could not save. Your changes are still here; check the provider connections and try again.");
-    return parseRouting(await response.json());
-  },onSuccess:value=>{client.setQueryData(modelRoutingQuery.queryKey,value);setDraft(null);void client.invalidateQueries({queryKey:["api","openrouter","policy"]});void client.invalidateQueries({queryKey:["api","cursor","policy"]});},onSettled:()=>{saveInFlight.current=false;}});
-  const persist=(next:RoutingPolicy)=>{
-    if(saveInFlight.current)return;
-    saveInFlight.current=true;
-    setDraft(next);
-    save.mutate(next);
-  };
-  const conflict=save.isError&&save.error.message.startsWith("Preferences changed elsewhere");
   const update=(id:string,routes:ModelRoute[])=>{if(policy)persist(setRoutes(policy,id,routes));};
-  const reload=async()=>{const result=await query.refetch();if(result.isSuccess){setDraft(null);save.reset();}};
+
   const ready={openrouter:!!orModels.data&&!orModels.isError,cursor:status.data?.state==="connected"&&!!cursorModels.data&&!cursorModels.isError};
   const offers:Offer[]=[
     ...(ready.openrouter?orModels.data??[]:[]).map(m=>({provider:"openrouter" as const,id:m.id,name:m.name,pricing:m.pricing,context:m.context_length,created:m.created,free:isFree(m)})),
@@ -94,14 +80,6 @@ export function ModelsTable() {
       })}</div></TableCell><TableCell className="whitespace-nowrap tabular-nums">{catalogDate(m.metadata.created)}</TableCell><TableCell className="tabular-nums">{m.pricing?tokenPrice(m.pricing.prompt):"—"}</TableCell><TableCell className="tabular-nums">{m.pricing?tokenPrice(m.pricing.completion):"—"}</TableCell><TableCell className="tabular-nums">{m.context?.toLocaleString("en-US")??"—"}</TableCell></TableRow>;
     })}</TableBody></Table>{!filtered.length&&<p className="p-6 text-sm text-muted-foreground">{query.isPending?"Loading preferences…":"No models match these filters."}</p>}</div>
     <div className="flex flex-wrap items-center justify-between gap-3 text-sm"><span className="text-muted-foreground">{filtered.length} matching models · Page {currentPage+1} of {pages}</span><div className="flex gap-2"><Button variant="outline" disabled={currentPage===0} onClick={()=>setPage(currentPage-1)}>Previous</Button><Button variant="outline" disabled={currentPage+1>=pages} onClick={()=>setPage(currentPage+1)}>Next</Button></div></div>
-    <div className="grid gap-2 border-t pt-4">
-      <label htmlFor="default-fallback-model" className="text-sm font-medium">Default / Fallback Model</label>
-      <select id="default-fallback-model" className="min-h-11 w-full max-w-md rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground" value={policy?.default_model??""} disabled={!policy||query.isError||save.isPending||conflict} onChange={e=>{if(policy)persist({...policy,default_model:e.target.value||null});}}>
-        <option value="">None — no automatic fallback</option>
-        {[...(policy?.models??[])].sort((a,b)=>a.model_id.localeCompare(b.model_id)).map(m=><option key={m.model_id} value={m.model_id}>{groups.find(g=>g.id===m.model_id)?.name??m.model_id}</option>)}
-      </select>
-      <p className="max-w-prose text-xs text-muted-foreground">Uses this model when no model is specified, or once after a confirmed failure. Its provider order and the run’s budget still apply. Uncertain outcomes never trigger fallback. Removing its last provider clears this setting.</p>
-    </div>
     <p className="text-xs text-muted-foreground">Up to 100 selections per provider. Missing pricing and context use OpenRouter reference values; Cursor billing follows your Cursor plan. Prices are base USD rates; tiers and extra capabilities can cost more. A dash means information was not supplied. Free, Pro, preview, and batch variants remain separate.</p>
   </div>;
 }
