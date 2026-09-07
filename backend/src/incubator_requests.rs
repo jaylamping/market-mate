@@ -511,6 +511,38 @@ pub async fn worker() {
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
 }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ArchiveInput {
+    request_id: String,
+    archived: bool,
+    expected_version: i32,
+}
+async fn archive_research(
+    Path(key): Path<String>,
+    Json(input): Json<ArchiveInput>,
+) -> Result<Json<Value>, ApiError> {
+    let db = database().await?;
+    db.client
+        .query_one(
+            "SELECT set_incubator_research_archived($1,$2,$3,$4)",
+            &[
+                &key,
+                &input.request_id,
+                &input.archived,
+                &input.expected_version,
+            ],
+        )
+        .await
+        .map_err(|_| {
+            error("Archive status changed or request could not be saved. Refresh and try again.")
+        })?;
+    db.client
+        .query_one("SELECT read_incubator_agent_run($1)", &[&key])
+        .await
+        .map(|r| Json(r.get(0)))
+        .map_err(sql_error)
+}
 pub fn router() -> Router {
     router_with_models(Arc::new(LiveModels))
 }
@@ -521,6 +553,7 @@ fn router_with_models(models: Arc<dyn ComparisonModels>) -> Router {
         .route("/assignments/check/{id}", get(get_check))
         .route("/assignments", post(submit))
         .route("/assignments/stream", get(stream))
+        .route("/runs/{key}/archive", post(archive_research))
         .route("/runs/{key}", get(get_run))
         .layer(DefaultBodyLimit::max(10000))
         .with_state(Arc::new(Intake {
@@ -617,6 +650,94 @@ mod tests {
                 )
             })
         }
+    }
+    #[tokio::test]
+    #[ignore = "requires isolated archive acceptance database"]
+    async fn archive_http_sse_and_restore() {
+        let db = database().await.unwrap();
+        db.client.query_one("SELECT admit_incubator_agent_run('archive-http','vendor/model:free','momentum-brief-v1')",&[]).await.unwrap();
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let base = format!("http://{}", listener.local_addr().unwrap());
+        let server = tokio::spawn(async move { axum::serve(listener, router()).await.unwrap() });
+        let client = reqwest::Client::new();
+        let mut stream = client
+            .get(format!("{base}/assignments/stream"))
+            .send()
+            .await
+            .unwrap();
+        let mut initial = Vec::new();
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                initial.extend_from_slice(&stream.chunk().await.unwrap().unwrap());
+                if String::from_utf8_lossy(&initial).contains("archive-http") {
+                    break;
+                }
+            }
+        })
+        .await
+        .unwrap();
+        let url = format!("{base}/runs/archive-http/archive");
+        let archive = json!({"request_id":"archive-request","archived":true,"expected_version":0});
+        for _ in 0..2 {
+            let r = client.post(&url).json(&archive).send().await.unwrap();
+            assert!(r.status().is_success());
+            let v: Value = r.json().await.unwrap();
+            assert_eq!(v["archived"], true);
+            assert_eq!(v["archive_version"], 1);
+            assert_eq!(v["state"], "admitted");
+        }
+        let mut changed = Vec::new();
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                changed.extend_from_slice(&stream.chunk().await.unwrap().unwrap());
+                if String::from_utf8_lossy(&changed).contains("\"archived\":true") {
+                    break;
+                }
+            }
+        })
+        .await
+        .unwrap();
+        let restored: Value = client
+            .post(&url)
+            .json(&json!({"request_id":"restore-request","archived":false,"expected_version":1}))
+            .send()
+            .await
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
+        assert_eq!(restored["archived"], false);
+        let replay: Value = client
+            .post(&url)
+            .json(&archive)
+            .send()
+            .await
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
+        assert_eq!(replay["archived"], false);
+        assert_eq!(replay["archive_version"], 2);
+        assert_eq!(
+            client
+                .post(&url)
+                .json(&json!({"request_id":"stale-request","archived":true,"expected_version":1}))
+                .send()
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::CONFLICT
+        );
+        let direct: Value = client
+            .get(format!("{base}/runs/archive-http"))
+            .send()
+            .await
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
+        assert_eq!(direct["archived"], false);
+        server.abort();
     }
     #[tokio::test]
     #[ignore = "requires the isolated database supplied by incubator_manual_requests_test.sh"]

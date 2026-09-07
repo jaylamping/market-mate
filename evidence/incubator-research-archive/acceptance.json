@@ -1,0 +1,21 @@
+{
+  "probe": "incubator-research-archive",
+  "checks": [
+    "archive_restore",
+    "immutable_command_identity",
+    "stale_version_denied",
+    "delayed_replay_no_effect",
+    "research_preserved",
+    "evaluation_scheduling_unchanged",
+    "populated_append_only",
+    "restricted_role",
+    "audit_chain",
+    "archive_http_idempotency",
+    "sse_archive_update",
+    "restore_http",
+    "delayed_http_replay_no_effect",
+    "direct_link_preserved"
+  ],
+  "passed": true,
+  "migration_sha256": "88a14d48e657d4ee8710238b7f16891f2526074bcb562391cd6e5650cfd44425"
+}

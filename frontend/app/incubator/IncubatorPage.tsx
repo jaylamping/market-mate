@@ -1,5 +1,5 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bot, ArrowUpRight, CheckCircle2, XCircle, Clock3, CircleDashed, X } from "lucide-react";
 import { Dialog, Tabs } from "radix-ui";
 import {OriginBadge} from "./OriginBadge";
@@ -10,6 +10,7 @@ import {ResearchReport,reportList} from "./ResearchReport";
 import { RunChat } from "./RunChat";
 import type { Conversation } from "@/lib/incubator-chat";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ModelLink } from "@/components/ModelLink";
@@ -45,6 +46,14 @@ function RunDetails({run}:{run:Run}) {
       <section className="space-y-3"><h3 className="text-sm font-medium">Run history</h3><ol className="space-y-2">{run.events.map(e=><li key={e.sequence} className="flex flex-wrap justify-between gap-2 border-l-2 border-border pl-3 text-sm"><span>{({admitted:"Assignment queued",preparing:"Preparing model and request",dispatched:"Dispatch intent recorded",completed:"Report recorded",failed:"Run failed",indeterminate:"Outcome unknown"})[e.state]}</span><time className="text-xs text-muted-foreground" dateTime={e.at}>{time(e.at)}</time></li>)}</ol></section>
   </div>;
 }
+function ArchiveResearch({run,onSaved}:{run:Run;onSaved:()=>void}) {
+ const cache=useQueryClient();
+ const mutation=useMutation({mutationFn:async(input:{request_id:string;archived:boolean;expected_version:number})=>{
+  const response=await fetch(`/api/incubator/runs/${encodeURIComponent(run.run_key)}/archive`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(input)});
+  if(!response.ok)throw Error("Could not save archive status. Refresh the ticket and try again.");
+ },onSuccess:()=>{void cache.invalidateQueries({queryKey:incubatorQuery.queryKey});onSaved();}});
+ return <div className="mb-5 rounded-lg border border-border p-3"><div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-muted-foreground">{run.archived?"Archived research · Report, chat, and linked experiments are preserved.":"Archive hides this ticket from the default list. It does not stop work or archive linked experiments."}</p><Button variant="outline" disabled={mutation.isPending} onClick={()=>mutation.mutate({request_id:crypto.randomUUID(),archived:!run.archived,expected_version:run.archive_version??0})}>{mutation.isPending?"Saving…":run.archived?"Restore research":"Archive research"}</Button></div>{mutation.isError&&<p role="alert" className="mt-2 text-sm text-destructive">{mutation.error.message}</p>}</div>;
+}
 function RunStatus({run}:{run:Run}) {
   const label=stateLabel(run);
   const color=label==="Report ready"?"var(--good)":label==="Failed"?"var(--destructive)":label==="Outcome unknown"?"var(--warning)":label==="Researching"?"var(--primary)":"var(--muted-foreground)";
@@ -59,7 +68,7 @@ export function RunCard({run,initiallyOpen=false,initialVersion="current",evalua
   const viewedRun=selected?{...run,detail:{...run.detail,report:selected.report}}:run;
   return <Dialog.Root open={open} onOpenChange={setOpen}><Dialog.Trigger asChild>
     <button type="button" className="group flex min-h-72 w-full min-w-0 flex-col items-start rounded-xl border border-border bg-card p-5 text-left text-card-foreground transition-colors hover:border-primary/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring" aria-label={`Open ${run.config.input.title}, ${stateLabel(run)}, ${time(run.created_at)}`}>
-      <span className="flex w-full items-center justify-between gap-2"><RunStatus run={run}/><ArrowUpRight className="size-4 text-muted-foreground transition-colors group-hover:text-primary" aria-hidden="true"/></span>
+      <span className="flex w-full items-center justify-between gap-2"><RunStatus run={run}/>{run.archived&&<Badge variant="outline">Archived</Badge>}<ArrowUpRight className="size-4 text-muted-foreground transition-colors group-hover:text-primary" aria-hidden="true"/></span>
       <span className="mt-3"><OriginBadge origin={run.created_by??"local_runner"}/></span>
       <span className="mt-5 line-clamp-3 text-base font-medium leading-snug">{run.config.input.title}</span>
       <span className="mt-3 line-clamp-2 break-all text-xs text-muted-foreground">{run.config.model}</span>
@@ -70,7 +79,7 @@ export function RunCard({run,initiallyOpen=false,initialVersion="current",evalua
     <div className="grid shrink-0 gap-5 border-b border-border p-5 pr-16 sm:p-6 sm:pr-16 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)]"><div><div className="mb-3"><RunStatus run={run}/></div><Dialog.Title className="text-lg font-semibold leading-snug sm:text-xl">{run.config.input.title}</Dialog.Title><Dialog.Description className="mt-2 text-sm text-muted-foreground">{run.config.agent_name} · {time(run.created_at)}</Dialog.Description></div><WorkflowTimeline run={run} evaluation={evaluation}/><Dialog.Close asChild><button type="button" aria-label="Close run details" className="absolute right-3 top-3 grid min-h-11 min-w-11 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"><X className="size-5" aria-hidden="true"/></button></Dialog.Close></div>
     <Tabs.Root defaultValue="report" className="flex h-[min(72dvh,50rem)] min-h-0 flex-col">
       <Tabs.List aria-label="Run view" className="flex shrink-0 gap-5 border-b border-border px-5 sm:px-6">{["Report","Chat"].map(label=><Tabs.Trigger key={label} value={label.toLowerCase()} className="min-h-11 border-b-2 border-transparent px-1 text-sm text-muted-foreground outline-none data-[state=active]:border-primary data-[state=active]:text-foreground focus-visible:ring-2 focus-visible:ring-ring">{label}</Tabs.Trigger>)}</Tabs.List>
-      <Tabs.Content value="report" className="min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6">{conversation.isError&&<p role="alert" className="mb-4 text-sm text-destructive">Plan revisions could not be refreshed. The displayed version may be outdated.</p>}{!!revisions.length&&<div className="mb-5 flex flex-wrap items-center justify-between gap-3"><label className="flex items-center gap-2 text-sm">Plan version<select aria-label="Plan version" value={version} onChange={e=>setVersion(e.target.value)} className="min-h-11 rounded-md border border-input bg-background px-3"><option value="current">Current · Revision {current?.revision}</option><option value="original">Original report</option>{revisions.slice(0,-1).map(r=><option value={r.revision} key={r.revision}>Revision {r.revision}</option>)}</select></label>{selected&&<span className="text-xs text-muted-foreground">Updated from chat · {time(selected.created_at)}</span>}</div>}<ReportEvaluation evaluations={evaluationHistory.length?evaluationHistory:evaluation?[evaluation]:[]} revision={selected?.revision??0}/><RunDetails run={viewedRun}/></Tabs.Content>
+      <Tabs.Content value="report" className="min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6"><ArchiveResearch run={run} onSaved={()=>setOpen(false)}/>{conversation.isError&&<p role="alert" className="mb-4 text-sm text-destructive">Plan revisions could not be refreshed. The displayed version may be outdated.</p>}{!!revisions.length&&<div className="mb-5 flex flex-wrap items-center justify-between gap-3"><label className="flex items-center gap-2 text-sm">Plan version<select aria-label="Plan version" value={version} onChange={e=>setVersion(e.target.value)} className="min-h-11 rounded-md border border-input bg-background px-3"><option value="current">Current · Revision {current?.revision}</option><option value="original">Original report</option>{revisions.slice(0,-1).map(r=><option value={r.revision} key={r.revision}>Revision {r.revision}</option>)}</select></label>{selected&&<span className="text-xs text-muted-foreground">Updated from chat · {time(selected.created_at)}</span>}</div>}<ReportEvaluation evaluations={evaluationHistory.length?evaluationHistory:evaluation?[evaluation]:[]} revision={selected?.revision??0}/><RunDetails run={viewedRun}/></Tabs.Content>
       <Tabs.Content value="chat" className="min-h-0 flex-1 overflow-hidden"><div className="grid h-full min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]"><aside className="hidden overflow-y-auto border-r border-border p-6 lg:block"><h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">{current?`Current hypothesis · Revision ${current.revision}`:"Original hypothesis"}</h3><p className="text-sm leading-relaxed">{current?.report.hypothesis??run.detail.report?.hypothesis??run.config.input.text}</p>{run.detail.report&&<div className="mt-6">{reportList("Proposed experiment",current?.report.experiment??run.detail.report.experiment,true)}</div>}</aside><RunChat run={run}/></div></Tabs.Content>
     </Tabs.Root>
   </Dialog.Content></Dialog.Portal></Dialog.Root>;
@@ -96,9 +105,10 @@ export function IncubatorPage() {
       .then(run=>setLinkedRun(parseRuns({environment:"local_research",artifact_kind:"research_planning",runs:[run]})[0]))
       .catch(()=>setLinkError("The linked assignment could not be loaded."));
   },[]);
-  const [search,setSearch]=useState(""),[status,setStatus]=useState("all");
+  const [search,setSearch]=useState(""),[status,setStatus]=useState("all"),[archiveView,setArchiveView]=useState("current");
   const runs=query.data??[];
-  const visibleRuns=runs.filter(run=>(status==="all"||stateLabel(run)===status)&&[run.config.agent_name,run.config.model,run.config.input.title,run.run_key].join(" ").toLowerCase().includes(search.toLowerCase()));
+  const scopedRuns=runs.filter(run=>Boolean(run.archived)===(archiveView==="archived"));
+  const visibleRuns=scopedRuns.filter(run=>(status==="all"||stateLabel(run)===status)&&[run.config.agent_name,run.config.model,run.config.input.title,run.run_key].join(" ").toLowerCase().includes(search.toLowerCase()));
   return <div className="supervisory-overview" data-display-only="false" data-order-authority="none"><a className="skip-link" href="#incubator-main">Skip to incubator</a><AppSidebar activePage="/incubator"/>
     <main className="overview-main" id="incubator-main" tabIndex={-1}>
       <header className="page-header">
@@ -108,15 +118,15 @@ export function IncubatorPage() {
       <p className="mb-6 max-w-4xl pt-2 text-sm leading-relaxed text-muted-foreground">Research planning only. Reports propose hypotheses and experiments; they contain no validated performance or trading approval.</p>
       {linkError&&<p role="alert" className="mb-4 text-sm text-destructive">{linkError}</p>}
       {linkedRun&&<div className="hidden"><RunCard run={runs.find(r=>r.run_key===linkedRun.run_key)??linkedRun} evaluation={evaluationFor(linkedRun.run_key)} evaluationHistory={evaluations.filter(e=>e.run_key===linkedRun.run_key)} initialVersion={linkedRevision} initiallyOpen/></div>}
-      <h2 className="mb-5 text-xl font-semibold">Research</h2>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-semibold">Research</h2><label className="flex items-center gap-2 text-sm text-muted-foreground">View<select aria-label="Research view" value={archiveView} onChange={e=>setArchiveView(e.target.value)} className="min-h-11 rounded-md border border-input bg-background px-3 text-foreground"><option value="current">Current</option><option value="archived">Archived</option></select></label></div>
       {workflow.isError&&<p role="alert" className="mb-4 text-sm text-destructive">Evaluation history is unavailable. Displayed workflow may be outdated.</p>}
       {query.isError && <p role="alert" className="workspace-panel p-4">Run history is unavailable. {query.data ? "The history below may be outdated." : "Refresh to try again."}</p>}
       {query.isPending && <p role="status" className="workspace-panel p-6">Loading research runs…</p>}
       {query.data?.length === 0 && <section className="workspace-panel"><div className="chart-empty"><Bot aria-hidden="true"/><h2>No research runs yet</h2><p>The first bounded assignment will appear here when the local research runner starts.</p><a href="/agents" className="text-primary underline underline-offset-4">View approved models</a></div></section>}
-      {!!runs.length&&<div className="mb-5 flex flex-wrap items-center gap-3"><Input className="min-w-0 flex-1 basis-64 sm:max-w-md" aria-label="Search runs" placeholder="Search agents, models, or runs…" value={search} onChange={e=>setSearch(e.target.value)}/><label className="flex items-center gap-2 text-sm text-muted-foreground">Status<select className="min-h-11 rounded-md border border-input bg-background px-3 py-2 text-foreground" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All statuses ({runs.length})</option>{["Assigned","Preparing","Researching","Report ready","Failed","Outcome unknown"].map(label=><option key={label} value={label}>{label} ({runs.filter(run=>stateLabel(run)===label).length})</option>)}</select></label></div>}
+      {!!runs.length&&<div className="mb-5 flex flex-wrap items-center gap-3"><Input className="min-w-0 flex-1 basis-64 sm:max-w-md" aria-label="Search runs" placeholder="Search agents, models, or runs…" value={search} onChange={e=>setSearch(e.target.value)}/><label className="flex items-center gap-2 text-sm text-muted-foreground">Status<select className="min-h-11 rounded-md border border-input bg-background px-3 py-2 text-foreground" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All statuses ({scopedRuns.length})</option>{["Assigned","Preparing","Researching","Report ready","Failed","Outcome unknown"].map(label=><option key={label} value={label}>{label} ({scopedRuns.filter(run=>stateLabel(run)===label).length})</option>)}</select></label></div>}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,14rem),15rem))] gap-4">{visibleRuns.map(run=><RunCard key={run.run_key} run={run} evaluation={evaluationFor(run.run_key)} evaluationHistory={evaluations.filter(e=>e.run_key===run.run_key)}/>)}</div>
-      {!!runs.length&&!visibleRuns.length&&<p className="rounded-xl border border-dashed border-border px-5 py-10 text-sm text-muted-foreground">No runs match your search and status filter.</p>}
-      {!!query.data?.length && <p className="pb-6 pt-6 text-xs leading-relaxed text-muted-foreground">Showing {visibleRuns.length} of {query.data.length} assignments · All active work and the latest 100 finished runs.</p>}
+      {!!runs.length&&!visibleRuns.length&&<p className="rounded-xl border border-dashed border-border px-5 py-10 text-sm text-muted-foreground">{archiveView==="archived"?"No archived research matches this view.":"No current research matches this view."}</p>}
+      {!!query.data?.length && <p className="pb-6 pt-6 text-xs leading-relaxed text-muted-foreground">Showing {visibleRuns.length} of {scopedRuns.length} {archiveView==="archived"?"archived research tickets · Latest 100 archived tickets.":"current assignments · All active work and the latest 100 finished or restored tickets."}</p>}
       <Experiments evaluations={evaluations}/>
     </main>
   </div>;
