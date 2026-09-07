@@ -1,0 +1,42 @@
+# Architecture and implementation map
+
+This map describes the source at its last review on 2026-09-07, based on merge `b5963db`. Runtime state must be checked separately with `python3 scripts/doctor.py --runtime`. Update this map when service ownership or authority boundaries change.
+
+## Implemented system
+
+The frontend is a Next.js application backed by Rust/Axum services and PostgreSQL. Container definitions, ports, credential mounts, runtime users, and service dependencies live in [docker-compose.yml](../docker-compose.yml). Rust binaries are in [backend/src/bin](../backend/src/bin); the backend entrypoint is [main.rs](../backend/src/main.rs).
+
+| Component | Responsibility and source |
+| --- | --- |
+| Frontend | Supervisory pages plus explicit research/configuration controls; [app](../frontend/app), [API proxies](../frontend/app/api), [shared components](../frontend/components) |
+| Backend | Health/readiness, migration validation, checkpoint/recovery services; [main.rs](../backend/src/main.rs), [migrate.rs](../backend/src/migrate.rs), [checkpoints.rs](../backend/src/checkpoints.rs) |
+| PostgreSQL | Durable state machines, runtime-role restrictions, audit events, assignments, capacity receipts; [migrations](../db/migrations), [fixtures](../db/fixtures) |
+| Custody | Local checkpoint custody and receipts; [custody binary](../backend/src/bin/custody.rs) |
+| Incubator requests | Request intake, campaign checking, Ticket Creator, evaluation, refinement, and experiment workers; [entrypoint](../backend/src/bin/incubator-requests.rs), [requests](../backend/src/incubator_requests.rs) |
+| Incubator chat | Persistent research conversations and streaming; [incubator_chat.rs](../backend/src/incubator_chat.rs) |
+| Market data | Source setup, acquisition, storage, and diagnostic datasets; [service entrypoint](../backend/src/bin/market-data-service.rs), [market_data.rs](../backend/src/market_data.rs), [acquisition](../backend/src/market_data_acquisition.rs) |
+| OpenRouter / Cursor connectors | Provider connection and model-policy surfaces; [openrouter.rs](../backend/src/openrouter.rs), [cursor.rs](../backend/src/cursor.rs), [model_routing.rs](../backend/src/model_routing.rs) |
+| Paper connector | Read-only Alpaca Paper account view; [paper.rs](../backend/src/paper.rs). This is not an order-execution service. |
+
+## Campaign request flow
+
+1. The Principal's saved campaign settings select the creator and bound intake. [Campaign controls](../backend/src/incubator_campaign.rs) and [campaign SQL](../db/migrations/0074_research_campaign.sql) own the transition, with subsequent migrations replacing functions.
+2. [Ticket Creator](../backend/src/incubator_ticket_creator.rs) proposes a title, premise, and supported diagnostic specification. Output is untrusted and validated in Rust and at database boundaries.
+3. [Similarity checking](../backend/src/incubator_requests.rs) compares against assignment history. Complete duplicates stop; incomplete checks block admission. Successful nonduplicates enter the existing research workflow.
+4. Research, evaluation, refinement, and [experiments](../backend/src/incubator_experiment.rs) preserve lineage. Observed market data and fixed diagnostic contracts remain separate from model-generated claims.
+5. [Capacity admission](../backend/src/openrouter_capacity.rs) records each dispatch and its reservation/outcome. [Request adaptation](../backend/src/openrouter_request.rs) respects model capabilities without removing output or cost bounds.
+6. [Recovery](../db/migrations/0079_campaign_recovery.sql) creates a linked new proposal for a stopped check and blocks uncertain provider outcomes. Original checks remain available.
+
+Read [campaign behavior](research/research-campaign.md), [capacity operation](research/openrouter-capacity-operation.md), and the relevant ADR before changing this flow. Campaign paid creator selection is distinct from free-only campaign research work; general manual/automated routing has separate policies.
+
+## Current implementation versus planned design
+
+- Research workers and configuration endpoints perform real writes and may incur approved model/data costs. “Zero order authority” does not mean the entire application is read-only.
+- `momentum_v1` is an implemented bounded diagnostic, not general strategy qualification. Fixture acceptance does not establish observed-data performance.
+- The domain terms Incubator, Engine, and Sentinel describe responsibilities and controls. Do not assume each is a separate running service; inspect the actual SQL and binaries.
+- Paper/Live governance, cloud portability, and qualification documents under [research](research) include plans and policy discussions. A document or glossary entry is not evidence of a deployed execution capability.
+- Provider configuration and runtime state are not in Git. A new checkout does not inherit credentials, model approvals, database contents, or container images from a previous IDE session.
+
+## Evidence navigation
+
+Use [verification](agents/verification.md) to select checks. Source-linked acceptance JSON lives under [evidence](../evidence); its hashes identify the tested files. Live logs and database receipts establish what actually ran. A compiled binary can embed older migration bytes, and a healthy container can still be running an older image than the local tag.

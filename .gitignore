@@ -7,3 +7,7 @@ evidence/**
 !evidence/**/*.json
 *.log
 .DS_Store
+
+# Local agent state and transient verification output
+.scratch/
+__pycache__/
