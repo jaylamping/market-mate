@@ -28,7 +28,7 @@ SELECT pg_temp.must_reject($q$UPDATE incubator_request_check SET input='{}'$q$,'
 SELECT pg_temp.must_reject($q$INSERT INTO incubator_manual_request SELECT * FROM incubator_manual_request$q$,'42501');
 SELECT pg_temp.must_reject($q$SELECT admit_incubator_brief('bypass','vendor/model:free','{}',true)$q$,'42501');
 DO $$ BEGIN
- IF next_incubator_manual_run()<>'manual-first' THEN RAISE EXCEPTION 'queue order'; END IF;
+ IF next_incubator_manual_run() IS DISTINCT FROM 'manual-first' THEN RAISE EXCEPTION 'queue order'; END IF;
 END $$;
 SELECT record_incubator_agent_event('manual-first','preparing','{}');
 SELECT pg_temp.must_reject($q$SELECT record_incubator_agent_event('manual-warn','preparing','{}')$q$,'55000');

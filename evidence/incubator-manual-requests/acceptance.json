@@ -20,7 +20,11 @@
     "durable_queue_worker",
     "sse_initial_snapshot",
     "sse_workflow_update",
-    "no_provider_dispatch_without_policy"
+    "no_provider_dispatch_without_policy",
+    "startup_resumes_persisted_assignment_once",
+    "semantic_http_default_model",
+    "semantic_warning_requires_confirmation",
+    "approval_revocation_stops_next_batch"
   ],
   "passed": true,
   "migration_sha256": "c847acc102940bafbda9bf2501d8ef58f72fd8b92447e45034d82abd18915b97"

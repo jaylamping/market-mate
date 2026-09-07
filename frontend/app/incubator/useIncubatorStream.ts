@@ -5,6 +5,8 @@ import {incubatorQuery} from "@/lib/api-queries";
 import {parseRuns} from "./model";
 export function useIncubatorStream() {
  const client=useQueryClient(),[connected,setConnected]=useState(false);
+ const [,setClock]=useState(0);
+ useEffect(()=>{const timer=setInterval(()=>setClock(n=>n+1),1000);return()=>clearInterval(timer);},[]);
  useEffect(()=>{
   const stream=new EventSource("/api/incubator/assignments/stream");
   stream.onmessage=async event=>{

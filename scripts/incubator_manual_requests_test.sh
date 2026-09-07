@@ -52,4 +52,36 @@ report['checks']+=['http_idempotency','durable_queue_worker','sse_initial_snapsh
 report['migration_sha256']=hashlib.sha256(pathlib.Path('db/migrations/0056_incubator_manual_assignments.sql').read_bytes()).hexdigest()
 (base/'acceptance.json').write_text(json.dumps(report,indent=2)+'\n')
 PY
+kill "$worker_pid"
+wait "$worker_pid" 2>/dev/null || true
+worker_pid=''
+"${compose[@]}" exec -T postgres psql -X -qAt -v ON_ERROR_STOP=1 -U mm -d market_mate <<'SQL' > /dev/null
+SET ROLE incubator_runner;
+SELECT begin_incubator_request_check('startup-probe','{"title":"Startup recovery","text":"Research a cost-aware stopping rule","model":"vendor/model:free","selected_model":""}');
+SELECT finish_incubator_request_check('startup-probe','{"complete":true,"matches":[],"issues":[]}');
+SELECT submit_incubator_request('startup-probe',false);
+SQL
+env -i DATABASE_URL=postgres://incubator_runner:local-poc-only@127.0.0.1:15434/market_mate INCUBATOR_REQUESTS_BIND=127.0.0.1:18086 ./target/debug/incubator-requests >> evidence/incubator-manual-requests/worker.log 2>&1 &
+worker_pid=$!
+python3 - <<'PYTEST'
+import json,time,urllib.request
+for _ in range(100):
+ try:
+  run=json.load(urllib.request.urlopen('http://127.0.0.1:18086/runs/manual-startup-probe',timeout=1))
+  if run['state']=='failed':break
+ except OSError:pass
+ time.sleep(.1)
+else:raise AssertionError('persisted assignment not picked up after restart')
+assert [e['state'] for e in run['events']]==['admitted','preparing','failed']
+PYTEST
+kill "$worker_pid"
+wait "$worker_pid" 2>/dev/null || true
+worker_pid=''
+DATABASE_URL=postgres://incubator_runner:local-poc-only@127.0.0.1:15434/market_mate cargo test --lib semantic_check_http_and_mid_batch_revocation -- --ignored --nocapture > evidence/incubator-manual-requests/semantic-test.log 2>&1
+python3 - <<'PYTEST'
+import json,pathlib
+p=pathlib.Path('evidence/incubator-manual-requests/acceptance.json')
+r=json.loads(p.read_text());r['checks']+=['startup_resumes_persisted_assignment_once','semantic_http_default_model','semantic_warning_requires_confirmation','approval_revocation_stops_next_batch']
+p.write_text(json.dumps(r,indent=2)+'\n')
+PYTEST
 echo 'Manual assignment acceptance passed.'
