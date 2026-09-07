@@ -9,10 +9,17 @@ function array(v: unknown): unknown[] { if (!Array.isArray(v)) throw Error("Inva
 function date(v: unknown): string { const s=string(v); if (!Number.isFinite(Date.parse(s))) throw Error("Invalid run date"); return s; }
 function state(v: unknown): RunState { if (!["admitted","preparing","dispatched","completed","failed","indeterminate"].includes(string(v))) throw Error("Invalid run state"); return v as RunState; }
 function nullable<T>(v: unknown, parse: (v: unknown) => T): T | null { return v === null || v === undefined ? null : parse(v); }
-function report(v: unknown): Report { const r=object(v); return { hypothesis:string(r.hypothesis), evidence_gaps:array(r.evidence_gaps).map(string), experiment:array(r.experiment).map(string), falsification_rule:string(r.falsification_rule), limitations:array(r.limitations).map(string) }; }
+export function parseReport(v: unknown): Report {
+ const r=object(v),fields=["hypothesis","evidence_gaps","experiment","falsification_rule","limitations"];
+ if(Object.keys(r).length!==fields.length||fields.some(k=>!(k in r)))throw Error("Invalid report fields");
+ const text=(v:unknown)=>{const s=string(v);if(new TextEncoder().encode(s).length>6000||/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(s))throw Error("Invalid report text");return s;};
+ const list=(v:unknown)=>{const rows=array(v);if(rows.length<1||rows.length>12)throw Error("Invalid report list");return rows.map(text);};
+ if(new TextEncoder().encode(JSON.stringify(r)).length>24000)throw Error("Report too long");
+ return {hypothesis:text(r.hypothesis),evidence_gaps:list(r.evidence_gaps),experiment:list(r.experiment),falsification_rule:text(r.falsification_rule),limitations:list(r.limitations)};
+}
 function detail(v: unknown): Detail {
   const d=object(v), u=d.usage == null ? {} : object(d.usage);
-  return { fallback_of:nullable(d.fallback_of,string),response_text:nullable(d.response_text,v=>{if(typeof v!=="string") throw Error("Invalid response text");return v;}),validation_error:nullable(d.validation_error,string),response_truncated:d.response_truncated === true,reason:nullable(d.reason,string), generation_id:nullable(d.generation_id,string), returned_model:nullable(d.returned_model,string), serving_provider:nullable(d.serving_provider,string), report:nullable(d.report,report), usage:{ prompt_tokens:nullable(u.prompt_tokens,number), completion_tokens:nullable(u.completion_tokens,number), cost_usd:nullable(u.cost_usd,number) }, request_sha256:nullable(d.request_sha256,string), policy_revision:nullable(d.policy_revision,number) };
+  return { fallback_of:nullable(d.fallback_of,string),response_text:nullable(d.response_text,v=>{if(typeof v!=="string") throw Error("Invalid response text");return v;}),validation_error:nullable(d.validation_error,string),response_truncated:d.response_truncated === true,reason:nullable(d.reason,string), generation_id:nullable(d.generation_id,string), returned_model:nullable(d.returned_model,string), serving_provider:nullable(d.serving_provider,string), report:nullable(d.report,parseReport), usage:{ prompt_tokens:nullable(u.prompt_tokens,number), completion_tokens:nullable(u.completion_tokens,number), cost_usd:nullable(u.cost_usd,number) }, request_sha256:nullable(d.request_sha256,string), policy_revision:nullable(d.policy_revision,number) };
 }
 export function parseRuns(v: unknown): Run[] {
   const body=object(v); if (body.environment !== "local_research" || body.artifact_kind !== "research_planning") throw Error("Invalid history scope");

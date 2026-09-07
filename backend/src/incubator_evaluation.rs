@@ -15,7 +15,7 @@ use std::time::Duration;
 struct Evaluation {
     decision: String,
     reason: String,
-    question: Option<String>,
+    question: Value,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -52,9 +52,9 @@ fn completion(v: Value, model: &str, clarification: bool) -> (&'static str, Valu
             if ["advance", "refine", "close", "clarify"].contains(&reply.decision.as_str())
                 && text_ok(&reply.reason)
                 && (if reply.decision == "clarify" {
-                    reply.question.as_deref().is_some_and(text_ok)
+                    reply.question.as_str().is_some_and(text_ok)
                 } else {
-                    reply.question.is_none()
+                    reply.question.is_null()
                 })
             {
                 detail["decision"] = json!(reply.decision);
@@ -496,6 +496,7 @@ mod tests {
         );
         for text in [
             r#"{"decision":"execute","reason":"Go","question":null}"#,
+            r#"{"decision":"advance","reason":"Missing required question"}"#,
             r#"{"decision":"clarify","reason":"Missing","question":null}"#,
             r#"{"decision":"advance","decision":"close","reason":"Test","question":null}"#,
         ] {
