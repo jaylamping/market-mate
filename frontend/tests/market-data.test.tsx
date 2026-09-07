@@ -21,3 +21,14 @@ test("failed collection and incomplete coverage never imply usable experiment da
  assert.match(dataError("IncompleteCoverage"),/No dataset was attached/);
  assert.match(dataError("refresh_failed"),/Saved experiment inputs are unchanged/);
 });
+
+test("reuse forwards only the acknowledgement and keeps foreign requests out",async()=>{
+ const old=process.env.MARKET_DATA_URL,original=globalThis.fetch;process.env.MARKET_DATA_URL="http://connector:8087";let sent=0;
+ globalThis.fetch=async(input,init)=>{sent++;assert.equal(String(input),"http://connector:8087/reuse");assert.deepEqual(JSON.parse(String(init?.body)),{rights_confirmed:true});return Response.json({connected:true});};
+ const context={params:Promise.resolve({path:["reuse"]})};
+ try{
+  const request=(origin:string)=>new Request("http://localhost/api/market-data/reuse",{method:"POST",headers:{host:"localhost",origin},body:JSON.stringify({rights_confirmed:true})});
+  assert.equal((await POST(request("https://foreign.example"),context)).status,403);assert.equal(sent,0);
+  assert.equal((await POST(request("http://localhost"),context)).status,200);assert.equal(sent,1);
+ }finally{globalThis.fetch=original;if(old===undefined)delete process.env.MARKET_DATA_URL;else process.env.MARKET_DATA_URL=old;}
+});

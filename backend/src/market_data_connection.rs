@@ -16,6 +16,7 @@ fn error(code: &str) -> Error {
 }
 pub struct Connection {
     path: PathBuf,
+    existing_path: Option<PathBuf>,
     gate: Mutex<()>,
     state: Mutex<String>,
     #[cfg(test)]
@@ -25,11 +26,24 @@ impl Connection {
     pub fn new(path: PathBuf) -> Self {
         Self {
             path,
+            existing_path: None,
             gate: Mutex::new(()),
             state: Mutex::new("not_configured".into()),
             #[cfg(test)]
             endpoint: None,
         }
+    }
+    pub fn with_existing_credentials(mut self, path: PathBuf) -> Self {
+        self.existing_path = Some(path);
+        self
+    }
+    fn load_existing(&self) -> Result<Vec<u8>, Error> {
+        Self::load_path(
+            self.existing_path
+                .as_ref()
+                .ok_or_else(|| error("existing_connection_unavailable"))?,
+        )
+        .map_err(|_| error("existing_connection_unavailable"))
     }
     fn client(&self, bytes: &[u8]) -> Result<AlpacaDailyClient, Error> {
         let c: Credentials =
@@ -44,7 +58,10 @@ impl Connection {
         Ok(c)
     }
     fn load(&self) -> Result<Vec<u8>, Error> {
-        let f = std::fs::File::open(&self.path).map_err(|_| error("not_configured"))?;
+        Self::load_path(&self.path)
+    }
+    fn load_path(path: &std::path::Path) -> Result<Vec<u8>, Error> {
+        let f = std::fs::File::open(path).map_err(|_| error("not_configured"))?;
         let meta = f.metadata().map_err(|_| error("invalid_credentials"))?;
         if !meta.is_file() {
             return Err(error("invalid_credentials"));
@@ -84,7 +101,7 @@ async fn status(State(s): State<Arc<Connection>>) -> Result<Json<Value>, Error> 
         .map_err(|_| error("database_unavailable"))?
         .get(0);
     Ok(Json(
-        json!({"state":s.state.lock().await.clone(),"settings":settings,"refresh":refresh}),
+        json!({"state":s.state.lock().await.clone(),"settings":settings,"refresh":refresh,"existing_alpaca_available":s.load_existing().and_then(|bytes|s.client(&bytes)).is_ok()}),
     ))
 }
 #[derive(Deserialize)]
@@ -104,9 +121,31 @@ async fn setup(
     if !input.rights_confirmed {
         return Err(error("account_terms_review_required"));
     }
-    let _gate = s.gate.lock().await;
     let bytes = serde_json::to_vec(&json!({"key_id":input.key_id,"secret_key":input.secret_key}))
         .map_err(|_| error("invalid_credentials"))?;
+    save_connection(&s, bytes, input.rights_confirmed).await
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ReuseSetup {
+    rights_confirmed: bool,
+}
+async fn reuse(
+    State(s): State<Arc<Connection>>,
+    Json(input): Json<ReuseSetup>,
+) -> Result<Json<Value>, Error> {
+    if !input.rights_confirmed {
+        return Err(error("account_terms_review_required"));
+    }
+    let bytes = s.load_existing()?;
+    save_connection(&s, bytes, input.rights_confirmed).await
+}
+async fn save_connection(
+    s: &Connection,
+    bytes: Vec<u8>,
+    rights_confirmed: bool,
+) -> Result<Json<Value>, Error> {
+    let _gate = s.gate.lock().await;
     let client = s.client(&bytes)?;
     tokio::time::timeout(Duration::from_secs(20), client.download(&probe_request()))
         .await
@@ -143,7 +182,7 @@ async fn setup(
         db.client
             .query_one(
                 "SELECT setup_personal_market_data($1)::text",
-                &[&input.rights_confirmed],
+                &[&rights_confirmed],
             )
             .await
             .map_err(|_| error("source_configuration_rejected"))?;
@@ -179,6 +218,7 @@ pub fn router(s: Arc<Connection>) -> Router {
         .route("/healthz", get(|| async { Json(json!({"status":"ok"})) }))
         .route("/status", get(status))
         .route("/setup", axum::routing::post(setup))
+        .route("/reuse", axum::routing::post(reuse))
         .route("/settings", axum::routing::post(settings))
         .layer(DefaultBodyLimit::max(8192))
         .with_state(s)
