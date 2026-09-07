@@ -45,3 +45,12 @@ test("workflow and research use the same strict five-field report ingestion",()=
   assert.throws(()=>parseReport(bad));assert.throws(()=>parseWorkflow({evaluations:[{...evaluations[0],report:bad}]}));
  }
 });
+
+import {experimentLabel,type Experiment,type ExperimentStatus} from "../app/incubator/evaluation";
+import {experimentProgress} from "../app/incubator/ExperimentDetail";
+test("live experiment states ingest and failures stay in their workflow stage",()=>{
+ for(const state of Object.keys(experimentLabel) as ExperimentStatus[]){const experiment:Experiment={id:evaluations[0].id,title:"Diagnostic",created_at:evaluations[0].created_at,status:state,events:[]};assert.equal(parseWorkflow({evaluations:[{...evaluations[0],experiment}]})[0].experiment?.status,state);}
+ const experiment:Experiment={id:"1",title:"Diagnostic",created_at:evaluations[0].created_at,status:"failed",events:[{sequence:1,state:"preparing",at:evaluations[0].created_at,detail:{}},{sequence:2,state:"ready",at:evaluations[0].created_at,detail:{}}]};
+ const steps=experimentProgress(experiment);assert.equal(steps[1].state,"complete");assert.equal(steps[2].state,"failed");assert.equal(steps[3].state,"pending");
+ assert.throws(()=>parseWorkflow({evaluations:[{...evaluations[0],experiment:{...experiment,events:[{state:"execute_live"}]}}]}));
+});

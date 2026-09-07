@@ -1,0 +1,29 @@
+{
+  "probe": "incubator-experiment",
+  "checks": [
+    "null_transition_denied",
+    "bounded_request_required",
+    "owner_input_idempotency",
+    "dataset_required",
+    "ready_idempotency_after_digest_enrichment",
+    "completion_shape",
+    "restricted_role",
+    "populated_append_only_tables",
+    "audit_chain",
+    "superseded_dataset_denied",
+    "superseded_research_denied",
+    "pinned_report_preserved",
+    "notification_pickup",
+    "setup_role_routing",
+    "original_research_clarification",
+    "awaiting_data_without_execution",
+    "dataset_http_idempotency",
+    "experiment_role_handoff",
+    "preregistration_digest",
+    "sse_executed_results",
+    "model_intent_no_replay",
+    "local_execution_restart"
+  ],
+  "passed": true,
+  "migration_sha256": "bbc55709e2eccbc1fe04313741715e26896d9c28df18beaa339054f335e5e742"
+}

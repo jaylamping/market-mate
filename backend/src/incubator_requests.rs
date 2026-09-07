@@ -528,6 +528,7 @@ fn router_with_models(models: Arc<dyn ComparisonModels>) -> Router {
             models,
         }))
         .merge(crate::incubator_evaluation::router())
+        .merge(crate::incubator_experiment::router())
 }
 #[cfg(test)]
 mod tests {

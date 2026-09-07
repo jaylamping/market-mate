@@ -1,6 +1,10 @@
 import {parseReport} from "./model";
 export type EvaluationStatus="queued"|"evaluating"|"awaiting_clarification"|"needs_input"|"advance"|"refine"|"close"|"failed"|"indeterminate"|"superseded";
-export type Evaluation={id:string;run_key:string;revision:number;report:import("./model").Report;created_at:string;status:EvaluationStatus;owner_answer:string|null;steps:{sequence:number;kind:"evaluation"|"clarification";model:string;created_at:string;state:string;finished_at:string|null;detail:{decision?:string;reason?:string;question?:string|null;answer?:string}}[];experiment:null|{id:string;title:string;status:"awaiting_setup";created_at:string}};
+export type ExperimentStatus="awaiting_setup"|"preparing"|"clarifying"|"clarified"|"answered"|"awaiting_data"|"needs_input"|"ready"|"dispatching"|"running"|"completed"|"failed"|"indeterminate";
+export type ExperimentEvent={sequence:number;state:ExperimentStatus;at:string;detail:Record<string,unknown>};
+export type Experiment={id:string;title:string;status:ExperimentStatus;created_at:string;snapshot_id?:string|null;dataset_class?:string|null;detail?:Record<string,unknown>;events?:ExperimentEvent[]};
+export const experimentLabel:Record<ExperimentStatus,string>={awaiting_setup:"Awaiting setup",preparing:"Checking setup",clarifying:"Clarifying research",clarified:"Research clarified",answered:"Input received",awaiting_data:"Awaiting data",needs_input:"Needs your input",ready:"Ready for experiment",dispatching:"Experiment agent",running:"Running diagnostic",completed:"Diagnostic complete",failed:"Experiment stopped",indeterminate:"Outcome unknown"};
+export type Evaluation={id:string;run_key:string;revision:number;report:import("./model").Report;created_at:string;status:EvaluationStatus;owner_answer:string|null;steps:{sequence:number;kind:"evaluation"|"clarification";model:string;created_at:string;state:string;finished_at:string|null;detail:{decision?:string;reason?:string;question?:string|null;answer?:string}}[];experiment:null|Experiment};
 export const workflowKey=["incubator-workflow"] as const;
 export const evaluationLabel:Record<EvaluationStatus,string>={queued:"Awaiting evaluation",evaluating:"Evaluating",awaiting_clarification:"Awaiting clarification",needs_input:"Needs your input",advance:"Advanced to experiment",refine:"Needs refinement",close:"Not advancing",failed:"Evaluation stopped",indeterminate:"Evaluation outcome unknown",superseded:"Earlier report revision"};
 export function parseWorkflow(value:unknown):Evaluation[]{
@@ -10,7 +14,8 @@ export function parseWorkflow(value:unknown):Evaluation[]{
  parseReport(row.report);
  if(row.revision<0||!Number.isFinite(Date.parse(row.created_at))||(row.owner_answer!==null&&typeof row.owner_answer!=="string"))throw Error("Invalid workflow metadata");
  for(const step of row.steps){if(!step||!Number.isInteger(step.sequence)||!["evaluation","clarification"].includes(step.kind)||typeof step.model!=="string"||!Number.isFinite(Date.parse(step.created_at))||!["pending","completed","failed","indeterminate"].includes(step.state)||!step.detail||typeof step.detail!=="object")throw Error("Invalid workflow step");for(const field of ["reason","answer","decision","question"] as const){const v=step.detail[field];if(v!==undefined&&v!==null&&typeof v!=="string")throw Error("Invalid workflow detail");}}
- if(row.experiment!==null&&(!row.experiment||row.experiment.id!==row.id||typeof row.experiment.title!=="string"||row.experiment.status!=="awaiting_setup"||!Number.isFinite(Date.parse(row.experiment.created_at))))throw Error("Invalid experiment ticket");
+ if(row.experiment!==null&&(!row.experiment||row.experiment.id!==row.id||typeof row.experiment.title!=="string"||!Object.hasOwn(experimentLabel,row.experiment.status)||!Number.isFinite(Date.parse(row.experiment.created_at))))throw Error("Invalid experiment ticket");
+ if(row.experiment?.events!==undefined){if(!Array.isArray(row.experiment.events))throw Error("Invalid experiment events");for(const event of row.experiment.events){if(!event||!Number.isInteger(event.sequence)||!Object.hasOwn(experimentLabel,event.state)||!Number.isFinite(Date.parse(event.at))||!event.detail||typeof event.detail!=="object")throw Error("Invalid experiment event");}}
  }
  return rows;
 }

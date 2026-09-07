@@ -43,7 +43,7 @@ SELECT pg_temp.reject('UPDATE incubator_evaluation_step SET request=request || '
 SELECT pg_temp.reject('DELETE FROM incubator_evaluation_step','55000');
 SELECT pg_temp.reject('TRUNCATE incubator_evaluation_result CASCADE','55000');
 SELECT pg_temp.reject('DELETE FROM incubator_evaluation_input','55000');
-SELECT pg_temp.reject('TRUNCATE incubator_experiment_ticket','55000');
+SELECT pg_temp.reject('TRUNCATE incubator_experiment_ticket CASCADE','55000');
 DO $$ BEGIN
  IF (SELECT count(*) FROM incubator_experiment_ticket)<>1 THEN RAISE EXCEPTION 'duplicate ticket'; END IF;
  IF NOT (SELECT valid FROM verify_audit_event_chain()) THEN RAISE EXCEPTION 'audit invalid'; END IF;
