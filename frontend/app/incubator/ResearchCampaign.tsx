@@ -1,37 +1,79 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Dialog } from "radix-ui";
-import { Plus, X } from "lucide-react";
+import { Dialog, Tabs } from "radix-ui";
+import { ArrowUpRight, Plus, X } from "lucide-react";
 import {modelRoutingQuery} from "@/lib/api-queries";
 import { Button } from "@/components/ui/button";
+import { ProgressFooter } from "./ProgressFooter";
 
 type Usage = {calls:number; input_tokens:number; output_tokens:number; reasoning_tokens:number; unknown_token_calls:number; known_cost_usd:number; unknown_cost_calls:number};
-type Campaign = {
+export type CampaignAgenda = { ordinal: number; generation_id: number; title: string; premise?: string; state: string; reason: string | null; run_key: string | null;
+  spec: {runner?: string; lookback_sessions?: number; quantile_count?: number; one_way_cost_bps?: number; borrow_bps_per_session?: number};
+  scope: {start: string; end: string} | null };
+export type Campaign = {
   creator_in_progress?: boolean;
   creator_usage?:{lifetime:Usage;last_24h:Usage}; creator_calls?:{id:number;model:string;state:string;cost_usd:number|null;usage:{prompt_tokens?:number;completion_tokens?:number}|null}[];
   creator_model: string; backlog_limit: number; backlog_count: number; creator_status: string | null; target: number; created_count: number; completed_count: number; enabled: boolean; revision: number; daily_limit: number; open_limit: number;
   next_at: string; note: string; open_count: number; attempts_today: number; symbols: string[];
-  agenda: { ordinal: number; title: string; state: string; reason: string | null; run_key: string | null;
-    scope: {start: string; end: string} | null }[];
+  agenda: CampaignAgenda[];
 };
-const key = ["research-campaign"];
+export const researchCampaignQueryKey = ["research-campaign"] as const;
 async function response(r: Response): Promise<Campaign> {
   const body = await r.json();
   if (!r.ok) throw Error(body.error ?? "Campaign unavailable");
   return body;
+}
+export async function fetchResearchCampaign(): Promise<Campaign> {
+  return response(await fetch("/api/incubator/campaign", {cache:"no-store"}));
+}
+const stateLabel: Record<string,string> = {pending:"Created",checking:"Checking similarity",queued:"Queued",duplicate:"Duplicate",blocked:"Blocked"};
+function CandidateCard({candidate,model}:{candidate:CampaignAgenda;model:string}) {
+  const spec = candidate.spec;
+  const state = stateLabel[candidate.state]??candidate.state;
+  return <Dialog.Root>
+    <article className="min-w-0">
+      <Dialog.Trigger asChild>
+        <button type="button" className="group flex min-h-64 w-full min-w-0 flex-col items-start rounded-xl border border-border bg-card p-5 text-left text-card-foreground transition-colors hover:border-primary/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring" aria-label={`Open campaign ticket ${candidate.title}, ${state}`}>
+          <span className="flex w-full items-start justify-between gap-3"><span className="flex flex-wrap gap-2"><span className="rounded-full border border-primary/35 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">Campaign backlog</span><span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">{state}</span></span><span className="flex items-center gap-2 text-xs tabular-nums text-muted-foreground">#{candidate.ordinal}<ArrowUpRight className="size-4 transition-colors group-hover:text-primary" aria-hidden="true"/></span></span>
+          <span className="mt-4 line-clamp-3 text-base font-medium leading-snug">{candidate.title}</span>
+          {candidate.premise&&<span className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">{candidate.premise}</span>}
+          <span className="mt-auto w-full space-y-1 border-t border-border pt-3 text-xs text-muted-foreground"><span className="block break-all">{model} · Ticket Creator</span><span className="block">{spec.lookback_sessions ?? "—"}-session lookback · {spec.quantile_count ?? "—"} quantiles · {spec.one_way_cost_bps ?? "—"} bps one-way cost</span></span>
+        </button>
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60"/>
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-6xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-background text-foreground shadow-xl focus:outline-none">
+          <div className="grid shrink-0 gap-5 border-b border-border p-5 pr-16 sm:p-6 sm:pr-16 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)]"><div><div className="mb-3 flex flex-wrap gap-2"><span className="rounded-full border border-primary/35 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">Campaign ticket</span><span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">{state}</span></div><Dialog.Title className="text-lg font-semibold leading-snug sm:text-xl">{candidate.title}</Dialog.Title><Dialog.Description className="mt-2 text-sm text-muted-foreground">Ticket Creator · Generation #{candidate.generation_id} · awaiting a free research worker</Dialog.Description></div><div className="min-w-0"><p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Workflow</p><ProgressFooter compact={false} steps={[{label:"Created",state:"complete"},{label:"Research",state:"pending"},{label:"Evaluate",state:"pending"},{label:"Advanced",state:"pending"}]}/></div><Dialog.Close asChild><button type="button" aria-label="Close campaign ticket" className="absolute right-3 top-3 grid min-h-11 min-w-11 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"><X className="size-5" aria-hidden="true"/></button></Dialog.Close></div>
+          <Tabs.Root defaultValue="report" className="flex h-[min(72dvh,50rem)] min-h-0 flex-col">
+            <Tabs.List aria-label="Campaign ticket view" className="flex shrink-0 gap-5 border-b border-border px-5 sm:px-6"><Tabs.Trigger value="report" className="min-h-11 border-b-2 border-transparent px-1 text-sm text-muted-foreground outline-none data-[state=active]:border-primary data-[state=active]:text-foreground focus-visible:ring-2 focus-visible:ring-ring">Report</Tabs.Trigger><Tabs.Trigger value="chat" className="min-h-11 border-b-2 border-transparent px-1 text-sm text-muted-foreground outline-none data-[state=active]:border-primary data-[state=active]:text-foreground focus-visible:ring-2 focus-visible:ring-ring">Chat</Tabs.Trigger></Tabs.List>
+            <Tabs.Content value="report" className="min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6"><p role="status" className="mb-5 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">This ticket is created and waiting for a free research worker. The report, evaluation, experiment, and chat will populate here after the ticket is claimed.</p><dl className="grid min-w-0 grid-cols-2 gap-4 border-y border-border py-4 text-sm lg:grid-cols-4"><div className="min-w-0"><dt className="text-xs text-muted-foreground">Ticket Creator model</dt><dd className="mt-1 break-all">{model}</dd></div><div><dt className="text-xs text-muted-foreground">Research cost</dt><dd className="mt-1 font-medium">Not established</dd></div><div><dt className="text-xs text-muted-foreground">Research tokens</dt><dd className="mt-1">— / —</dd></div><div><dt className="text-xs text-muted-foreground">Request duration</dt><dd className="mt-1">Not established</dd></div></dl><section className="mt-6 space-y-3"><h3 className="text-sm font-medium">Research premise</h3><p className="whitespace-pre-wrap text-sm leading-relaxed">{candidate.premise??"No premise was recorded."}</p></section><section className="mt-6 space-y-3"><h3 className="text-sm font-medium">Diagnostic specification</h3><dl className="grid gap-3 border-y border-border py-4 text-sm sm:grid-cols-2"><div><dt className="text-xs text-muted-foreground">Runner</dt><dd className="mt-1">{spec.runner??"—"}</dd></div><div><dt className="text-xs text-muted-foreground">Lookback</dt><dd className="mt-1">{spec.lookback_sessions??"—"} sessions</dd></div><div><dt className="text-xs text-muted-foreground">Quantiles</dt><dd className="mt-1">{spec.quantile_count??"—"}</dd></div><div><dt className="text-xs text-muted-foreground">One-way cost</dt><dd className="mt-1">{spec.one_way_cost_bps??"—"} bps</dd></div><div><dt className="text-xs text-muted-foreground">Borrow cost</dt><dd className="mt-1">{spec.borrow_bps_per_session??"—"} bps / session</dd></div><div><dt className="text-xs text-muted-foreground">Creator model</dt><dd className="mt-1 break-all">{model}</dd></div></dl></section>{candidate.scope&&<section className="mt-6 space-y-2"><h3 className="text-sm font-medium">Pinned data scope</h3><p className="text-sm text-muted-foreground">{candidate.scope.start} – {candidate.scope.end} · SPY benchmark · approved campaign symbols</p></section>}<section className="mt-6 space-y-3"><h3 className="text-sm font-medium">Run history</h3><ol className="space-y-2"><li className="flex flex-wrap justify-between gap-2 border-l-2 border-border pl-3 text-sm"><span>Ticket created</span><span className="text-xs text-muted-foreground">Generation #{candidate.generation_id}</span></li></ol></section></Tabs.Content>
+            <Tabs.Content value="chat" className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6"><div className="grid min-h-full place-items-center rounded-lg border border-dashed border-border p-6 text-center"><div><h3 className="text-sm font-medium">Research chat is not available yet</h3><p className="mt-2 max-w-md text-sm text-muted-foreground">A free research worker will open the conversation when it claims this created ticket.</p></div></div></Tabs.Content>
+          </Tabs.Root>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </article>
+  </Dialog.Root>;
+}
+export function CampaignBacklog({campaign}:{campaign:Campaign|null|undefined}) {
+  const candidates = (campaign?.agenda??[]).filter(candidate=>!candidate.run_key&&["pending","checking"].includes(candidate.state));
+  if (!campaign || !candidates.length) return null;
+  return <section aria-labelledby="campaign-backlog-heading" className="mb-8">
+    <div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><h2 id="campaign-backlog-heading" className="text-xl font-semibold">Campaign backlog</h2><p className="mt-1 text-sm text-muted-foreground">Ticket Creator proposals waiting for a free research worker.</p></div><span className="text-sm tabular-nums text-muted-foreground">{campaign.backlog_count} waiting</span></div>
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),20rem))] gap-4">{candidates.map(candidate=><CandidateCard key={candidate.ordinal} candidate={candidate} model={campaign.creator_model}/>)}</div>
+  </section>;
 }
 export function ResearchCampaign() {
   const client = useQueryClient();
   const routing = useQuery(modelRoutingQuery);
   const models = routing.data?.models.map(m=>m.routes[0]).filter(r=>r.provider==="openrouter")??[];
   const [creator, setCreator] = useState<string | null>(null), [backlog,setBacklog]=useState<number | null>(null);
-  const query = useQuery({ queryKey: key, queryFn: () => fetch("/api/incubator/campaign", {cache:"no-store"}).then(response), refetchInterval: 10000 });
+  const query = useQuery({ queryKey: researchCampaignQueryKey, queryFn: fetchResearchCampaign, refetchInterval: 10000 });
   const [daily, setDaily] = useState<number | null>(null), [open, setOpen] = useState<number | null>(null);
   const save = useMutation({ mutationFn: (enabled: boolean) => fetch("/api/incubator/campaign", {
     method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ enabled,
       creator_model: creator??query.data?.creator_model??"", backlog_limit: backlog??query.data?.backlog_limit, revision: query.data?.revision, daily_limit: daily ?? query.data?.daily_limit, open_limit: open ?? query.data?.open_limit })
-  }).then(response), onSuccess: data => {client.setQueryData(key, data); setDaily(null); setOpen(null); setCreator(null); setBacklog(null);} });
+  }).then(response), onSuccess: data => {client.setQueryData(researchCampaignQueryKey, data); setDaily(null); setOpen(null); setCreator(null); setBacklog(null);} });
   const c = query.data;
   const stopping = !c?.enabled && !!c?.creator_in_progress;
   const pendingSettings = daily!==null||open!==null||creator!==null||backlog!==null;
@@ -42,11 +84,12 @@ export function ResearchCampaign() {
     {query.isError && <p role="alert" className="mt-3 text-sm text-destructive">Campaign could not be refreshed. <button className="underline" onClick={()=>query.refetch()}>Retry</button></p>}
     {c && <>
       <p role="status" className="mt-3 text-sm">{c.note}</p>
-      <p className="mt-2 text-xs text-muted-foreground">{c.completed_count} / {c.target} experiments completed for acceptance · {c.created_count} tickets created · {c.backlog_count} tickets in backlog · Creator: {c.creator_status??"idle"} · {c.attempts_today} candidates checked in the last 24 hours · {c.open_count} unfinished tickets{c.enabled ? ` · Next check no earlier than ${new Date(c.next_at).toLocaleString()}` : ""}</p>
+      <div className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4"><div className="rounded-lg border border-border/70 bg-background/40 p-3"><p className="text-muted-foreground">Experiments</p><p className="mt-1 text-sm font-medium tabular-nums">{c.completed_count} / {c.target}</p></div><div className="rounded-lg border border-border/70 bg-background/40 p-3"><p className="text-muted-foreground">Backlog</p><p className="mt-1 text-sm font-medium tabular-nums">{c.backlog_count}</p></div><div className="rounded-lg border border-border/70 bg-background/40 p-3"><p className="text-muted-foreground">Creator</p><p className="mt-1 text-sm font-medium capitalize">{c.creator_status??"idle"}</p></div><div className="rounded-lg border border-border/70 bg-background/40 p-3"><p className="text-muted-foreground">Unfinished</p><p className="mt-1 text-sm font-medium tabular-nums">{c.open_count}</p></div></div>
+      <p className="mt-3 text-xs text-muted-foreground">{c.created_count} tickets created · {c.attempts_today} candidates checked in the last 24 hours{c.enabled ? ` · Next check no earlier than ${new Date(c.next_at).toLocaleString()}` : ""}</p>
       {c.creator_usage&&<details className="mt-4"><summary className="cursor-pointer text-sm font-medium text-primary">Ticket Creator usage · ${Number(c.creator_usage.last_24h.known_cost_usd).toFixed(4)} reported in 24h{c.creator_usage.last_24h.unknown_cost_calls>0?` · ${c.creator_usage.last_24h.unknown_cost_calls} costs pending`:""}</summary>
         <div className="mt-3 space-y-2 text-sm">{(["last_24h","lifetime"] as const).map(period=>{const u=c.creator_usage![period];return <p key={period}>{period==="last_24h"?"Last 24 hours":"Lifetime"}: {u.calls} calls · {u.input_tokens.toLocaleString()} input / {u.output_tokens.toLocaleString()} output tokens · {u.reasoning_tokens.toLocaleString()} reported reasoning tokens (included in output) · ${Number(u.known_cost_usd).toFixed(4)} reported · {u.unknown_cost_calls} costs pending · {u.unknown_token_calls} token reports pending</p>;})}
           <p className="text-muted-foreground">Includes failed calls. Costs come from recorded provider receipts; missing costs remain pending. This tracks Ticket Creator separately from research workers.</p>
-          <ol className="space-y-2">{c.creator_calls?.map(call=><li key={call.id}>#{call.id} · {call.model} · {call.state} · {call.usage?.prompt_tokens??"—"} input / {call.usage?.completion_tokens??"—"} output tokens · {call.cost_usd===null?"Cost pending":`$${Number(call.cost_usd).toFixed(6)}`}</li>)}</ol>
+          <details className="rounded-md border border-border/70 p-3"><summary className="cursor-pointer text-sm font-medium">Recent creator calls</summary><ol className="mt-3 space-y-2">{c.creator_calls?.slice(0,5).map(call=><li key={call.id}>#{call.id} · {call.state} · {call.usage?.prompt_tokens??"—"} input / {call.usage?.completion_tokens??"—"} output tokens · {call.cost_usd===null?"Cost pending":`$${Number(call.cost_usd).toFixed(6)}`}</li>)}</ol>{(c.creator_calls?.length??0)>5&&<p className="mt-3 text-xs text-muted-foreground">Showing the latest 5 of {c.creator_calls?.length} recorded calls.</p>}</details>
         </div>
       </details>}
       <details className="mt-4"><summary className="cursor-pointer text-sm font-medium text-primary">Current diagnostic scope and recent backlog</summary>
@@ -73,11 +116,11 @@ export function ResearchCampaign() {
 }
 
 export function CampaignDialog() {
- return <Dialog.Root><Dialog.Trigger asChild><Button className="min-h-11" variant="outline"><Plus aria-hidden="true"/>New Campaign</Button></Dialog.Trigger>
+ return <Dialog.Root><Dialog.Trigger asChild><Button className="min-h-11" variant="outline"><Plus aria-hidden="true"/>Campaign</Button></Dialog.Trigger>
   <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-black/60"/>
    <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-border bg-background p-6 text-foreground shadow-xl">
-    <Dialog.Title className="pr-10 text-xl font-semibold">New Campaign</Dialog.Title>
-    <Dialog.Description className="mb-5 mt-2 text-sm text-muted-foreground">Configure automatic ticket creation, manage the backlog, and track model usage.</Dialog.Description>
+    <Dialog.Title className="pr-10 text-xl font-semibold">Campaign controls</Dialog.Title>
+    <Dialog.Description className="mb-5 mt-2 text-sm text-muted-foreground">Configure automatic ticket creation, review the backlog, and track creator usage.</Dialog.Description>
     <Dialog.Close asChild><Button variant="ghost" size="icon" className="absolute right-3 top-3 min-h-11 min-w-11" aria-label="Close campaign"><X/></Button></Dialog.Close>
     <ResearchCampaign/>
    </Dialog.Content>

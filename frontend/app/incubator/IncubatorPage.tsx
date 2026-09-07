@@ -19,7 +19,7 @@ import { AppSidebar } from "../AppSidebar";
 import { RefreshQueries } from "../RefreshQueries";
 import { costLabel, parseRuns, providerErrorLabel, researchTickets, spendingLimitLabel, stateLabel, type Run } from "./model";
 
-import { CampaignDialog } from "./ResearchCampaign";
+import { CampaignBacklog, CampaignDialog, fetchResearchCampaign, researchCampaignQueryKey } from "./ResearchCampaign";
 import { AddAssignment } from "./AddAssignment";
 import { WorkflowTimeline } from "./WorkflowTimeline";
 import {STREAM_POLL_INTERVAL_MS} from "./stream-connection";
@@ -111,6 +111,7 @@ export function IncubatorPage() {
   const connection=useIncubatorStream(),connected=connection==="live";
   const refetchInterval=connection==="polling"?STREAM_POLL_INTERVAL_MS:false;
   const query=useQuery({...incubatorQuery,refetchInterval});
+  const campaign=useQuery({queryKey:researchCampaignQueryKey,queryFn:fetchResearchCampaign,refetchInterval:connection==="polling"?STREAM_POLL_INTERVAL_MS:10000});
   const workflow=useQuery({queryKey:workflowKey,queryFn:getWorkflow,refetchInterval});
   const evaluations=workflow.data??[];
   const evaluationFor=(key:string)=>evaluations.filter(e=>e.run_key===key).sort((a,b)=>b.revision-a.revision)[0];
@@ -145,10 +146,11 @@ export function IncubatorPage() {
       {connection==="polling"&&<p role="status" className="text-sm text-muted-foreground">Live updates are unavailable. Refreshing tickets every 5 seconds while the connection retries.</p>}
       {query.isError && <p role="alert" className="workspace-panel p-4">Run history is unavailable. {query.data ? "The history below may be outdated." : "Refresh to try again."}</p>}
       {query.isPending && <p role="status" className="workspace-panel p-6">Loading research runs…</p>}
-      {query.data?.length === 0 && <section className="workspace-panel"><div className="chart-empty"><Bot aria-hidden="true"/><h2>No research runs yet</h2><p>The first bounded assignment will appear here when the local research runner starts.</p><a href="/agents" className="text-primary underline underline-offset-4">View approved models</a></div></section>}
+      {query.data?.length === 0 && <section className="workspace-panel"><div className="chart-empty"><Bot aria-hidden="true"/><h2>No research assignments yet</h2><p>Creator proposals stay in the backlog below until a free research worker accepts one.</p><a href="/agents" className="text-primary underline underline-offset-4">View approved models</a></div></section>}
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,14rem),15rem))] gap-4">{visibleRuns.map(run=><RunCard key={run.run_key} run={run} fallbacks={runs.filter(attempt=>attempt.detail.fallback_of===run.run_key)} evaluation={evaluationFor(run.run_key)} evaluationHistory={evaluations.filter(e=>e.run_key===run.run_key)}/>)}</div>
       {!!runs.length&&!visibleRuns.length&&<p className="rounded-xl border border-dashed border-border px-5 py-10 text-sm text-muted-foreground">{archiveView==="archived"?"No archived research matches this view.":"No current research matches this view."}</p>}
+      <CampaignBacklog campaign={campaign.data}/>
       {!!query.data?.length && <p className="pb-6 pt-6 text-xs leading-relaxed text-muted-foreground">Showing {visibleRuns.length} of {scopedRuns.length} {archiveView==="archived"?"archived research tickets · Latest 100 archived tickets.":"current assignments · All active work and the latest 100 finished or restored tickets."}</p>}
       <Experiments evaluations={evaluations}/>
     </main>

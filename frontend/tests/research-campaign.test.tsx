@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import React from "react";
 import {renderToStaticMarkup} from "react-dom/server";
 import {QueryClient,QueryClientProvider} from "@tanstack/react-query";
-import {ResearchCampaign,CampaignDialog} from "../app/incubator/ResearchCampaign";
+import {CampaignBacklog,ResearchCampaign,CampaignDialog} from "../app/incubator/ResearchCampaign";
 import {modelRoutingQuery} from "../lib/api-queries";
 Object.assign(globalThis,{React});
 test("fresh empty backlog renders the independent Ticket Creator picker",()=>{
@@ -14,6 +14,10 @@ test("fresh empty backlog renders the independent Ticket Creator picker",()=>{
  const html=renderToStaticMarkup(<QueryClientProvider client={client}><ResearchCampaign/></QueryClientProvider>);
  assert.match(html,/Ticket Creator model/);assert.match(html,/vendor\/creator:free/);assert.match(html,/vendor\/creator-paid/);assert.match(html,/Enable campaign/);
  assert.match(html,/Cost pending/); assert.match(html,/0.125000/); assert.match(html,/Includes failed calls/); assert.match(html,/>100<\/option>/);
+ const backlog={...campaign,creator_model:"vendor/creator:free",backlog_count:1,agenda:[{ordinal:1,generation_id:3,title:"A fresh momentum question",premise:"Test whether short-horizon continuation survives costs.",spec:{runner:"momentum_v1",lookback_sessions:3,quantile_count:5,one_way_cost_bps:8,borrow_bps_per_session:4},state:"pending",reason:null,run_key:null,scope:null}]};
+ const backlogHtml=renderToStaticMarkup(<CampaignBacklog campaign={backlog}/>);
+ assert.match(backlogHtml,/Campaign backlog/); assert.match(backlogHtml,/A fresh momentum question/); assert.match(backlogHtml,/short-horizon continuation/); assert.match(backlogHtml,/Ticket Creator/);
+ assert.match(backlogHtml,/Open campaign ticket A fresh momentum question, Created/); assert.match(backlogHtml,/aria-haspopup="dialog"/);
  client.setQueryData(["research-campaign"],{...campaign,enabled:true,creator_in_progress:true,creator_model:"vendor/creator-paid",creator_status:"dispatching"});
  const active=renderToStaticMarkup(<QueryClientProvider client={client}><ResearchCampaign/></QueryClientProvider>);
  assert.match(active,/Stop generation/); assert.match(active,/request already accepted by the provider may still incur a charge/);
@@ -24,5 +28,5 @@ test("fresh empty backlog renders the independent Ticket Creator picker",()=>{
 });
 test("campaign controls stay inside the dialog until opened",()=>{
  const html=renderToStaticMarkup(<CampaignDialog/>);
- assert.match(html,/New Campaign/); assert.doesNotMatch(html,/Ticket Creator model/);
+ assert.match(html,/Campaign/); assert.doesNotMatch(html,/Ticket Creator model/);
 });

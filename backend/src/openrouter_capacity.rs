@@ -98,8 +98,28 @@ fn reserve_cost(request: &Value, pricing: &Value) -> Result<i64, &'static str> {
     let prices = pricing.as_object().ok_or("price_unavailable")?;
     let prompt = price_nanos(&pricing["prompt"])?;
     let completion = price_nanos(&pricing["completion"])?;
+    let input_price = [
+        "input_cache_read",
+        "input_cache_write",
+        "input_cache_write_1h",
+    ]
+    .iter()
+    .filter_map(|key| prices.get(*key))
+    .map(price_nanos)
+    .collect::<Result<Vec<_>, _>>()?
+    .into_iter()
+    .fold(prompt, i64::max);
     for (kind, price) in prices {
-        if !["prompt", "completion"].contains(&kind.as_str()) && price_nanos(price)? != 0 {
+        if ![
+            "prompt",
+            "completion",
+            "input_cache_read",
+            "input_cache_write",
+            "input_cache_write_1h",
+        ]
+        .contains(&kind.as_str())
+            && price_nanos(price)? != 0
+        {
             return Err("unsupported_paid_price");
         }
     }
@@ -125,7 +145,7 @@ fn reserve_cost(request: &Value, pricing: &Value) -> Result<i64, &'static str> {
         .checked_add(4096 + messages.len() as i64 * 256)
         .ok_or("cost_overflow")?;
     input
-        .checked_mul(prompt)
+        .checked_mul(input_price)
         .and_then(|v| {
             completion
                 .checked_mul(output)
@@ -699,9 +719,9 @@ mod tests {
     #[test]
     fn paid_reservations_include_full_input_and_output_and_reject_unknown_prices() {
         let request = json!({"messages":[{"role":"user","content":"hello"}],"max_tokens":2048});
-        let pricing = json!({"prompt":"0.0000001","completion":"0.0000002","request":"0"});
+        let pricing = json!({"prompt":"0.0000001","completion":"0.0000002","input_cache_read":"0.0000003","request":"0"});
         let cost = reserve_cost(&request, &pricing).unwrap();
-        assert!(cost >= 409_600);
+        assert!(cost >= 1_228_800);
         assert!(reserve_cost(&request, &json!({"prompt":"0"})).is_err());
         assert!(reserve_cost(&request, &json!({"prompt":"NaN","completion":"0"})).is_err());
         assert!(reserve_cost(

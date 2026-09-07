@@ -1,5 +1,5 @@
 //! Local orchestration for one text-only research planning request.
-use crate::openrouter::{authorization, effective_policy as read_policy, OpenRouterReader};
+use crate::openrouter::{authorization, OpenRouterReader};
 use reqwest::{header::HeaderValue, Client};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -361,7 +361,9 @@ impl OpenRouter {
         let model = permit.request["model"]
             .as_str()
             .ok_or("model_unavailable")?;
-        let policy = read_policy(std::path::Path::new("/var/lib/model-policy/policy.json"))?;
+        let policy = crate::openrouter::effective_policy(std::path::Path::new(
+            "/var/lib/model-policy/policy.json",
+        ))?;
         if !policy.allowed_models.iter().any(|m| m == model) {
             return Err("model_policy_changed");
         }
@@ -657,7 +659,7 @@ pub(crate) async fn prepare_model_with_spend(
             model_id: model.into(),
         }]
     };
-    let policy = read_policy(&policy_path)?;
+    let policy = crate::openrouter::effective_policy(&policy_path)?;
     if !policy.allowed_models.iter().any(|m| m == model) {
         return Err("model_not_whitelisted");
     }
@@ -672,7 +674,7 @@ pub(crate) async fn prepare_model_with_spend(
         return Err("zero_spend_budget_denied");
     }
     let provider = OpenRouter::new(&path, selected.capabilities.clone())?;
-    let current = read_policy(&policy_path)?;
+    let current = crate::openrouter::effective_policy(&policy_path)?;
     if crate::model_routing::stored(&routing_path)? != routing
         || current.revision != policy.revision
         || !current.allowed_models.iter().any(|m| m == model)
