@@ -47,7 +47,7 @@ SELECT pg_temp.assert(read_incubator_campaign()->>'created_count'='1','idempoten
 SELECT pg_temp.assert(next_incubator_manual_run()='campaign-pilot-v1-1','existing worker selects automatic ticket');
 SELECT pg_temp.assert(read_incubator_agent_run('campaign-pilot-v1-1')->'config'->>'manual_model_spend'='false','no manual spending authority');
 SELECT pg_temp.assert(read_incubator_agent_run('campaign-pilot-v1-1')->>'created_by'='agent','automatic provenance');
-SELECT pg_temp.assert(claim_incubator_campaign('vendor/model:free') IS NULL,'paced');
+SELECT pg_temp.assert(claim_incubator_campaign('vendor/model:free') IS NULL,'open limit after first admission');
 RESET ROLE;
 UPDATE incubator_campaign SET next_at=now()-interval '1 minute';
 SET LOCAL ROLE incubator_runner;
@@ -68,8 +68,12 @@ DO $$ DECLARE id bigint:=next_incubator_evaluation(); seq integer; j jsonb:=(SEL
  PERFORM record_incubator_experiment_event(id,'failed','{"reason":"isolated boundary probe"}');
 END $$;
 SELECT set_incubator_campaign(true,10,3,1,'vendor/creator:free',10);
+RESET ROLE;
+UPDATE incubator_campaign SET next_at=now()+interval '1 hour';
+SET LOCAL ROLE incubator_runner;
 TRUNCATE candidate;
 INSERT INTO candidate SELECT claim_incubator_campaign('vendor/model:free');
+SELECT pg_temp.assert((SELECT j IS NOT NULL FROM candidate),'claim ignores next_at');
 SELECT begin_incubator_request_check(j->>'request_id',jsonb_build_object('title',j->>'title','text',j->>'text','model',j->>'model')) FROM candidate;
 SELECT finish_incubator_request_check(j->>'request_id',jsonb_build_object('complete',true,'matches',jsonb_build_array(jsonb_build_object('id','prior','reason','rewritten exact case','text',j->>'text')))) FROM candidate;
 SELECT finish_incubator_campaign((j->>'ordinal')::int) FROM candidate;

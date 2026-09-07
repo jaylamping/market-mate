@@ -190,6 +190,7 @@ impl ComparisonModels for LiveModels {
         })
     }
 }
+#[cfg_attr(not(test), allow(dead_code))]
 struct CampaignComparison<'a> {
     models: &'a dyn ComparisonModels,
     model: &'a str,
@@ -222,6 +223,7 @@ impl ComparisonModels for CampaignComparison<'_> {
         })
     }
 }
+#[cfg_attr(not(test), allow(dead_code))]
 struct CampaignPrepared {
     inner: Box<dyn PreparedComparison>,
     revision: i64,
@@ -325,14 +327,38 @@ fn material_matches(request_text: &str, matches: Vec<Value>) -> Vec<Value> {
     };
     matches
         .into_iter()
-        .filter(|row| {
-            row.get("spec")
-                .and_then(momentum_case_fields)
-                .or_else(|| momentum_case_spec(row["text"].as_str().unwrap_or_default()))
-                .as_ref()
-                == Some(&request_case)
+        .filter(|row| row_momentum_case(row).as_ref() == Some(&request_case))
+        .collect()
+}
+fn row_momentum_case(row: &Value) -> Option<Value> {
+    row.get("spec")
+        .and_then(momentum_case_fields)
+        .or_else(|| momentum_case_spec(row["text"].as_str().unwrap_or_default()))
+}
+fn exact_case_matches(request_text: &str, corpus: &[Value]) -> Vec<Value> {
+    let Some(request_case) = momentum_case_spec(request_text) else {
+        return vec![];
+    };
+    corpus
+        .iter()
+        .filter(|row| row_momentum_case(row).as_ref() == Some(&request_case))
+        .map(|row| {
+            matching_row(
+                row,
+                "Exact momentum_v1 lookback, quantile count, one-way cost, and borrow cost already exist.",
+            )
         })
         .collect()
+}
+fn exact_case_check(request_text: &str, corpus: &[Value]) -> Value {
+    json!({
+        "complete":true,
+        "matches":exact_case_matches(request_text, corpus),
+        "issues":[],
+        "assignments_checked":corpus.len(),
+        "attempts":[],
+        "method":"exact_case"
+    })
 }
 #[derive(Deserialize)]
 struct SimilarityReply {
@@ -598,8 +624,11 @@ pub(crate) async fn campaign_check(db: &Database, candidate: &Value) -> Result<(
         .await
         .map_err(|e| e.to_string())?
         .get(0);
-    if prior.is_some() || candidate["fresh"] != true {
-        // A recorded check is never replayed after a crash. Its result can still be admitted.
+    if prior
+        .as_ref()
+        .is_some_and(|check| check["result"].is_object())
+    {
+        // A recorded check is never replayed. Its result can still be admitted.
         return Ok(());
     }
     let input = CheckInput {
@@ -627,22 +656,35 @@ pub(crate) async fn campaign_check(db: &Database, candidate: &Value) -> Result<(
         .await
         .map_err(|e| e.to_string())?
         .get(0);
-    let corpus = started["corpus"].as_array().ok_or("history_unavailable")?;
-    let models = CampaignComparison {
-        models: &LiveModels,
-        model: &input.model,
-        revision: candidate["campaign_revision"]
-            .as_i64()
-            .ok_or("invalid_campaign_revision")?,
+    let corpus = if let Some(existing) = started.get("existing") {
+        if existing["result"].is_object() {
+            return Ok(());
+        }
+        db.client
+            .query_one("SELECT incubator_assignment_corpus()", &[])
+            .await
+            .map_err(|e| e.to_string())?
+            .get(0)
+    } else {
+        started
+            .get("corpus")
+            .cloned()
+            .ok_or("history_unavailable")?
     };
-    let result = assess(db, &input, corpus, &models).await;
-    db.client
+    let corpus = corpus.as_array().ok_or("history_unavailable")?;
+    let result = exact_case_check(&input.text, corpus);
+    if let Err(error) = db
+        .client
         .query_one(
             "SELECT finish_incubator_request_check($1,$2)",
             &[&id, &result],
         )
         .await
-        .map_err(|e| e.to_string())?;
+    {
+        if error.as_db_error().map(|e| e.message()) != Some("check_result_immutable") {
+            return Err(error.to_string());
+        }
+    }
     Ok(())
 }
 async fn get_check(Path(id): Path<String>) -> Result<Json<Value>, ApiError> {
@@ -861,15 +903,24 @@ mod tests {
         let same = json!({"id":"same","text":"Earlier wording\nExact diagnostic spec: {\"lookback_sessions\":3,\"quantile_count\":5,\"one_way_cost_bps\":8,\"borrow_bps_per_session\":4}"});
         let sensitivity = json!({"id":"sensitivity","text":"Same topic\nExact diagnostic spec: {\"lookback_sessions\":1,\"quantile_count\":5,\"one_way_cost_bps\":8,\"borrow_bps_per_session\":4}","reason":"intentional sensitivity case rather than a duplicate"});
         let generic = json!({"id":"generic","text":"Investigate whether a simple daily stock momentum signal could produce durable after-cost excess returns.","reason":"same core research question"});
-        let kept = material_matches(request, vec![same.clone(), sensitivity, generic.clone()]);
-        assert_eq!(kept, vec![same]);
+        let kept = material_matches(
+            request,
+            vec![same.clone(), sensitivity.clone(), generic.clone()],
+        );
+        assert_eq!(kept, vec![same.clone()]);
         assert_eq!(
             material_matches(
                 "A generic manual brief without a spec",
                 vec![generic.clone()]
             ),
-            vec![generic]
+            vec![generic.clone()]
         );
+        let corpus = vec![same, sensitivity, generic];
+        let kept = exact_case_matches(request, &corpus);
+        assert_eq!(kept.len(), 1);
+        assert_eq!(kept[0]["id"], "same");
+        assert_eq!(exact_case_check(request, &corpus)["method"], "exact_case");
+        assert!(exact_case_matches("A generic manual brief without a spec", &corpus).is_empty());
     }
     #[test]
     fn malformed_model_comparisons_are_never_a_clean_result() {

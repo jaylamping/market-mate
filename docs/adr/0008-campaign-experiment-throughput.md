@@ -1,6 +1,6 @@
 # ADR-0008: Pace backlog claims below capacity, retry unusable Experiment replies
 
-- Status: accepted
+- Status: superseded in part by [ADR-0011](0011-campaign-exact-case-check.md) for claim spacing. Experiment-reply retry remains accepted.
 - Date: 2026-09-07
 - Decision source: User-directed after admitted campaign tickets failed at the Experiment agent and pickup still felt slow.
 - Implementation: implemented in [0081](../../db/migrations/0081_campaign_experiment_throughput.sql), [experiment completion](../../backend/src/incubator_experiment.rs), and [campaign worker](../../backend/src/incubator_campaign.rs).

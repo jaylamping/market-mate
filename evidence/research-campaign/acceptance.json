@@ -51,7 +51,8 @@
     "research_scout_retry",
     "archived_research_not_retried",
     "campaign_paid_research_claim",
-    "assignment_used_spec_rejected"
+    "assignment_used_spec_rejected",
+    "campaign_exact_case_check"
   ],
   "passed": true,
   "sha256": {
@@ -65,18 +66,20 @@
     "db/migrations/0081_campaign_experiment_throughput.sql": "505761d5ff4271d1509e2932e87eeb80ee881cd95a4b077755e7d022f9a05abc",
     "db/migrations/0083_research_retry_campaign_paid.sql": "cb31d24c0fafd85acd109cc87649af6f581eb66114a533ba732c112fe1a72e09",
     "db/migrations/0084_campaign_used_momentum_cases.sql": "282dcdfd73903e41b730079204b9f15b427476c038e5622c64d1ab75bcef630c",
+    "db/migrations/0085_campaign_exact_case_check.sql": "e29376c2e9f9b28843796484869381528b483200bab445a724366b69d67210f5",
     "db/fixtures/campaign_recovery_probe.sql": "7872681ca0d4a28e7ff1636f2780efd95da8c8a7ac69e8d5f8837997dad7561f",
     "db/fixtures/campaign_backlog_pickup_probe.sql": "801aa9fbe32413f45bb83f0f443bd3082165de9d22a9d977116b8edc7fe16df2",
     "db/fixtures/research_scout_retry_probe.sql": "1909819612677c8339503ea2d22a9e3551b336393d3fff26499d3672f0d31c63",
     "db/fixtures/campaign_used_specs_probe.sql": "55c57d28c115b88dad4c29f036bac04aac2650c9da28feff8d28ff24d9cc0241",
+    "db/fixtures/campaign_exact_case_check_probe.sql": "ca772414832dcfa9bfe849479ca712f1d10818ad2e9e01ff6d61680d8abf3027",
     "backend/src/incubator_output.rs": "79c9fb8d4b94be01442a6925acfbcbfb7e7d226a78316997b1d66eef39c66e30",
     "backend/src/openrouter_request.rs": "bb9a3d8bd1cff418e8aa9e6b52c8ca3eb83054f25b080099ee8ba695f436b2db",
-    "db/fixtures/research_campaign_probe.sql": "4b78f4aed62260b11c3b787354f11f21abce91bf95b3c23b15d6404007b02977",
+    "db/fixtures/research_campaign_probe.sql": "4f140ef9340f6b06ea64ccc0790e8beb4d26b7cae82367f8876645910d03b32a",
     "backend/src/incubator.rs": "8088473311769e6aad658b22a9542edcf04282f8302383442d39a9c6bb253ded",
-    "backend/src/incubator_campaign.rs": "496992733aeb65c57e110b2da10574d74af2faae71f0ba1bc2f3652e081329a0",
+    "backend/src/incubator_campaign.rs": "8991c164de0b3fde0ba54f6ed88fa683f48e3fdbdd7e08335456405f2257930c",
     "backend/src/incubator_ticket_creator.rs": "d98ce526bd2a25790c304109ecc1bb4ee9486908dda9d7ef3316a2ab5b22843f",
-    "backend/src/incubator_requests.rs": "cbbe37dc4c7975f85a60164e5c88164e017a87f3b8199839af8bee20d79aff2f",
+    "backend/src/incubator_requests.rs": "96827c4c49914b0af184d1eae08080e6b281d0950af3b5fa7130eada40d6b2c1",
     "backend/src/openrouter_capacity.rs": "84fbba679f513d1048dc68546aabddced46689bfcd6339f077758e05f6bd17ac",
-    "scripts/research_campaign_test.sh": "d8abf62e5c6ac4d63890d34ba7ea6672c87eac4b2d6bd038b0207f73edf13992"
+    "scripts/research_campaign_test.sh": "2d802d80bf9b1eef66644efa826a6f6c846b22220c7b5735d610761948b4aca2"
   }
 }

@@ -1,4 +1,4 @@
-//! A finite, paced pilot agenda feeding the existing research workflow.
+//! A finite agenda feeding the existing research workflow.
 use crate::incubator_requests::{campaign_check, database, select_role_model, selected_role_model};
 use axum::{
     http::StatusCode,
@@ -115,23 +115,36 @@ async fn tick() -> Result<(), String> {
     } else {
         select_role_model(creator, "research", true).unwrap_or_default()
     };
-    let candidate: Option<Value> = db
-        .client
-        .query_one("SELECT claim_incubator_campaign($1)", &[&model])
-        .await
-        .map_err(|e| e.to_string())?
-        .get(0);
-    if let Some(candidate) = candidate {
-        campaign_check(&db, &candidate).await?;
+    let mut first_error = None;
+    loop {
+        let candidate: Option<Value> = db
+            .client
+            .query_one("SELECT claim_incubator_campaign($1)", &[&model])
+            .await
+            .map_err(|e| e.to_string())?
+            .get(0);
+        let Some(candidate) = candidate else {
+            break;
+        };
+        if let Err(reason) = campaign_check(&db, &candidate).await {
+            first_error = Some(reason);
+        }
         let ordinal = candidate["ordinal"]
             .as_i64()
             .ok_or("invalid_campaign_candidate")? as i32;
-        db.client
+        if let Err(reason) = db
+            .client
             .query_one("SELECT finish_incubator_campaign($1)", &[&ordinal])
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| e.to_string())
+        {
+            first_error = Some(reason);
+        }
     }
-    Ok(())
+    match first_error {
+        Some(reason) => Err(reason),
+        None => Ok(()),
+    }
 }
 pub async fn worker() {
     loop {

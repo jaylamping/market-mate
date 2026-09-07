@@ -11,7 +11,7 @@ An incomplete similarity check marked the candidate `blocked` and disabled the c
 
 ## Decision
 
-Pause stops Ticket Creator only. Existing backlog cards still receive a free-model similarity check and can be admitted. A comparison already claimed is cancelled only when campaign settings revision changes, not merely because generation is paused. Incomplete or interrupted checks keep the original result, queue a linked retry, and leave campaign `enabled` unchanged. A duplicate is the same exact momentum_v1 lookback, quantile count, one-way cost, and borrow cost. Topic overlap and different parameter cases stay in the live queue. Uncertain provider outcomes still block another dispatch.
+Pause stops Ticket Creator only. Existing backlog cards still receive an exact-case check and can be admitted. Campaign Check no longer calls a model; see [ADR-0011](0011-campaign-exact-case-check.md). A comparison already claimed is cancelled only when campaign settings revision changes, not merely because generation is paused. Incomplete or interrupted checks keep the original result, queue a linked retry, and leave campaign `enabled` unchanged. A duplicate is the same exact momentum_v1 lookback, quantile count, one-way cost, and borrow cost. Topic overlap and different parameter cases stay in the live queue. Uncertain provider outcomes still block another dispatch.
 
 ## Alternatives and consequences
 

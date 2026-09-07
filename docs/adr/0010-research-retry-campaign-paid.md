@@ -3,7 +3,7 @@
 - Status: accepted
 - Date: 2026-09-07
 - Decision source: User-directed after three campaign Research Scout tickets failed (`incomplete_response`, `invalid_report`) and those tickets were archived rather than retried.
-- Implementation: implemented in [0083](../../db/migrations/0083_research_retry_campaign_paid.sql), [Research Scout](../../backend/src/incubator.rs), [capacity admission](../../backend/src/openrouter_capacity.rs), [campaign worker](../../backend/src/incubator_campaign.rs), and [similarity comparison](../../backend/src/incubator_requests.rs).
+- Implementation: implemented in [0083](../../db/migrations/0083_research_retry_campaign_paid.sql), [Research Scout](../../backend/src/incubator.rs), [capacity admission](../../backend/src/openrouter_capacity.rs), and [campaign worker](../../backend/src/incubator_campaign.rs). Campaign Check later moved to a local exact-case comparison in [ADR-0011](0011-campaign-exact-case-check.md).
 
 ## Context
 
@@ -11,7 +11,7 @@ Campaign Research Scout used the free creator (`inclusionai/ling-3.0-flash-fin:f
 
 ## Decision
 
-Research Scout disables reasoning, asks for the `research_scout` JSON schema, and repairs an enclosing fence, a first JSON object, and a string coerced to a one-element list. One automatic `research_retry` is allowed after `incomplete_response` or `invalid_report`. Archived runs are not picked up. When the campaign creator is paid, claim, similarity, and Research Scout may use that same creator under `campaign_selection` and the existing paid reservation caps. Evaluation, refinement, and experiment stay on free routes. Global `paid_enabled` stays off unless the owner changes it.
+Research Scout disables reasoning, asks for the `research_scout` JSON schema, and repairs an enclosing fence, a first JSON object, and a string coerced to a one-element list. One automatic `research_retry` is allowed after `incomplete_response` or `invalid_report`. Archived runs are not picked up. When the campaign creator is paid, Ticket Creator and Research Scout may use that same creator under `campaign_selection` and the existing paid reservation caps. Campaign Check is a local exact-case comparison and does not spend that creator; see [ADR-0011](0011-campaign-exact-case-check.md). Evaluation, refinement, and experiment stay on free routes. Global `paid_enabled` stays off unless the owner changes it.
 
 ## Alternatives and consequences
 
