@@ -4,7 +4,7 @@ import React from "react";
 import {renderToStaticMarkup} from "react-dom/server";
 import {OriginBadge} from "../app/incubator/OriginBadge";
 import {ProgressFooter} from "../app/incubator/ProgressFooter";
-import {parseWorkflow,researchStatus,researchHasAdvanced} from "../app/incubator/evaluation";
+import {parseWorkflow,researchStatus,researchHasAdvanced,experimentOutcome,visibleExperiments} from "../app/incubator/evaluation";
 test("card origins distinguish owner, automatic agent, and legacy local runner",()=>{
  for(const [origin,label] of [["principal","You"],["agent","Agent"],["local_runner","Local runner"]] as const)assert.match(renderToStaticMarkup(<OriginBadge origin={origin}/>),new RegExp(`Created by ${label}`));
 });
@@ -83,4 +83,36 @@ test("advanced research has a separate status from reports awaiting evaluation",
  assert.equal(researchHasAdvanced({...advanced,status:"superseded",experiment:{id:"1"} as Evaluation["experiment"]}),true);
  assert.equal(researchHasAdvanced(evaluations[0]),false);
  assert.equal(researchHasAdvanced(undefined),false);
+});
+
+import {Experiments} from "../app/incubator/Experiments";
+test("completed diagnostics leave the active queue and sort by outcome",()=>{
+ const ticket=(id:string,status:Experiment["status"],result?:Record<string,unknown>,at=evaluations[0].created_at):Evaluation=>({
+  ...evaluations[0],id,experiment:{id,title:"Diagnostic",created_at:at,status,detail:result?{result}:{},events:[]},
+ });
+ const rows=[
+  ticket("active","running"),
+  ticket("positive-old","completed",{mean_next_open_net_bps:12,mean_cash_bps:0,mean_benchmark_next_open_bps:3},"2026-09-07T02:00:00Z"),
+  ticket("mixed","completed",{mean_next_open_net_bps:-4,mean_cash_bps:0,mean_benchmark_next_open_bps:-8}),
+  ticket("terrible","completed",{mean_next_open_net_bps:-6,mean_cash_bps:0,mean_benchmark_next_open_bps:-1}),
+  ticket("stopped","failed"),
+  ticket("positive-new","completed",{mean_next_open_net_bps:"8",mean_cash_bps:"1"},"2026-09-07T03:00:00Z"),
+  ticket("unscored","completed"),
+ ];
+ assert.equal(experimentOutcome(rows[0].experiment!),"active");
+ assert.equal(experimentOutcome(rows[1].experiment!),"positive");
+ assert.equal(experimentOutcome(rows[2].experiment!),"negative");
+ assert.equal(experimentOutcome(rows[3].experiment!),"terrible");
+ assert.equal(experimentOutcome(rows[4].experiment!),"stopped");
+ assert.equal(experimentOutcome(rows[5].experiment!),"positive");
+ assert.equal(experimentOutcome(rows[6].experiment!),"negative");
+ assert.deepEqual(visibleExperiments(rows,"active").map(row=>row.id),["active"]);
+ assert.deepEqual(visibleExperiments(rows,"all").map(row=>row.id),["active","positive-new","positive-old","mixed","unscored","terrible","stopped"]);
+ const html=renderToStaticMarkup(<Experiments evaluations={rows.filter(row=>row.id!=="active")}/>);
+ assert.match(html,/Filter experiments by diagnostic outcome/);
+ assert.match(html,/No active experiments/);
+ assert.match(html,/Research tickets with promise/);
+ assert.doesNotMatch(html,/Automatic setup/);
+ assert.match(html,/Positive/);
+ assert.doesNotMatch(html,/All statuses/);
 });

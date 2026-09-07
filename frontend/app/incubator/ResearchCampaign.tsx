@@ -88,7 +88,7 @@ export function campaignCandidates(campaign:Campaign|null|undefined, view:string
 export function CampaignBacklog({campaign,view="current",search="",status="all"}:{campaign:Campaign|null|undefined;view?:string;search?:string;status?:string}) {
   const candidates = campaignCandidates(campaign,view,search,status);
   if (view==="archived") return null;
-  if (!candidates.length) return view==="duplicates" ? <p className="rounded-xl border border-dashed border-border px-5 py-10 text-sm text-muted-foreground">No duplicate proposals match this view.</p> : null;
+  if (!candidates.length) return view==="duplicates" ? <div className={ticketCardStyles.empty}>No duplicate proposals.</div> : null;
   return <section aria-labelledby="campaign-backlog-heading" className="mt-6 mb-8 border-t border-border pt-5">
     <div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><h2 id="campaign-backlog-heading" className="text-xl font-semibold">{view==="duplicates"?"Duplicate proposals":"Campaign backlog"}</h2><p className="mt-1 text-sm text-muted-foreground">{view==="duplicates"?"Preserved proposals that matched existing research. Open a card to inspect the match.":"Waiting and stopped proposals. Open a card to inspect its progress or stopping reason."}</p></div><span className="text-sm tabular-nums text-muted-foreground">{candidates.length} shown · latest 100 proposals</span></div>
     <div className={ticketCardStyles.grid}>{candidates.map(candidate=><CandidateCard key={candidate.ordinal} candidate={candidate} model={campaign!.creator_model}/>)}</div>

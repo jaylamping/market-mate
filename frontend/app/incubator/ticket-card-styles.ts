@@ -4,4 +4,5 @@ export const ticketCardStyles = {
   title: "mt-4 line-clamp-3 text-base font-medium leading-snug",
   preview: "mb-5 mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground",
   footer: "mt-auto w-full space-y-1 border-t border-border pt-3 text-xs text-muted-foreground",
+  empty: "grid min-h-28 place-items-center rounded-xl border border-dashed border-border px-5 py-10 text-center text-sm text-muted-foreground",
 };

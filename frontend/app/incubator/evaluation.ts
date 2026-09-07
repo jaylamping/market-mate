@@ -1,9 +1,9 @@
 import {parseReport,stateLabel,type Run} from "./model";
 export type EvaluationStatus="refining"|"queued"|"evaluating"|"awaiting_clarification"|"needs_input"|"advance"|"refine"|"close"|"failed"|"indeterminate"|"superseded";
-export type ExperimentStatus="setup_retry"|"setup_question"|"awaiting_setup"|"preparing"|"clarifying"|"clarified"|"answered"|"awaiting_data"|"needs_input"|"ready"|"dispatching"|"running"|"completed"|"failed"|"indeterminate";
+export type ExperimentStatus="setup_retry"|"experiment_retry"|"setup_question"|"awaiting_setup"|"preparing"|"clarifying"|"clarified"|"answered"|"awaiting_data"|"needs_input"|"ready"|"dispatching"|"running"|"completed"|"failed"|"indeterminate";
 export type ExperimentEvent={sequence:number;state:ExperimentStatus;at:string;detail:Record<string,unknown>};
 export type Experiment={setup_retry_available?:boolean;capacity_wait?:import("./model").CapacityWait|null;id:string;title:string;status:ExperimentStatus;created_at:string;snapshot_id?:string|null;dataset_class?:string|null;detail?:Record<string,unknown>;events?:ExperimentEvent[]};
-export const experimentLabel:Record<ExperimentStatus,string>={setup_retry:"Setup retry queued",setup_question:"Waiting for clarification capacity",awaiting_setup:"Awaiting setup",preparing:"Checking setup",clarifying:"Clarifying research",clarified:"Research clarified",answered:"Input received",awaiting_data:"Awaiting data",needs_input:"Needs your input",ready:"Ready for experiment",dispatching:"Experiment agent",running:"Running diagnostic",completed:"Diagnostic complete",failed:"Experiment stopped",indeterminate:"Outcome unknown"};
+export const experimentLabel:Record<ExperimentStatus,string>={setup_retry:"Setup retry queued",experiment_retry:"Retrying experiment agent",setup_question:"Waiting for clarification capacity",awaiting_setup:"Awaiting setup",preparing:"Checking setup",clarifying:"Clarifying research",clarified:"Research clarified",answered:"Input received",awaiting_data:"Awaiting data",needs_input:"Needs your input",ready:"Ready for experiment",dispatching:"Experiment agent",running:"Running diagnostic",completed:"Diagnostic complete",failed:"Experiment stopped",indeterminate:"Outcome unknown"};
 export type Evaluation={capacity_wait?:import("./model").CapacityWait|null;refinement_rounds_used?:number;refinement_stop_reason?:string;refinement?:null|{round:number;state:string;reason:string|null;created_at:string;finished_at:string|null};id:string;run_key:string;revision:number;report:import("./model").Report;created_at:string;status:EvaluationStatus;owner_answer:string|null;steps:{sequence:number;kind:"evaluation"|"clarification";model:string;created_at:string;state:string;finished_at:string|null;detail:{decision?:string;reason?:string;question?:string|null;answer?:string}}[];experiment:null|Experiment};
 export const workflowKey=["incubator-workflow"] as const;
 export const evaluationLabel:Record<EvaluationStatus,string>={refining:"Refining",queued:"Awaiting evaluation",evaluating:"Evaluating",awaiting_clarification:"Awaiting clarification",needs_input:"Needs your input",advance:"Advanced to experiment",refine:"Needs refinement",close:"Not advancing",failed:"Evaluation stopped",indeterminate:"Evaluation outcome unknown",superseded:"Earlier report revision"};
@@ -40,4 +40,45 @@ export function researchStatus(run:Run,evaluation?:Evaluation):string {
 
 export function researchHasAdvanced(evaluation:Evaluation|undefined):boolean {
  return evaluation?.status==="advance"||!!evaluation?.experiment;
+}
+
+export type ExperimentOutcome="active"|"positive"|"negative"|"terrible"|"stopped";
+export const experimentOutcomeLabel:Record<ExperimentOutcome,string>={active:"Active",positive:"Positive",negative:"Negative",terrible:"Terrible",stopped:"Stopped"};
+export const experimentOutcomeOrder:ExperimentOutcome[]=["active","positive","negative","terrible","stopped"];
+
+function metric(value:unknown):number|null {
+ if(typeof value==="number"&&Number.isFinite(value))return value;
+ if(typeof value==="string"&&/^-?\d+$/.test(value))return Number(value);
+ return null;
+}
+
+export function experimentOutcome(experiment:Experiment):ExperimentOutcome {
+ if(experiment.status==="failed"||experiment.status==="indeterminate")return "stopped";
+ if(experiment.status!=="completed")return "active";
+ const result=experiment.detail?.result;
+ if(!result||typeof result!=="object")return "negative";
+ const row=result as Record<string,unknown>;
+ const net=metric(row.mean_next_open_net_bps);
+ const cash=metric(row.mean_cash_bps);
+ if(net===null||cash===null)return "negative";
+ if(net>cash)return "positive";
+ const bench=metric(row.mean_benchmark_next_open_bps);
+ if(bench!==null&&net<cash&&net<bench)return "terrible";
+ return "negative";
+}
+
+export const experimentOutcomeColor:Record<ExperimentOutcome,string>={
+ active:"var(--muted-foreground)",
+ positive:"var(--good)",
+ negative:"var(--warning)",
+ terrible:"var(--destructive)",
+ stopped:"var(--destructive)",
+};
+
+export function visibleExperiments(evaluations:Evaluation[],filter:"all"|ExperimentOutcome):Evaluation[] {
+ const tickets=evaluations.filter((evaluation):evaluation is Evaluation&{experiment:Experiment}=>!!evaluation.experiment&&(filter==="all"||experimentOutcome(evaluation.experiment)===filter));
+ return tickets.sort((left,right)=>{
+  const rank=experimentOutcomeOrder.indexOf(experimentOutcome(left.experiment))-experimentOutcomeOrder.indexOf(experimentOutcome(right.experiment));
+  return rank||Date.parse(right.experiment.created_at)-Date.parse(left.experiment.created_at);
+ });
 }

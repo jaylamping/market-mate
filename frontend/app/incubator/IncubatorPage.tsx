@@ -2,7 +2,7 @@
 import { TicketModelBadge } from "./TicketModelBadge";
 import { ticketCardStyles } from "./ticket-card-styles";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bot, ArrowUpRight, CheckCircle2, XCircle, Clock3, CircleDashed, X, Archive, ArchiveRestore, LoaderCircle } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, XCircle, Clock3, CircleDashed, X, Archive, ArchiveRestore, LoaderCircle } from "lucide-react";
 import { Dialog, Tabs } from "radix-ui";
 import {OriginBadge} from "./OriginBadge";
 import {Experiments} from "./Experiments";
@@ -21,7 +21,7 @@ import { AppSidebar } from "../AppSidebar";
 import { RefreshQueries } from "../RefreshQueries";
 import { costLabel, parseRuns, providerErrorLabel, researchTickets, spendingLimitLabel, stateLabel, type Run } from "./model";
 
-import { CampaignBacklog, campaignCandidates, campaignCandidateStatus, CampaignDialog, fetchResearchCampaign, researchCampaignQueryKey } from "./ResearchCampaign";
+import { CampaignBacklog, CampaignDialog, fetchResearchCampaign, researchCampaignQueryKey } from "./ResearchCampaign";
 import { AddAssignment } from "./AddAssignment";
 import { WorkflowTimeline } from "./WorkflowTimeline";
 import {STREAM_POLL_INTERVAL_MS} from "./stream-connection";
@@ -127,13 +127,10 @@ export function IncubatorPage() {
       .then(run=>setLinkedRun(parseRuns({environment:"local_research",artifact_kind:"research_planning",runs:[run]})[0]))
       .catch(()=>setLinkError("The linked ticket could not be loaded."));
   },[]);
-  const [search,setSearch]=useState(""),[status,setStatus]=useState("all"),[archiveView,setArchiveView]=useState("current");
+  const [search,setSearch]=useState(""),[archiveView,setArchiveView]=useState("current");
   const runs=query.data??[];
   const scopedRuns=researchTickets(runs).filter(run=>!researchHasAdvanced(evaluationFor(run.run_key))).filter(run=>archiveView!=="duplicates").filter(run=>Boolean(run.archived)===(archiveView==="archived"));
-  const scopedCandidates=campaignCandidates(campaign.data,archiveView);
-  const visibleCandidates=campaignCandidates(campaign.data,archiveView,search,status);
-  const statusOptions=["Assigned","Preparing","Researching","Report ready","Failed","Outcome unknown",...(archiveView==="current"?["Created","Checking similarity","Cancelled"]:[])];
-  const visibleRuns=scopedRuns.filter(run=>(status==="all"||researchStatus(run,evaluationFor(run.run_key))===status)&&[run.config.agent_name,run.config.model,run.config.input.title,run.run_key].join(" ").toLowerCase().includes(search.toLowerCase()));
+  const visibleRuns=scopedRuns.filter(run=>[run.config.agent_name,run.config.model,run.config.input.title,run.run_key].join(" ").toLowerCase().includes(search.toLowerCase()));
   return <div className="supervisory-overview" data-display-only="false" data-order-authority="none"><a className="skip-link" href="#incubator-main">Skip to incubator</a><AppSidebar activePage="/incubator"/>
     <main className="overview-main" id="incubator-main" tabIndex={-1}>
       <header className="page-header">
@@ -143,21 +140,19 @@ export function IncubatorPage() {
       {linkedRun&&<div className="hidden"><RunCard run={runs.find(r=>r.run_key===linkedRun.run_key)??linkedRun} evaluation={evaluationFor(linkedRun.run_key)} evaluationHistory={evaluations.filter(e=>e.run_key===linkedRun.run_key)} initialVersion={linkedRevision} initiallyOpen/></div>}
       {workflow.isError&&<p role="alert" className="mb-4 text-sm text-destructive">Evaluation history is unavailable. Displayed workflow may be outdated.</p>}
       <div role="region" aria-label="Research filters and actions" className="sticky top-0 z-30 mb-5 flex flex-wrap items-center gap-3 border-b border-border bg-background py-3 shadow-[0_4px_8px_-6px_rgba(0,0,0,0.35)]">
-        <Input className="min-h-11 min-w-0 flex-1 basis-64 xl:max-w-md" aria-label="Search runs" placeholder="Search agents, models, or runs…" value={search} onChange={e=>setSearch(e.target.value)}/><label className="flex flex-col items-start gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-2">Status<select className="min-h-11 rounded-md border border-input bg-background px-3 py-2 text-foreground" disabled={archiveView==="duplicates"} value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All statuses ({scopedRuns.length+scopedCandidates.length})</option>{statusOptions.map(label=><option key={label} value={label}>{label} ({scopedRuns.filter(run=>researchStatus(run,evaluationFor(run.run_key))===label).length+scopedCandidates.filter(candidate=>campaignCandidateStatus(candidate.state)===label).length})</option>)}</select></label><label className="flex flex-col items-start gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-2">View<select aria-label="Research view" value={archiveView} onChange={e=>{setArchiveView(e.target.value);setStatus("all");}} className="min-h-11 rounded-md border border-input bg-background px-3 text-foreground"><option value="current">Current</option><option value="archived">Archived</option><option value="duplicates">Duplicates</option></select></label>
+        <Input className="min-h-11 min-w-0 flex-1 basis-64 xl:max-w-md" aria-label="Search runs" placeholder="Search agents, models, or runs…" value={search} onChange={e=>setSearch(e.target.value)}/><label className="flex flex-col items-start gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-2">View<select aria-label="Research view" value={archiveView} onChange={e=>setArchiveView(e.target.value)} className="min-h-11 rounded-md border border-input bg-background px-3 text-foreground"><option value="current">Current</option><option value="archived">Archived</option><option value="duplicates">Duplicates</option></select></label>
         <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-3"><RefreshQueries label="Refresh runs" iconOnly queryKeys={[incubatorQuery.queryKey,workflowKey,researchCampaignQueryKey]}/><CampaignDialog/><AddAssignment/></div>
       </div>
       <Experiments evaluations={evaluations} runs={runs}/>
-      <div className="mb-3 mt-6 border-t border-border pt-5"><h2 className="text-xl font-semibold">Research</h2></div>
+      <div className="mb-4 mt-6 border-t border-border pt-5"><h2 className="text-xl font-semibold">Research <span className="ml-2 text-sm font-normal text-muted-foreground">{scopedRuns.length}</span></h2></div>
 
       {connection==="polling"&&<p role="status" className="text-sm text-muted-foreground">Live updates are unavailable. Refreshing tickets every 5 seconds while the connection retries.</p>}
       {query.isError && <p role="alert" className="workspace-panel p-4">Run history is unavailable. {query.data ? "The history below may be outdated." : "Refresh to try again."}</p>}
       {query.isPending && <p role="status" className="workspace-panel p-6">Loading research runs…</p>}
-      {archiveView!=="duplicates" && query.data?.length === 0 && <section className="workspace-panel"><div className="chart-empty"><Bot aria-hidden="true"/><h2>No research tickets yet</h2><p>Creator proposals stay in the backlog below until a free research worker accepts one.</p><a href="/agents" className="text-primary underline underline-offset-4">View approved models</a></div></section>}
+      {archiveView!=="duplicates"&&!query.isPending&&!visibleRuns.length&&<div className={ticketCardStyles.empty}>{archiveView==="archived"?"No archived research.":"No current research."}</div>}
 
       <div className={ticketCardStyles.grid}>{visibleRuns.map(run=><RunCard key={run.run_key} run={run} fallbacks={runs.filter(attempt=>attempt.detail.fallback_of===run.run_key)} evaluation={evaluationFor(run.run_key)} evaluationHistory={evaluations.filter(e=>e.run_key===run.run_key)}/>)}</div>
-      {archiveView!=="duplicates"&&!!runs.length&&!visibleRuns.length&&!visibleCandidates.length&&<p className="rounded-xl border border-dashed border-border px-5 py-10 text-sm text-muted-foreground">{archiveView==="archived"?"No archived research matches this view.":"No current research matches this view."}</p>}
-      {archiveView!=="duplicates"&&!!query.data?.length && <p className="py-3 text-xs leading-relaxed text-muted-foreground">{visibleRuns.length} of {scopedRuns.length} {archiveView==="archived"?"archived":"current"} tickets</p>}
-      {campaign.isError&&<p role="alert" className="text-sm text-destructive">Campaign proposals could not be refreshed. Displayed proposals may be outdated.</p>}<CampaignBacklog campaign={campaign.data} view={archiveView} search={search} status={status}/>
+      {campaign.isError&&<p role="alert" className="text-sm text-destructive">Campaign proposals could not be refreshed. Displayed proposals may be outdated.</p>}<CampaignBacklog campaign={campaign.data} view={archiveView} search={search}/>
     </main>
   </div>;
 }
