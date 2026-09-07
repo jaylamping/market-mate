@@ -72,10 +72,21 @@ CREATE TABLE market_data_result (
  receipt_time timestamptz NOT NULL,
  record_environment record_environment NOT NULL CHECK(record_environment='local_research')
 );
+CREATE TABLE market_data_event_detail (
+ experiment_id bigint NOT NULL,
+ sequence integer NOT NULL,
+ dataset_id uuid NOT NULL REFERENCES market_data_dataset,
+ detail jsonb NOT NULL,
+ source_lineage jsonb NOT NULL CHECK(source_lineage_is_valid(source_lineage)),
+ receipt_time timestamptz NOT NULL,
+ record_environment record_environment NOT NULL CHECK(record_environment='local_research'),
+ PRIMARY KEY(experiment_id,sequence),
+ FOREIGN KEY(experiment_id) REFERENCES incubator_experiment_ticket(evaluation_id)
+);
 -- These payload/control tables deliberately support scoped deletion; only the API role
 -- may invoke lifecycle functions. There are no table grants to either runtime role.
 DO $$ DECLARE t text; BEGIN
- FOREACH t IN ARRAY ARRAY['market_data_source','market_data_dataset','market_data_payload','market_data_observation','market_data_dataset_observation','market_data_result'] LOOP
+ FOREACH t IN ARRAY ARRAY['market_data_source','market_data_dataset','market_data_payload','market_data_observation','market_data_dataset_observation','market_data_result','market_data_event_detail'] LOOP
   PERFORM register_evidence_table(t);
  END LOOP;
 END $$;
@@ -236,7 +247,7 @@ END $$;
 ALTER FUNCTION record_incubator_experiment_event(bigint,text,jsonb) RENAME TO record_incubator_experiment_event_legacy;
 CREATE FUNCTION record_incubator_experiment_event(id_value bigint,state_value text,detail_value jsonb) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,pg_temp AS $$
-DECLARE d market_data_dataset%ROWTYPE; prior jsonb; safe_detail jsonb;
+DECLARE d market_data_dataset%ROWTYPE; prior jsonb; safe_detail jsonb; event_value incubator_experiment_event%ROWTYPE;
 BEGIN
  SELECT m.* INTO d FROM market_data_dataset m JOIN incubator_experiment_dataset e ON e.snapshot_id=m.snapshot_id WHERE e.experiment_id=id_value;
  IF NOT FOUND THEN PERFORM record_incubator_experiment_event_legacy(id_value,state_value,detail_value); RETURN; END IF;
@@ -250,7 +261,28 @@ BEGIN
   safe_detail:=jsonb_build_object('result',jsonb_build_object('engine','momentum_v1','outcome','diagnostic_only','storage','market_data_v1'),'registration_id',(SELECT detail->'registration_id' FROM incubator_experiment_event WHERE experiment_id=id_value AND state='ready' ORDER BY sequence DESC LIMIT 1));
   PERFORM record_incubator_experiment_event_legacy(id_value,state_value,safe_detail);
   INSERT INTO market_data_result VALUES(id_value,d.id,detail_value->'result',d.source_lineage,clock_timestamp(),'local_research') ON CONFLICT DO NOTHING;
- ELSE PERFORM record_incubator_experiment_event_legacy(id_value,state_value,detail_value); END IF;
+ ELSE
+  SELECT * INTO event_value FROM incubator_experiment_event WHERE experiment_id=id_value AND (state_value<>'answered' OR state='answered') ORDER BY sequence DESC LIMIT 1;
+  SELECT detail INTO prior FROM market_data_event_detail WHERE experiment_id=id_value AND sequence=event_value.sequence;
+  IF event_value.state=state_value AND prior=detail_value THEN RETURN; END IF;
+  IF event_value.state=state_value AND prior IS NOT NULL THEN RAISE EXCEPTION 'immutable_event_detail'; END IF;
+  -- Keep free text, model messages and provider diagnostics in deletable storage.
+  -- The legacy state machine receives only the bounded control fields it validates.
+  safe_detail:='{}';
+  IF state_value IN ('preparing','clarifying','dispatching') THEN
+   safe_detail:=jsonb_build_object('request',jsonb_build_object('model',detail_value->'request'->'model','max_tokens',detail_value->'request'->'max_tokens','provider',jsonb_build_object('max_price',detail_value->'request'->'provider'->'max_price')));
+  ELSIF state_value='ready' THEN safe_detail:=jsonb_build_object('spec',detail_value->'spec');
+  ELSIF state_value IN ('answered','clarified') THEN
+   IF jsonb_typeof(detail_value->'answer') IS DISTINCT FROM 'string' OR length(btrim(detail_value->>'answer'))=0 OR octet_length(detail_value->>'answer')>6000 THEN RAISE EXCEPTION 'invalid_answer'; END IF;
+   safe_detail:=jsonb_build_object('answer','Stored with managed dataset');
+  ELSIF state_value='failed' THEN safe_detail:=jsonb_build_object('reason','Managed experiment failed; details are retained with its dataset.');
+  END IF;
+  PERFORM record_incubator_experiment_event_legacy(id_value,state_value,safe_detail);
+  IF market_data_snapshot_available(d.snapshot_id) THEN
+   INSERT INTO market_data_event_detail
+   SELECT id_value,max(sequence),d.id,detail_value,d.source_lineage,clock_timestamp(),'local_research' FROM incubator_experiment_event WHERE experiment_id=id_value;
+  END IF;
+ END IF;
 END $$;
 ALTER FUNCTION read_incubator_experiment(bigint) RENAME TO read_incubator_experiment_legacy;
 CREATE FUNCTION read_incubator_experiment(id_value bigint) RETURNS jsonb
@@ -262,8 +294,9 @@ BEGIN
  IF NOT FOUND THEN RETURN r; END IF;
  available:=market_data_snapshot_available(d.snapshot_id);
  SELECT result INTO result_value FROM market_data_result WHERE experiment_id=id_value AND available;
- SELECT coalesce(jsonb_agg(CASE WHEN x->>'state'='completed' THEN jsonb_set(x,'{detail}',((x->'detail')-'result')||CASE WHEN result_value IS NULL THEN '{}'::jsonb ELSE jsonb_build_object('result',result_value) END) ELSE x END ORDER BY (x->>'sequence')::integer),'[]') INTO events_value FROM jsonb_array_elements(r->'events') x;
+ SELECT coalesce(jsonb_agg(CASE WHEN x->>'state'='completed' THEN jsonb_set(x,'{detail}',((x->'detail')-'result')||CASE WHEN result_value IS NULL THEN '{}'::jsonb ELSE jsonb_build_object('result',result_value) END) ELSE CASE WHEN available AND md.detail IS NOT NULL THEN jsonb_set(x,'{detail}',md.detail||CASE WHEN x->>'state'='ready' THEN jsonb_build_object('registration_id',x->'detail'->'registration_id','registration_digest',x->'detail'->'registration_digest') ELSE '{}'::jsonb END) ELSE x END END ORDER BY (x->>'sequence')::integer),'[]') INTO events_value FROM jsonb_array_elements(r->'events') x LEFT JOIN market_data_event_detail md ON md.experiment_id=id_value AND md.sequence=(x->>'sequence')::integer;
  r:=r||jsonb_build_object('events',events_value,'replay_available',available);
+ IF jsonb_array_length(events_value)>0 THEN r:=jsonb_set(r,'{detail}',events_value->-1->'detail'); END IF;
  IF r->>'status'='completed' THEN r:=jsonb_set(r,'{detail}',((r->'detail')-'result')||CASE WHEN result_value IS NULL THEN '{}'::jsonb ELSE jsonb_build_object('result',result_value) END); END IF;
  IF NOT available THEN r:=jsonb_set(r,'{detail}',(r->'detail')||jsonb_build_object('reason','Source data is unavailable; this experiment cannot be replayed.')); END IF;
  RETURN r;
@@ -274,6 +307,7 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,pg_temp AS $
 DECLARE src market_data_source%ROWTYPE; n integer; BEGIN
  SELECT * INTO STRICT src FROM market_data_source WHERE id=source_value FOR UPDATE;
  UPDATE market_data_source SET removed_at=coalesce(removed_at,clock_timestamp()) WHERE id=source_value;
+ DELETE FROM market_data_event_detail WHERE dataset_id IN(SELECT id FROM market_data_dataset WHERE source_id=source_value);
  DELETE FROM market_data_result WHERE dataset_id IN(SELECT id FROM market_data_dataset WHERE source_id=source_value);
  DELETE FROM market_data_dataset_observation WHERE source_id=source_value;
  DELETE FROM market_data_payload WHERE source_id=source_value;

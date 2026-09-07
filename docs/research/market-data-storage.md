@@ -41,3 +41,5 @@ This operation reports **active stores purged**, not complete deletion across ev
 `bash scripts/wu61_market_data_test.sh` uses a separate Compose database, synthetic source/entitlement records and synthetic bars. It probes actual populated payload/observation/result deletion, function/table privileges, immutable result retries, idempotent registration, shared references, 90-day cleanup, source tombstones, replay projections, unrelated experiments and the audit hash chain. It also runs the legacy Incubator experiment SQL regression and the Rust untrusted-envelope tests. JSON evidence is in `evidence/wu-61/acceptance.json`.
 
 No real market data, provider credentials or normal-project migrations are installed by the acceptance script.
+
+Managed experiment messages and failure diagnostics are stored alongside deletable dataset payloads. Permanent events retain only validated control fields; projections resolve the full details while the source is available. Source removal also removes these details.
