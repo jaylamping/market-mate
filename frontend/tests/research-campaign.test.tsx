@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import React from "react";
 import {renderToStaticMarkup} from "react-dom/server";
 import {QueryClient,QueryClientProvider} from "@tanstack/react-query";
-import {ResearchCampaign} from "../app/incubator/ResearchCampaign";
+import {ResearchCampaign,CampaignDialog} from "../app/incubator/ResearchCampaign";
 import {modelRoutingQuery} from "../lib/api-queries";
 Object.assign(globalThis,{React});
 test("fresh empty backlog renders the independent Ticket Creator picker",()=>{
@@ -14,4 +14,8 @@ test("fresh empty backlog renders the independent Ticket Creator picker",()=>{
  assert.match(html,/Ticket Creator model/);assert.match(html,/vendor\/creator:free/);assert.match(html,/vendor\/creator-paid/);assert.match(html,/Enable campaign/);
  assert.match(html,/Cost pending/); assert.match(html,/0.125000/); assert.match(html,/Includes failed calls/); assert.match(html,/>100<\/option>/);
  client.clear();
+});
+test("campaign controls stay inside the dialog until opened",()=>{
+ const html=renderToStaticMarkup(<CampaignDialog/>);
+ assert.match(html,/New Campaign/); assert.doesNotMatch(html,/Ticket Creator model/);
 });

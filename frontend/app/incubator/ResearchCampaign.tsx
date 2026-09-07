@@ -1,6 +1,8 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Dialog } from "radix-ui";
+import { Plus, X } from "lucide-react";
 import {modelRoutingQuery} from "@/lib/api-queries";
 import { Button } from "@/components/ui/button";
 
@@ -63,4 +65,17 @@ export function ResearchCampaign() {
     </>}
     {save.isError&&<p role="alert" className="mt-3 text-sm text-destructive">{save.error.message}</p>}
   </section>;
+}
+
+export function CampaignDialog() {
+ return <Dialog.Root><Dialog.Trigger asChild><Button className="min-h-11" variant="outline"><Plus aria-hidden="true"/>New Campaign</Button></Dialog.Trigger>
+  <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-black/60"/>
+   <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-border bg-background p-6 text-foreground shadow-xl">
+    <Dialog.Title className="pr-10 text-xl font-semibold">New Campaign</Dialog.Title>
+    <Dialog.Description className="mb-5 mt-2 text-sm text-muted-foreground">Configure automatic ticket creation, manage the backlog, and track model usage.</Dialog.Description>
+    <Dialog.Close asChild><Button variant="ghost" size="icon" className="absolute right-3 top-3 min-h-11 min-w-11" aria-label="Close campaign"><X/></Button></Dialog.Close>
+    <ResearchCampaign/>
+   </Dialog.Content>
+  </Dialog.Portal>
+ </Dialog.Root>;
 }
