@@ -1,0 +1,36 @@
+{
+  "checks": [
+    "registered_entitlement_required",
+    "idempotent_import",
+    "shared_observation_identity",
+    "correction_preserves_original",
+    "panel_raw_consistency",
+    "restricted_runtime_role",
+    "pointer_only_snapshot",
+    "result_reference_only_audit",
+    "failure_detail_scoped_purge",
+    "resolved_experiment_payload",
+    "immutable_result_retry",
+    "referenced_retention",
+    "shared_cache_cleanup",
+    "actual_source_and_derivative_purge",
+    "source_tombstone",
+    "unrelated_experiment_preserved",
+    "replay_unavailable",
+    "audit_chain",
+    "untrusted_envelope_validation",
+    "cli_database_read",
+    "legacy_experiment_regression"
+  ],
+  "passed": true,
+  "work_unit": "WU-61",
+  "source_sha256": {
+    "db/migrations/0060_market_data_storage.sql": "d7e4ded24896381c59ce03b4019a7298e9da1251b3fb82904102cb6eff0db312",
+    "db/fixtures/wu61_market_data_probe.sql": "b18c1e31d4af8071c5a5217ee0e8cd9e490c6a5039b2da99a19139cd2f8e26ae",
+    "backend/src/market_data.rs": "0b1bde45d186eab80b52a2788bf22086b42bb048da91af6045c024819d4388c5",
+    "backend/src/bin/market-data-store.rs": "05dd7a678059e9f28f308fb4276e189b90622a38f4a4f307cb6bca9fbc34c6d5",
+    "scripts/wu61_market_data_test.sh": "5f7f153cdb3527a2febb88c13b9bf0b9345d25c65b7c899901b5bd2f87cb655d"
+  },
+  "live_provider_tested": false,
+  "external_backups_purged": false
+}

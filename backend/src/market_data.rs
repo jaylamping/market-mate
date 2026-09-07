@@ -444,5 +444,85 @@ fn package(
     )
 }
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DownloadEnvelope {
+    schema: String,
+    request: PanelRequest,
+    request_sha256: String,
+    panel_sha256: String,
+    panel: Value,
+    source_facts: Value,
+    observations: Vec<DownloadObservation>,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DownloadObservation {
+    symbol: String,
+    session: NaiveDate,
+    bar: ProviderBar,
+}
+
+/// Validate a saved downloader envelope before it crosses the database boundary.
+/// This does not establish vendor authenticity or certify an entitlement.
+pub fn validate_download(bytes: &[u8]) -> Result<Value, DownloadError> {
+    if bytes.len() > MAX_BODY {
+        return Err(DownloadError::ResourceLimit);
+    }
+    let input: DownloadEnvelope =
+        serde_json::from_slice(bytes).map_err(|_| DownloadError::InvalidResponse)?;
+    if input.schema != "market_mate_daily_download_v1" {
+        return Err(DownloadError::InvalidResponse);
+    }
+    input.request.validate(Utc::now())?;
+    let mut observations = BTreeMap::new();
+    for observation in input.observations {
+        if !input.request.symbols().contains(&observation.symbol)
+            || !input.request.sessions.contains(&observation.session)
+            || session(&observation.bar)? != observation.session
+        {
+            return Err(DownloadError::UnexpectedObservation);
+        }
+        if observations
+            .insert((observation.symbol, observation.session), observation.bar)
+            .is_some()
+        {
+            return Err(DownloadError::DuplicateObservation);
+        }
+    }
+    let started = input.source_facts["started_at"]
+        .as_str()
+        .ok_or(DownloadError::InvalidResponse)?;
+    let received = input.source_facts["received_at"]
+        .as_str()
+        .ok_or(DownloadError::InvalidResponse)?;
+    let start_time =
+        DateTime::parse_from_rfc3339(started).map_err(|_| DownloadError::InvalidResponse)?;
+    let received_time =
+        DateTime::parse_from_rfc3339(received).map_err(|_| DownloadError::InvalidResponse)?;
+    if start_time > received_time || received_time.with_timezone(&Utc) > Utc::now() {
+        return Err(DownloadError::InvalidResponse);
+    }
+    let pages = input.source_facts["pages"]
+        .as_u64()
+        .filter(|n| (1..=MAX_PAGES as u64).contains(n))
+        .ok_or(DownloadError::InvalidResponse)?;
+    let mut rebuilt = package(
+        &input.request,
+        observations,
+        started.to_string(),
+        pages as usize,
+    )?;
+    rebuilt["source_facts"]["received_at"] = json!(received);
+    if rebuilt["source_facts"] != input.source_facts
+        || rebuilt["request_sha256"] != input.request_sha256
+        || rebuilt["panel_sha256"] != input.panel_sha256
+        || rebuilt["panel"] != input.panel
+    {
+        return Err(DownloadError::InvalidResponse);
+    }
+    Ok(rebuilt)
+}
+
 #[cfg(test)]
 mod tests;

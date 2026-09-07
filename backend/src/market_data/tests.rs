@@ -270,3 +270,20 @@ async fn raw_decimal_precision_is_checked_before_float_normalization() {
         task.abort();
     }
 }
+
+#[tokio::test]
+async fn saved_download_rejects_panel_tampering_and_extra_provenance() {
+    let (client, _, task) = mock(vec![(200, bars(&request()), None)]).await;
+    let envelope = client.download(&request()).await.unwrap();
+    task.abort();
+    validate_download(&serde_json::to_vec(&envelope).unwrap()).unwrap();
+    let mut tampered = envelope.clone();
+    tampered["panel"]["series"][0]["bars"][0]["open_cents"] = json!(1);
+    assert!(validate_download(&serde_json::to_vec(&tampered).unwrap()).is_err());
+    let mut tampered = envelope.clone();
+    tampered["source_facts"]["extra"] = json!("untrusted");
+    assert!(validate_download(&serde_json::to_vec(&tampered).unwrap()).is_err());
+    let mut tampered = envelope;
+    tampered["observations"][0]["bar"]["o"] = json!(999);
+    assert!(validate_download(&serde_json::to_vec(&tampered).unwrap()).is_err());
+}
