@@ -20,6 +20,7 @@ COPY --from=build /app/target/release/cursor-connector /usr/local/bin/cursor-con
 COPY --from=build /app/target/release/research-agent /usr/local/bin/research-agent
 COPY --from=build /app/target/release/incubator-chat /usr/local/bin/incubator-chat
 COPY --from=build /app/target/release/incubator-requests /usr/local/bin/incubator-requests
+COPY --from=build /app/target/release/market-data-download /usr/local/bin/market-data-download
 RUN mkdir -p /var/lib/custody /var/lib/model-policy && chown app /var/lib/custody /var/lib/model-policy
 USER app
 EXPOSE 8080
