@@ -81,18 +81,31 @@ function CandidateCard({candidate,model}:{candidate:CampaignAgenda;model:string}
     </article>
   </Dialog.Root>;
 }
+export type CampaignView = "current" | "archived" | "duplicates";
 export function campaignCandidateStatus(state:string) { return stateLabel[state]??state; }
-export function campaignCandidates(campaign:Campaign|null|undefined, view:string, search="", status="all") {
+export function campaignCandidates(campaign:Campaign|null|undefined, view:CampaignView, search="", status="all") {
   return (campaign?.agenda??[]).filter(candidate=>!candidate.run_key && (view==="duplicates" ? candidate.state==="duplicate" : view==="archived" ? !!candidate.retry_candidate && ["blocked","cancelled"].includes(candidate.state) : view==="current" && candidate.state!=="duplicate" && !candidate.retry_candidate) && (status==="all"||campaignCandidateStatus(candidate.state)===status) && [candidate.title,candidate.premise,candidate.creator_model??campaign?.creator_model,String(candidate.ordinal)].join(" ").toLowerCase().includes(search.toLowerCase()));
 }
-export function CampaignBacklog({campaign,view="current",search="",status="all"}:{campaign:Campaign|null|undefined;view?:string;search?:string;status?:string}) {
+function campaignBacklogEmpty(view:CampaignView):string {
+  switch (view) {
+    case "duplicates": return "No duplicate proposals.";
+    case "archived": return "No archived campaign checks.";
+    case "current": return "No current campaign backlog.";
+    default: {
+      const _exhaustive: never = view;
+      return _exhaustive;
+    }
+  }
+}
+export function CampaignBacklog({campaign,view="current",search="",status="all"}:{campaign:Campaign|null|undefined;view?:CampaignView;search?:string;status?:string}) {
   const candidates = campaignCandidates(campaign,view,search,status);
-  if (!candidates.length) return view==="duplicates" ? <div className={ticketCardStyles.empty}>No duplicate proposals.</div> : view==="archived" ? <div className={ticketCardStyles.empty}>No archived campaign checks.</div> : null;
   const heading = view==="duplicates" ? "Duplicate proposals" : view==="archived" ? "Archived campaign checks" : "Campaign backlog";
   const blurb = view==="duplicates" ? "Preserved proposals that matched an exact diagnostic case. Open a card to inspect the match." : view==="archived" ? "Failed or cancelled checks that already have a retry. Open a card to inspect the original result." : "Waiting and stopped proposals. A failed check stays on file; its retry card is the one workers pick up.";
   return <section aria-labelledby="campaign-backlog-heading" className="mt-6 mb-8 border-t border-border pt-5">
     <div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><h2 id="campaign-backlog-heading" className="text-xl font-semibold">{heading}</h2><p className="mt-1 text-sm text-muted-foreground">{blurb}</p></div><span className="text-sm tabular-nums text-muted-foreground">{candidates.length} shown · latest 100 proposals</span></div>
-    <div className={ticketCardStyles.grid}>{candidates.map(candidate=><CandidateCard key={candidate.ordinal} candidate={candidate} model={campaign!.creator_model}/>)}</div>
+    {!candidates.length
+      ? <div className={ticketCardStyles.empty}>{campaignBacklogEmpty(view)}</div>
+      : <div className={ticketCardStyles.grid}>{candidates.map(candidate=><CandidateCard key={candidate.ordinal} candidate={candidate} model={campaign!.creator_model}/>)}</div>}
   </section>;
 }
 export function ResearchCampaign() {
