@@ -43,7 +43,7 @@ BEGIN
    RAISE EXCEPTION 'fallback key already used' USING ERRCODE='22023';
  END IF;
  child_run := admit_incubator_agent_run(key_value,model_value,'momentum-brief-v1');
- lineage := jsonb_build_object('source','incubator-agent-fallback','parent_run_key',parent_value,'policy_revision',revision_value);
+ lineage := jsonb_build_object('source','incubator-agent-fallback','entitlement_version','project-authored-brief-v1','parent_run_key',parent_value,'policy_revision',revision_value);
  INSERT INTO incubator_agent_fallback VALUES(parent_value,key_value,revision_value,lineage,clock_timestamp(),'local_research');
  PERFORM append_audit_event('agent-fallback:'||parent_value,'research.agent_fallback_admitted',now(),
    jsonb_build_object('parent_run_key',parent_value,'fallback_run_key',key_value,'model',model_value,'policy_revision',revision_value),lineage,now(),'local_research');

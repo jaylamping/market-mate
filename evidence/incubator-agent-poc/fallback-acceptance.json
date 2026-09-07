@@ -1,0 +1,16 @@
+{
+  "probe": "incubator-fallback",
+  "checks": [
+    "confirmed_failure_only",
+    "different_model",
+    "one_fallback_per_parent",
+    "no_fallback_chains",
+    "idempotent_admission",
+    "uncertain_outcome_denied",
+    "restricted_role",
+    "immutable_populated_link",
+    "audit_chain"
+  ],
+  "passed": true,
+  "migration_sha256": "6944e4222a7d5db70d1c733976c2c0bba8743ff6e042473ade5c0e5b943a7276"
+}
