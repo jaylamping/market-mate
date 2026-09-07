@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {GET,POST} from "../app/api/market-data/[[...path]]/route";
-import {acquisitionLabels,dataError} from "../lib/market-data";
+import {acquisitionLabels,canRetryAcquisition,dataError} from "../lib/market-data";
 test("market data proxy rejects foreign origins, oversized secrets and arbitrary paths",async()=>{
  const old=process.env.MARKET_DATA_URL,original=globalThis.fetch;process.env.MARKET_DATA_URL="http://connector:8087";let sent=0;
  globalThis.fetch=async(input,init)=>{sent++;assert.equal(String(input),"http://connector:8087/setup");assert.equal(init?.cache,"no-store");return Response.json({saved:true});};
@@ -20,6 +20,12 @@ test("failed collection and incomplete coverage never imply usable experiment da
  assert.equal(acquisitionLabels.failed,"Download needs attention");
  assert.match(dataError("IncompleteCoverage"),/No dataset was attached/);
  assert.match(dataError("refresh_failed"),/Saved experiment inputs are unchanged/);
+ assert.match(dataError("commit_rejected"),/Retry uses the same request/);
+ const request={symbols:["AAPL"],sessions:["2026-01-05"],benchmark:"SPY",cash:"zero_interest",symbol_asof:"2026-01-05"};
+ assert.equal(canRetryAcquisition({state:"failed",attempts:2,error_code:"IncompleteCoverage",request}),true);
+ assert.equal(canRetryAcquisition({state:"failed",attempts:3,error_code:"IncompleteCoverage",request}),false);
+ assert.equal(canRetryAcquisition({state:"failed",attempts:3,error_code:"commit_rejected",request}),true);
+ assert.equal(canRetryAcquisition({state:"failed",attempts:3,error_code:"commit_rejected",request:null}),false);
 });
 
 test("reuse forwards only the acknowledgement and keeps foreign requests out",async()=>{

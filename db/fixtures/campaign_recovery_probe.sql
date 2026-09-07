@@ -13,7 +13,7 @@ DO $$ DECLARE a jsonb; original jsonb; state jsonb; child integer; BEGIN
  state:=retry_incubator_campaign((a->>'ordinal')::integer,0);
  SELECT (x->>'ordinal')::integer INTO child FROM jsonb_array_elements(state->'agenda') x WHERE x->>'retry_of'=a->>'ordinal';
  PERFORM pg_temp.ensure(child IS NOT NULL,'retry links original candidate');
- PERFORM pg_temp.ensure(state->>'enabled'='false','retry cannot resume campaign');
+ PERFORM pg_temp.ensure(state->>'enabled'='true','retry does not change campaign enabled state');
  PERFORM pg_temp.ensure(read_incubator_request_check(a->>'request_id')=original,'original check unchanged');
  PERFORM pg_temp.ensure(retry_incubator_campaign((a->>'ordinal')::integer,-999)=state,'network replay returns same child');
  BEGIN PERFORM retry_incubator_campaign(child,0); RAISE EXCEPTION 'pending candidate retry accepted';
@@ -39,7 +39,7 @@ END $$;
 RESET ROLE;
 -- Pre-dispatch failures must appear even without a capacity receipt.
 INSERT INTO incubator_ticket_generation(campaign_revision,model,state,detail) VALUES(0,'vendor/model:free','failed','{"reason":"model_not_whitelisted","stage":"preparation"}');
-UPDATE incubator_campaign SET note='Ticket Creator needs attention. Its recorded attempts are preserved; uncertain requests are not replayed.';
+UPDATE incubator_campaign SET enabled=false,note='Ticket Creator needs attention. Its recorded attempts are preserved; uncertain requests are not replayed.';
 SELECT pg_temp.ensure(read_incubator_campaign()->'creator_calls'->0->>'reason'='model_not_whitelisted','pre-dispatch failure visible');
 SELECT pg_temp.ensure(read_incubator_campaign()->>'note' LIKE '%model_not_whitelisted%','pause retains root cause');
 SELECT pg_temp.ensure(read_incubator_campaign()->'creator_calls'->0->>'request_id' LIKE 'ticket-creator:%','creator failure linked');

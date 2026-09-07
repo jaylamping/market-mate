@@ -55,7 +55,8 @@ pub(crate) async fn tick(
         )
         .await
         {
-            Ok(Ok(bundle)) => {
+            Ok(Ok(mut bundle)) => {
+                bundle["request"] = job["request"].clone();
                 match db
                     .query_one(
                         "SELECT finish_market_data_acquisition($1,$2::text::uuid,$3)::text",
@@ -64,13 +65,13 @@ pub(crate) async fn tick(
                     .await
                 {
                     Ok(_) => return Ok(true),
-                    Err(_) => "commit_rejected".to_string(),
+                    Err(error) => attachment_failure("commit", &error),
                 }
             }
             Ok(Err(error)) => error.to_string(),
             Err(_) => "download_timeout".to_string(),
         },
-        Err(_) => "commit_rejected".to_string(),
+        Err(error) => attachment_failure("cache", &error),
     };
     db.query_one(
         "SELECT fail_market_data_acquisition($1,$2::text::uuid,$3)",
@@ -79,6 +80,19 @@ pub(crate) async fn tick(
     .await
     .map_err(|_| "failure_record_unavailable")?;
     Ok(true)
+}
+
+fn attachment_failure(stage: &str, error: &tokio_postgres::Error) -> String {
+    let message = error
+        .as_db_error()
+        .map(|e| e.message().to_string())
+        .unwrap_or_else(|| error.to_string());
+    eprintln!("Market data {stage} rejected: {error:?}");
+    if message.contains("statement timeout") || message.contains("canceling statement") {
+        "download_timeout".to_string()
+    } else {
+        "commit_rejected".to_string()
+    }
 }
 
 /// LISTEN provides prompt handoff; periodic draining recovers missed notifications

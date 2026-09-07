@@ -41,7 +41,9 @@ cargo run --locked --bin market-data-acquire
 
 One job per ticket freezes the request and source. Claims serialize on the source, select jobs with row locks, and issue a random five-minute lease token. A download has a two-minute overall timeout. After a crash, another process recovers the expired lease. Only the current token may finish; a source check and current waiting/supersession check precede atomic registration and binding.
 
-Transient network, rate-limit and provider-availability failures retry after 60 seconds. There are three acquisition attempts total, including expired leases. Permanent failures wait for explicit retry with the same request and remaining budget. Exhausted or invalid requests need a new experiment; parameters are never changed by Retry.
+Transient network, rate-limit, provider-availability, and statement-timeout failures retry after 60 seconds. There are three acquisition attempts total, including expired leases. Permanent price and coverage failures wait for explicit retry with the same request and remaining budget. `commit_rejected` stays operator-retryable after that budget: Retry requeues the same frozen request and does not invent new symbols or dates. Other exhausted or invalid requests need a new experiment.
+
+The Compose acquisition worker uses a 180-second statement timeout. Request handlers keep the 5-second API timeout. Cache assembly of a reused 60-session panel can exceed 5 seconds; applying the API timeout to the worker recorded those reads as `commit_rejected`. See [ADR 0009](../adr/0009-acquisition-worker-timeout.md).
 
 The local Incubator API exposes `GET /workflow/{id}/acquisition` and `POST /workflow/{id}/acquisition` with `{"action":"retry"}` or `{"action":"cancel"}`. WU-63 exposes these controls in experiment details. Cancellation fences attachment immediately; an already in-flight, bounded download may finish but its response cannot be stored or attached. Manual binding or research supersession also blocks an outstanding acquisition's commit. Completed jobs cannot be cancelled or rebound.
 

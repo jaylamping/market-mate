@@ -43,7 +43,14 @@
     "campaign_cancellation_pending_cost",
     "http_campaign_read",
     "http_campaign_save",
-    "http_stale_settings_rejected"
+    "http_stale_settings_rejected",
+    "paused_backlog_pickup",
+    "topic_overlap_not_duplicate",
+    "exact_case_duplicate_queue",
+    "incomplete_check_auto_retry",
+    "research_scout_retry",
+    "archived_research_not_retried",
+    "campaign_paid_research_claim"
   ],
   "passed": true,
   "sha256": {
@@ -53,15 +60,20 @@
     "db/migrations/0077_campaign_backlog_premise.sql": "ecb65a7928d33c322cd66e309690f0901ce49241d16193a9e7e04c7de10432e6",
     "db/migrations/0078_campaign_failure_visibility.sql": "99917efa195303a7cf82ce5103c43a4fdd032c214543825cf054f768c3228ae0",
     "db/migrations/0079_campaign_recovery.sql": "c2acdcd3814efaa51d811142c64dc16c142cceab39c748ae94fb95ac890e010d",
-    "db/fixtures/campaign_recovery_probe.sql": "a26db9c52cc8349ebb6d3be2d314570de71c4de97b6a23197766d0bcfddcc2fd",
-    "backend/src/incubator_output.rs": "d0ba22c0bdf9d6ade74d3c0c568cf45aea27b13641336b32e4b084c76c5bb8db",
-    "backend/src/openrouter_request.rs": "10e57ec28a03e73a51846a59913976935a67e502845d8039cf7b69c07670bdff",
-    "db/fixtures/research_campaign_probe.sql": "8c8ab67054f7e96654ceed3e37a08d04a91edcae935644eeb922d034a99b59d3",
-    "backend/src/incubator.rs": "614eb7ea9520316a7b8a260b3eedaca8fbbdca84afed3b22a7364323f86861e3",
-    "backend/src/incubator_campaign.rs": "6099fa1a965ab74cfd130fdb8094c2994f5e90933056feede42a38be604b57d2",
+    "db/migrations/0080_campaign_backlog_pickup.sql": "959c2cd4dfa26113992d9ad72259624ef061052d2fb603429dd9dfa1dd11949d",
+    "db/migrations/0081_campaign_experiment_throughput.sql": "505761d5ff4271d1509e2932e87eeb80ee881cd95a4b077755e7d022f9a05abc",
+    "db/migrations/0083_research_retry_campaign_paid.sql": "cb31d24c0fafd85acd109cc87649af6f581eb66114a533ba732c112fe1a72e09",
+    "db/fixtures/campaign_recovery_probe.sql": "7872681ca0d4a28e7ff1636f2780efd95da8c8a7ac69e8d5f8837997dad7561f",
+    "db/fixtures/campaign_backlog_pickup_probe.sql": "801aa9fbe32413f45bb83f0f443bd3082165de9d22a9d977116b8edc7fe16df2",
+    "db/fixtures/research_scout_retry_probe.sql": "1909819612677c8339503ea2d22a9e3551b336393d3fff26499d3672f0d31c63",
+    "backend/src/incubator_output.rs": "79c9fb8d4b94be01442a6925acfbcbfb7e7d226a78316997b1d66eef39c66e30",
+    "backend/src/openrouter_request.rs": "bb9a3d8bd1cff418e8aa9e6b52c8ca3eb83054f25b080099ee8ba695f436b2db",
+    "db/fixtures/research_campaign_probe.sql": "4b78f4aed62260b11c3b787354f11f21abce91bf95b3c23b15d6404007b02977",
+    "backend/src/incubator.rs": "8088473311769e6aad658b22a9542edcf04282f8302383442d39a9c6bb253ded",
+    "backend/src/incubator_campaign.rs": "496992733aeb65c57e110b2da10574d74af2faae71f0ba1bc2f3652e081329a0",
     "backend/src/incubator_ticket_creator.rs": "0a439cdc09e3fd2dbe725e0d57316b6152a8d695cace33243d27d5b913e9c1f2",
-    "backend/src/incubator_requests.rs": "ff057f582d05c2ab20d728a761efdf7ad4e6928d0dc3cc44fd8cffcc57140b2f",
-    "backend/src/openrouter_capacity.rs": "1bb0b544210177e015f03dcb7a135007a918c0c2f0af508888fc7daa2da3d8c7",
-    "scripts/research_campaign_test.sh": "dfab360e24c3a0bc1a14945dd3a2108a3d8110627c9ef9ba40a73927c20ce2ae"
+    "backend/src/incubator_requests.rs": "ecbc099588cebe7fa3ef206081beebbd2fd0e63dd0b4d0b57e4afa036cf11546",
+    "backend/src/openrouter_capacity.rs": "84fbba679f513d1048dc68546aabddced46689bfcd6339f077758e05f6bd17ac",
+    "scripts/research_campaign_test.sh": "16f0593f296ef2c7580fed7072a0153c23bd6b2a57ffd372b5156c3dd1bb7970"
   }
 }

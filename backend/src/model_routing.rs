@@ -78,7 +78,7 @@ pub fn read(path: &Path, openrouter: &Path, cursor: &Path) -> Result<RoutingPoli
             .collect(),
     })
 }
-pub fn provider_policy(policy: &RoutingPolicy, provider: &str) -> crate::openrouter::Policy {
+pub(crate) fn provider_policy(policy: &RoutingPolicy, provider: &str) -> crate::openrouter::Policy {
     crate::openrouter::Policy {
         revision: policy.revision,
         allowed_models: policy

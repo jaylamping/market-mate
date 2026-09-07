@@ -267,12 +267,14 @@ async fn admit_route(
     let status = read(db).await?;
     let policy = &status["policy"];
     let primary = request["model"].as_str().ok_or("model_unavailable")?;
-    let campaign_free: bool = db
+    let campaign_work: bool = db
         .query_one("SELECT incubator_campaign_free_work($1)", &[&key])
         .await
         .map_err(|_| "capacity_unavailable")?
         .get(0);
-    let trigger = if campaign_free {
+    let trigger = if campaign_work && !primary.ends_with(":free") {
+        "campaign_selection"
+    } else if campaign_work {
         "free"
     } else {
         paid_trigger(&status, primary, purpose, recovery).unwrap_or("free")
@@ -283,7 +285,7 @@ async fn admit_route(
     let mut actual = request.clone();
     let mut reserve = 0_i64;
     if trigger != "free" && trigger != "manual" {
-        let candidates = if purpose == "ticket_creator" {
+        let candidates = if purpose == "ticket_creator" || trigger == "campaign_selection" {
             vec![primary]
         } else {
             paid_candidates(policy, purpose)

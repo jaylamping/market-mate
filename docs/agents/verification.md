@@ -26,7 +26,7 @@ Verification writes normal build artifacts; it does not migrate the running data
 
 | Changed behavior | Additional acceptance script(s) |
 | --- | --- |
-| Campaign/creator/similarity/retry | `bash scripts/research_campaign_test.sh` |
+| Campaign/creator/similarity/research retry | `bash scripts/research_campaign_test.sh` |
 | Provider capacity/spending/recovery | `bash scripts/openrouter_capacity_test.sh` |
 | Manual research intake | `bash scripts/incubator_manual_requests_test.sh` |
 | Evaluation/refinement/experiment | Corresponding `incubator_evaluation_test.sh`, `incubator_refinement_test.sh`, `incubator_experiment_test.sh` in [scripts](../../scripts) |
