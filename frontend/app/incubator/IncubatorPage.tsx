@@ -1,6 +1,6 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bot, ArrowUpRight, CheckCircle2, XCircle, Clock3, CircleDashed, X } from "lucide-react";
+import { Bot, ArrowUpRight, CheckCircle2, XCircle, Clock3, CircleDashed, X, Archive, ArchiveRestore, LoaderCircle } from "lucide-react";
 import { Dialog, Tabs } from "radix-ui";
 import {OriginBadge} from "./OriginBadge";
 import {Experiments} from "./Experiments";
@@ -46,13 +46,16 @@ function RunDetails({run}:{run:Run}) {
       <section className="space-y-3"><h3 className="text-sm font-medium">Run history</h3><ol className="space-y-2">{run.events.map(e=><li key={e.sequence} className="flex flex-wrap justify-between gap-2 border-l-2 border-border pl-3 text-sm"><span>{({admitted:"Assignment queued",preparing:"Preparing model and request",dispatched:"Dispatch intent recorded",completed:"Report recorded",failed:"Run failed",indeterminate:"Outcome unknown"})[e.state]}</span><time className="text-xs text-muted-foreground" dateTime={e.at}>{time(e.at)}</time></li>)}</ol></section>
   </div>;
 }
-function ArchiveResearch({run,onSaved}:{run:Run;onSaved:()=>void}) {
+function ArchiveResearch({run,onSaved,compact=false}:{run:Run;onSaved:()=>void;compact?:boolean}) {
  const cache=useQueryClient();
  const mutation=useMutation({mutationFn:async(input:{request_id:string;archived:boolean;expected_version:number})=>{
   const response=await fetch(`/api/incubator/runs/${encodeURIComponent(run.run_key)}/archive`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(input)});
   if(!response.ok)throw Error("Could not save archive status. Refresh the ticket and try again.");
  },onSuccess:()=>{void cache.invalidateQueries({queryKey:incubatorQuery.queryKey});onSaved();}});
- return <div className="mb-5 rounded-lg border border-border p-3"><div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-muted-foreground">{run.archived?"Archived research · Report, chat, and linked experiments are preserved.":"Archive hides this ticket from the default list. It does not stop work or archive linked experiments."}</p><Button variant="outline" disabled={mutation.isPending} onClick={()=>mutation.mutate({request_id:crypto.randomUUID(),archived:!run.archived,expected_version:run.archive_version??0})}>{mutation.isPending?"Saving…":run.archived?"Restore research":"Archive research"}</Button></div>{mutation.isError&&<p role="alert" className="mt-2 text-sm text-destructive">{mutation.error.message}</p>}</div>;
+ const action=()=>mutation.mutate({request_id:crypto.randomUUID(),archived:!run.archived,expected_version:run.archive_version??0});
+ const label=run.archived?"Restore research":"Archive research";
+ if(compact){const Icon=mutation.isPending?LoaderCircle:run.archived?ArchiveRestore:Archive;return <><Button type="button" variant="ghost" size="icon" className="absolute right-10 top-3 z-10 text-muted-foreground hover:text-foreground disabled:pointer-events-auto" aria-label={`${label}: ${run.config.input.title}`} title={label} disabled={mutation.isPending} onClick={action}><Icon className={`size-4 ${mutation.isPending?"animate-spin":""}`} aria-hidden="true"/></Button>{mutation.isError&&<p role="alert" className="mt-2 px-2 text-xs text-destructive">{mutation.error.message}</p>}</>;}
+ return <div className="mb-5 rounded-lg border border-border p-3"><div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-muted-foreground">{run.archived?"Archived research · Report, chat, and linked experiments are preserved.":"Archive hides this ticket from the default list. It does not stop work or archive linked experiments."}</p><Button variant="outline" disabled={mutation.isPending} onClick={action}>{mutation.isPending?"Saving…":run.archived?"Restore research":"Archive research"}</Button></div>{mutation.isError&&<p role="alert" className="mt-2 text-sm text-destructive">{mutation.error.message}</p>}</div>;
 }
 function RunStatus({run}:{run:Run}) {
   const label=stateLabel(run);
@@ -66,16 +69,16 @@ export function RunCard({run,initiallyOpen=false,initialVersion="current",evalua
   const revisions=conversation.data?.plan?.revisions??[],current=revisions.at(-1);
   const selected=version==="current"?current:revisions.find(r=>String(r.revision)===version);
   const viewedRun=selected?{...run,detail:{...run.detail,report:selected.report}}:run;
-  return <Dialog.Root open={open} onOpenChange={setOpen}><Dialog.Trigger asChild>
-    <button type="button" className="group flex min-h-72 w-full min-w-0 flex-col items-start rounded-xl border border-border bg-card p-5 text-left text-card-foreground transition-colors hover:border-primary/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring" aria-label={`Open ${run.config.input.title}, ${stateLabel(run)}, ${time(run.created_at)}`}>
-      <span className="flex w-full items-center justify-between gap-2"><RunStatus run={run}/>{run.archived&&<Badge variant="outline">Archived</Badge>}<ArrowUpRight className="size-4 text-muted-foreground transition-colors group-hover:text-primary" aria-hidden="true"/></span>
-      <span className="mt-3"><OriginBadge origin={run.created_by??"local_runner"}/></span>
+  return <Dialog.Root open={open} onOpenChange={setOpen}><div className="relative flex min-w-0 flex-col"><Dialog.Trigger asChild>
+    <button type="button" className="group flex min-h-72 w-full min-w-0 flex-1 flex-col items-start rounded-xl border border-border bg-card p-5 text-left text-card-foreground transition-colors hover:border-primary/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring" aria-label={`Open ${run.config.input.title}, ${stateLabel(run)}, ${time(run.created_at)}`}>
+      <span className="flex w-full items-center justify-between gap-2"><span className="min-w-0 max-w-[calc(100%-3.5rem)]"><RunStatus run={run}/></span><ArrowUpRight className="size-4 text-muted-foreground transition-colors group-hover:text-primary" aria-hidden="true"/></span>
+      <span className="mt-3 flex flex-wrap gap-2"><OriginBadge origin={run.created_by??"local_runner"}/>{run.archived&&<Badge variant="outline">Archived</Badge>}</span>
       <span className="mt-5 line-clamp-3 text-base font-medium leading-snug">{run.config.input.title}</span>
       <span className="mt-3 line-clamp-2 break-all text-xs text-muted-foreground">{run.config.model}</span>
       <span className="mt-auto block w-full space-y-1 border-t border-border pt-3 text-xs text-muted-foreground"><span className="block">{run.config.agent_name}</span><time className="block tabular-nums" dateTime={run.created_at}>{time(run.created_at)}</time></span>
       <div className="mt-3 h-8 w-full text-xs text-primary">{evaluation?<EvaluationSummary evaluation={evaluation}/>:<span className="text-muted-foreground">{run.state==="failed"?"Evaluation not reached":"Evaluation follows research"}</span>}</div><WorkflowTimeline run={run} evaluation={evaluation} compact/>
     </button>
-  </Dialog.Trigger><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-black/60"/><Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-6xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-background text-foreground shadow-xl focus:outline-none">
+  </Dialog.Trigger><ArchiveResearch run={run} compact onSaved={()=>setOpen(false)}/></div><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-black/60"/><Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-6xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-background text-foreground shadow-xl focus:outline-none">
     <div className="grid shrink-0 gap-5 border-b border-border p-5 pr-16 sm:p-6 sm:pr-16 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)]"><div><div className="mb-3"><RunStatus run={run}/></div><Dialog.Title className="text-lg font-semibold leading-snug sm:text-xl">{run.config.input.title}</Dialog.Title><Dialog.Description className="mt-2 text-sm text-muted-foreground">{run.config.agent_name} · {time(run.created_at)}</Dialog.Description></div><WorkflowTimeline run={run} evaluation={evaluation}/><Dialog.Close asChild><button type="button" aria-label="Close run details" className="absolute right-3 top-3 grid min-h-11 min-w-11 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"><X className="size-5" aria-hidden="true"/></button></Dialog.Close></div>
     <Tabs.Root defaultValue="report" className="flex h-[min(72dvh,50rem)] min-h-0 flex-col">
       <Tabs.List aria-label="Run view" className="flex shrink-0 gap-5 border-b border-border px-5 sm:px-6">{["Report","Chat"].map(label=><Tabs.Trigger key={label} value={label.toLowerCase()} className="min-h-11 border-b-2 border-transparent px-1 text-sm text-muted-foreground outline-none data-[state=active]:border-primary data-[state=active]:text-foreground focus-visible:ring-2 focus-visible:ring-ring">{label}</Tabs.Trigger>)}</Tabs.List>
