@@ -58,7 +58,7 @@ function CandidateCard({candidate,model}:{candidate:CampaignAgenda;model:string}
 export function CampaignBacklog({campaign}:{campaign:Campaign|null|undefined}) {
   const candidates = (campaign?.agenda??[]).filter(candidate=>!candidate.run_key&&["pending","checking"].includes(candidate.state));
   if (!campaign || !candidates.length) return null;
-  return <section aria-labelledby="campaign-backlog-heading" className="mb-8">
+  return <section aria-labelledby="campaign-backlog-heading" className="mt-6 mb-8 border-t border-border pt-5">
     <div className="mb-3 flex flex-wrap items-end justify-between gap-3"><div><h2 id="campaign-backlog-heading" className="text-xl font-semibold">Campaign backlog</h2><p className="mt-1 text-sm text-muted-foreground">Ticket Creator proposals waiting for a free research worker.</p></div><span className="text-sm tabular-nums text-muted-foreground">{campaign.backlog_count} waiting</span></div>
     <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),20rem))] gap-4">{candidates.map(candidate=><CandidateCard key={candidate.ordinal} candidate={candidate} model={campaign.creator_model}/>)}</div>
   </section>;
