@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 
 type Usage = {calls:number; input_tokens:number; output_tokens:number; reasoning_tokens:number; unknown_token_calls:number; known_cost_usd:number; unknown_cost_calls:number};
 type Campaign = {
+  creator_in_progress?: boolean;
   creator_usage?:{lifetime:Usage;last_24h:Usage}; creator_calls?:{id:number;model:string;state:string;cost_usd:number|null;usage:{prompt_tokens?:number;completion_tokens?:number}|null}[];
   creator_model: string; backlog_limit: number; backlog_count: number; creator_status: string | null; target: number; created_count: number; completed_count: number; enabled: boolean; revision: number; daily_limit: number; open_limit: number;
   next_at: string; note: string; open_count: number; attempts_today: number; symbols: string[];
@@ -32,6 +33,9 @@ export function ResearchCampaign() {
       creator_model: creator??query.data?.creator_model??"", backlog_limit: backlog??query.data?.backlog_limit, revision: query.data?.revision, daily_limit: daily ?? query.data?.daily_limit, open_limit: open ?? query.data?.open_limit })
   }).then(response), onSuccess: data => {client.setQueryData(key, data); setDaily(null); setOpen(null); setCreator(null); setBacklog(null);} });
   const c = query.data;
+  const stopping = !c?.enabled && !!c?.creator_in_progress;
+  const pendingSettings = daily!==null||open!==null||creator!==null||backlog!==null;
+  const campaignActionLabel = save.isPending ? "Saving…" : stopping ? "Stopping generation…" : !c?.enabled ? "Enable campaign" : c.creator_in_progress ? "Stop generation" : "Pause campaign";
   return <section className="mb-6 rounded-xl border border-border bg-card p-5" aria-label="Research campaign">
     <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Research campaign</h2><span className="text-sm text-muted-foreground">{c ? c.enabled ? "Enabled" : "Paused" : "Loading"}</span></div>
     <p className="mt-2 text-sm text-muted-foreground">One Ticket Creator model proposes a backlog of research questions. Free research workers take tickets as capacity permits, then evaluation and experiments follow.</p>
@@ -47,7 +51,7 @@ export function ResearchCampaign() {
       </details>}
       <details className="mt-4"><summary className="cursor-pointer text-sm font-medium text-primary">Current diagnostic scope and recent backlog</summary>
         <div className="mt-3 space-y-3 text-sm"><p>{c.symbols.join(", ")}. Each candidate pins the latest 60 trading sessions ending before today in New York, with SPY as benchmark and zero-interest cash.</p>
-          <p className="text-muted-foreground">Ticket Creator uses the selected model; paid choices require your existing automated spending policy to allow that model. Research workers stay on free routes. Duplicate or incomplete checks create no research ticket. Ten completed experiments is an acceptance milestone; intake continues afterward. The latest 100 backlog entries are shown. Pausing lets existing research tickets finish.</p>
+          <p className="text-muted-foreground">Ticket Creator uses the selected model; a paid choice authorizes that selected creator only, within the recorded spending limits. Automated research workers stay free-only. Duplicate or incomplete checks create no research ticket. Ten completed experiments is an acceptance milestone; intake continues afterward. The latest 100 backlog entries are shown. Pausing lets existing research tickets finish.</p>
           <ol className="space-y-3">{(c.agenda??[]).map(a=><li key={a.ordinal} className="border-l-2 border-border pl-3"><p>{a.title} <span className="text-muted-foreground">· {a.state}</span></p>{a.reason&&<p className="text-xs text-muted-foreground">{a.reason}</p>}{a.scope&&<p className="text-xs text-muted-foreground">Pinned dates: {a.scope.start} – {a.scope.end}</p>}{a.run_key&&<a className="text-primary underline" href={`/incubator?run=${encodeURIComponent(a.run_key)}`}>Open research ticket</a>}</li>)}</ol>
         </div>
       </details>
@@ -55,12 +59,13 @@ export function ResearchCampaign() {
         <label className="min-w-0 text-sm">Ticket Creator model<select className="mt-2 min-h-11 w-full min-w-0 rounded-md border border-input bg-background px-3" aria-label="Ticket Creator model" value={creator??c.creator_model} disabled={save.isPending||routing.isPending} onChange={e=>setCreator(e.target.value)}><option value="">Choose a model</option>{!!c.creator_model&&!models.some(m=>m.model_id===c.creator_model)&&<option value={c.creator_model}>{c.creator_model} (unavailable)</option>}{models.map(m=><option key={m.model_id} value={m.model_id}>{m.model_id}{m.model_id.endsWith(":free")?" · Free":" · Paid"}</option>)}</select></label>
         <label className="text-sm">Backlog target<select className="ml-2 min-h-11 rounded-md border border-input bg-background px-3" value={backlog??c.backlog_limit} onChange={e=>setBacklog(Number(e.target.value))}>{[1,3,5,10,15,20,50,75,100].map(n=><option key={n}>{n}</option>)}</select></label>
       </div>
+      {c.creator_in_progress&&<p className="mt-3 text-xs text-muted-foreground">Stop generation cancels the local request and pauses new intake. A request already accepted by the provider may still incur a charge; unknown costs remain pending.{pendingSettings&&" Saving settings also stops this in-flight request and may pause the campaign for attention if its provider outcome is uncertain."}</p>}
       {routing.isError&&<p role="alert" className="mt-2 text-sm text-destructive">Model choices are unavailable. Refresh Models to choose a Ticket Creator.</p>}
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <label className="text-sm">New tickets per day<select className="ml-2 min-h-11 rounded-md border border-input bg-background px-3" value={daily??c.daily_limit} onChange={e=>setDaily(Number(e.target.value))}>{[1,2,3,4,5,6,7,8,9,10,25,50,75,100].map(n=><option key={n}>{n}</option>)}</select></label>
         <label className="text-sm">Unfinished ticket limit<select className="ml-2 min-h-11 rounded-md border border-input bg-background px-3" value={open??c.open_limit} onChange={e=>setOpen(Number(e.target.value))}>{[1,2,3,5,10,20].map(n=><option key={n}>{n}</option>)}</select></label>
-        <Button disabled={save.isPending||query.isError||(!c.enabled&&!(creator??c.creator_model))} onClick={()=>save.mutate(!c.enabled)}>{save.isPending?"Saving…":c.enabled?"Pause campaign":"Enable campaign"}</Button>
-        {(daily!==null||open!==null||creator!==null||backlog!==null)&&<Button variant="outline" disabled={save.isPending||query.isError} onClick={()=>save.mutate(c.enabled)}>Save settings</Button>}
+        <Button disabled={save.isPending||query.isError||stopping||(!c.enabled&&!(creator??c.creator_model))} onClick={()=>save.mutate(!c.enabled)}>{campaignActionLabel}</Button>
+        {pendingSettings&&<Button variant="outline" disabled={save.isPending||query.isError} onClick={()=>save.mutate(c.enabled)}>{c.creator_in_progress?"Save settings and stop generation":"Save settings"}</Button>}
       </div>
     </>}
     {save.isError&&<p role="alert" className="mt-3 text-sm text-destructive">{save.error.message}</p>}

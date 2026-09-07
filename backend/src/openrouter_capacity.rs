@@ -149,8 +149,7 @@ fn paid_trigger(
 ) -> Option<&'static str> {
     let p = &status["policy"];
     if purpose == "ticket_creator" {
-        return (!recovery && !primary.ends_with(":free") && p["paid_enabled"] == true)
-            .then_some("paid_primary");
+        return (!recovery && !primary.ends_with(":free")).then_some("campaign_selection");
     }
     if purpose == "manual" {
         return (!primary.ends_with(":free")).then_some("manual");
@@ -265,14 +264,6 @@ async fn admit_route(
     let mut reserve = 0_i64;
     if trigger != "free" && trigger != "manual" {
         let candidates = if purpose == "ticket_creator" {
-            if !policy["paid_models"]
-                .as_array()
-                .into_iter()
-                .flatten()
-                .any(|m| m == primary)
-            {
-                return Err("paid_model_not_selected");
-            }
             vec![primary]
         } else {
             paid_candidates(policy, purpose)
@@ -543,14 +534,19 @@ mod tests {
 
     #[test]
     fn ticket_creator_keeps_the_selected_model_and_never_recovers_on_another() {
-        let status = json!({"policy":{"paid_enabled":true,"prefer_free_models":false,"paid_finish_on_429":true},"daily_limited":true});
+        let status = json!({"policy":{"paid_enabled":false,"prefer_free_models":true,"paid_finish_on_429":false},"daily_limited":true});
         assert_eq!(
             paid_trigger(&status, "v/creator:free", "ticket_creator", false),
             None
         );
         assert_eq!(
             paid_trigger(&status, "v/creator", "ticket_creator", false),
-            Some("paid_primary")
+            Some("campaign_selection")
+        );
+        assert_eq!(paid_trigger(&status, "v/creator", "research", false), None);
+        assert_eq!(
+            paid_trigger(&status, "v/creator", "ticket_creator", true),
+            None
         );
         assert_eq!(
             paid_trigger(&status, "v/creator:free", "ticket_creator", true),

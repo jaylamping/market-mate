@@ -296,6 +296,16 @@ impl OpenRouter {
         request: &Value,
         parse: fn(Value, &str) -> (&'static str, Value),
     ) -> (&'static str, Value) {
+        self.send_with_parser_until(request, parse, std::future::pending())
+            .await
+    }
+    pub(crate) async fn send_with_parser_until(
+        &self,
+        request: &Value,
+        parse: fn(Value, &str) -> (&'static str, Value),
+        cancelled: impl std::future::Future<Output = &'static str> + Send,
+    ) -> (&'static str, Value) {
+        tokio::pin!(cancelled);
         let original = match self.take_permit(request) {
             Ok(p) => p,
             Err(reason) => return ("indeterminate", json!({"reason":reason,"dispatched":false})),
@@ -304,7 +314,8 @@ impl OpenRouter {
         let mut attempts = Vec::new();
         for ordinal in 0..=2 {
             let permit = replacement.as_ref().unwrap_or(&original);
-            let (mut state, mut detail) = self.send_once(permit, parse).await;
+            let (mut state, mut detail) =
+                cancel_provider_response(self.send_once(permit, parse), &mut cancelled).await;
             if crate::openrouter_capacity::finish(permit, state, &mut detail)
                 .await
                 .is_err()
@@ -766,9 +777,45 @@ async fn run_once(
     event(db, key, state, detail).await
 }
 
+async fn cancel_provider_response(
+    response: impl std::future::Future<Output = (&'static str, Value)>,
+    cancelled: impl std::future::Future<Output = &'static str>,
+) -> (&'static str, Value) {
+    tokio::select! {
+        biased;
+        reason = cancelled => ("indeterminate", json!({"reason":reason,"cost_pending":true})),
+        result = response => result,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[tokio::test]
+    async fn stop_drops_pending_provider_response_without_claiming_zero_cost() {
+        struct Dropped(std::sync::Arc<std::sync::atomic::AtomicBool>);
+        impl Drop for Dropped {
+            fn drop(&mut self) {
+                self.0.store(true, std::sync::atomic::Ordering::SeqCst);
+            }
+        }
+        let dropped = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let started = tokio::sync::Notify::new();
+        let response = async {
+            let _guard = Dropped(dropped.clone());
+            started.notify_one();
+            std::future::pending::<(&'static str, Value)>().await
+        };
+        let cancelled = async {
+            started.notified().await;
+            "cancelled_by_owner"
+        };
+        let (state, detail) = cancel_provider_response(response, cancelled).await;
+        assert_eq!(state, "indeterminate");
+        assert_eq!(detail["cost_pending"], true);
+        assert!(detail.get("usage").is_none());
+        assert!(dropped.load(std::sync::atomic::Ordering::SeqCst));
+    }
     #[test]
     fn fallback_is_bounded_to_confirmed_failures_and_a_different_executable_model() {
         let route = crate::model_routing::Route {

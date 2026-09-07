@@ -179,7 +179,38 @@ async fn tick() -> Result<(), String> {
             .map_err(str::to_string)?;
         return Ok(());
     }
-    let (state, detail) = provider.send_with_parser(&req, completion).await;
+    let revision = job["campaign_revision"].as_i64();
+    let cancelled = async {
+        let mut fence_failures = 0;
+        loop {
+            tokio::time::sleep(Duration::from_secs(1)).await;
+            match db
+                .client
+                .query_one("SELECT read_incubator_campaign_fence()", &[])
+                .await
+            {
+                Ok(row) => {
+                    fence_failures = 0;
+                    let c: Value = row.get(0);
+                    if c["enabled"] != true {
+                        return "cancelled_by_owner";
+                    }
+                    if c["revision"].as_i64() != revision {
+                        return "campaign_changed_during_generation";
+                    }
+                }
+                Err(_) => {
+                    fence_failures += 1;
+                    if fence_failures >= 3 {
+                        return "campaign_state_unavailable";
+                    }
+                }
+            }
+        }
+    };
+    let (state, detail) = provider
+        .send_with_parser_until(&req, completion, cancelled)
+        .await;
     db.client
         .query_one(
             "SELECT finish_incubator_ticket_generation($1,$2,$3)",
