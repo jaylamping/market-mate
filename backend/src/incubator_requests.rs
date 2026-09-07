@@ -801,7 +801,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires isolated campaign acceptance database"]
     async fn campaign_comparison_waits_for_capacity_and_observes_pause() {
-        struct Waiting(std::sync::atomic::AtomicUsize);
+        struct Waiting(
+            std::sync::atomic::AtomicUsize,
+            Option<Arc<tokio::sync::Notify>>,
+        );
         impl PreparedComparison for Waiting {
             fn admit<'a>(
                 &'a self,
@@ -809,9 +812,13 @@ mod tests {
                 _key: &'a str,
                 _request: &'a Value,
             ) -> ModelFuture<'a, Result<bool, &'static str>> {
-                Box::pin(
-                    async move { Ok(self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst) > 0) },
-                )
+                Box::pin(async move {
+                    if let Some(notify) = &self.1 {
+                        notify.notify_one();
+                        return Ok(false);
+                    }
+                    Ok(self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst) > 0)
+                })
             }
             fn send<'a>(&'a self, _request: &'a Value) -> ModelFuture<'a, (&'static str, Value)> {
                 panic!("admission must not send")
@@ -826,7 +833,7 @@ mod tests {
             .await
             .unwrap();
         let prepared = CampaignPrepared {
-            inner: Box::new(Waiting(std::sync::atomic::AtomicUsize::new(0))),
+            inner: Box::new(Waiting(std::sync::atomic::AtomicUsize::new(0), None)),
             revision: 2,
         };
         assert!(tokio::time::timeout(
@@ -836,20 +843,35 @@ mod tests {
         .await
         .unwrap()
         .unwrap());
-        db.client
-            .query_one(
-                "SELECT set_incubator_campaign(false,10,3,2,'vendor/creator:free',10)",
-                &[],
+        let denied = Arc::new(tokio::sync::Notify::new());
+        let waiting = CampaignPrepared {
+            inner: Box::new(Waiting(
+                std::sync::atomic::AtomicUsize::new(0),
+                Some(denied.clone()),
+            )),
+            revision: 2,
+        };
+        let owner = database().await.unwrap();
+        let request = json!({});
+        let (result, ()) = tokio::time::timeout(Duration::from_secs(12), async {
+            tokio::join!(
+                waiting.admit(&db.client, "campaign-pause-test", &request),
+                async {
+                    denied.notified().await;
+                    owner
+                        .client
+                        .query_one(
+                            "SELECT set_incubator_campaign(false,10,3,2,'vendor/creator:free',10)",
+                            &[],
+                        )
+                        .await
+                        .unwrap();
+                }
             )
-            .await
-            .unwrap();
-        assert_eq!(
-            prepared
-                .admit(&db.client, "campaign-wait-test", &json!({}))
-                .await
-                .unwrap_err(),
-            "campaign_changed_before_comparison"
-        );
+        })
+        .await
+        .unwrap();
+        assert_eq!(result.unwrap_err(), "campaign_changed_before_comparison");
     }
     #[derive(Default)]
     struct MockState {

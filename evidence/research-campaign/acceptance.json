@@ -41,7 +41,7 @@
     "db/fixtures/research_campaign_probe.sql": "d32a4eb70d3c4428c416bd2a11131559213db5450219bc079ecd735824b1d59d",
     "backend/src/incubator_campaign.rs": "3e4afca859e014273e17be6d053f632f0c1a03a87b4166472b8cc346af220ed8",
     "backend/src/incubator_ticket_creator.rs": "1b0c61d2d828003ceab1bff7182d29d48d3a9fc93cbc60d31b27ac604df736e9",
-    "backend/src/incubator_requests.rs": "8e55990d2f1b0be4c559562ec41afef46e829047ca343c2b7db01650a74ed67a",
+    "backend/src/incubator_requests.rs": "6129b578c08359a6febdc97f3afbe471a44ac402697a9b4c6c53525e67b46613",
     "backend/src/openrouter_capacity.rs": "8c6edc2725c84a6aac8963d1a91b914bee2bbc189832570f2b6ef3bfa6a464ee",
     "scripts/research_campaign_test.sh": "6027b6c9f0f213b7f80d946b83b02fd6a74afce73442861ba3249fefbaf4c991"
   }
