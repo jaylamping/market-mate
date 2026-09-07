@@ -5,6 +5,7 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {IntegrationDisclosure} from "@/components/IntegrationSection";
 import {IntegrationLogo} from "@/components/IntegrationLogo";
+import {IntegrationStatus} from "@/components/IntegrationStatus";
 import {marketDataKey,marketRequest,type MarketConnection,dataError} from "@/lib/market-data";
 export function MarketDataIntegration(){
  const cache=useQueryClient(),[key,setKey]=useState(""),[secret,setSecret]=useState(""),[rights,setRights]=useState(false),[manual,setManual]=useState(false);
@@ -13,8 +14,10 @@ export function MarketDataIntegration(){
  const save=useMutation({mutationFn:()=>reuse?marketRequest("/reuse",{rights_confirmed:rights}):marketRequest("/setup",{key_id:key,secret_key:secret,rights_confirmed:rights}),onSuccess:()=>{setKey("");setSecret("");void cache.invalidateQueries({queryKey:marketDataKey});}});
  const change=useMutation({mutationFn:(v:{enabled:boolean;refresh_enabled:boolean})=>marketRequest("/settings",v),onSuccess:()=>void cache.invalidateQueries({queryKey:marketDataKey})});
  const cfg=q.data?.settings,state=q.data?.state;
+ const credentialsVerified=state==="connected"||state==="configured"||state==="paused";
+ const collectionState=state==="paused"||cfg?.enabled===false?"collection_paused":"collection_active";
  return <section id="market-data" aria-labelledby="market-data-title" className="grid min-w-0 gap-4 border-b p-6">
- <div className="flex flex-wrap items-center justify-between gap-3"><h3 id="market-data-title" className="inline-flex items-center gap-2.5 text-base font-semibold"><IntegrationLogo provider="alpaca"/>Market data</h3><span className="text-sm text-muted-foreground" role="status">{q.isPending?"Checking connection…":q.isError?"Service unavailable":state==="connected"?"Connection verified":state==="configured"?"Credentials configured":state==="paused"?"Collection paused":!cfg&&q.data?.existing_alpaca_available?"Ready to activate":"Setup needed"}</span></div>
+ <div className="flex flex-wrap items-center justify-between gap-3"><h3 id="market-data-title" className="inline-flex items-center gap-2.5 text-base font-semibold"><IntegrationLogo provider="alpaca"/>Market data</h3><div className="flex flex-wrap items-center gap-2" role="status" aria-label="Market data status">{q.isPending?<IntegrationStatus state="loading"/>:q.isError?<IntegrationStatus state="unavailable"/>:credentialsVerified?<><IntegrationStatus state="credentials_verified"/><IntegrationStatus state={collectionState}/></>:<IntegrationStatus state={!cfg&&q.data?.existing_alpaca_available?"ready_to_activate":state??"not_configured"}/>}</div></div>
  <p className="max-w-prose text-sm text-muted-foreground">Alpaca historical SIP prices for local research. Adjusted daily prices, stored locally. This connection does not place trades or upgrade your plan.</p>
  {q.isError&&<p role="alert" className="text-sm text-destructive">{q.error.message}. Start or restart the local market data service, then <button type="button" className="underline underline-offset-4" onClick={()=>void q.refetch()}>check connection again</button>.</p>}
  {state&&!['connected','configured','paused','not_configured'].includes(state)&&<p role="alert" className="text-sm text-destructive">{dataError(state)}</p>}
@@ -28,7 +31,7 @@ export function MarketDataIntegration(){
  <label className="flex items-start gap-3 text-sm"><input type="checkbox" required checked={rights} onChange={e=>setRights(e.target.checked)} className="mt-1 size-4 shrink-0"/>I have reviewed my Alpaca account terms and can retain historical data locally for personal research.</label>
  <p className="text-sm text-muted-foreground">Keys go only to your local connector and its private storage. Connecting checks a small historical panel; it does not accept provider terms for you.</p>
  <Button className="justify-self-start" disabled={save.isPending||!rights||(!reuse&&(!key||!secret))}>{save.isPending?"Checking historical access…":reuse?"Activate market data":"Verify and save connection"}</Button>
- {save.isError&&<p role="alert" className="text-sm text-destructive">{save.error.message}</p>}{save.isSuccess&&<p role="status" className="text-sm">Connection verified and saved.</p>}
+ {save.isError&&<p role="alert" className="text-sm text-destructive">{save.error.message}</p>}{save.isSuccess&&<p role="status" className="text-sm">Credentials verified and saved.</p>}
  </form></IntegrationDisclosure>
  {change.isError&&<p role="alert" className="text-sm text-destructive">{change.error.message}</p>}
  </section>;
