@@ -91,7 +91,7 @@ impl Credentials {
 }
 
 impl PanelRequest {
-    fn validate(&self, now: DateTime<Utc>) -> Result<(), DownloadError> {
+    pub(crate) fn validate(&self, now: DateTime<Utc>) -> Result<(), DownloadError> {
         let valid_symbol = |s: &str| {
             !s.is_empty()
                 && s.len() <= 16
@@ -258,6 +258,12 @@ impl AlpacaDailyClient {
             pace: Duration::from_millis(350),
         })
     }
+    #[cfg(test)]
+    pub(crate) fn test_endpoint(mut self, endpoint: String) -> Self {
+        self.endpoint = endpoint;
+        self.pace = Duration::ZERO;
+        self
+    }
     async fn page(&self, query: &[(&str, String)]) -> Result<Page, DownloadError> {
         for attempt in 0..MAX_ATTEMPTS {
             tokio::time::sleep(self.pace).await;
@@ -358,12 +364,63 @@ impl AlpacaDailyClient {
         Ok(())
     }
     pub async fn download(&self, request: &PanelRequest) -> Result<Value, DownloadError> {
+        self.acquire(request, &json!([])).await
+    }
+
+    /// Cache must be selected by the governed store. Partial symbol windows are
+    /// rejected so adjusted prices for one instrument never mix retrieval vintages.
+    pub(crate) async fn acquire(
+        &self,
+        request: &PanelRequest,
+        cached: &Value,
+    ) -> Result<Value, DownloadError> {
         request.validate(Utc::now())?;
         let started_at = Utc::now().to_rfc3339();
         let mut query = request.query();
         let mut tokens = BTreeSet::new();
         let mut observations = BTreeMap::new();
-        let symbols = request.symbols();
+        let all_symbols = request.symbols();
+        let cached_rows: Vec<DownloadObservation> =
+            serde_json::from_value(cached.clone()).map_err(|_| DownloadError::InvalidResponse)?;
+        for row in cached_rows {
+            if !all_symbols.contains(&row.symbol)
+                || !request.sessions.contains(&row.session)
+                || session(&row.bar)? != row.session
+            {
+                return Err(DownloadError::UnexpectedObservation);
+            }
+            if observations
+                .insert((row.symbol, row.session), row.bar)
+                .is_some()
+            {
+                return Err(DownloadError::DuplicateObservation);
+            }
+        }
+        let mut symbols = all_symbols.clone();
+        for symbol in &all_symbols {
+            let count = observations.keys().filter(|(s, _)| s == symbol).count();
+            if count == request.sessions.len() {
+                symbols.remove(symbol);
+            } else if count != 0 {
+                return Err(DownloadError::IncompleteCoverage);
+            }
+        }
+        let reused = observations.len();
+        let finish = |observations, pages| {
+            let mut value = package(request, observations, started_at.clone(), pages)?;
+            if reused > 0 {
+                value["source_facts"]["acquisition_cache"] = json!({"observations":reused,"policy":"complete_symbol_window_same_ny_day_v1","receipt_semantics":"assembly time; original observation receipts retained in store"});
+            }
+            Ok(value)
+        };
+        if symbols.is_empty() {
+            return finish(observations, 0);
+        }
+        query.retain(|(key, _)| *key != "symbols");
+        query.push((
+            "symbols",
+            symbols.iter().cloned().collect::<Vec<_>>().join(","),
+        ));
         for page_number in 1..=MAX_PAGES {
             let page = self.page(&query).await?;
             for (symbol, bars) in page.bars {
@@ -388,7 +445,7 @@ impl AlpacaDailyClient {
                     query.retain(|(key, _)| *key != "page_token");
                     query.push(("page_token", token));
                 }
-                None => return package(request, observations, started_at, page_number),
+                None => return finish(observations, page_number),
             }
         }
         Err(DownloadError::ResourceLimit)
