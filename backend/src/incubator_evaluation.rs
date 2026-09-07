@@ -15,6 +15,7 @@ use std::time::Duration;
 struct Evaluation {
     decision: String,
     reason: String,
+    #[serde(default)]
     question: Value,
 }
 #[derive(Deserialize)]
@@ -508,9 +509,30 @@ mod tests {
             .0,
             "completed"
         );
+        for decision in ["advance", "refine", "close"] {
+            let content = json!({"decision":decision,"reason":"Testable plan"}).to_string();
+            let (state, detail) = evaluate_completion(response(&content), "v/m:free");
+            assert_eq!(state, "completed");
+            assert_eq!(detail["decision"], decision);
+            assert_eq!(detail["question"], Value::Null);
+        }
+        assert_eq!(
+            evaluate_completion(
+                response(
+                    r#"{"decision":"clarify","reason":"Need detail","question":"Which benchmark?"}"#
+                ),
+                "v/m:free"
+            )
+            .0,
+            "completed"
+        );
         for text in [
             r#"{"decision":"execute","reason":"Go","question":null}"#,
-            r#"{"decision":"advance","reason":"Missing required question"}"#,
+            r#"{"decision":"clarify","reason":"Missing question"}"#,
+            r#"{"decision":"clarify","reason":"Empty question","question":" "}"#,
+            r#"{"decision":"advance","reason":"Unexpected question","question":"Why?"}"#,
+            r#"{"decision":"advance","reason":"Wrong type","question":false}"#,
+            r#"{"decision":"advance","reason":"Unknown field","authority":true}"#,
             r#"{"decision":"clarify","reason":"Missing","question":null}"#,
             r#"{"decision":"advance","decision":"close","reason":"Test","question":null}"#,
         ] {
