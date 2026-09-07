@@ -1,0 +1,33 @@
+{
+  "probe": "research-campaign",
+  "checks": [
+    "paused_default",
+    "bounded_limits",
+    "settings_revision",
+    "restart_identity",
+    "pinned_scope",
+    "idempotent_admission",
+    "worker_pickup",
+    "no_manual_spend",
+    "automatic_origin",
+    "pacing",
+    "backpressure",
+    "role_restrictions",
+    "duplicates",
+    "pause_fence",
+    "no_check_replay",
+    "audit_chain",
+    "ten_ticket_cap",
+    "http_campaign_read",
+    "http_campaign_save",
+    "http_stale_settings_rejected"
+  ],
+  "passed": true,
+  "sha256": {
+    "db/migrations/0074_research_campaign.sql": "212f48733bf99c33b8a5a290c2fd81aa9a11e2d096b4e7f22d06a13123f5d824",
+    "db/fixtures/research_campaign_probe.sql": "23998c52a2b7ab75d8253af8d185fa2d357e54a20171f224eea2708e23520559",
+    "backend/src/incubator_campaign.rs": "4610befbe4ef7950e323ae29ecda43cc113b505de7757dc1783845dac6185629",
+    "backend/src/incubator_requests.rs": "0c3080e81a67c1b6f2f75e9d489b11e996a6acda4524c18a967a60f96d63812c",
+    "scripts/research_campaign_test.sh": "d07c98b031fffd3c94fc26adc68c84d37b76ff70f1f1d1cf0de4bbe2be31e6ac"
+  }
+}
