@@ -241,6 +241,19 @@ async fn dispatch(
     .await?;
     Ok(models.send(provider, &request).await)
 }
+async fn setup_input(
+    db: &tokio_postgres::Client,
+    id: i64,
+    job: &Value,
+    mut detail: Value,
+) -> Result<(), String> {
+    if job["resuming_for_market_data"] == true && event(job, "answered").is_some() {
+        detail["reason"] = json!(format!("{} The owner response has already been used. Create a new experiment with explicit symbols, dates and benchmark to continue.", detail["reason"].as_str().unwrap_or("Setup could not determine the data scope.")));
+        detail["question"] = Value::Null;
+        return record(db, id, "failed", detail).await;
+    }
+    record(db, id, "needs_input", detail).await
+}
 async fn ready(
     db: &tokio_postgres::Client,
     id: i64,
@@ -251,7 +264,7 @@ async fn ready(
         && job["resuming_for_market_data"] == true
         && detail["data_request"].is_null()
     {
-        return record(db, id, "needs_input", json!({"reason":"The market data connector is available, but Setup still has no explicit data request. No prices have been selected or downloaded.","question":"Which stock symbols, start/end dates and benchmark should this diagnostic use, and is a zero-interest cash comparison acceptable? Use 2025–2026 dates with 3–60 completed trading sessions; the symbol count must fit the pinned quantile specification.","spec":detail["spec"],"setup_response":detail})).await;
+        return setup_input(db, id, job, json!({"reason":"The market data connector is available, but Setup still has no explicit data request. No prices have been selected or downloaded.","question":"Which stock symbols, start/end dates and benchmark should this diagnostic use, and is a zero-interest cash comparison acceptable? Use 2025–2026 dates with 3–60 completed trading sessions; the symbol count must fit the pinned quantile specification.","spec":detail["spec"],"setup_response":detail})).await;
     }
     if job["experiment"]["snapshot_id"].is_null() {
         return record(db, id, "awaiting_data", detail).await;
@@ -427,7 +440,7 @@ async fn tick(models: &dyn Models) -> Result<bool, String> {
             {
                 record(&db.client, id, "setup_question", detail).await?;
             }
-            _ => record(&db.client, id, "needs_input", detail).await?,
+            _ => setup_input(&db.client, id, &job, detail).await?,
         }
     }
     Ok(true)

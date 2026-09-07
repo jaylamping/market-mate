@@ -406,6 +406,30 @@ async fn setup_and_refresh() {
             .get::<_, Option<i64>>(0),
         Some(revisit_id)
     );
+    let wait_key = format!("experiment:{revisit_id}:revisit-probe");
+    admin.client.query_one(
+        "SELECT enqueue_openrouter_capacity($1,'{\"model\":\"vendor/model:free\"}'::jsonb,'setup')", &[&wait_key]
+    ).await.unwrap();
+    admin
+        .client
+        .query_one(
+            "SELECT defer_openrouter_capacity($1,'test_wait')",
+            &[&wait_key],
+        )
+        .await
+        .unwrap();
+    assert!(admin
+        .client
+        .query_one("SELECT next_incubator_experiment()", &[])
+        .await
+        .unwrap()
+        .get::<_, Option<i64>>(0)
+        .is_none());
+    admin
+        .client
+        .query_one("SELECT cancel_openrouter_capacity($1)", &[&wait_key])
+        .await
+        .unwrap();
     crate::incubator_experiment::tests::acquisition_tick(request.clone())
         .await
         .unwrap();
@@ -518,6 +542,9 @@ async fn setup_and_refresh() {
     crate::incubator_experiment::tests::clarification_tick()
         .await
         .unwrap();
+    crate::incubator_experiment::tests::clarification_tick()
+        .await
+        .unwrap();
     let clarified: Value = admin
         .client
         .query_one("SELECT read_incubator_experiment($1)", &[&clarification_id])
@@ -538,6 +565,90 @@ async fn setup_and_refresh() {
             .count(),
         1
     );
+    assert!(
+        !crate::incubator_experiment::tests::acquisition_tick(Value::Null)
+            .await
+            .unwrap()
+    );
+    admin
+        .client
+        .query_one(
+            "SELECT record_incubator_experiment_event($1,'answered',$2)",
+            &[
+                &clarification_id,
+                &json!({"answer":"Use the explicitly requested stock panel and dates."}),
+            ],
+        )
+        .await
+        .unwrap();
+    assert!(
+        crate::incubator_experiment::tests::acquisition_tick(request.clone())
+            .await
+            .unwrap()
+    );
+    let after_answer: Value = admin
+        .client
+        .query_one("SELECT read_incubator_experiment($1)", &[&clarification_id])
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(after_answer["status"], "awaiting_data");
+    assert_eq!(
+        after_answer["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|e| e["state"] == "preparing")
+            .count(),
+        4
+    );
+    assert!(
+        crate::market_data_acquisition::tick(&admin.client, src, &client)
+            .await
+            .unwrap()
+    );
+    for _ in 0..3 {
+        assert!(
+            crate::incubator_experiment::tests::acquisition_tick(Value::Null)
+                .await
+                .unwrap()
+        );
+    }
+    let owner_finished: Value = admin
+        .client
+        .query_one("SELECT read_incubator_experiment($1)", &[&clarification_id])
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(owner_finished["status"], "completed");
+    admin
+        .client
+        .query_one(
+            "SELECT record_incubator_experiment_event($1,'answered',$2)",
+            &[
+                &question_id,
+                &json!({"answer":"The scope remains unspecified."}),
+            ],
+        )
+        .await
+        .unwrap();
+    assert!(
+        crate::incubator_experiment::tests::acquisition_tick(Value::Null)
+            .await
+            .unwrap()
+    );
+    let unresolved: Value = admin
+        .client
+        .query_one("SELECT read_incubator_experiment($1)", &[&question_id])
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(unresolved["status"], "failed");
+    assert!(unresolved["detail"]["question"].is_null());
+    assert!(unresolved["detail"]["reason"]
+        .as_str()
+        .unwrap()
+        .contains("Create a new experiment"));
     assert!(
         !crate::incubator_experiment::tests::acquisition_tick(Value::Null)
             .await

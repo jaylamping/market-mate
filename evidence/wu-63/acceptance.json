@@ -22,18 +22,20 @@
     "revisit_pause_archive_fences",
     "revisit_question_no_loop",
     "concurrent_revisit_once",
-    "revisit_context_survives_clarification"
+    "revisit_context_survives_clarification",
+    "revisit_respects_capacity_wait",
+    "revisit_owner_answer_to_completion"
   ],
   "source_sha256": {
-    "db/migrations/0068_market_data_setup_revisit.sql": "ba6f7f96de9c2b4cb4c6172745ab569afd52bb74c846b1d474b914065fb3a1ef",
+    "db/migrations/0071_market_data_setup_revisit.sql": "42951c044140edc900c2d34202e77155cf7c121a6ab503f08867254c1c05c3a5",
     "db/fixtures/market_data_setup_revisit_probe.sql": "ec8eaaa068d8d656f6fea3f4623372ce9afe959c626811b689a4e91cd1c0b7d8",
-    "backend/src/incubator_experiment.rs": "3a124511f9585ac8a894b61d55b12cee2001b39a76bbb7bf3cc74231566917eb",
+    "backend/src/incubator_experiment.rs": "c8a9c3177845f5ff43ee15a1895c3c28d10d8ef8b0a4147076f21180cb214759",
     "db/migrations/0067_market_data_setup_refresh.sql": "85696548553458b2faa070a2aa9e5f2101ef22ab18268fcb196a09c33d12a2f6",
     "db/fixtures/wu63_market_data_setup_probe.sql": "dae8bcae3aa52893db370c68e08ab6a1d3042207cdbf7b809e8a602db0acfa2c",
     "backend/src/market_data_connection.rs": "7b9d475412cac2523d7eed610a780b90884e12a4cadb95a967d0337aa3026677",
-    "backend/src/market_data_connection/tests.rs": "f0b13832912ca1fbefde8f5ac862f2bebb1cf40093a002954ad2f1eb25ca729f",
+    "backend/src/market_data_connection/tests.rs": "082703e93899bdc74f2579ec5203f3edb14e3d0b2d27e58e86e04ec4e20c9ae1",
     "backend/src/market_data_acquisition.rs": "def91930345d25b96b7eb912177e5e4a95aed1150b4aa060e66fae0337549a19",
-    "scripts/wu63_market_data_test.sh": "f5c9a716b6ada206899a3f7310ac33642acef8688fa3f89328d4f74f561829b6"
+    "scripts/wu63_market_data_test.sh": "c1e613e9977cced6e5056fdb17d7dab4b113f2dbfac512b7937b6c2cfcd11658"
   },
   "live_provider_tested": false
 }

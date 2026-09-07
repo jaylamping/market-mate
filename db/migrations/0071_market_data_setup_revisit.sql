@@ -15,7 +15,7 @@ REVOKE ALL ON FUNCTION market_data_setup_revisit_eligible(bigint) FROM PUBLIC;
 -- Preserve the original selector and its ordinary execution/recovery cases.
 ALTER FUNCTION next_incubator_experiment() RENAME TO next_incubator_experiment_before_data_revisit;
 CREATE FUNCTION next_incubator_experiment() RETURNS bigint LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path=pg_catalog,public,pg_temp AS $$
- SELECT coalesce(next_incubator_experiment_before_data_revisit(),(SELECT evaluation_id FROM incubator_experiment_ticket WHERE market_data_setup_revisit_eligible(evaluation_id) ORDER BY evaluation_id LIMIT 1))
+ SELECT coalesce(next_incubator_experiment_before_data_revisit(),(SELECT evaluation_id FROM incubator_experiment_ticket WHERE market_data_setup_revisit_eligible(evaluation_id) AND openrouter_work_ready('experiment:'||evaluation_id||':') ORDER BY evaluation_id LIMIT 1))
 $$;
 REVOKE ALL ON FUNCTION next_incubator_experiment_before_data_revisit() FROM PUBLIC,incubator_runner;
 REVOKE ALL ON FUNCTION next_incubator_experiment() FROM PUBLIC;
@@ -44,5 +44,13 @@ BEGIN
   PERFORM 1 FROM market_data_source WHERE id=(SELECT source_id FROM market_data_settings) FOR UPDATE;
  END IF;
  PERFORM pg_advisory_xact_lock(58001,id_value::integer);$lock$);
+ needle:='state=''preparing'')>=3 THEN RAISE EXCEPTION ''setup_budget_exhausted''';
+ IF strpos(definition,needle)=0 THEN RAISE EXCEPTION 'setup_revisit_budget_anchor_missing'; END IF;
+ definition:=replace(definition,needle,$budget$state='preparing')>=(3+CASE WHEN EXISTS(
+  SELECT 1 FROM incubator_experiment_event resumed JOIN incubator_experiment_event previous
+  ON previous.experiment_id=resumed.experiment_id AND previous.sequence=resumed.sequence-1
+  WHERE resumed.experiment_id=id_value AND resumed.state='preparing'
+  AND resumed.detail->>'resume_reason'='market_data_available' AND previous.state='awaiting_data'
+ ) THEN 1 ELSE 0 END) THEN RAISE EXCEPTION 'setup_budget_exhausted'$budget$);
  EXECUTE definition;
 END $$;
