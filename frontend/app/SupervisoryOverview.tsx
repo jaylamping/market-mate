@@ -1,8 +1,9 @@
+import { surfacesQuery } from "@/lib/api-queries";
 import { Activity, AlertTriangle, ArrowUpRight, Check, ChevronRight, CircleDollarSign, FlaskConical, LockKeyhole, ShieldCheck, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AppSidebar } from "./AppSidebar";
 import { EvidenceBrowser } from "./EvidenceBrowser";
-import { RefreshEvidence } from "./RefreshEvidence";
+import { RefreshQueries } from "./RefreshQueries";
 import type { Stage1SurfacesModel } from "./Stage1Surfaces";
 import { attentionItems, comparatorFloors, custodyTrusted, displayTime, money, qualificationMeasures, type Tone } from "./overview-model";
 
@@ -34,7 +35,7 @@ export function SupervisoryOverview({ surfaces, loadedAt }: { surfaces: Stage1Su
   return <div className="supervisory-overview" id="supervisory-overview" data-environment="local_research" data-display-only="true" data-order-authority="none" data-trusted={String(trusted)}>
     <a className="skip-link" href="#overview-main">Skip to overview</a><AppSidebar/>
     <main className="overview-main" id="overview-main" tabIndex={-1}>
-      <header className="page-header"><div><h1>Supervisory overview</h1><p>Research and acceptance-test evidence, in one place.</p></div><div className="page-actions"><span className="loaded-at">Loaded <time dateTime={loadedAt}>{displayTime(loadedAt)}</time></span><RefreshEvidence/></div></header>
+      <header className="page-header"><div><h1>Supervisory overview</h1><p>Research and acceptance-test evidence, in one place.</p></div><div className="page-actions"><span className="loaded-at">Loaded <time dateTime={loadedAt}>{displayTime(loadedAt)}</time></span><RefreshQueries label="Refresh evidence" queryKeys={[surfacesQuery.queryKey]} /></div></header>
       <div className="authority-strip"><span><FlaskConical aria-hidden="true"/>Local Research</span><span><LockKeyhole aria-hidden="true"/>Order authority: none</span><StateChip tone={trusted ? "good" : trustLabel === "Pending" ? "warning" : "danger"}>Custody {trustLabel.toLowerCase()}</StateChip><span className="coverage-status">{pack.verified_position ?? "Unknown"} / {pack.head_position ?? "unknown"} events covered</span></div>
       {!trusted && <p className="trust-notice"><ShieldCheck aria-hidden="true"/>{trustLabel === "Pending" ? "Newer evidence awaits custody coverage. Recorded results below are not yet trusted." : "Custody is unverified. Do not rely on the displayed evidence until verification is restored."}<a href="/surfaces#checkpoint-pack">Inspect custody <ChevronRight aria-hidden="true"/></a></p>}
       <div className="summary-grid">

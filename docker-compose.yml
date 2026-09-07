@@ -84,11 +84,81 @@ services:
     command:
       - 'umask 077; cat > /var/lib/alpaca-paper/credentials.json.new; chown 10001:10001 /var/lib/alpaca-paper/credentials.json.new; chmod 600 /var/lib/alpaca-paper/credentials.json.new; mv /var/lib/alpaca-paper/credentials.json.new /var/lib/alpaca-paper/credentials.json'
 
+  openrouter-connector:
+    image: market-mate-openrouter-connector
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["openrouter-connector"]
+    volumes:
+      - openrouter-secrets:/var/lib/openrouter:ro
+      - openrouter-policy:/var/lib/model-policy
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8083/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  openrouter-credentials:
+    image: market-mate-openrouter-connector
+    profiles: [setup]
+    user: "0:0"
+    volumes:
+      - openrouter-secrets:/var/lib/openrouter
+    entrypoint: ["sh", "-ec"]
+    command:
+      - 'umask 077; cat > /var/lib/openrouter/credentials.json.new; chown 10001:10001 /var/lib/openrouter/credentials.json.new; chmod 600 /var/lib/openrouter/credentials.json.new; mv /var/lib/openrouter/credentials.json.new /var/lib/openrouter/credentials.json'
+
+  openrouter-management-credentials:
+    image: market-mate-openrouter-connector
+    profiles: [setup]
+    user: "0:0"
+    volumes:
+      - openrouter-secrets:/var/lib/openrouter
+    entrypoint: ["sh", "-ec"]
+    command:
+      - 'umask 077; cat > /var/lib/openrouter/management.json.new; chown 10001:10001 /var/lib/openrouter/management.json.new; chmod 600 /var/lib/openrouter/management.json.new; mv /var/lib/openrouter/management.json.new /var/lib/openrouter/management.json'
+
+  cursor-connector:
+    image: market-mate-cursor-connector
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["cursor-connector"]
+    volumes:
+      - cursor-secrets:/var/lib/cursor:ro
+      - cursor-policy:/var/lib/model-policy
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8084/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  cursor-credentials:
+    image: market-mate-cursor-connector
+    profiles: [setup]
+    user: "0:0"
+    volumes:
+      - cursor-secrets:/var/lib/cursor
+    entrypoint: ["sh", "-ec"]
+    command:
+      - 'umask 077; cat > /var/lib/cursor/credentials.json.new; chown 10001:10001 /var/lib/cursor/credentials.json.new; chmod 600 /var/lib/cursor/credentials.json.new; mv /var/lib/cursor/credentials.json.new /var/lib/cursor/credentials.json'
+
   frontend:
     build: ./frontend
     command: ["npm", "run", "start:container"]
     environment:
       BACKEND_URL: http://backend:8080
+      CURSOR_CONNECTOR_URL: http://cursor-connector:8084
+      OPENROUTER_CONNECTOR_URL: http://openrouter-connector:8083
       PAPER_CONNECTOR_URL: http://paper-connector:8082
     ports:
       - "127.0.0.1:${MARKET_MATE_FRONTEND_PORT:-3000}:3000"
@@ -97,6 +167,10 @@ services:
       backend:
         condition: service_healthy
       paper-connector:
+        condition: service_healthy
+      openrouter-connector:
+        condition: service_healthy
+      cursor-connector:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:3000/api/health || exit 1"]
@@ -108,3 +182,7 @@ volumes:
   pgdata:
   custodydata:
   alpaca-paper-secrets:
+  openrouter-secrets:
+  openrouter-policy:
+  cursor-secrets:
+  cursor-policy:

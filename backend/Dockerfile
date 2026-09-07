@@ -14,7 +14,9 @@ RUN apt-get update \
 COPY --from=build /app/target/release/backend /usr/local/bin/backend
 COPY --from=build /app/target/release/custody /usr/local/bin/custody
 COPY --from=build /app/target/release/paper-connector /usr/local/bin/paper-connector
-RUN mkdir -p /var/lib/custody && chown app /var/lib/custody
+COPY --from=build /app/target/release/openrouter-connector /usr/local/bin/openrouter-connector
+COPY --from=build /app/target/release/cursor-connector /usr/local/bin/cursor-connector
+RUN mkdir -p /var/lib/custody /var/lib/model-policy && chown app /var/lib/custody /var/lib/model-policy
 USER app
 EXPOSE 8080
 CMD ["backend"]

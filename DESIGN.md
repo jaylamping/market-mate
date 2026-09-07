@@ -183,7 +183,7 @@ At 1180px and below, the sidebar narrows to 180px while keeping labels; summarie
 
 Evidence tables retain their tabular shape and scroll within their containers: the overview has a 710px minimum table width; mobile detailed inventory retains 750px. Full identifiers wrap in the detail cells. Record anchors highlight the exact destination row.
 
-The Paper workspace extends this shell with a three-column account summary above a records/activity grid (1.8fr with a 320px-minimum 1fr activity column; 20px gap). Its grid stacks at 1150px. At 600px, balances stack, panel insets narrow to 16px, and records tables retain a contained 540px minimum width. The account strip uses 24px spacing and 27px Geist balance readings with tabular figures; Paper metadata and table text use 12px, while empty-state explanations use 14px. These are local composite rules from `frontend/app/paper/paper.css`, not a new global type ramp.
+The Paper workspace extends this shell with a three-column account summary above a records/activity grid (1.8fr with a 320px-minimum 1fr activity column; 20px gap). Its grid stacks at 1150px. At 600px, balances stack, panel insets narrow to 16px, and records tables retain a contained 540px minimum width. The account strip uses 24px spacing and 27px Geist balance readings with tabular figures; Paper metadata and table text use 12px, while empty-state explanations use 14px. These are local composite rules from Tailwind utilities in `frontend/app/paper/PaperWorkspace.tsx`, not a new global type ramp.
 
 ## Elevation & Depth
 
@@ -247,3 +247,9 @@ Empty positions, empty orders, and filters with no matches have distinct explana
 - **Don't** inherit stale Night Desk microtype or unused legacy colors as new system tokens.
 
 Not canonized: the legacy 7px uppercase detail-table captions and tiny chart-axis annotations are existing legibility debt, not a reusable text scale; unused Night Desk selectors are compatibility residue, not Spectral Edge rules.
+
+### Integration sections
+
+System connections and Agents provider sections share `IntegrationSection`: 24px padding, 16px vertical rhythm, official 28px provider marks, a name/status/metric row, a muted description below, and a small outline action aligned to the right. Headers wrap on narrow screens. Use `IntegrationDisclosure` for setup and model controls; sections start collapsed, with a consistent chevron and keyboard focus ring. Keep provider-specific balances in the header and actual connection status on System. Model selections use the shared shadcn Table with 44px checkbox targets and a whitelist summary/save toolbar.
+
+The Agents model catalog is a single collapsed-by-default table across serving providers. A provider badge sits beside every linked model name. Identity and approval are scoped to provider plus model ID; search, provider/free/selected filters and pagination span the combined catalog. Provider save controls report independently, and unavailable provider data never empties its saved policy. Header summaries retain account balance and System connection links.

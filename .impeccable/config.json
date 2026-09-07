@@ -1,0 +1,53 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font-size",
+        "value": "10px",
+        "files": [
+          "frontend/app/supervisory-overview.css"
+        ],
+        "createdAt": "2026-09-06T23:56:00.040Z",
+        "reason": "Agent: DESIGN.md Typography explicitly documents 10–11px compact identifiers, timestamps and measurements."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "13px",
+        "files": [
+          "frontend/app/supervisory-overview.css"
+        ],
+        "createdAt": "2026-09-06T23:56:00.199Z",
+        "reason": "Agent: DESIGN.md Typography explicitly documents 11–13px working descriptions and cells."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "16px",
+        "files": [
+          "frontend/app/supervisory-overview.css"
+        ],
+        "createdAt": "2026-09-06T23:56:00.384Z",
+        "reason": "Agent: DESIGN.md Typography explicitly documents 16px Stage-1 headings; incumbent brand uses the same step."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "25px",
+        "files": [
+          "frontend/app/supervisory-overview.css"
+        ],
+        "createdAt": "2026-09-06T23:56:00.543Z",
+        "reason": "Agent: DESIGN.md Typography explicitly documents 25px mobile headlines."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "21px",
+        "files": [
+          "frontend/app/supervisory-overview.css"
+        ],
+        "createdAt": "2026-09-06T23:56:00.703Z",
+        "reason": "Agent: DESIGN.md Typography explicitly documents 21px mobile summary readings."
+      }
+    ]
+  }
+}

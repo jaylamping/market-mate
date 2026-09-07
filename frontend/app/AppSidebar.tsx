@@ -1,7 +1,7 @@
-import { Bot, CircleDollarSign, FlaskConical, LayoutDashboard, LockKeyhole, Radio, Settings, ShieldCheck } from "lucide-react";
+import { SlidersHorizontal, Bot, CircleDollarSign, FlaskConical, LayoutDashboard, LockKeyhole, Radio, Settings, ShieldCheck } from "lucide-react";
 import { ThemePicker } from "./ThemeProvider";
 
-export type SidebarPage = "/" | "/live" | "/paper" | "/incubator" | "/finances" | "/system" | "/settings";
+export type SidebarPage = "/" | "/live" | "/paper" | "/incubator" | "/agents" | "/finances" | "/system" | "/settings";
 
 export function AppSidebar({ details = false, activePage = "/" }: { details?: boolean; activePage?: SidebarPage }) {
   const selectedPage = details ? "/system" : activePage;
@@ -9,6 +9,7 @@ export function AppSidebar({ details = false, activePage = "/" }: { details?: bo
     ["Overview", "/", LayoutDashboard],
     ["Live", "/live", Radio],
     ["Paper", "/paper", FlaskConical],
+    ["Agents", "/agents", SlidersHorizontal],
     ["Incubator", "/incubator", Bot],
     ["Finances", "/finances", CircleDollarSign],
     ["System", "/system", ShieldCheck],
