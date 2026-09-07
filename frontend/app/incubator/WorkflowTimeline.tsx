@@ -2,15 +2,16 @@ import {type Evaluation} from "./evaluation";
 import {ProgressFooter,type ProgressStep} from "./ProgressFooter";
 import {type Run,stateLabel} from "./model";
 const stages=[{state:"admitted",label:"Assigned"},{state:"preparing",label:"Preparing"},{state:"dispatched",label:"Researching"},{state:"completed",label:"Report ready"}] as const;
+function stageState(state:string) { return state==="research_retry"?"admitted":state; }
 export function WorkflowTimeline({run,compact=false,evaluation}:{run:Run;compact?:boolean;evaluation?:Evaluation}) {
  const stopped=run.state==="failed"||stateLabel(run)==="Outcome unknown";
- const current=stages.findIndex(s=>s.state===run.state);
+ const current=stages.findIndex(s=>s.state===stageState(run.state));
  if(run.state==="completed"&&evaluation){
   const status=evaluation.status,finished=["advance","refine","close"].includes(status);
   return <div className="min-w-0">{!compact&&<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Workflow</p>}<ProgressFooter compact={compact} steps={[{label:"Assigned",state:"complete",at:run.created_at},{label:"Research",state:"complete",at:run.events.find(e=>e.state==="dispatched")?.at??null},{label:status==="refining"?"Refining":status==="failed"?"Failed":status==="indeterminate"?"Unknown":status==="awaiting_clarification"?"Clarify":status==="needs_input"?"Your input":"Evaluate",state:status==="failed"?"failed":status==="indeterminate"||status==="needs_input"?"paused":status==="refining"||status==="evaluating"||status==="awaiting_clarification"?"active":finished?"complete":"pending",at:evaluation.steps[0]?.created_at??null},{label:status==="advance"?"Advanced":status==="refine"?"Refine":status==="close"?"Closed":"Decision",state:finished?"complete":"pending",at:finished?evaluation.steps.at(-1)?.finished_at:null}]}/></div>;
  }
  if(compact){
-  const lastReached=Math.max(0,...run.events.map(e=>stages.findIndex(s=>s.state===e.state)));
+  const lastReached=Math.max(0,...run.events.map(e=>stages.findIndex(s=>s.state===stageState(e.state))));
   // Pre-dispatch failures belong to preparation, even for older runs without that event.
   const failedStage=Math.max(1,lastReached);
   const steps:ProgressStep[]=stages.map((s,i)=>({label:stopped&&i===failedStage?(run.state==="failed"?"Failed":"Unknown"):s.state==="dispatched"?"Research":s.state==="completed"?"Ready":s.label,title:stopped&&i===failedStage?`${s.label}: ${run.state==="failed"?"Failed":"Outcome unknown"}`:s.label,state:stopped&&i===failedStage?(run.state==="failed"?"failed":"paused"):i===current&&["preparing","dispatched"].includes(run.state)?"active":i<=lastReached?"complete":"pending"}));
@@ -32,6 +33,6 @@ export function WorkflowTimeline({run,compact=false,evaluation}:{run:Run;compact
    })}
   </ol>
   {stopped&&<p className={`${compact?"mt-2 text-[10px]":"mt-3 text-xs"} ${run.state==="failed"?"text-destructive":"text-[var(--warning)]"}`}>{run.state==="failed"?"Stopped · Failed":"Paused · Outcome unknown"}{!compact&&` · ${new Date(run.updated_at).toLocaleString()}`}</p>}
-  {!compact&&run.state==="admitted"&&<p className="mt-3 text-xs text-muted-foreground">Queued for the next available research slot.</p>}
+  {!compact&&(run.state==="admitted"||run.state==="research_retry")&&<p className="mt-3 text-xs text-muted-foreground">{run.state==="research_retry"?"Retrying after an unusable research reply.":"Queued for the next available research slot."}</p>}
  </div>;
 }

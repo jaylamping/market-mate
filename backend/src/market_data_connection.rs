@@ -234,6 +234,12 @@ pub async fn worker(s: Arc<Connection>) {
 }
 async fn work(s: &Connection) -> Result<(), &'static str> {
     let db = db().await.map_err(|_| "database_unavailable")?;
+    // Request handlers keep a 5s statement timeout. Cache assembly of a reused
+    // 60-session panel exceeds that and was recorded as commit_rejected.
+    db.client
+        .batch_execute("SET statement_timeout='180s'; SET lock_timeout='30s'")
+        .await
+        .map_err(|_| "database_unavailable")?;
     db.client
         .query_one("SELECT run_market_data_housekeeping()", &[])
         .await

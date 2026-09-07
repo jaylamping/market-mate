@@ -287,3 +287,9 @@ async fn saved_download_rejects_panel_tampering_and_extra_provenance() {
     tampered["observations"][0]["bar"]["o"] = json!(999);
     assert!(validate_download(&serde_json::to_vec(&tampered).unwrap()).is_err());
 }
+
+#[test]
+fn campaign_acquisition_request_parses_the_stored_sql_shape() {
+    let stored = json!({"cash":"zero_interest","spec":{"runner":"momentum_v1","quantile_count":2,"one_way_cost_bps":10,"lookback_sessions":5,"borrow_bps_per_session":4},"symbols":["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","JPM","JNJ","V","UNH","PG","MA","HD","DIS","PYPL","ADBE","CRM","NFLX"],"sessions":["2026-06-11","2026-06-12","2026-06-15"],"benchmark":"SPY","symbol_asof":"2026-09-07","schema_version":1});
+    serde_json::from_value::<PanelRequest>(stored).unwrap();
+}

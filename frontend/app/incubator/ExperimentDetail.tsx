@@ -8,7 +8,7 @@ import {experimentReason,experimentLabel,workflowKey,type Experiment} from "./ev
 import type {ProgressStep} from "./ProgressFooter";
 export function experimentProgress(e:Experiment):ProgressStep[]{
  const events=e.events??[],has=(state:string)=>events.some(x=>x.state===state),at=(state:string)=>events.find(x=>x.state===state)?.at;
- const failed=["failed","indeterminate"].includes(e.status),paused=!!e.capacity_wait||["awaiting_data","needs_input","setup_question"].includes(e.status);
+ const failed=["failed","indeterminate"].includes(e.status),paused=!!e.capacity_wait||["awaiting_data","needs_input","setup_question","setup_retry","experiment_retry"].includes(e.status);
  const stage=has("running")?3:has("ready")?2:1;
  return [{label:"Created",state:"complete",at:e.created_at},...(["Setup","Experiment","Results"] as const).map((label,i):ProgressStep=>({label:i+1===stage&&paused?(e.capacity_wait?capacityWaitLabel(e.capacity_wait):experimentLabel[e.status]):label,state:e.status==="completed"||i+1<stage?"complete":i+1>stage?"pending":failed?"failed":paused?"paused":e.status==="awaiting_setup"?"pending":"active",at:at(["preparing","dispatching","completed"][i])}))];
 }

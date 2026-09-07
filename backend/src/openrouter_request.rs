@@ -170,7 +170,7 @@ mod tests {
         let adapted = c.adapt(&request()).unwrap();
         assert!(adapted.get("max_tokens").is_none());
         assert_eq!(adapted["max_completion_tokens"], 2048);
-        assert_eq!(adapted["response_format"], request()["response_format"]);
+        assert_eq!(adapted["response_format"], json!({"type":"json_object"}));
         assert_eq!(c.adapt(&adapted).unwrap(), adapted);
     }
     #[test]

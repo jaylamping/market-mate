@@ -1,17 +1,17 @@
-export type RunState = "admitted" | "preparing" | "dispatched" | "completed" | "failed" | "indeterminate";
+export type RunState = "admitted" | "preparing" | "dispatched" | "completed" | "failed" | "indeterminate" | "research_retry";
 export type Report = { hypothesis: string; evidence_gaps: string[]; experiment: string[]; falsification_rule: string; limitations: string[] };
 export type CapacityReceipt = {attempt_id:string;model:string;trigger:string;reserved_nanos:number;cost_nanos:number|null};
 export type CapacityAttempt = {state:RunState;capacity:CapacityReceipt|null;http_status:number|null;reason:string|null};
 type Detail = { capacity?:CapacityReceipt|null;capacity_attempts?:CapacityAttempt[]; provider_limit_source: string | null; provider_remedy: string | null; provider_message: string | null; retry_after: string | null; http_status: number | null; fallback_of: string | null; response_text: string | null; validation_error: string | null; response_truncated: boolean; reason: string | null; generation_id: string | null; returned_model: string | null; serving_provider: string | null; report: Report | null; usage: { prompt_tokens: number | null; completion_tokens: number | null; cost_usd: number | null }; request_sha256: string | null; policy_revision: number | null };
 export type CapacityWait = {reason:string;next_eligible_at:string};
 export function capacityWaitLabel(wait:CapacityWait):string {return ({dispatch_outcome_unknown:"Outcome unknown · not retried",paused:"Automated work paused",daily_free_exhausted:"Daily free capacity used",provider_cooldown:"Provider cooling down",account_cooldown:"Provider cooling down",paid_budget:"Paid budget used"} as Record<string,string>)[wait.reason]??"Waiting for request capacity";}
-export type Run = { capacity_wait?:CapacityWait|null; archived?:boolean; archive_version?:number; created_by?: "principal"|"agent"|"local_runner"; run_key: string; assignment_id: string; created_at: string; updated_at: string; state: RunState; config: { agent_name: string; model: string; input: { title: string; text: string }; limits: { max_requests: number; max_output_tokens: number; timeout_seconds: number; max_cost_usd: number | null; spend_policy?: "owner_selected_model" } }; detail: Detail; events: { sequence: number; state: RunState; at: string; detail: Detail }[] };
+export type Run = { capacity_wait?:CapacityWait|null; archived?:boolean; archive_version?:number; created_by?: "principal"|"agent"|"local_runner"; run_key: string; assignment_id: string; created_at: string; updated_at: string; state: RunState; config: { agent_name: string; model: string; input: { title: string; text: string }; limits: { max_requests: number; max_output_tokens: number; timeout_seconds: number; max_cost_usd: number | null; spend_policy?: "owner_selected_model"|"campaign_selected_model" } }; detail: Detail; events: { sequence: number; state: RunState; at: string; detail: Detail }[] };
 function object(v: unknown): Record<string, unknown> { if (!v || typeof v !== "object" || Array.isArray(v)) throw Error("Invalid run history"); return v as Record<string, unknown>; }
 function string(v: unknown): string { if (typeof v !== "string" || !v.trim()) throw Error("Invalid run text"); return v; }
 function number(v: unknown): number { if (typeof v !== "number" || !Number.isFinite(v) || v < 0) throw Error("Invalid run number"); return v; }
 function array(v: unknown): unknown[] { if (!Array.isArray(v)) throw Error("Invalid run list"); return v; }
 function date(v: unknown): string { const s=string(v); if (!Number.isFinite(Date.parse(s))) throw Error("Invalid run date"); return s; }
-function state(v: unknown): RunState { if (!["admitted","preparing","dispatched","completed","failed","indeterminate"].includes(string(v))) throw Error("Invalid run state"); return v as RunState; }
+function state(v: unknown): RunState { if (!["admitted","preparing","dispatched","completed","failed","indeterminate","research_retry"].includes(string(v))) throw Error("Invalid run state"); return v as RunState; }
 function nullable<T>(v: unknown, parse: (v: unknown) => T): T | null { return v === null || v === undefined ? null : parse(v); }
 function capacityReceipt(v:unknown):CapacityReceipt {
   const row=object(v),nanos=(v:unknown)=>{const n=number(v);if(!Number.isSafeInteger(n))throw Error("Invalid capacity amount");return n;};
@@ -38,11 +38,12 @@ export function parseRuns(v: unknown): Run[] {
     if(r.archived!==undefined&&typeof r.archived!=="boolean")throw Error("Invalid archive state");
     if(r.archive_version!==undefined&&(!Number.isInteger(r.archive_version)||Number(r.archive_version)<0))throw Error("Invalid archive version");
     const ownerSelected = limits.spend_policy === "owner_selected_model" && c.manual_model_spend === true;
-    if (limits.spend_policy !== undefined && !ownerSelected) throw Error("Invalid spending policy");
-    const maxCost = ownerSelected && limits.max_cost_usd === undefined ? null : number(limits.max_cost_usd);
+    const campaignSelected = limits.spend_policy === "campaign_selected_model" && c.campaign_model_spend === true;
+    if (limits.spend_policy !== undefined && !ownerSelected && !campaignSelected) throw Error("Invalid spending policy");
+    const maxCost = (ownerSelected || campaignSelected) && limits.max_cost_usd === undefined ? null : number(limits.max_cost_usd);
     const capacityWait=r.capacity_wait==null?null:object(r.capacity_wait);
     const result: Run={ capacity_wait:capacityWait?{reason:string(capacityWait.reason),next_eligible_at:date(capacityWait.next_eligible_at)}:null, archived:r.archived===true,archive_version:r.archive_version===undefined?0:number(r.archive_version), created_by:r.created_by==="principal"||r.created_by==="agent"?r.created_by:"local_runner", run_key:string(r.run_key), assignment_id:string(r.assignment_id), created_at:date(r.created_at), updated_at:date(r.updated_at), state:state(r.state),
-      config:{agent_name:string(c.agent_name),model:string(c.model),input:{title:string(input.title),text:string(input.text)},limits:{max_requests:number(limits.max_requests),max_output_tokens:number(limits.max_output_tokens),timeout_seconds:number(limits.timeout_seconds),max_cost_usd:maxCost,...(ownerSelected?{spend_policy:"owner_selected_model" as const}:{})}}, detail:detail(r.detail),
+      config:{agent_name:string(c.agent_name),model:string(c.model),input:{title:string(input.title),text:string(input.text)},limits:{max_requests:number(limits.max_requests),max_output_tokens:number(limits.max_output_tokens),timeout_seconds:number(limits.timeout_seconds),max_cost_usd:maxCost,...(ownerSelected?{spend_policy:"owner_selected_model" as const}:campaignSelected?{spend_policy:"campaign_selected_model" as const}:{})}}, detail:detail(r.detail),
       events:array(r.events).map(v => { const e=object(v); return {sequence:number(e.sequence),state:state(e.state),at:date(e.at),detail:detail(e.detail)}; }) };
     if (!result.events.length || result.events.at(-1)?.state !== result.state || (result.state === "completed" && !result.detail.report)) throw Error("Incomplete run history");
     return result;
@@ -51,11 +52,12 @@ export function parseRuns(v: unknown): Run[] {
 export function stateLabel(run: Run, now = Date.now()): string {
   if(run.state==="admitted" && run.capacity_wait)return capacityWaitLabel(run.capacity_wait);
   if (run.state === "dispatched" && now - Date.parse(run.updated_at) > (run.config.limits.timeout_seconds + 15) * 1000) return "Outcome unknown";
-  return { admitted:"Assigned", preparing:"Preparing", dispatched:"Researching", completed:"Report ready", failed:"Failed", indeterminate:"Outcome unknown" }[run.state];
+  return { admitted:"Assigned", preparing:"Preparing", dispatched:"Researching", completed:"Report ready", failed:"Failed", indeterminate:"Outcome unknown", research_retry:"Retrying research" }[run.state];
 }
 export function costLabel(value: number | null): string { return value === null ? "Unavailable" : value === 0 ? "$0.00" : `$${value.toFixed(6)}`; }
 
 export function spendingLimitLabel(limits: Run["config"]["limits"]): string {
+  if (limits.spend_policy === "campaign_selected_model") return "Campaign-selected model pricing · No dollar cap";
   return limits.max_cost_usd === null ? "Owner-selected model pricing · No dollar cap" : `$${limits.max_cost_usd} spending limit`;
 }
 

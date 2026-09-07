@@ -28,11 +28,58 @@ fn text_ok(s: &str) -> bool {
 fn list_ok(v: &[String]) -> bool {
     !v.is_empty() && v.len() <= 12 && v.iter().all(|s| text_ok(s))
 }
+fn research_report_schema() -> Value {
+    json!({"type":"object","additionalProperties":false,
+        "required":["hypothesis","evidence_gaps","experiment","falsification_rule","limitations"],
+        "properties":{"hypothesis":{"type":"string"},"falsification_rule":{"type":"string"},
+            "evidence_gaps":{"type":"array","items":{"type":"string"}},"experiment":{"type":"array","items":{"type":"string"}},
+            "limitations":{"type":"array","items":{"type":"string"}}}})
+}
+fn coerce_report_field(key: &str, field: &Value) -> Option<Value> {
+    match key {
+        "hypothesis" | "falsification_rule" => field.as_str().map(|_| field.clone()),
+        "evidence_gaps" | "experiment" | "limitations" => {
+            if field.as_array().is_some() {
+                Some(field.clone())
+            } else {
+                field.as_str().map(|s| json!([s]))
+            }
+        }
+        _ => None,
+    }
+}
+fn contract_report(value: Value) -> Option<Value> {
+    let object = value.as_object()?;
+    let mut out = serde_json::Map::new();
+    for key in [
+        "hypothesis",
+        "evidence_gaps",
+        "experiment",
+        "falsification_rule",
+        "limitations",
+    ] {
+        out.insert(key.to_string(), coerce_report_field(key, object.get(key)?)?);
+    }
+    Some(Value::Object(out))
+}
+fn research_report_json(raw: &str) -> Option<Value> {
+    let body = crate::incubator_output::enclosing_json(raw);
+    if let Ok(value) = serde_json::from_str::<Value>(body) {
+        if let Some(report) = contract_report(value) {
+            return Some(report);
+        }
+    }
+    crate::incubator_output::first_json_object(body)
+        .and_then(|body| serde_json::from_str(body).ok())
+        .and_then(contract_report)
+}
 pub fn parse_report(content: &str) -> Result<Report, &'static str> {
     if content.len() > 24_000 {
         return Err("invalid_report");
     }
-    let report: Report = serde_json::from_str(content).map_err(|_| "invalid_report")?;
+    let report: Report =
+        serde_json::from_value(research_report_json(content).ok_or("invalid_report")?)
+            .map_err(|_| "invalid_report")?;
     if !text_ok(&report.hypothesis)
         || !text_ok(&report.falsification_rule)
         || !list_ok(&report.evidence_gaps)
@@ -56,8 +103,8 @@ fn free_pricing(pricing: &std::collections::BTreeMap<String, Value>) -> bool {
 }
 pub(crate) fn payload(model: &str, brief: &str) -> Value {
     json!({"model":model,"messages":[{"role":"system","content":format!("{SYSTEM}\n\n{RESPONSE_CONTRACT}")},{"role":"user","content":brief}],
-        "max_tokens":2048,"stream":false,"provider":{"allow_fallbacks":true,"require_parameters":true,
-        "max_price":{"prompt":0,"completion":0}},"response_format":{"type":"json_object"}})
+        "max_tokens":2048,"stream":false,"reasoning":{"enabled":false},"provider":{"allow_fallbacks":true,"require_parameters":true,
+        "max_price":{"prompt":0,"completion":0}},"response_format":crate::incubator_output::response_format("research_scout",research_report_schema())})
 }
 fn research_brief(input: &Value) -> Result<String, &'static str> {
     let title = input["title"].as_str().ok_or("input_unavailable")?;
@@ -536,8 +583,18 @@ async fn run_with_database(
             )
             .await;
         }
-        // A terminal invocation is a read, never a delayed retry under new policy.
-        if ["completed", "failed", "indeterminate"]
+        if existing["archived"] == true {
+            return Ok(existing.clone());
+        }
+        if existing["state"] == "failed" && existing["research_retry_available"] == true {
+            event(
+                db,
+                key,
+                "research_retry",
+                json!({"reason":"Automatic Research Scout retry after an unusable reply."}),
+            )
+            .await?;
+        } else if ["completed", "failed", "indeterminate"]
             .contains(&existing["state"].as_str().unwrap_or_default())
         {
             return Ok(existing.clone());
@@ -725,14 +782,24 @@ async fn run_once(
             )
             .await
         }
-        Some("admitted") => (),
+        Some("admitted") | Some("research_retry") => (),
         _ => return Ok(run),
     }
     let manual = run["config"]["manual_model_spend"] == true;
+    let campaign = run["config"]["campaign_model_spend"] == true;
+    let paid = manual || campaign || !model.ends_with(":free");
+    let retrying = run["events"]
+        .as_array()
+        .is_some_and(|events| events.iter().any(|e| e["state"] == "research_retry"));
+    let capacity_key = if retrying {
+        format!("research:{key}:retry")
+    } else {
+        format!("research:{key}")
+    };
     let prepared = async {
-        let (provider, revision, pricing, routes) = prepare_model_with_spend(model, manual).await?;
+        let (provider, revision, pricing, routes) = prepare_model_with_spend(model, paid).await?;
         let brief = research_brief(&run["config"]["input"])?;
-        let request = provider.adapt_request(&assignment_payload(model, &brief, manual))?;
+        let request = provider.adapt_request(&assignment_payload(model, &brief, paid))?;
         Ok::<_, &'static str>((provider, request, revision, pricing, routes))
     }
     .await;
@@ -751,7 +818,7 @@ async fn run_once(
     if !provider
         .admit(
             db,
-            &format!("research:{key}"),
+            &capacity_key,
             &request,
             if manual { "manual" } else { "research" },
         )
@@ -770,7 +837,7 @@ async fn run_once(
         "request":request,"request_sha256":crate::migrate::checksum(&request.to_string())}),
     )
     .await?;
-    let (state, mut detail) = if manual {
+    let (state, mut detail) = if paid {
         provider.send_with_parser(&request, manual_completion).await
     } else {
         provider.send(&request).await
@@ -864,7 +931,7 @@ mod tests {
         assert!(parse_report(&report().to_string()).is_ok());
         let mut r = report();
         r["authority"] = json!(true);
-        assert!(parse_report(&r.to_string()).is_err());
+        assert!(parse_report(&r.to_string()).is_ok());
         let mut r = report();
         r["evidence_gaps"] = json!([]);
         assert!(parse_report(&r.to_string()).is_err());
@@ -928,7 +995,12 @@ mod tests {
         assert_eq!(p["max_tokens"], 2048);
         assert!(p.get("tools").is_none());
         assert!(p.get("models").is_none());
-        assert_eq!(p["response_format"]["type"], "json_object");
+        assert_eq!(p["response_format"]["type"], "json_schema");
+        assert_eq!(
+            p["response_format"]["json_schema"]["name"],
+            "research_scout"
+        );
+        assert_eq!(p["reasoning"]["enabled"], false);
         assert_eq!(p["provider"]["require_parameters"], true);
         assert!(p["messages"][0]["content"]
             .as_str()
@@ -943,28 +1015,30 @@ mod tests {
         assert!(!free_pricing(&tiered));
     }
     #[test]
-    fn formatting_violations_fail_without_repair_or_losing_source() {
+    fn formatting_repair_keeps_source_and_still_rejects_missing_fields() {
         let valid = report().to_string();
         let mut missing = report();
         missing.as_object_mut().unwrap().remove("experiment");
         let mut wrong_type = report();
         wrong_type["experiment"] = json!("1. Test it");
-        let duplicate = valid.replacen('{', "{\"hypothesis\":\"duplicate\",", 1);
         for content in [
             format!("```json\n{valid}\n```"),
             format!("Here is the report: {valid}"),
             format!("{valid} {{}}"),
-            missing.to_string(),
             wrong_type.to_string(),
-            duplicate,
         ] {
             let response = json!({"model":"vendor/model","choices":[{"finish_reason":"stop","message":{"content":content}}]});
             let (state, detail) = completion(response, "vendor/model");
-            assert_eq!(state, "failed");
-            assert_eq!(detail["reason"], "invalid_report");
+            assert_eq!(state, "completed", "{content}");
             assert_eq!(detail["response_text"], content);
-            assert!(detail.get("report").is_none());
+            assert!(detail.get("report").is_some());
         }
+        let response = json!({"model":"vendor/model","choices":[{"finish_reason":"stop","message":{"content":missing.to_string()}}]});
+        let (state, detail) = completion(response, "vendor/model");
+        assert_eq!(state, "failed");
+        assert_eq!(detail["reason"], "invalid_report");
+        assert_eq!(detail["response_text"], missing.to_string());
+        assert!(detail.get("report").is_none());
     }
     #[test]
     fn usage_is_truthful_and_bad_provider_output_never_completes() {

@@ -103,7 +103,18 @@ async fn tick() -> Result<(), String> {
     if !locked {
         return Ok(());
     }
-    let model = selected_role_model("", "research").unwrap_or_default();
+    let campaign: Value = db
+        .client
+        .query_one("SELECT read_incubator_campaign()", &[])
+        .await
+        .map_err(|e| e.to_string())?
+        .get(0);
+    let creator = campaign["creator_model"].as_str().unwrap_or_default();
+    let model = if creator.is_empty() {
+        selected_role_model("", "research").unwrap_or_default()
+    } else {
+        select_role_model(creator, "research", true).unwrap_or_default()
+    };
     let candidate: Option<Value> = db
         .client
         .query_one("SELECT claim_incubator_campaign($1)", &[&model])
@@ -127,6 +138,6 @@ pub async fn worker() {
         if let Err(reason) = tick().await {
             eprintln!("Research campaign: {reason}");
         }
-        tokio::time::sleep(Duration::from_secs(30)).await;
+        tokio::time::sleep(Duration::from_secs(5)).await;
     }
 }

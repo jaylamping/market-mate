@@ -1,6 +1,6 @@
 # Architecture and implementation map
 
-This map describes the source at its last review on 2026-09-07, based on merge `b5963db`. Runtime state must be checked separately with `python3 scripts/doctor.py --runtime`. Update this map when service ownership or authority boundaries change.
+This map describes the source at its last review on 2026-09-07, based on merge `b5963db` plus campaign backlog pickup, experiment throughput, and acquisition worker timeout recovery. Runtime state must be checked separately with `python3 scripts/doctor.py --runtime`. Update this map when service ownership or authority boundaries change.
 
 ## Implemented system
 
@@ -22,12 +22,12 @@ The frontend is a Next.js application backed by Rust/Axum services and PostgreSQ
 
 1. The Principal's saved campaign settings select the creator and bound intake. [Campaign controls](../backend/src/incubator_campaign.rs) and [campaign SQL](../db/migrations/0074_research_campaign.sql) own the transition, with subsequent migrations replacing functions.
 2. [Ticket Creator](../backend/src/incubator_ticket_creator.rs) proposes a title, premise, and supported diagnostic specification. Output is untrusted and validated in Rust and at database boundaries.
-3. [Similarity checking](../backend/src/incubator_requests.rs) compares against assignment history. Complete duplicates stop; incomplete checks block admission. Successful nonduplicates enter the existing research workflow.
+3. [Similarity checking](../backend/src/incubator_requests.rs) compares against assignment history. Only an exact diagnostic case is a duplicate and leaves the live queue. Incomplete checks record the original result and queue a linked retry without pausing the backlog. Successful nonduplicates enter the existing research workflow.
 4. Research, evaluation, refinement, and [experiments](../backend/src/incubator_experiment.rs) preserve lineage. Observed market data and fixed diagnostic contracts remain separate from model-generated claims.
 5. [Capacity admission](../backend/src/openrouter_capacity.rs) records each dispatch and its reservation/outcome. [Request adaptation](../backend/src/openrouter_request.rs) respects model capabilities without removing output or cost bounds.
-6. [Recovery](../db/migrations/0079_campaign_recovery.sql) creates a linked new proposal for a stopped check and blocks uncertain provider outcomes. Original checks remain available.
+6. [Recovery](../db/migrations/0079_campaign_recovery.sql), [backlog pickup](../db/migrations/0080_campaign_backlog_pickup.sql), [throughput](../db/migrations/0081_campaign_experiment_throughput.sql), and [research retry](../db/migrations/0083_research_retry_campaign_paid.sql) create a linked new proposal for a stopped check, keep claims below capacity, retry one unusable Experiment-agent or Research Scout reply, and let a paid campaign creator run similarity and Research Scout. Original checks remain available.
 
-Read [campaign behavior](research/research-campaign.md), [capacity operation](research/openrouter-capacity-operation.md), and the relevant ADR before changing this flow. Campaign paid creator selection is distinct from free-only campaign research work; general manual/automated routing has separate policies.
+Read [campaign behavior](research/research-campaign.md), [capacity operation](research/openrouter-capacity-operation.md), and the relevant ADR before changing this flow. A paid campaign creator authorizes Ticket Creator, similarity, and Research Scout only; later campaign stages stay free-only. General manual/automated routing has separate policies.
 
 ## Current implementation versus planned design
 

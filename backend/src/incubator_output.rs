@@ -58,3 +58,51 @@ pub(crate) fn content<'a>(
 pub(crate) fn response_format(name: &str, schema: Value) -> Value {
     json!({"type":"json_schema","json_schema":{"name":name,"strict":true,"schema":schema}})
 }
+pub(crate) fn enclosing_json(raw: &str) -> &str {
+    let text = raw.trim();
+    if let Some((header, rest)) = text.split_once('\n') {
+        if matches!(header.trim_end(), "```json" | "```") {
+            if let Some((body, closing)) = rest.rsplit_once('\n') {
+                if closing.trim() == "```" {
+                    return body.trim();
+                }
+            }
+        }
+    }
+    text
+}
+pub(crate) fn first_json_object(raw: &str) -> Option<&str> {
+    let start = raw.find('{')?;
+    let bytes = raw.as_bytes();
+    let mut depth = 0i32;
+    let mut in_str = false;
+    let mut esc = false;
+    for (i, c) in bytes.iter().enumerate().skip(start) {
+        if in_str {
+            if esc {
+                esc = false;
+                continue;
+            }
+            if *c == b'\\' {
+                esc = true;
+                continue;
+            }
+            if *c == b'"' {
+                in_str = false;
+            }
+            continue;
+        }
+        match c {
+            b'"' => in_str = true,
+            b'{' => depth += 1,
+            b'}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return raw.get(start..=i);
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}

@@ -3,7 +3,7 @@ import {useState} from "react";
 import {useMutation,useQuery,useQueryClient} from "@tanstack/react-query";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
-import {acquisitionKey,acquisitionLabels,dataError,marketDataKey,marketRequest,type Acquisition,type MarketConnection} from "@/lib/market-data";
+import {acquisitionKey,acquisitionLabels,canRetryAcquisition,dataError,marketDataKey,marketRequest,type Acquisition,type MarketConnection} from "@/lib/market-data";
 import {workflowKey,type Experiment} from "./evaluation";
 export function AcquisitionSummary({job}:{job:Acquisition}){
  const r=job.request;
@@ -21,7 +21,7 @@ export function AcquisitionPanel({experiment:e}:{experiment:Experiment}){
  {job.isError&&<p role="alert" className="text-sm text-destructive">{job.error.message}</p>}
  {job.data?<AcquisitionSummary job={job.data}/>:<p className="text-sm text-muted-foreground">{provided?"The requested symbols and dates are ready for collection.":waiting?"Specify the prices this diagnostic needs. A daily panel is one price history per stock over the same trading sessions.":"Setup will identify the price history needed for this diagnostic."}</p>}
  {waiting&&(!connection.data?.settings?.enabled||connection.isError)&&<p className="text-sm text-muted-foreground">{connection.data?.settings?"Price collection is paused.":"Connect a historical data source to collect prices automatically."} <a className="text-primary underline underline-offset-4" href="/system#market-data">Open market data settings</a></p>}
- {job.data&&<div className="flex flex-wrap gap-3">{job.data.state==="failed"&&job.data.attempts<3&&job.data.request&&<Button disabled={save.isPending} onClick={()=>save.mutate({path:"acquisition",body:{action:"retry"}})}>Retry download</Button>}{["queued","leased","retry_wait","failed"].includes(job.data.state)&&<Button variant="outline" disabled={save.isPending} onClick={()=>save.mutate({path:"acquisition",body:{action:"cancel"}})}>Cancel download</Button>}</div>}
+ {job.data&&<div className="flex flex-wrap gap-3">{canRetryAcquisition(job.data)&&<Button disabled={save.isPending} onClick={()=>save.mutate({path:"acquisition",body:{action:"retry"}})}>Retry download</Button>}{["queued","leased","retry_wait","failed"].includes(job.data.state)&&<Button variant="outline" disabled={save.isPending} onClick={()=>save.mutate({path:"acquisition",body:{action:"cancel"}})}>Cancel download</Button>}</div>}
  {waiting&&!provided&&!job.data&&!job.isPending&&<details><summary className="cursor-pointer text-sm font-medium text-primary">Specify symbols and dates</summary><form className="mt-4 grid max-w-xl gap-4" onSubmit={ev=>{ev.preventDefault();save.mutate({path:"data-request",body:{calendar:"XNYS_2025_2026_v1",symbols:symbols.split(/[\s,]+/).filter(Boolean),start,end,benchmark,symbol_asof:end,cash:"zero_interest"}});}}>
  <label className="grid gap-2 text-sm">Stock symbols, separated by commas<Input required placeholder="For example: AAPL, XOM, JPM, NEE" value={symbols} onChange={ev=>setSymbols(ev.target.value.toUpperCase())}/></label>
  <div className="grid gap-4 sm:grid-cols-2"><label className="grid gap-2 text-sm">Start date<Input type="date" min="2025-01-01" max="2026-12-31" required value={start} onChange={ev=>setStart(ev.target.value)}/></label><label className="grid gap-2 text-sm">End date<Input type="date" min={start||"2025-01-01"} max="2026-12-31" required value={end} onChange={ev=>setEnd(ev.target.value)}/></label></div>
