@@ -16,6 +16,11 @@
     "least_privilege",
     "workflow_events",
     "audit_chain",
+    "catalog_token_limit_bounds",
+    "alternative_token_limit_similarity_dispatch",
+    "manual_paid_model_admission",
+    "manual_paid_model_idempotency",
+    "automatic_paid_model_denied",
     "http_idempotency",
     "durable_queue_worker",
     "sse_initial_snapshot",
@@ -27,5 +32,8 @@
     "approval_revocation_stops_next_batch"
   ],
   "passed": true,
+  "output_limits_migration_sha256": "229ad45e6725c2173a1d33c7cbab25cd156af8c68aa44ddc411e1b6848883e37",
+  "model_identifier_migration_sha256": "223b410fec5e57e41e76d401cbbca1632192f3d3df9312beee1ccc67ebae7623",
+  "paid_model_migration_sha256": "a5ff5d10da4368cce4c71ffe50a77dbd53bd308be00dd500b77701ffb2f5bc6d",
   "migration_sha256": "c847acc102940bafbda9bf2501d8ef58f72fd8b92447e45034d82abd18915b97"
 }

@@ -108,10 +108,14 @@ async fn acquisition_workflow() {
         .batch_execute("DELETE FROM market_data_acquisition")
         .await
         .is_err());
-    assert!(db
+    let denied = db
         .batch_execute("SELECT bind_incubator_experiment_dataset(1,gen_random_uuid())")
         .await
-        .is_err());
+        .unwrap_err();
+    assert_eq!(
+        denied.code(),
+        Some(&tokio_postgres::error::SqlState::INSUFFICIENT_PRIVILEGE)
+    );
     let provider = Provider::default();
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();

@@ -15,6 +15,7 @@ trap cleanup EXIT
 cargo build --locked --bin backend --bin incubator-requests
 env -i DATABASE_URL=postgres://mm:local-only@127.0.0.1:15434/market_mate ./target/debug/backend migrate
 "${compose[@]}" exec -T postgres psql -X -qAt -v ON_ERROR_STOP=1 -U mm -d market_mate < db/fixtures/incubator_manual_requests_probe.sql > evidence/incubator-manual-requests/probe.log
+"${compose[@]}" exec -T postgres psql -X -qAt -v ON_ERROR_STOP=1 -U mm -d market_mate < db/fixtures/incubator_manual_paid_models_probe.sql > evidence/incubator-manual-requests/paid-models-probe.log
 # Create a check before startup; the actual HTTP submission and restart-safe worker
 # run under the restricted identity, without provider credentials or network inference.
 "${compose[@]}" exec -T postgres psql -X -qAt -v ON_ERROR_STOP=1 -U mm -d market_mate <<'SQL' > /dev/null
@@ -48,7 +49,10 @@ with urllib.request.urlopen(url+'/assignments/stream',timeout=10) as stream:
  again=json.load(urllib.request.urlopen(request,timeout=5));assert again['run_key']==run['run_key'] and again['state']=='failed'
 report=[json.loads(l) for l in (base/'probe.log').read_text().splitlines() if l.startswith('{') and 'incubator-manual-requests' in l][-1]
 assert report['passed']
-report['checks']+=['http_idempotency','durable_queue_worker','sse_initial_snapshot','sse_workflow_update','no_provider_dispatch_without_policy']
+report['checks']+=['catalog_token_limit_bounds','alternative_token_limit_similarity_dispatch','manual_paid_model_admission','manual_paid_model_idempotency','automatic_paid_model_denied','http_idempotency','durable_queue_worker','sse_initial_snapshot','sse_workflow_update','no_provider_dispatch_without_policy']
+report['output_limits_migration_sha256']=hashlib.sha256(pathlib.Path('db/migrations/0063_incubator_model_output_limits.sql').read_bytes()).hexdigest()
+report['model_identifier_migration_sha256']=hashlib.sha256(pathlib.Path('db/migrations/0062_manual_assignment_model_identifiers.sql').read_bytes()).hexdigest()
+report['paid_model_migration_sha256']=hashlib.sha256(pathlib.Path('db/migrations/0061_manual_assignment_paid_models.sql').read_bytes()).hexdigest()
 report['migration_sha256']=hashlib.sha256(pathlib.Path('db/migrations/0056_incubator_manual_assignments.sql').read_bytes()).hexdigest()
 (base/'acceptance.json').write_text(json.dumps(report,indent=2)+'\n')
 PY

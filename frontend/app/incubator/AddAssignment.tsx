@@ -14,7 +14,7 @@ export function AddAssignment() {
  const [check,setCheck]=useState<RequestCheck|null>(null),[error,setError]=useState(""),[notice,setNotice]=useState("");
  const id=useRef<string|null>(null),busy=useRef(false),client=useQueryClient();
  const routing=useQuery({...modelRoutingQuery,enabled:open});
- const models=routing.data?.models.map(m=>m.routes[0]).filter(r=>r.provider==="openrouter"&&r.model_id.endsWith(":free"))??[];
+ const models=routing.data?.models.map(m=>m.routes[0]).filter(r=>r.provider==="openrouter")??[];
  const locked=phase==="checking"||phase==="submitting";
  function revise(){id.current=null;setCheck(null);setPhase("editing");setError("");}
  async function submit(checked:RequestCheck,accept=false) {
@@ -65,7 +65,7 @@ export function AddAssignment() {
    <label className="block space-y-2 text-sm font-medium">Request<textarea required maxLength={6000} rows={5} value={text} disabled={locked} onChange={e=>{setText(e.target.value);revise();}} className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus-visible:outline-2 focus-visible:outline-ring" placeholder="Describe the hypothesis, question, or experiment you have in mind…"/></label>
    <label className="block space-y-2 text-sm font-medium">Assignment model<select value={model} disabled={locked||routing.isPending} onChange={e=>{setModel(e.target.value);revise();}} className="min-h-11 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Use research runner{(routing.data?.research_model??routing.data?.default_model)?` · ${routing.data?.research_model??routing.data?.default_model}`:""}</option>{models.map(m=><option key={m.model_id} value={m.model_id}>{m.model_id}</option>)}</select></label>
    {routing.isError&&<p role="alert" className="text-sm text-destructive">Model choices are unavailable. The saved research runner or default will be checked when you submit.</p>}
-   <p className="text-xs leading-relaxed text-muted-foreground">Owner-authored research text only. Planning runs use approved free models. Similarity checks use the default/fallback model when wording alone is inconclusive.</p>
+   <p className="text-xs leading-relaxed text-muted-foreground">Owner-authored research text only. Manual assignments can use approved free or paid models. Paid models incur provider charges. Similarity checks use the default/fallback model when wording alone is inconclusive.</p>
    {phase==="checking"&&<p role="status" className="flex gap-2 text-sm"><LoaderCircle className="size-4 animate-spin"/>Checking current and historical assignments…</p>}
    {phase==="warning"&&check?.result&&<section aria-label="Similarity warning" className="space-y-3 rounded-lg border border-[var(--warning)]/50 bg-[var(--warning)]/5 p-4">
     <h3 className="flex items-center gap-2 text-sm font-medium"><TriangleAlert className="size-4"/>{check.result.matches.length?"Similar assignments found":check.result.complete?"Ready to create":"Similarity check incomplete"}</h3>

@@ -19,4 +19,4 @@ export function parseWorkflow(value:unknown):Evaluation[]{
  }
  return rows;
 }
-export async function getWorkflow(){const r=await fetch("/api/incubator/workflow",{cache:"no-store"});if(!r.ok)throw Error("Workflow unavailable");return parseWorkflow(await r.json());}
+export async function getWorkflow(){const r=await fetch("/api/incubator/workflow",{cache:"no-store",signal:AbortSignal.timeout(15_000)});if(!r.ok)throw Error("Workflow unavailable");return parseWorkflow(await r.json());}

@@ -170,7 +170,7 @@ fn request_payload(
     messages.push(json!({"role":"user","content":text}));
     let request = json!({"model":model,"messages":messages,"max_tokens":2048,"stream":true,
         "stream_options":{"include_usage":true},"response_format":{"type":"json_object"},
-        "provider":{"allow_fallbacks":false,"require_parameters":true,"max_price":{"prompt":0,"completion":0}}});
+        "provider":{"allow_fallbacks":true,"require_parameters":true,"max_price":{"prompt":0,"completion":0}}});
     if request.to_string().len() > 96000 {
         return Err("Conversation context is full; no history was silently removed");
     }
@@ -249,6 +249,9 @@ async fn send_message(
             .map_err(|e| error(StatusCode::CONFLICT, e))?;
         let (provider, _, _, _) = crate::incubator::prepare_model(model)
             .await
+            .map_err(|e| error(StatusCode::CONFLICT, e))?;
+        let request = provider
+            .adapt_request(&request)
             .map_err(|e| error(StatusCode::CONFLICT, e))?;
         let admitted: bool = db
             .client
@@ -708,6 +711,8 @@ mod tests {
             .unwrap()
             .contains("Latest applied hypothesis"));
         assert!(!p.to_string().contains("unvalidated"));
+        assert_eq!(p["provider"]["allow_fallbacks"], true);
+        assert!(p.get("models").is_none());
         assert_eq!(
             p["provider"]["max_price"],
             json!({"prompt":0,"completion":0})

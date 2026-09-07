@@ -200,6 +200,23 @@ async fn dispatch(
             return Ok(("recorded", Value::Null));
         }
     };
+    let request = if let Some(provider) = &provider {
+        match provider.adapt_request(&request) {
+            Ok(request) => request,
+            Err(reason) => {
+                record(
+                    db,
+                    id,
+                    "failed",
+                    json!({"reason":reason,"dispatched":false}),
+                )
+                .await?;
+                return Ok(("recorded", Value::Null));
+            }
+        }
+    } else {
+        request
+    };
     record(
         db,
         id,

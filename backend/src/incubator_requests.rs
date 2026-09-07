@@ -94,6 +94,9 @@ pub(crate) fn selected_model(choice: &str) -> Result<String, ApiError> {
     selected_role_model(choice, "default")
 }
 pub(crate) fn selected_role_model(choice: &str, role: &str) -> Result<String, ApiError> {
+    select_role_model(choice, role, false)
+}
+fn select_role_model(choice: &str, role: &str, manual: bool) -> Result<String, ApiError> {
     let policy =
         crate::model_routing::stored(std::path::Path::new("/var/lib/model-policy/routing.json"))
             .map_err(error)?
@@ -117,16 +120,24 @@ pub(crate) fn selected_role_model(choice: &str, role: &str) -> Result<String, Ap
     if route.provider != "openrouter" {
         return Err(error("preferred_provider_execution_unavailable"));
     }
-    if !route.model_id.ends_with(":free") {
+    if !manual && !route.model_id.ends_with(":free") {
         return Err(error("zero_spend_budget_denied"));
     }
     Ok(route.model_id.clone())
 }
 type ModelFuture<'a, T> = std::pin::Pin<Box<dyn std::future::Future<Output = T> + Send + 'a>>;
 trait PreparedComparison: Send + Sync {
+    fn adapt_request(&self, request: &Value) -> Result<Value, &'static str> {
+        Ok(request.clone())
+    }
+
     fn send<'a>(&'a self, request: &'a Value) -> ModelFuture<'a, (&'static str, Value)>;
 }
 impl PreparedComparison for crate::incubator::OpenRouter {
+    fn adapt_request(&self, request: &Value) -> Result<Value, &'static str> {
+        self.adapt_request(request)
+    }
+
     fn send<'a>(&'a self, request: &'a Value) -> ModelFuture<'a, (&'static str, Value)> {
         Box::pin(self.send_with_parser(request, similarity_completion))
     }
@@ -144,7 +155,7 @@ trait ComparisonModels: Send + Sync {
 struct LiveModels;
 impl ComparisonModels for LiveModels {
     fn research(&self, choice: &str) -> Result<String, ApiError> {
-        selected_role_model(choice, "research")
+        select_role_model(choice, "research", true)
     }
     fn resolve(&self, choice: &str) -> Result<String, ApiError> {
         selected_model(choice)
@@ -303,6 +314,13 @@ async fn assess(
                     }
                     let provider = match models.prepare(&model).await {
                         Ok(provider) => provider,
+                        Err(reason) => {
+                            issues.push(reason.into());
+                            break;
+                        }
+                    };
+                    let request = match provider.adapt_request(&request) {
+                        Ok(request) => request,
                         Err(reason) => {
                             issues.push(reason.into());
                             break;

@@ -1,7 +1,7 @@
 export type RunState = "admitted" | "preparing" | "dispatched" | "completed" | "failed" | "indeterminate";
 export type Report = { hypothesis: string; evidence_gaps: string[]; experiment: string[]; falsification_rule: string; limitations: string[] };
-type Detail = { fallback_of: string | null; response_text: string | null; validation_error: string | null; response_truncated: boolean; reason: string | null; generation_id: string | null; returned_model: string | null; serving_provider: string | null; report: Report | null; usage: { prompt_tokens: number | null; completion_tokens: number | null; cost_usd: number | null }; request_sha256: string | null; policy_revision: number | null };
-export type Run = { archived?:boolean; archive_version?:number; created_by?: "principal"|"agent"|"local_runner"; run_key: string; assignment_id: string; created_at: string; updated_at: string; state: RunState; config: { agent_name: string; model: string; input: { title: string; text: string }; limits: { max_requests: number; max_output_tokens: number; timeout_seconds: number; max_cost_usd: number } }; detail: Detail; events: { sequence: number; state: RunState; at: string; detail: Detail }[] };
+type Detail = { provider_limit_source: string | null; provider_remedy: string | null; provider_message: string | null; retry_after: string | null; http_status: number | null; fallback_of: string | null; response_text: string | null; validation_error: string | null; response_truncated: boolean; reason: string | null; generation_id: string | null; returned_model: string | null; serving_provider: string | null; report: Report | null; usage: { prompt_tokens: number | null; completion_tokens: number | null; cost_usd: number | null }; request_sha256: string | null; policy_revision: number | null };
+export type Run = { archived?:boolean; archive_version?:number; created_by?: "principal"|"agent"|"local_runner"; run_key: string; assignment_id: string; created_at: string; updated_at: string; state: RunState; config: { agent_name: string; model: string; input: { title: string; text: string }; limits: { max_requests: number; max_output_tokens: number; timeout_seconds: number; max_cost_usd: number | null; spend_policy?: "owner_selected_model" } }; detail: Detail; events: { sequence: number; state: RunState; at: string; detail: Detail }[] };
 function object(v: unknown): Record<string, unknown> { if (!v || typeof v !== "object" || Array.isArray(v)) throw Error("Invalid run history"); return v as Record<string, unknown>; }
 function string(v: unknown): string { if (typeof v !== "string" || !v.trim()) throw Error("Invalid run text"); return v; }
 function number(v: unknown): number { if (typeof v !== "number" || !Number.isFinite(v) || v < 0) throw Error("Invalid run number"); return v; }
@@ -19,7 +19,7 @@ export function parseReport(v: unknown): Report {
 }
 function detail(v: unknown): Detail {
   const d=object(v), u=d.usage == null ? {} : object(d.usage);
-  return { fallback_of:nullable(d.fallback_of,string),response_text:nullable(d.response_text,v=>{if(typeof v!=="string") throw Error("Invalid response text");return v;}),validation_error:nullable(d.validation_error,string),response_truncated:d.response_truncated === true,reason:nullable(d.reason,string), generation_id:nullable(d.generation_id,string), returned_model:nullable(d.returned_model,string), serving_provider:nullable(d.serving_provider,string), report:nullable(d.report,parseReport), usage:{ prompt_tokens:nullable(u.prompt_tokens,number), completion_tokens:nullable(u.completion_tokens,number), cost_usd:nullable(u.cost_usd,number) }, request_sha256:nullable(d.request_sha256,string), policy_revision:nullable(d.policy_revision,number) };
+  return { provider_limit_source:nullable(d.provider_limit_source,string),provider_remedy:nullable(d.provider_remedy,string),provider_message:nullable(d.provider_message,string),retry_after:nullable(d.retry_after,string),http_status:nullable(d.http_status,number),fallback_of:nullable(d.fallback_of,string),response_text:nullable(d.response_text,v=>{if(typeof v!=="string") throw Error("Invalid response text");return v;}),validation_error:nullable(d.validation_error,string),response_truncated:d.response_truncated === true,reason:nullable(d.reason,string), generation_id:nullable(d.generation_id,string), returned_model:nullable(d.returned_model,string), serving_provider:nullable(d.serving_provider,string), report:nullable(d.report,parseReport), usage:{ prompt_tokens:nullable(u.prompt_tokens,number), completion_tokens:nullable(u.completion_tokens,number), cost_usd:nullable(u.cost_usd,number) }, request_sha256:nullable(d.request_sha256,string), policy_revision:nullable(d.policy_revision,number) };
 }
 export function parseRuns(v: unknown): Run[] {
   const body=object(v); if (body.environment !== "local_research" || body.artifact_kind !== "research_planning") throw Error("Invalid history scope");
@@ -28,8 +28,11 @@ export function parseRuns(v: unknown): Run[] {
     if (c.provider !== "openrouter" || input.classification !== "project_authored_research_brief") throw Error("Invalid run scope");
     if(r.archived!==undefined&&typeof r.archived!=="boolean")throw Error("Invalid archive state");
     if(r.archive_version!==undefined&&(!Number.isInteger(r.archive_version)||Number(r.archive_version)<0))throw Error("Invalid archive version");
+    const ownerSelected = limits.spend_policy === "owner_selected_model" && c.manual_model_spend === true;
+    if (limits.spend_policy !== undefined && !ownerSelected) throw Error("Invalid spending policy");
+    const maxCost = ownerSelected && limits.max_cost_usd === undefined ? null : number(limits.max_cost_usd);
     const result: Run={ archived:r.archived===true,archive_version:r.archive_version===undefined?0:number(r.archive_version), created_by:r.created_by==="principal"||r.created_by==="agent"?r.created_by:"local_runner", run_key:string(r.run_key), assignment_id:string(r.assignment_id), created_at:date(r.created_at), updated_at:date(r.updated_at), state:state(r.state),
-      config:{agent_name:string(c.agent_name),model:string(c.model),input:{title:string(input.title),text:string(input.text)},limits:{max_requests:number(limits.max_requests),max_output_tokens:number(limits.max_output_tokens),timeout_seconds:number(limits.timeout_seconds),max_cost_usd:number(limits.max_cost_usd)}}, detail:detail(r.detail),
+      config:{agent_name:string(c.agent_name),model:string(c.model),input:{title:string(input.title),text:string(input.text)},limits:{max_requests:number(limits.max_requests),max_output_tokens:number(limits.max_output_tokens),timeout_seconds:number(limits.timeout_seconds),max_cost_usd:maxCost,...(ownerSelected?{spend_policy:"owner_selected_model" as const}:{})}}, detail:detail(r.detail),
       events:array(r.events).map(v => { const e=object(v); return {sequence:number(e.sequence),state:state(e.state),at:date(e.at),detail:detail(e.detail)}; }) };
     if (!result.events.length || result.events.at(-1)?.state !== result.state || (result.state === "completed" && !result.detail.report)) throw Error("Incomplete run history");
     return result;
@@ -40,3 +43,16 @@ export function stateLabel(run: Run, now = Date.now()): string {
   return { admitted:"Assigned", preparing:"Preparing", dispatched:"Researching", completed:"Report ready", failed:"Failed", indeterminate:"Outcome unknown" }[run.state];
 }
 export function costLabel(value: number | null): string { return value === null ? "Unavailable" : value === 0 ? "$0.00" : `$${value.toFixed(6)}`; }
+
+export function spendingLimitLabel(limits: Run["config"]["limits"]): string {
+  return limits.max_cost_usd === null ? "Owner-selected model pricing · No dollar cap" : `$${limits.max_cost_usd} spending limit`;
+}
+
+export function researchTickets(runs: Run[]): Run[] {
+ const keys=new Set(runs.map(run=>run.run_key));
+ return runs.filter(run=>!run.detail.fallback_of||!keys.has(run.detail.fallback_of));
+}
+export function providerErrorLabel(status: number | null): string {
+ const reasons:Record<number,string>={400:"The provider rejected the request parameters",401:"The provider rejected authentication",402:"The provider requires credits or a higher spending allowance",403:"The provider denied access",404:"The selected model has no available endpoint",413:"The provider rejected the request size",422:"The provider could not process the request",429:"The provider rate-limited this request"};
+ return status===null?"The provider returned an error. Its status is preserved in the run record.":`${reasons[status]??"The provider returned an error"} (HTTP ${status}).`;
+}

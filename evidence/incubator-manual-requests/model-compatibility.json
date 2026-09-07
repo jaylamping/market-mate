@@ -1,0 +1,63 @@
+{
+  "checked_at": "2026-09-07T07:54:36.517697+00:00",
+  "catalog_sha256": "325877b42351b886ab96ec453aa10a5fb758ae5727328731695834aad63398df",
+  "catalog_request_checks": {
+    "compatible": 422,
+    "without_native_json": 55,
+    "alternative_token_limit": 6,
+    "unsupported_output_limit": [
+      "sakana/sakana-namazu",
+      "sakana/fugu-ultra"
+    ],
+    "scope": "catalog request construction; not live inference for every model"
+  },
+  "ling_live_probe": {
+    "request": {
+      "model": "inclusionai/ling-3.0-flash-fin:free",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Return exactly {\"ok\":true} and no other text."
+        }
+      ],
+      "max_tokens": 2048,
+      "stream": false,
+      "provider": {
+        "allow_fallbacks": true,
+        "require_parameters": true,
+        "max_price": {
+          "prompt": 0,
+          "completion": 0
+        }
+      }
+    },
+    "http_status": 200,
+    "provider": "Novita",
+    "finish_reason": "stop",
+    "content": "{\"ok\":true}",
+    "usage": {
+      "prompt_tokens": 32,
+      "completion_tokens": 154,
+      "total_tokens": 186,
+      "cost": 0,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0,
+        "upstream_inference_completions_cost": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 125,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "error": null
+  }
+}

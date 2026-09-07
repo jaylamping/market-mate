@@ -18,7 +18,7 @@ python3 - <<'CHECK'
 import hashlib,json,pathlib
 base=pathlib.Path('.scratch/wu62')
 assert 'test market_data_acquisition::tests::acquisition_workflow ... ok' in (base/'workflow.log').read_text()
-paths=['db/migrations/0061_market_data_acquisition.sql','db/fixtures/wu62_market_data_seed.sql','db/fixtures/wu62_calendar_probe.sql','backend/src/market_data_acquisition.rs','backend/src/market_data_acquisition/tests.rs','backend/src/market_data.rs','backend/src/incubator_experiment.rs','scripts/wu62_market_data_test.sh']
+paths=['db/migrations/0064_market_data_acquisition.sql','db/fixtures/wu62_market_data_seed.sql','db/fixtures/wu62_calendar_probe.sql','backend/src/market_data_acquisition.rs','backend/src/market_data_acquisition/tests.rs','backend/src/market_data.rs','backend/src/incubator_experiment.rs','scripts/wu62_market_data_test.sh']
 r={'work_unit':'WU-62','passed':True,'checks':['calendar_closures_and_early_close','unsupported_requests_rejected','setup_to_executed_diagnostic','two_workers_one_lease','complete_cache_no_http','missing_symbol_fetch','missing_coverage_no_binding','explicit_retry','expired_lease_recovery','stale_worker_fenced','cancel_fences_commit','source_removal_fences_commit','restricted_runtime_role','audit_chain','wu61_and_legacy_regressions'],'source_sha256':{p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in paths},'live_provider_tested':False}
 pathlib.Path('evidence/wu-62/acceptance.json').write_text(json.dumps(r,indent=2)+'\n')
 CHECK
