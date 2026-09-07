@@ -37,6 +37,6 @@ subprocess.run(['cargo','test','campaign_comparison_waits_for_capacity_and_obser
 r=[json.loads(l) for l in pathlib.Path('.scratch/campaign/probe.log').read_text().splitlines() if l.startswith('{') and '"probe": "research-campaign"' in l][-1]
 assert r['passed']
 r['checks']+=['http_campaign_read','http_campaign_save','http_stale_settings_rejected']
-r['sha256']={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in ['db/migrations/0074_research_campaign.sql','db/fixtures/research_campaign_probe.sql','backend/src/incubator_campaign.rs','backend/src/incubator_ticket_creator.rs','backend/src/incubator_requests.rs','backend/src/openrouter_capacity.rs','scripts/research_campaign_test.sh']}
+r['sha256']={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in ['db/migrations/0074_research_campaign.sql','db/migrations/0075_continuous_research_campaign.sql','db/fixtures/research_campaign_probe.sql','backend/src/incubator_campaign.rs','backend/src/incubator_ticket_creator.rs','backend/src/incubator_requests.rs','backend/src/openrouter_capacity.rs','scripts/research_campaign_test.sh']}
 pathlib.Path('evidence/research-campaign/acceptance.json').write_text(json.dumps(r,indent=2)+'\n')
 EVIDENCE

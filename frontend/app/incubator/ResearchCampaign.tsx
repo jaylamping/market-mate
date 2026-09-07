@@ -1,10 +1,14 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Dialog } from "radix-ui";
+import { Plus, X } from "lucide-react";
 import {modelRoutingQuery} from "@/lib/api-queries";
 import { Button } from "@/components/ui/button";
 
+type Usage = {calls:number; input_tokens:number; output_tokens:number; reasoning_tokens:number; unknown_token_calls:number; known_cost_usd:number; unknown_cost_calls:number};
 type Campaign = {
+  creator_usage?:{lifetime:Usage;last_24h:Usage}; creator_calls?:{id:number;model:string;state:string;cost_usd:number|null;usage:{prompt_tokens?:number;completion_tokens?:number}|null}[];
   creator_model: string; backlog_limit: number; backlog_count: number; creator_status: string | null; target: number; created_count: number; completed_count: number; enabled: boolean; revision: number; daily_limit: number; open_limit: number;
   next_at: string; note: string; open_count: number; attempts_today: number; symbols: string[];
   agenda: { ordinal: number; title: string; state: string; reason: string | null; run_key: string | null;
@@ -34,25 +38,44 @@ export function ResearchCampaign() {
     {query.isError && <p role="alert" className="mt-3 text-sm text-destructive">Campaign could not be refreshed. <button className="underline" onClick={()=>query.refetch()}>Retry</button></p>}
     {c && <>
       <p role="status" className="mt-3 text-sm">{c.note}</p>
-      <p className="mt-2 text-xs text-muted-foreground">{c.completed_count} / {c.target} experiments completed · {c.created_count} tickets created · {c.backlog_count} tickets in backlog · Creator: {c.creator_status??"idle"} · {c.attempts_today} candidates checked in the last 24 hours · {c.open_count} unfinished tickets{c.enabled ? ` · Next check no earlier than ${new Date(c.next_at).toLocaleString()}` : ""}</p>
-      <details className="mt-4"><summary className="cursor-pointer text-sm font-medium text-primary">Research scope and backlog</summary>
+      <p className="mt-2 text-xs text-muted-foreground">{c.completed_count} / {c.target} experiments completed for acceptance · {c.created_count} tickets created · {c.backlog_count} tickets in backlog · Creator: {c.creator_status??"idle"} · {c.attempts_today} candidates checked in the last 24 hours · {c.open_count} unfinished tickets{c.enabled ? ` · Next check no earlier than ${new Date(c.next_at).toLocaleString()}` : ""}</p>
+      {c.creator_usage&&<details className="mt-4"><summary className="cursor-pointer text-sm font-medium text-primary">Ticket Creator usage · ${Number(c.creator_usage.last_24h.known_cost_usd).toFixed(4)} reported in 24h{c.creator_usage.last_24h.unknown_cost_calls>0?` · ${c.creator_usage.last_24h.unknown_cost_calls} costs pending`:""}</summary>
+        <div className="mt-3 space-y-2 text-sm">{(["last_24h","lifetime"] as const).map(period=>{const u=c.creator_usage![period];return <p key={period}>{period==="last_24h"?"Last 24 hours":"Lifetime"}: {u.calls} calls · {u.input_tokens.toLocaleString()} input / {u.output_tokens.toLocaleString()} output tokens · {u.reasoning_tokens.toLocaleString()} reported reasoning tokens (included in output) · ${Number(u.known_cost_usd).toFixed(4)} reported · {u.unknown_cost_calls} costs pending · {u.unknown_token_calls} token reports pending</p>;})}
+          <p className="text-muted-foreground">Includes failed calls. Costs come from recorded provider receipts; missing costs remain pending. This tracks Ticket Creator separately from research workers.</p>
+          <ol className="space-y-2">{c.creator_calls?.map(call=><li key={call.id}>#{call.id} · {call.model} · {call.state} · {call.usage?.prompt_tokens??"—"} input / {call.usage?.completion_tokens??"—"} output tokens · {call.cost_usd===null?"Cost pending":`$${Number(call.cost_usd).toFixed(6)}`}</li>)}</ol>
+        </div>
+      </details>}
+      <details className="mt-4"><summary className="cursor-pointer text-sm font-medium text-primary">Current diagnostic scope and recent backlog</summary>
         <div className="mt-3 space-y-3 text-sm"><p>{c.symbols.join(", ")}. Each candidate pins the latest 60 trading sessions ending before today in New York, with SPY as benchmark and zero-interest cash.</p>
-          <p className="text-muted-foreground">Ticket Creator uses the selected model; paid choices require your existing automated spending policy to allow that model. Research workers stay on free routes. Duplicate or incomplete checks create no research ticket. This acceptance campaign stops new admission at ten tickets and preserves its remaining backlog. Pausing lets existing research tickets finish.</p>
+          <p className="text-muted-foreground">Ticket Creator uses the selected model; paid choices require your existing automated spending policy to allow that model. Research workers stay on free routes. Duplicate or incomplete checks create no research ticket. Ten completed experiments is an acceptance milestone; intake continues afterward. The latest 100 backlog entries are shown. Pausing lets existing research tickets finish.</p>
           <ol className="space-y-3">{(c.agenda??[]).map(a=><li key={a.ordinal} className="border-l-2 border-border pl-3"><p>{a.title} <span className="text-muted-foreground">· {a.state}</span></p>{a.reason&&<p className="text-xs text-muted-foreground">{a.reason}</p>}{a.scope&&<p className="text-xs text-muted-foreground">Pinned dates: {a.scope.start} – {a.scope.end}</p>}{a.run_key&&<a className="text-primary underline" href={`/incubator?run=${encodeURIComponent(a.run_key)}`}>Open research ticket</a>}</li>)}</ol>
         </div>
       </details>
       <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
         <label className="min-w-0 text-sm">Ticket Creator model<select className="mt-2 min-h-11 w-full min-w-0 rounded-md border border-input bg-background px-3" aria-label="Ticket Creator model" value={creator??c.creator_model} disabled={save.isPending||routing.isPending} onChange={e=>setCreator(e.target.value)}><option value="">Choose a model</option>{!!c.creator_model&&!models.some(m=>m.model_id===c.creator_model)&&<option value={c.creator_model}>{c.creator_model} (unavailable)</option>}{models.map(m=><option key={m.model_id} value={m.model_id}>{m.model_id}{m.model_id.endsWith(":free")?" · Free":" · Paid"}</option>)}</select></label>
-        <label className="text-sm">Backlog target<select className="ml-2 min-h-11 rounded-md border border-input bg-background px-3" value={backlog??c.backlog_limit} onChange={e=>setBacklog(Number(e.target.value))}>{[1,3,5,10,15,20].map(n=><option key={n}>{n}</option>)}</select></label>
+        <label className="text-sm">Backlog target<select className="ml-2 min-h-11 rounded-md border border-input bg-background px-3" value={backlog??c.backlog_limit} onChange={e=>setBacklog(Number(e.target.value))}>{[1,3,5,10,15,20,50,75,100].map(n=><option key={n}>{n}</option>)}</select></label>
       </div>
       {routing.isError&&<p role="alert" className="mt-2 text-sm text-destructive">Model choices are unavailable. Refresh Models to choose a Ticket Creator.</p>}
       <div className="mt-4 flex flex-wrap items-end gap-3">
-        <label className="text-sm">New tickets per day<select className="ml-2 min-h-11 rounded-md border border-input bg-background px-3" value={daily??c.daily_limit} onChange={e=>setDaily(Number(e.target.value))}>{[1,2,3,4,5,6,7,8,9,10].map(n=><option key={n}>{n}</option>)}</select></label>
-        <label className="text-sm">Unfinished ticket limit<select className="ml-2 min-h-11 rounded-md border border-input bg-background px-3" value={open??c.open_limit} onChange={e=>setOpen(Number(e.target.value))}>{[1,2,3].map(n=><option key={n}>{n}</option>)}</select></label>
-        <Button disabled={save.isPending||query.isError||(!c.enabled&&!(creator??c.creator_model))} onClick={()=>save.mutate(!c.enabled)}>{save.isPending?"Saving…":c.enabled?"Pause campaign":"Enable pilot campaign"}</Button>
+        <label className="text-sm">New tickets per day<select className="ml-2 min-h-11 rounded-md border border-input bg-background px-3" value={daily??c.daily_limit} onChange={e=>setDaily(Number(e.target.value))}>{[1,2,3,4,5,6,7,8,9,10,25,50,75,100].map(n=><option key={n}>{n}</option>)}</select></label>
+        <label className="text-sm">Unfinished ticket limit<select className="ml-2 min-h-11 rounded-md border border-input bg-background px-3" value={open??c.open_limit} onChange={e=>setOpen(Number(e.target.value))}>{[1,2,3,5,10,20].map(n=><option key={n}>{n}</option>)}</select></label>
+        <Button disabled={save.isPending||query.isError||(!c.enabled&&!(creator??c.creator_model))} onClick={()=>save.mutate(!c.enabled)}>{save.isPending?"Saving…":c.enabled?"Pause campaign":"Enable campaign"}</Button>
         {(daily!==null||open!==null||creator!==null||backlog!==null)&&<Button variant="outline" disabled={save.isPending||query.isError} onClick={()=>save.mutate(c.enabled)}>Save settings</Button>}
       </div>
     </>}
     {save.isError&&<p role="alert" className="mt-3 text-sm text-destructive">{save.error.message}</p>}
   </section>;
+}
+
+export function CampaignDialog() {
+ return <Dialog.Root><Dialog.Trigger asChild><Button className="min-h-11" variant="outline"><Plus aria-hidden="true"/>New Campaign</Button></Dialog.Trigger>
+  <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-black/60"/>
+   <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-border bg-background p-6 text-foreground shadow-xl">
+    <Dialog.Title className="pr-10 text-xl font-semibold">New Campaign</Dialog.Title>
+    <Dialog.Description className="mb-5 mt-2 text-sm text-muted-foreground">Configure automatic ticket creation, manage the backlog, and track model usage.</Dialog.Description>
+    <Dialog.Close asChild><Button variant="ghost" size="icon" className="absolute right-3 top-3 min-h-11 min-w-11" aria-label="Close campaign"><X/></Button></Dialog.Close>
+    <ResearchCampaign/>
+   </Dialog.Content>
+  </Dialog.Portal>
+ </Dialog.Root>;
 }

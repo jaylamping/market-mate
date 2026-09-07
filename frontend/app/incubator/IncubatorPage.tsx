@@ -19,7 +19,7 @@ import { AppSidebar } from "../AppSidebar";
 import { RefreshQueries } from "../RefreshQueries";
 import { costLabel, parseRuns, providerErrorLabel, researchTickets, spendingLimitLabel, stateLabel, type Run } from "./model";
 
-import { ResearchCampaign } from "./ResearchCampaign";
+import { CampaignDialog } from "./ResearchCampaign";
 import { AddAssignment } from "./AddAssignment";
 import { WorkflowTimeline } from "./WorkflowTimeline";
 import {STREAM_POLL_INTERVAL_MS} from "./stream-connection";
@@ -136,11 +136,10 @@ export function IncubatorPage() {
       </header>
       {linkError&&<p role="alert" className="mb-4 text-sm text-destructive">{linkError}</p>}
       {linkedRun&&<div className="hidden"><RunCard run={runs.find(r=>r.run_key===linkedRun.run_key)??linkedRun} evaluation={evaluationFor(linkedRun.run_key)} evaluationHistory={evaluations.filter(e=>e.run_key===linkedRun.run_key)} initialVersion={linkedRevision} initiallyOpen/></div>}
-      <ResearchCampaign/>
       <h2 className="mb-3 text-xl font-semibold">Research</h2>
       <div role="region" aria-label="Research filters and actions" className="sticky top-0 z-30 mb-5 flex flex-wrap items-center gap-3 border-b border-border bg-background py-3 shadow-[0_4px_8px_-6px_rgba(0,0,0,0.35)]">
         <Input className="min-h-11 min-w-0 flex-1 basis-64 xl:max-w-md" aria-label="Search runs" placeholder="Search agents, models, or runs…" value={search} onChange={e=>setSearch(e.target.value)}/><label className="flex flex-col items-start gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-2">Status<select className="min-h-11 rounded-md border border-input bg-background px-3 py-2 text-foreground" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All statuses ({scopedRuns.length})</option>{["Assigned","Preparing","Researching","Report ready","Failed","Outcome unknown"].map(label=><option key={label} value={label}>{label} ({scopedRuns.filter(run=>stateLabel(run)===label).length})</option>)}</select></label><label className="flex flex-col items-start gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-2">View<select aria-label="Research view" value={archiveView} onChange={e=>setArchiveView(e.target.value)} className="min-h-11 rounded-md border border-input bg-background px-3 text-foreground"><option value="current">Current</option><option value="archived">Archived</option></select></label>
-        <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-3"><RefreshQueries label="Refresh runs" iconOnly queryKeys={[incubatorQuery.queryKey,workflowKey]}/><AddAssignment/></div>
+        <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-3"><RefreshQueries label="Refresh runs" iconOnly queryKeys={[incubatorQuery.queryKey,workflowKey]}/><CampaignDialog/><AddAssignment/></div>
       </div>
       {workflow.isError&&<p role="alert" className="mb-4 text-sm text-destructive">Evaluation history is unavailable. Displayed workflow may be outdated.</p>}
       {connection==="polling"&&<p role="status" className="text-sm text-muted-foreground">Live updates are unavailable. Refreshing tickets every 5 seconds while the connection retries.</p>}
