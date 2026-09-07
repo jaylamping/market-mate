@@ -24,6 +24,10 @@ _Avoid_: profit promise, strategy thesis, KPI label, raw Paper P&L
 A cheap, time-bounded, aggressively parallel Research Assignment that tests one Profit Contribution Hypothesis inside existing Research and Testing Budgets while preserving its result and failure lineage. Engine may launch many Alpha Shots, prune weak branches quickly, and scale survivors, but volume never creates evidence, independence, or authority.
 _Avoid_: trade, free experiment, unregistered trial, agent idea
 
+**Seed**:
+The Principal-controlled automatic intake that keeps a bounded backlog of research tickets stocked: a selected Ticket Creator model proposes one title, premise, and exact diagnostic case per call under lens rotation, near-duplicate discard, and daily and open-work limits, and research workers consume the backlog as capacity permits. Seed plants questions; it holds no research, spending, or trading authority beyond the recorded creator selection. Code, SQL, routes, audit events, and ADRs 0007 through 0012 still use the earlier name `campaign` for the same thing.
+_Avoid_: strategy, portfolio, marketing campaign, autonomous trader, proof of edge
+
 **Incubator Mutation**:
 An intentional bounded deviation in hypothesis, method, model, Research Posture, Desk Role composition, collaboration pattern, or Presentation Persona used to preserve variation and escape premature convergence. It may create duplication, conflict, eccentricity, and failed work inside approved research capacity, but it cannot conceal lineage, results, contamination, cost, or dissent; weaken evidence; or obtain authority.
 _Avoid_: control failure, hidden experiment, policy exception, random trade

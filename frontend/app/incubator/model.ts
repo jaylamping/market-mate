@@ -57,7 +57,7 @@ export function stateLabel(run: Run, now = Date.now()): string {
 export function costLabel(value: number | null): string { return value === null ? "Unavailable" : value === 0 ? "$0.00" : `$${value.toFixed(6)}`; }
 
 export function spendingLimitLabel(limits: Run["config"]["limits"]): string {
-  if (limits.spend_policy === "campaign_selected_model") return "Campaign-selected model pricing · No dollar cap";
+  if (limits.spend_policy === "campaign_selected_model") return "Seed-selected model pricing · No dollar cap";
   return limits.max_cost_usd === null ? "Owner-selected model pricing · No dollar cap" : `$${limits.max_cost_usd} spending limit`;
 }
 
