@@ -1,6 +1,6 @@
 # Automatic market data for personal research
 
-Date: 2026-09-07. Owner-approved implementation direction. WU-60 is the first implementation unit; later units remain planned. No paid service is authorized by this plan.
+Date: 2026-09-07. Owner-approved implementation direction. WU-60 implements the first download unit; later units remain planned. No paid service is authorized by this plan.
 
 ## Direction
 
@@ -108,7 +108,7 @@ Use isolated fixtures for meaningful tests: pagination/429, missing dates, split
 
 The owner confirmed the entire direction: personal/noncommercial use, automatic acquisition, local price storage, reproducible experiments, pragmatic cleanup, and exploration of hidden cross-sector relationships. The following bounded units make the implementation reviewable. Each uses the repository WU loop; later units depend on tested earlier work. No cloud/vector subscription is needed.
 
-### WU-60 — Historical panel download (in progress)
+### WU-60 — Historical panel download (implemented)
 
 Deliver a reusable Alpaca daily-bars client and an executable local download command. Input is a typed request specifying symbols, exact sessions, symbol-mapping date, benchmark and diagnostic parameters. Output is one validated envelope containing the compatible momentum panel, request identity, retrieval timestamps, normalization version and source facts. Keep source facts separate from registry-generated entitlement lineage. Use explicit historical SIP, all adjustments and USD; prohibit redirects and arbitrary production origins. Credentials are read from a local secret file, never command arguments or output. The initial command requires explicit sessions; automatic exchange-calendar request generation is WU-62.
 

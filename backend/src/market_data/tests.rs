@@ -222,7 +222,7 @@ fn date_identity_and_precision_validation() {
     bar.t = "2025-07-01T05:00:00Z".into();
     assert_eq!(session(&bar), Err(DownloadError::InvalidResponse));
     bar.t = "2025-07-01T04:00:00Z".into();
-    bar.h = Number::from(9);
+    bar.h = serde_json::from_str("9").unwrap();
     assert_eq!(session(&bar), Err(DownloadError::InvalidPrice));
 }
 #[tokio::test]
@@ -236,4 +236,37 @@ async fn invalid_or_unfinished_request_makes_no_network_call() {
     );
     assert!(state.queries.lock().await.is_empty());
     task.abort();
+}
+
+#[tokio::test]
+async fn raw_decimal_precision_is_checked_before_float_normalization() {
+    for value in ["100.004999999999999", "10000000.0000000001"] {
+        let wire = format!(
+            r#"{{"bars":{{"AAPL":[{{"t":"2025-01-06T05:00:00Z","o":{value},"h":10000000,"l":90,"c":101,"v":100}}]}},"next_page_token":null}}"#
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let app = Router::new().route(
+            "/v2/stocks/bars",
+            get(move || {
+                let wire = wire.clone();
+                async move { wire }
+            }),
+        );
+        let task = tokio::spawn(async move {
+            axum::serve(listener, app).await.unwrap();
+        });
+        let mut client = AlpacaDailyClient::new(Credentials {
+            key_id: "test-key".into(),
+            secret_key: "test-secret".into(),
+        })
+        .unwrap();
+        client.endpoint = format!("http://{address}/v2/stocks/bars");
+        client.pace = Duration::ZERO;
+        assert_eq!(
+            client.download(&request()).await.unwrap_err(),
+            DownloadError::InvalidPrice
+        );
+        task.abort();
+    }
 }

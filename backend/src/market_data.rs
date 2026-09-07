@@ -6,7 +6,7 @@ use reqwest::{
     Client,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Number, Value};
+use serde_json::{json, value::RawValue, Value};
 use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -166,12 +166,16 @@ impl PanelRequest {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(transparent)]
+struct Price(Box<RawValue>);
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 struct ProviderBar {
     t: String,
-    o: Number,
-    h: Number,
-    l: Number,
-    c: Number,
+    o: Price,
+    h: Price,
+    l: Price,
+    c: Price,
     v: u64,
 }
 #[derive(Deserialize)]
@@ -182,8 +186,8 @@ struct Page {
 
 // Accept at most six decimal places and round half up to cents. Reject unsupported
 // representations rather than silently introducing a floating-point conversion.
-fn micro_price(n: &Number) -> Result<i64, DownloadError> {
-    let text = n.to_string();
+fn micro_price(n: &Price) -> Result<i64, DownloadError> {
+    let text = n.0.get();
     let mut parts = text.split('.');
     let whole = parts.next().unwrap_or("");
     let fraction = parts.next().unwrap_or("");
@@ -208,7 +212,7 @@ fn micro_price(n: &Number) -> Result<i64, DownloadError> {
     }
     Ok(value)
 }
-fn cents(n: &Number) -> Result<i64, DownloadError> {
+fn cents(n: &Price) -> Result<i64, DownloadError> {
     let result = (micro_price(n)? + 5_000) / 10_000;
     if !(1..=1_000_000_000).contains(&result) {
         return Err(DownloadError::InvalidPrice);
@@ -322,7 +326,7 @@ impl AlpacaDailyClient {
             {
                 return Err(DownloadError::ProviderRejected);
             }
-            return serde_json::from_value(value).map_err(|_| DownloadError::InvalidResponse);
+            return serde_json::from_slice(&body).map_err(|_| DownloadError::InvalidResponse);
         }
         Err(DownloadError::ProviderUnavailable)
     }

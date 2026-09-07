@@ -20,7 +20,7 @@ import hashlib,json,pathlib,subprocess,tempfile
 root=pathlib.Path.cwd()
 client=(root/'.scratch/wu60/client-tests.log').read_text()
 output=(root/'.scratch/wu60/output-tests.log').read_text()
-checks=['paginated_download_has_explicit_feed_and_reproducible_panel','incomplete_duplicate_and_unexpected_data_never_make_a_panel','retry_and_access_errors_are_bounded_and_do_not_echo_provider_bodies','cyclic_pages_and_oversized_responses_are_rejected','date_identity_and_precision_validation','invalid_or_unfinished_request_makes_no_network_call']
+checks=['paginated_download_has_explicit_feed_and_reproducible_panel','incomplete_duplicate_and_unexpected_data_never_make_a_panel','retry_and_access_errors_are_bounded_and_do_not_echo_provider_bodies','cyclic_pages_and_oversized_responses_are_rejected','date_identity_and_precision_validation','invalid_or_unfinished_request_makes_no_network_call','raw_decimal_precision_is_checked_before_float_normalization']
 for name in checks:
     assert f'test market_data::tests::{name} ... ok' in client, name
 assert 'test tests::output_is_private_and_never_overwritten ... ok' in output
