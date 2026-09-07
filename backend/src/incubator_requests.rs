@@ -96,7 +96,11 @@ pub(crate) fn selected_model(choice: &str) -> Result<String, ApiError> {
 pub(crate) fn selected_role_model(choice: &str, role: &str) -> Result<String, ApiError> {
     select_role_model(choice, role, false)
 }
-fn select_role_model(choice: &str, role: &str, manual: bool) -> Result<String, ApiError> {
+pub(crate) fn select_role_model(
+    choice: &str,
+    role: &str,
+    manual: bool,
+) -> Result<String, ApiError> {
     let policy =
         crate::model_routing::stored(std::path::Path::new("/var/lib/model-policy/routing.json"))
             .map_err(error)?

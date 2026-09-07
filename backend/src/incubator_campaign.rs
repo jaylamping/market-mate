@@ -1,5 +1,5 @@
 //! A finite, paced pilot agenda feeding the existing research workflow.
-use crate::incubator_requests::{campaign_check, database, selected_role_model};
+use crate::incubator_requests::{campaign_check, database, select_role_model, selected_role_model};
 use axum::{http::StatusCode, routing::get, Json, Router};
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -9,9 +9,7 @@ type Error = (StatusCode, Json<Value>);
 fn storage_error(e: tokio_postgres::Error) -> Error {
     let message = match e.as_db_error().map(|e| e.message()) {
         Some("campaign_changed_refresh") => "Campaign settings changed. Refresh and try again.",
-        Some("invalid_campaign_limits") => {
-            "Choose 1–10 daily candidates and 1–3 unfinished tickets."
-        }
+        Some("invalid_campaign_limits") => "Choose 1–10 daily tickets and 1–3 unfinished tickets.",
         _ => "Campaign storage is unavailable.",
     };
     (StatusCode::CONFLICT, Json(json!({"error":message})))
@@ -31,17 +29,26 @@ struct Settings {
     daily_limit: i32,
     open_limit: i32,
     revision: i32,
+    creator_model: String,
+    backlog_limit: i32,
 }
 async fn save(Json(input): Json<Settings>) -> Result<Json<Value>, Error> {
     let db = database().await?;
+    let creator = if !input.enabled {
+        input.creator_model.clone()
+    } else {
+        select_role_model(&input.creator_model, "research", true)?
+    };
     db.client
         .query_one(
-            "SELECT set_incubator_campaign($1,$2,$3,$4)",
+            "SELECT set_incubator_campaign($1,$2,$3,$4,$5,$6)",
             &[
                 &input.enabled,
                 &input.daily_limit,
                 &input.open_limit,
                 &input.revision,
+                &creator,
+                &input.backlog_limit,
             ],
         )
         .await

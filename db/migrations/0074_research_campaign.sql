@@ -2,6 +2,8 @@
 CREATE TABLE incubator_campaign (
  id boolean PRIMARY KEY DEFAULT true CHECK(id),
  enabled boolean NOT NULL DEFAULT false,
+ creator_model text NOT NULL DEFAULT '',
+ backlog_limit integer NOT NULL DEFAULT 10 CHECK(backlog_limit BETWEEN 1 AND 20),
  revision integer NOT NULL DEFAULT 0,
  daily_limit integer NOT NULL DEFAULT 2 CHECK(daily_limit BETWEEN 1 AND 10),
  open_limit integer NOT NULL DEFAULT 3 CHECK(open_limit BETWEEN 1 AND 3),
@@ -10,28 +12,11 @@ CREATE TABLE incubator_campaign (
 );
 INSERT INTO incubator_campaign(id) VALUES(true);
 CREATE TABLE incubator_campaign_candidate (
- ordinal integer PRIMARY KEY,
+ ordinal integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
  title text NOT NULL,
  premise text NOT NULL,
  spec jsonb NOT NULL
 );
-INSERT INTO incubator_campaign_candidate VALUES
- (1,'Does three-session momentum retain an after-cost edge?',
- 'Test whether ranking three-session trailing close returns produces positive next-open to close long-short mean returns after explicit costs, relative to SPY and zero-interest cash. Falsify this bounded premise if its net mean fails either baseline. Explain economic persistence and why this differs from the existing one-session pilot.',
- '{"runner":"momentum_v1","lookback_sessions":3,"quantile_count":10,"one_way_cost_bps":10,"borrow_bps_per_session":2}'),
- (2,'Does broader portfolio participation improve momentum economics?',
- 'Test a five-quantile portfolio, holding the top and bottom fifth of the universe at equal weight and total gross exposure one. Use one-session rankings. Falsify its bounded after-cost premise if its next-open net mean fails SPY or cash. Explain diversification versus dilution and preserve the distinction from the existing decile pilot.',
- '{"runner":"momentum_v1","lookback_sessions":1,"quantile_count":5,"one_way_cost_bps":10,"borrow_bps_per_session":2}'),
- (3,'Can slower momentum withstand a larger execution-cost hurdle?',
- 'Test a five-session trailing-close signal under 25 basis points per side and two basis points of borrowing per session, with next-open entry and same-session close exit. Reject the bounded premise if the mean net return does not exceed SPY and cash. Explain the economic cost hurdle, distinguish signal lookback from holding duration, and do not infer profitability from model agreement.',
- '{"runner":"momentum_v1","lookback_sessions":5,"quantile_count":10,"one_way_cost_bps":25,"borrow_bps_per_session":2}');
--- Distinct registered parameter questions, with spare candidates when history overlaps.
-INSERT INTO incubator_campaign_candidate
-SELECT row_number() OVER(ORDER BY lookback,quantiles,cost)+3,
- format('Does %s-session momentum with %s quantiles survive %s bps per side?',lookback,quantiles,cost),
- format('Study persistence of %s-session trailing-close rankings using %s quantiles at %s basis points per side and 2 basis points of borrowing per session. Form equal-weight top and bottom groups with total gross exposure one; enter next open and exit that session close. The bounded falsifiable premise is that mean net return exceeds both SPY over the same entry/exit interval and zero-interest cash. Distinguish this exact parameter case from other campaign cases. This is a predeclared exploratory sensitivity case, not selection of a profitable strategy or a statistical confirmation. No extra data, bootstrap, changing exposure, or multi-day holding is required.',lookback,quantiles,cost),
- jsonb_build_object('runner','momentum_v1','lookback_sessions',lookback,'quantile_count',quantiles,'one_way_cost_bps',cost,'borrow_bps_per_session',2)
-FROM (VALUES(1),(2),(3),(4),(5)) l(lookback) CROSS JOIN (VALUES(2),(5),(10)) q(quantiles) CROSS JOIN (VALUES(5),(15)) c(cost);
 CREATE TABLE incubator_campaign_attempt (
  ordinal integer PRIMARY KEY REFERENCES incubator_campaign_candidate,
  request_id text UNIQUE NOT NULL,
@@ -46,6 +31,17 @@ CREATE TABLE incubator_campaign_attempt (
 INSERT INTO schema_object(table_name,kind) VALUES('incubator_campaign','control'),('incubator_campaign_candidate','control'),('incubator_campaign_attempt','control');
 REVOKE ALL ON incubator_campaign,incubator_campaign_candidate,incubator_campaign_attempt FROM PUBLIC;
 
+CREATE TABLE incubator_ticket_generation (
+ id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ campaign_revision integer NOT NULL,
+ model text NOT NULL,
+ state text NOT NULL CHECK(state IN('queued','dispatching','completed','failed','indeterminate','cancelled')),
+ request jsonb,
+ detail jsonb,
+ receipt_time timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+INSERT INTO schema_object(table_name,kind) VALUES('incubator_ticket_generation','control');
+REVOKE ALL ON incubator_ticket_generation FROM PUBLIC;
 CREATE FUNCTION incubator_campaign_open_count() RETURNS bigint
 LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
  SELECT count(*) FROM incubator_campaign_attempt a
@@ -62,17 +58,20 @@ LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
  'completed_count',(SELECT count(*) FROM incubator_campaign_attempt a WHERE a.state='queued' AND EXISTS(SELECT 1 FROM incubator_evaluation e WHERE (e.run_key=a.run_key OR e.run_key IN(SELECT fallback_run_key FROM incubator_agent_fallback WHERE parent_run_key=a.run_key)) AND read_incubator_experiment(e.id)->>'status'='completed')),
  'attempts_today',(SELECT count(*) FROM incubator_campaign_attempt WHERE receipt_time>clock_timestamp()-interval '24 hours'),
  'symbols','["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","JPM","JNJ","V","UNH","PG","MA","HD","DIS","PYPL","ADBE","CRM","NFLX"]'::jsonb,
+ 'backlog_count',(SELECT count(*) FROM incubator_campaign_candidate WHERE ordinal NOT IN(SELECT ordinal FROM incubator_campaign_attempt)),
+ 'creator_status',(SELECT state FROM incubator_ticket_generation ORDER BY id DESC LIMIT 1),
  'agenda',(SELECT jsonb_agg(jsonb_build_object('ordinal',p.ordinal,'title',p.title,'spec',p.spec,'state',coalesce(a.state,'pending'),'reason',a.reason,'run_key',a.run_key,'scope',a.scope) ORDER BY p.ordinal)
  FROM incubator_campaign_candidate p LEFT JOIN incubator_campaign_attempt a USING(ordinal))) FROM incubator_campaign c
 $$;
-CREATE FUNCTION set_incubator_campaign(enabled_value boolean,daily_value integer,open_value integer,revision_value integer) RETURNS jsonb
+CREATE FUNCTION set_incubator_campaign(enabled_value boolean,daily_value integer,open_value integer,revision_value integer,creator_value text,backlog_value integer) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE c incubator_campaign%ROWTYPE;
 BEGIN
  SELECT * INTO c FROM incubator_campaign WHERE id FOR UPDATE;
  IF revision_value IS DISTINCT FROM c.revision THEN RAISE EXCEPTION 'campaign_changed_refresh'; END IF;
+ IF creator_value IS NULL OR (enabled_value AND creator_value='') OR length(creator_value)>256 OR backlog_value IS NULL OR backlog_value NOT BETWEEN 1 AND 20 THEN RAISE EXCEPTION 'invalid_campaign_creator'; END IF;
  IF enabled_value IS NULL OR daily_value IS NULL OR daily_value NOT BETWEEN 1 AND 10 OR open_value IS NULL OR open_value NOT BETWEEN 1 AND 3 THEN RAISE EXCEPTION 'invalid_campaign_limits'; END IF;
- UPDATE incubator_campaign SET enabled=enabled_value,daily_limit=daily_value,open_limit=open_value,revision=revision+1,
+ UPDATE incubator_campaign SET enabled=enabled_value,creator_model=creator_value,backlog_limit=backlog_value,daily_limit=daily_value,open_limit=open_value,revision=revision+1,
  note=CASE WHEN enabled_value THEN 'Enabled. Waiting for the next eligible agenda item.' ELSE 'Paused. Existing tickets continue; no new tickets will be admitted.' END;
  PERFORM append_audit_event('campaign:config:'||(c.revision+1),'research.campaign_configured',now(),
  jsonb_build_object('before',to_jsonb(c),'after',read_incubator_campaign()),'{"source":"research-campaign","entitlement_version":"pilot-agenda-v1"}',now(),'local_research');
@@ -110,10 +109,10 @@ BEGIN
   UPDATE incubator_campaign SET enabled=false,note='Ten-ticket admission target reached. Existing tickets continue through the workflow.'; RETURN NULL;
  END IF;
  IF clock_timestamp()<c.next_at THEN RETURN NULL; END IF;
- IF (SELECT count(*) FROM incubator_campaign_attempt WHERE receipt_time>clock_timestamp()-interval '24 hours')>=c.daily_limit OR incubator_campaign_open_count()>=c.open_limit THEN RETURN NULL; END IF;
+ IF (SELECT count(*) FROM incubator_campaign_attempt WHERE state='queued' AND receipt_time>clock_timestamp()-interval '24 hours')>=c.daily_limit OR incubator_campaign_open_count()>=c.open_limit THEN RETURN NULL; END IF;
  IF model_value IS NULL OR model_value !~ '^[a-zA-Z0-9._/-]+:free$' OR model_value LIKE 'openrouter/%' THEN UPDATE incubator_campaign SET note='Waiting for an approved free Research model. Configure Models to continue.'; RETURN NULL; END IF;
  SELECT * INTO p FROM incubator_campaign_candidate WHERE ordinal NOT IN(SELECT ordinal FROM incubator_campaign_attempt) ORDER BY ordinal LIMIT 1;
- IF NOT FOUND THEN UPDATE incubator_campaign SET enabled=false,note='Agenda complete. Review its results before adding another campaign.'; RETURN NULL; END IF;
+ IF NOT FOUND THEN UPDATE incubator_campaign SET note='Waiting for Ticket Creator to stock the backlog.'; RETURN NULL; END IF;
  IF NOT EXISTS(SELECT 1 FROM market_data_source WHERE market_data_source_available(id)) THEN
   UPDATE incubator_campaign SET note='Waiting for an available market data connection.'; RETURN NULL;
  END IF;
@@ -153,8 +152,8 @@ BEGIN
    SELECT * INTO p FROM incubator_campaign_candidate WHERE ordinal=a.ordinal;
    r:=admit_incubator_brief('campaign-pilot-v1-'||p.ordinal,a.model,jsonb_build_object('key',a.request_id,'title',p.title,
     'text',p.premise||E'\nCampaign-approved fixed diagnostic spec: '||p.spec::text||E'\nCampaign-approved observed data request: '||a.scope::text||E'\nPreserve this exact scope in the research plan. These are exploratory diagnostics; no parameter selection, statistical significance or independent confirmation is claimed. Record missing data and limitations. Do not change symbols, dates, benchmark, costs or runner. The existing one-session decile pilot is historical context, not an untouched holdout.',
-    'classification','project_authored_research_brief','permitted_destination','openrouter','entitlement_scope','Project-authored pilot agenda and scope only; no observed prices or account data.'),true);
-   outcome:='queued'; reason_value:='Created from the pilot agenda after a complete duplicate check.';
+    'classification','project_authored_research_brief','permitted_destination','openrouter','entitlement_scope','Model-proposed research premise within the approved campaign scope; no observed prices or account data.'),true);
+   outcome:='queued'; reason_value:='Created by Ticket Creator and admitted after a complete duplicate check.';
   END IF;
  END IF;
  UPDATE incubator_campaign_attempt SET state=outcome,run_key=r->>'run_key',reason=reason_value WHERE ordinal=a.ordinal;
@@ -179,6 +178,129 @@ CREATE FUNCTION read_incubator_agent_run(key_value text) RETURNS jsonb
 LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
  SELECT read_incubator_agent_run_before_campaign(key_value)||CASE WHEN EXISTS(SELECT 1 FROM incubator_campaign_attempt WHERE run_key=key_value) THEN '{"created_by":"agent"}'::jsonb ELSE '{}'::jsonb END
 $$;
-REVOKE ALL ON FUNCTION incubator_campaign_open_count(),read_incubator_campaign(),set_incubator_campaign(boolean,integer,integer,integer),incubator_campaign_scope(),claim_incubator_campaign(text),finish_incubator_campaign(integer),next_incubator_manual_run_before_campaign(),next_incubator_manual_run(),read_incubator_agent_run_before_campaign(text),read_incubator_agent_run(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION read_incubator_campaign(),set_incubator_campaign(boolean,integer,integer,integer),claim_incubator_campaign(text),finish_incubator_campaign(integer),next_incubator_manual_run(),read_incubator_agent_run(text) TO incubator_runner;
+REVOKE ALL ON FUNCTION incubator_campaign_open_count(),read_incubator_campaign(),set_incubator_campaign(boolean,integer,integer,integer,text,integer),incubator_campaign_scope(),claim_incubator_campaign(text),finish_incubator_campaign(integer),next_incubator_manual_run_before_campaign(),next_incubator_manual_run(),read_incubator_agent_run_before_campaign(text),read_incubator_agent_run(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION read_incubator_campaign(),set_incubator_campaign(boolean,integer,integer,integer,text,integer),claim_incubator_campaign(text),finish_incubator_campaign(integer),next_incubator_manual_run(),read_incubator_agent_run(text) TO incubator_runner;
 GRANT EXECUTE ON FUNCTION read_incubator_agent_run(text) TO incubator_chat;
+
+-- Enforce the campaign contract at every downstream input boundary, including fallbacks.
+CREATE FUNCTION incubator_campaign_contract(id_value bigint) RETURNS jsonb
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+ SELECT jsonb_build_object('scope',a.scope,'spec',p.spec) FROM incubator_evaluation e
+ JOIN incubator_campaign_attempt a ON (a.run_key=e.run_key OR a.run_key=(SELECT parent_run_key FROM incubator_agent_fallback WHERE fallback_run_key=e.run_key))
+ JOIN incubator_campaign_candidate p USING(ordinal) WHERE e.id=id_value AND a.state='queued'
+$$;
+ALTER FUNCTION record_incubator_experiment_event(bigint,text,jsonb) RENAME TO record_incubator_experiment_event_before_campaign;
+CREATE FUNCTION record_incubator_experiment_event(id_value bigint,state_value text,detail_value jsonb) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE contract jsonb:=incubator_campaign_contract(id_value);
+BEGIN
+ IF contract IS NOT NULL AND state_value IN('awaiting_data','ready') THEN
+  IF detail_value->'spec' IS DISTINCT FROM contract->'spec' THEN RAISE EXCEPTION 'campaign_spec_mismatch'; END IF;
+  IF state_value='awaiting_data' AND detail_value->'data_request' IS DISTINCT FROM contract->'scope' THEN RAISE EXCEPTION 'campaign_scope_mismatch'; END IF;
+ END IF;
+ PERFORM record_incubator_experiment_event_before_campaign(id_value,state_value,detail_value);
+END $$;
+ALTER FUNCTION supply_market_data_request(bigint,jsonb) RENAME TO supply_market_data_request_before_campaign;
+CREATE FUNCTION supply_market_data_request(id_value bigint,request_value jsonb) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE contract jsonb:=incubator_campaign_contract(id_value);
+BEGIN
+ IF contract IS NOT NULL AND request_value IS DISTINCT FROM contract->'scope' THEN RAISE EXCEPTION 'campaign_scope_mismatch'; END IF;
+ PERFORM supply_market_data_request_before_campaign(id_value,request_value);
+END $$;
+ALTER FUNCTION bind_incubator_experiment_dataset(bigint,uuid) RENAME TO bind_incubator_experiment_dataset_before_campaign;
+CREATE FUNCTION bind_incubator_experiment_dataset(id_value bigint,snapshot_value uuid) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE contract jsonb:=incubator_campaign_contract(id_value); stored jsonb; class text;
+BEGIN
+ IF contract IS NOT NULL THEN
+  SELECT request,panel->>'dataset_class' INTO stored,class FROM market_data_payload p JOIN market_data_dataset d ON d.id=p.dataset_id WHERE d.snapshot_id=snapshot_value;
+  IF class IS DISTINCT FROM 'observed' OR (stored-'spec') IS DISTINCT FROM (expand_market_data_request(contract->'scope',contract->'spec')-'spec') THEN RAISE EXCEPTION 'campaign_dataset_mismatch'; END IF;
+ END IF;
+ PERFORM bind_incubator_experiment_dataset_before_campaign(id_value,snapshot_value);
+END $$;
+REVOKE ALL ON FUNCTION incubator_campaign_contract(bigint),record_incubator_experiment_event_before_campaign(bigint,text,jsonb),supply_market_data_request_before_campaign(bigint,jsonb),bind_incubator_experiment_dataset_before_campaign(bigint,uuid) FROM PUBLIC,incubator_runner,market_data_acquirer,market_data_service;
+REVOKE ALL ON FUNCTION record_incubator_experiment_event(bigint,text,jsonb),supply_market_data_request(bigint,jsonb),bind_incubator_experiment_dataset(bigint,uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION record_incubator_experiment_event(bigint,text,jsonb),supply_market_data_request(bigint,jsonb),bind_incubator_experiment_dataset(bigint,uuid) TO incubator_runner;
+
+CREATE FUNCTION claim_incubator_ticket_generation() RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE c incubator_campaign%ROWTYPE; g incubator_ticket_generation%ROWTYPE;
+BEGIN
+ SELECT * INTO c FROM incubator_campaign WHERE id FOR UPDATE;
+ SELECT * INTO g FROM incubator_ticket_generation WHERE state IN('queued','dispatching') ORDER BY id LIMIT 1;
+ IF FOUND THEN RETURN to_jsonb(g)||jsonb_build_object('uncertain',EXISTS(SELECT 1 FROM openrouter_capacity_attempt WHERE key='ticket-creator:'||g.id)); END IF;
+ IF NOT c.enabled OR c.creator_model='' OR (SELECT count(*) FROM incubator_campaign_attempt WHERE state='queued')>=10
+ OR (SELECT count(*) FROM incubator_campaign_candidate WHERE ordinal NOT IN(SELECT ordinal FROM incubator_campaign_attempt))>=c.backlog_limit
+ OR (SELECT count(*) FROM incubator_ticket_generation WHERE receipt_time>clock_timestamp()-interval '24 hours')>=40 THEN RETURN NULL; END IF;
+ INSERT INTO incubator_ticket_generation(campaign_revision,model,state) VALUES(c.revision,c.creator_model,'queued') RETURNING * INTO g;
+ PERFORM append_audit_event('ticket-creator:'||g.id||':queued','research.ticket_generation_queued',now(),to_jsonb(g),'{"source":"ticket-creator","entitlement_version":"campaign-v1"}',now(),'local_research');
+ RETURN to_jsonb(g);
+END $$;
+CREATE FUNCTION prepare_incubator_ticket_generation(id_value bigint,request_value jsonb) RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE c incubator_campaign%ROWTYPE; g incubator_ticket_generation%ROWTYPE;
+BEGIN
+ SELECT * INTO c FROM incubator_campaign WHERE id FOR UPDATE;
+ SELECT * INTO STRICT g FROM incubator_ticket_generation WHERE id=id_value FOR UPDATE;
+ IF NOT c.enabled OR c.revision<>g.campaign_revision THEN UPDATE incubator_ticket_generation SET state='cancelled',detail='{"reason":"campaign_changed"}' WHERE id=id_value; RETURN false; END IF;
+ IF g.state<>'queued' THEN RAISE EXCEPTION 'generation_already_dispatched'; END IF;
+ IF request_value->>'model' IS DISTINCT FROM g.model OR coalesce((request_value->>'max_tokens')::int,(request_value->>'max_completion_tokens')::int,0) NOT BETWEEN 1 AND 2048 OR octet_length(request_value::text)>96000 THEN RAISE EXCEPTION 'invalid_generation_request'; END IF;
+ IF g.request IS NOT NULL AND g.request IS DISTINCT FROM request_value THEN RAISE EXCEPTION 'generation_request_changed'; END IF;
+ UPDATE incubator_ticket_generation SET request=request_value WHERE id=id_value;
+ RETURN true;
+END $$;
+CREATE FUNCTION dispatch_incubator_ticket_generation(id_value bigint) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE g incubator_ticket_generation%ROWTYPE;
+BEGIN
+ SELECT * INTO STRICT g FROM incubator_ticket_generation WHERE id=id_value FOR UPDATE;
+ IF g.state<>'queued' OR g.request IS NULL THEN RAISE EXCEPTION 'generation_not_prepared'; END IF;
+ UPDATE incubator_ticket_generation SET state='dispatching' WHERE id=id_value;
+ PERFORM append_audit_event('ticket-creator:'||g.id||':dispatch','research.ticket_generation_dispatched',now(),jsonb_build_object('model',g.model,'request',g.request),'{"source":"ticket-creator","entitlement_version":"campaign-v1"}',now(),'local_research');
+END $$;
+CREATE FUNCTION finish_incubator_ticket_generation(id_value bigint,state_value text,detail_value jsonb) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE c incubator_campaign%ROWTYPE; g incubator_ticket_generation%ROWTYPE; p jsonb:=detail_value->'proposal'; scope_value jsonb;
+BEGIN
+ SELECT * INTO c FROM incubator_campaign WHERE id FOR UPDATE;
+ SELECT * INTO STRICT g FROM incubator_ticket_generation WHERE id=id_value FOR UPDATE;
+ IF g.state NOT IN('queued','dispatching') THEN RETURN; END IF;
+ IF state_value NOT IN('completed','failed','indeterminate') OR detail_value IS NULL OR octet_length(detail_value::text)>64000 THEN RAISE EXCEPTION 'invalid_generation_result'; END IF;
+ IF state_value='completed' THEN
+  IF g.state<>'dispatching' THEN RAISE EXCEPTION 'generation_not_dispatched'; END IF;
+  IF NOT c.enabled OR c.revision<>g.campaign_revision THEN state_value:='cancelled';
+  ELSE
+   IF jsonb_typeof(p) IS DISTINCT FROM 'object' OR (SELECT count(*) FROM jsonb_object_keys(p))<>3 OR coalesce(length(btrim(p->>'title')),0)=0 OR octet_length(p->>'title')>240 OR coalesce(length(btrim(p->>'premise')),0)=0 OR octet_length(p->>'premise')>3000 OR incubator_json_claims_authority(p) THEN RAISE EXCEPTION 'invalid_ticket_proposal'; END IF;
+   scope_value:=incubator_campaign_scope();
+   PERFORM expand_market_data_request(scope_value,p->'spec');
+   IF NOT EXISTS(SELECT 1 FROM incubator_campaign_candidate WHERE spec=p->'spec') THEN
+    INSERT INTO incubator_campaign_candidate(title,premise,spec) VALUES(p->>'title',p->>'premise',p->'spec');
+   ELSE detail_value:=detail_value||'{"deduplicated":true}'; END IF;
+  END IF;
+ END IF;
+ UPDATE incubator_ticket_generation SET state=state_value,detail=detail_value WHERE id=id_value;
+ IF state_value='indeterminate' OR (SELECT count(*) FROM (SELECT state FROM incubator_ticket_generation ORDER BY id DESC LIMIT 3) recent WHERE state='failed')=3 THEN
+  UPDATE incubator_campaign SET enabled=false,note='Ticket Creator needs attention. Its recorded attempts are preserved; uncertain requests are not replayed.';
+ END IF;
+ PERFORM append_audit_event('ticket-creator:'||g.id||':result','research.ticket_generation_finished',now(),jsonb_build_object('state',state_value,'detail',detail_value),'{"source":"ticket-creator","entitlement_version":"campaign-v1"}',now(),'local_research');
+END $$;
+REVOKE ALL ON FUNCTION claim_incubator_ticket_generation(),prepare_incubator_ticket_generation(bigint,jsonb),dispatch_incubator_ticket_generation(bigint),finish_incubator_ticket_generation(bigint,text,jsonb) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION claim_incubator_ticket_generation(),prepare_incubator_ticket_generation(bigint,jsonb),dispatch_incubator_ticket_generation(bigint),finish_incubator_ticket_generation(bigint,text,jsonb) TO incubator_runner;
+
+CREATE FUNCTION incubator_campaign_free_work(key_value text) RETURNS boolean
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE id_value bigint;
+BEGIN
+ IF key_value LIKE 'research:campaign-pilot-v1-%' OR key_value LIKE 'similarity:campaign-pilot-v1-%' THEN RETURN true; END IF;
+ IF key_value ~ '^(evaluation|experiment|refinement):[0-9]+(:|$)' THEN
+  id_value:=split_part(key_value,':',2)::bigint;
+  RETURN incubator_campaign_contract(id_value) IS NOT NULL;
+ END IF;
+ IF key_value LIKE 'research:fallback-%' THEN
+  RETURN EXISTS(SELECT 1 FROM incubator_agent_fallback f JOIN incubator_campaign_attempt a ON a.run_key=f.parent_run_key WHERE key_value LIKE 'research:'||f.fallback_run_key||'%');
+ END IF;
+ RETURN false;
+END $$;
+REVOKE ALL ON FUNCTION incubator_campaign_free_work(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION incubator_campaign_free_work(text) TO incubator_runner,incubator_chat;

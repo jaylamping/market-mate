@@ -148,6 +148,10 @@ fn paid_trigger(
     recovery: bool,
 ) -> Option<&'static str> {
     let p = &status["policy"];
+    if purpose == "ticket_creator" {
+        return (!recovery && !primary.ends_with(":free") && p["paid_enabled"] == true)
+            .then_some("paid_primary");
+    }
     if purpose == "manual" {
         return (!primary.ends_with(":free")).then_some("manual");
     }
@@ -244,14 +248,35 @@ async fn admit_route(
     let status = read(db).await?;
     let policy = &status["policy"];
     let primary = request["model"].as_str().ok_or("model_unavailable")?;
-    let trigger = paid_trigger(&status, primary, purpose, recovery).unwrap_or("free");
+    let campaign_free: bool = db
+        .query_one("SELECT incubator_campaign_free_work($1)", &[&key])
+        .await
+        .map_err(|_| "capacity_unavailable")?
+        .get(0);
+    let trigger = if campaign_free {
+        "free"
+    } else {
+        paid_trigger(&status, primary, purpose, recovery).unwrap_or("free")
+    };
     if recovery && trigger != "finish_after_429" {
         return Ok(None);
     }
     let mut actual = request.clone();
     let mut reserve = 0_i64;
     if trigger != "free" && trigger != "manual" {
-        let candidates = paid_candidates(policy, purpose);
+        let candidates = if purpose == "ticket_creator" {
+            if !policy["paid_models"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .any(|m| m == primary)
+            {
+                return Err("paid_model_not_selected");
+            }
+            vec![primary]
+        } else {
+            paid_candidates(policy, purpose)
+        };
         let selected = candidates
             .iter()
             .copied()
@@ -317,6 +342,7 @@ pub(crate) async fn recover(
     ordinal: u8,
 ) -> Result<Option<Permit>, &'static str> {
     if original.purpose == "manual"
+        || original.purpose == "ticket_creator"
         || !original.request["model"]
             .as_str()
             .is_some_and(|m| m.ends_with(":free"))
@@ -327,6 +353,15 @@ pub(crate) async fn recover(
     let db = crate::incubator_requests::database()
         .await
         .map_err(|_| "capacity_unavailable")?;
+    let campaign_free: bool = db
+        .client
+        .query_one("SELECT incubator_campaign_free_work($1)", &[&original.key])
+        .await
+        .map_err(|_| "capacity_unavailable")?
+        .get(0);
+    if campaign_free {
+        return Ok(None);
+    }
     let status = read(&db.client).await?;
     if status["policy"]["paid_enabled"] != true
         || status["policy"]["paid_finish_on_429"] != true
@@ -506,6 +541,22 @@ mod tests {
     use super::*;
     use serde_json::json;
 
+    #[test]
+    fn ticket_creator_keeps_the_selected_model_and_never_recovers_on_another() {
+        let status = json!({"policy":{"paid_enabled":true,"prefer_free_models":false,"paid_finish_on_429":true},"daily_limited":true});
+        assert_eq!(
+            paid_trigger(&status, "v/creator:free", "ticket_creator", false),
+            None
+        );
+        assert_eq!(
+            paid_trigger(&status, "v/creator", "ticket_creator", false),
+            Some("paid_primary")
+        );
+        assert_eq!(
+            paid_trigger(&status, "v/creator:free", "ticket_creator", true),
+            None
+        );
+    }
     #[test]
     fn preference_switch_controls_automated_routing_but_never_manual_selection() {
         let mut status = json!({"free_used":0,"daily_limited":false,"free_outage":false,"policy":{"prefer_free_models":true,"paid_enabled":false,"paid_finish_on_429":false}});

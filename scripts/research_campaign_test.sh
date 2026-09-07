@@ -3,6 +3,10 @@ set -Eeuo pipefail
 cd "$(dirname "$0")/.."
 export MARKET_MATE_POSTGRES_PORT=15439
 compose=(docker compose --project-name market-mate-campaign-test)
+if [[ -n "$("${compose[@]}" ps -aq)" ]]; then
+  echo 'Refusing to reuse an existing campaign acceptance project.' >&2
+  exit 1
+fi
 trap '"${compose[@]}" down -v --remove-orphans >/dev/null 2>&1' EXIT
 mkdir -p .scratch/campaign evidence/research-campaign
 "${compose[@]}" up -d --wait postgres
@@ -21,7 +25,7 @@ try:
     else: raise AssertionError('campaign API did not start')
     assert state['enabled'] is False and state['target']==10
     def save(revision):
-        return urllib.request.urlopen(urllib.request.Request(url,data=json.dumps({'enabled':False,'daily_limit':10,'open_limit':3,'revision':revision}).encode(),headers={'Content-Type':'application/json'}),timeout=5)
+        return urllib.request.urlopen(urllib.request.Request(url,data=json.dumps({'enabled':False,'daily_limit':10,'open_limit':3,'revision':revision,'creator_model':'','backlog_limit':10}).encode(),headers={'Content-Type':'application/json'}),timeout=5)
     assert json.load(save(0))['revision']==1
     try: save(0)
     except urllib.error.HTTPError as error: assert error.code==409
@@ -31,6 +35,6 @@ finally:
 r=[json.loads(l) for l in pathlib.Path('.scratch/campaign/probe.log').read_text().splitlines() if l.startswith('{') and '"probe": "research-campaign"' in l][-1]
 assert r['passed']
 r['checks']+=['http_campaign_read','http_campaign_save','http_stale_settings_rejected']
-r['sha256']={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in ['db/migrations/0074_research_campaign.sql','db/fixtures/research_campaign_probe.sql','backend/src/incubator_campaign.rs','backend/src/incubator_requests.rs','scripts/research_campaign_test.sh']}
+r['sha256']={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in ['db/migrations/0074_research_campaign.sql','db/fixtures/research_campaign_probe.sql','backend/src/incubator_campaign.rs','backend/src/incubator_ticket_creator.rs','backend/src/incubator_requests.rs','backend/src/openrouter_capacity.rs','scripts/research_campaign_test.sh']}
 pathlib.Path('evidence/research-campaign/acceptance.json').write_text(json.dumps(r,indent=2)+'\n')
 EVIDENCE
