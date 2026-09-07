@@ -505,6 +505,44 @@ async fn setup_and_refresh() {
             .await
             .unwrap()
     );
+    // A research clarification must preserve the resumed acquisition context.
+    let clarification_id =
+        crate::incubator_experiment::tests::ticket(&admin.client, "wu63-revisit-clarification")
+            .await;
+    crate::incubator_experiment::tests::acquisition_tick(Value::Null)
+        .await
+        .unwrap();
+    crate::incubator_experiment::tests::clarification_tick()
+        .await
+        .unwrap();
+    crate::incubator_experiment::tests::clarification_tick()
+        .await
+        .unwrap();
+    let clarified: Value = admin
+        .client
+        .query_one("SELECT read_incubator_experiment($1)", &[&clarification_id])
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(clarified["status"], "needs_input");
+    assert!(clarified["detail"]["question"]
+        .as_str()
+        .unwrap()
+        .contains("benchmark"));
+    let events = clarified["events"].as_array().unwrap();
+    assert!(events.iter().any(|e| e["state"] == "clarified"));
+    assert_eq!(
+        events
+            .iter()
+            .filter(|e| e["detail"]["resume_reason"] == "market_data_available")
+            .count(),
+        1
+    );
+    assert!(
+        !crate::incubator_experiment::tests::acquisition_tick(Value::Null)
+            .await
+            .unwrap()
+    );
     // Setup serializes only credential writers. Holding its lock cannot stall the worker.
     let setup_gate = s.gate.lock().await;
     tokio::time::timeout(Duration::from_secs(3), work(&s))

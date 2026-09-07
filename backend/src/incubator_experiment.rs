@@ -315,7 +315,15 @@ async fn tick(models: &dyn Models) -> Result<bool, String> {
         match result{Ok(result)=>record(&db.client,id,"completed",json!({"result":result,"registration_id":event(&job,"ready").unwrap()["detail"]["registration_id"]})).await?,Err(e)=>record(&db.client,id,"failed",json!({"reason":e})).await?};
         return Ok(true);
     }
-    if state == "awaiting_data" {
+    if state == "awaiting_data"
+        || job["experiment"]["events"]
+            .as_array()
+            .is_some_and(|events| {
+                events
+                    .iter()
+                    .any(|e| e["detail"]["resume_reason"] == "market_data_available")
+            })
+    {
         job["resuming_for_market_data"] = json!(true);
     }
     let key = job["evaluation"]["run_key"].as_str().unwrap();
@@ -576,6 +584,9 @@ pub(crate) mod tests {
                 )
             })
         }
+    }
+    pub(crate) async fn clarification_tick() -> Result<bool, String> {
+        tick(&FakeModels::default()).await
     }
     pub(crate) async fn acquisition_tick(data_request: Value) -> Result<bool, String> {
         struct Automatic(Value);
