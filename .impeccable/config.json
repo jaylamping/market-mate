@@ -47,6 +47,15 @@
         ],
         "createdAt": "2026-09-06T23:56:00.703Z",
         "reason": "Agent: DESIGN.md Typography explicitly documents 21px mobile summary readings."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "frontend/app/incubator/ResearchCampaign.tsx"
+        ],
+        "createdAt": "2026-09-07T14:39:12.622Z",
+        "reason": "User confirmed the campaign ticket modal should match the existing research-card tabs; this is an intentional bottom tab indicator, not a side-tab card accent."
       }
     ]
   }
