@@ -21,12 +21,24 @@ def run(args):
 
 def migration_check(directory, applied):
     local = {}
+    names = set()
     for path in sorted(directory.glob("*.sql")):
-        match = re.fullmatch(r"(\d+)_(.+)\.sql", path.name)
-        if match:
-            local[int(match[1])] = (match[2], hashlib.sha256(path.read_bytes()).hexdigest())
+        match = re.fullmatch(r"([+]?[0-9]+)_([A-Za-z0-9_]+)\.sql", path.name)
+        if not match or not 1 <= int(match[1]) <= 2**63 - 1:
+            return "fail", f"Invalid source migration filename: {path.name}"
+        version, name = int(match[1]), match[2]
+        if version in local or name in names:
+            return "fail", f"Duplicate source migration version or name: {path.name}"
+        try:
+            checksum = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError:
+            return "fail", f"Unreadable source migration: {path.name}"
+        local[version] = (name, checksum)
+        names.add(name)
     if not local:
         return "fail", "No source migrations found."
+    if sorted(local) != list(range(1, len(local) + 1)):
+        return "fail", "Source migration versions must be contiguous from 1."
     mismatches = [str(row["version"]) for row in applied
                   if local.get(row["version"]) != (row["name"], row["checksum"])]
     if mismatches:

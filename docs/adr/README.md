@@ -1,6 +1,6 @@
 # Architecture decision records
 
-ADRs explain consequential choices that are not obvious from the code. Read only the decisions relevant to a task. The initial records below document existing implementation retrospectively on 2026-09-07; they do not create new trading, spending, or deployment authority.
+ADRs explain consequential choices that are not obvious from the code. Read only the decisions relevant to a task. Records 0001–0005 document existing implementation retrospectively on 2026-09-07; 0006 records the newly approved agent-context arrangement. None creates trading, spending, or deployment authority.
 
 | Record | Decision |
 | --- | --- |

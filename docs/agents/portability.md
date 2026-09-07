@@ -23,6 +23,8 @@ Run the identical prompt below in a new session in each tool, using its existing
 
 Score each response against the same checklist: shared/nested instruction discovery; accurate Local Research boundary; all requested invariants; real source/check paths; fresh-state awareness; no mutations. Record tool version, reported model when available, commit/tree, timestamp, outcomes and limitations in a task-specific evidence JSON. Differences in prose are expected. Missing constraints or invented commands identify a discovery/context gap to fix. A single exercise is a smoke check, not proof of equal future behavior.
 
+The initial [Cursor/Codex CLI smoke record](../../evidence/agent-portability/alignment.json) records the tested context hashes and limitations. Both recovered the key retry constraints. Codex could not inspect Docker or GitHub from its read-only sandbox and reported that uncertainty. Frontend-specific discovery and full IDE GUI behavior were not tested.
+
 ## Outgoing session and maintenance
 
 Use [the handoff template](../handoffs/TEMPLATE.md) for unfinished work. Update relevant ADRs and architecture links alongside implementation changes. Keep decisions, live state, and glossary entries separate. Run `bash scripts/verify.sh context` after changing this layer. Repeat the fresh-session exercise when instruction discovery or shared workflow changes materially.

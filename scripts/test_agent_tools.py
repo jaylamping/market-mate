@@ -21,6 +21,16 @@ class MigrationInspectionTests(unittest.TestCase):
             source.unlink()
             self.assertEqual(doctor.migration_check(root, applied)[0], "fail")
 
+    def test_invalid_source_migration_sets_fail_even_when_applied_hash_matches(self):
+        for extra in ["broken.sql", "0001_duplicate.sql", "0002_base.sql", "0003_gap.sql", "0000_zero.sql", "0002_bad-slug.sql"]:
+            with self.subTest(extra=extra), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                source = root / "0001_base.sql"
+                source.write_bytes(b"SELECT 1;\n")
+                applied = [{"version": 1, "name": "base", "checksum": hashlib.sha256(source.read_bytes()).hexdigest()}]
+                (root / extra).write_text("SELECT 2;")
+                self.assertEqual(doctor.migration_check(root, applied)[0], "fail")
+
     def test_unapplied_source_is_distinct_from_checksum_failure(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
