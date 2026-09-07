@@ -50,3 +50,4 @@ BEGIN
  jsonb_build_object('candidate',a.ordinal,'state',outcome,'run_key',r->>'run_key','reason',reason_value,'check',checked->'result'),'{"source":"research-campaign","entitlement_version":"pilot-agenda-v1"}',now(),'local_research');
  RETURN read_incubator_campaign();
 END $$;
+

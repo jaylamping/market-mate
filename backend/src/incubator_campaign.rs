@@ -1,6 +1,10 @@
 //! A finite, paced pilot agenda feeding the existing research workflow.
 use crate::incubator_requests::{campaign_check, database, select_role_model, selected_role_model};
-use axum::{http::StatusCode, routing::get, Json, Router};
+use axum::{
+    http::StatusCode,
+    routing::{get, post},
+    Json, Router,
+};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::time::Duration;
@@ -9,6 +13,15 @@ type Error = (StatusCode, Json<Value>);
 fn storage_error(e: tokio_postgres::Error) -> Error {
     let message = match e.as_db_error().map(|e| e.message()) {
         Some("campaign_changed_refresh") => "Campaign settings changed. Refresh and try again.",
+        Some("campaign_backlog_full") => {
+            "The backlog is full. Wait for a proposal to leave the queue."
+        }
+        Some("Only failed or cancelled checks can be retried.") => {
+            "Only failed or cancelled checks can be retried."
+        }
+        Some("Reconcile the uncertain provider request before retrying.") => {
+            "Reconcile the uncertain provider request before retrying."
+        }
         Some("invalid_campaign_limits") => {
             "Choose 1–100 daily tickets and 1–20 unfinished tickets."
         }
@@ -57,8 +70,27 @@ async fn save(Json(input): Json<Settings>) -> Result<Json<Value>, Error> {
         .map(|r| Json(r.get(0)))
         .map_err(storage_error)
 }
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Retry {
+    ordinal: i32,
+    revision: i32,
+}
+async fn retry(Json(input): Json<Retry>) -> Result<Json<Value>, Error> {
+    let db = database().await?;
+    db.client
+        .query_one(
+            "SELECT retry_incubator_campaign($1,$2)",
+            &[&input.ordinal, &input.revision],
+        )
+        .await
+        .map(|r| Json(r.get(0)))
+        .map_err(storage_error)
+}
 pub fn router() -> Router {
-    Router::new().route("/campaign", get(read).post(save))
+    Router::new()
+        .route("/campaign", get(read).post(save))
+        .route("/campaign/retry", post(retry))
 }
 async fn tick() -> Result<(), String> {
     let db = database().await.map_err(|_| "database_unavailable")?;
