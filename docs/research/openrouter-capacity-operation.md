@@ -1,6 +1,6 @@
 # Automated model selection and request capacity
 
-The Agents page separates model preference from spending authorization.
+The Settings page separates model preference from spending authorization.
 
 - **Prefer free models** starts enabled. Automated research, evaluation, setup, experiments, and refinement retain their free route until daily free capacity is exhausted, or another explicitly enabled fallback condition applies.
 - Turn the preference off to use the configured paid role model as the primary automated route. Paid spending must also be enabled. Role choices resolve to Research, Setup, Experiment, then the shared default; unassigned roles use the shared model. Refinement uses the Research choice.
