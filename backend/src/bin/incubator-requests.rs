@@ -1,6 +1,8 @@
 #[tokio::main]
 async fn main() {
     tokio::spawn(backend::incubator_requests::worker());
+    tokio::spawn(backend::incubator_campaign::worker());
+    tokio::spawn(backend::incubator_ticket_creator::worker());
     tokio::spawn(backend::incubator_evaluation::worker());
     tokio::spawn(backend::incubator_refinement::worker());
     tokio::spawn(backend::incubator_experiment::worker());
