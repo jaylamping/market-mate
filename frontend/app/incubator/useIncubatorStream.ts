@@ -11,7 +11,7 @@ export function useIncubatorStream() {
  useEffect(()=>{
   const stream=new EventSource("/api/incubator/assignments/stream");
   stream.onmessage=async event=>{
-   try{const data=JSON.parse(event.data),runs=parseRuns(data),evaluations=parseWorkflow(data);await client.cancelQueries({queryKey:incubatorQuery.queryKey});client.setQueryData(incubatorQuery.queryKey,runs);client.setQueryData(workflowKey,evaluations);setConnected(true);}
+   try{const data=JSON.parse(event.data),runs=parseRuns(data),evaluations=parseWorkflow(data);await Promise.all([client.cancelQueries({queryKey:incubatorQuery.queryKey}),client.cancelQueries({queryKey:workflowKey})]);client.setQueryData(incubatorQuery.queryKey,runs);client.setQueryData(workflowKey,evaluations);setConnected(true);}
    catch{setConnected(false);}
   };
   stream.onerror=()=>setConnected(false);

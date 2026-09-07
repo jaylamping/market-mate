@@ -164,4 +164,3 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public AS $$
  JOIN LATERAL (SELECT * FROM incubator_agent_event WHERE run_key = r.run_key
    ORDER BY sequence DESC LIMIT 1) e ON true WHERE r.run_key = key_value;
 $$;
-
