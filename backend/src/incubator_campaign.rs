@@ -9,7 +9,9 @@ type Error = (StatusCode, Json<Value>);
 fn storage_error(e: tokio_postgres::Error) -> Error {
     let message = match e.as_db_error().map(|e| e.message()) {
         Some("campaign_changed_refresh") => "Campaign settings changed. Refresh and try again.",
-        Some("invalid_campaign_limits") => "Choose 1–10 daily tickets and 1–3 unfinished tickets.",
+        Some("invalid_campaign_limits") => {
+            "Choose 1–100 daily tickets and 1–20 unfinished tickets."
+        }
         _ => "Campaign storage is unavailable.",
     };
     (StatusCode::CONFLICT, Json(json!({"error":message})))

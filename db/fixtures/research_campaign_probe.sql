@@ -9,15 +9,15 @@ DO $$ BEGIN
  IF read_incubator_campaign()->'agenda' IS DISTINCT FROM '[]'::jsonb THEN RAISE EXCEPTION 'empty backlog must be an array'; END IF;
 END $$;
 -- Disposable model double: all backlog candidates enter through the generator result API.
-UPDATE incubator_campaign SET enabled=true,daily_limit=10,open_limit=3,creator_model='vendor/creator:free',backlog_limit=20;
+UPDATE incubator_campaign SET enabled=true,daily_limit=10,open_limit=3,creator_model='vendor/creator:free',backlog_limit=100;
 DO $$ DECLARE g jsonb; req jsonb; i integer; BEGIN
- FOR i IN 1..20 LOOP
+ FOR i IN 1..100 LOOP
   g:=claim_incubator_ticket_generation();
   req:=jsonb_build_object('model','vendor/creator:free','max_tokens',2048,'provider',jsonb_build_object('max_price',jsonb_build_object('prompt',0,'completion',0)));
   PERFORM prepare_incubator_ticket_generation((g->>'id')::bigint,req);
   PERFORM dispatch_incubator_ticket_generation((g->>'id')::bigint);
   PERFORM finish_incubator_ticket_generation((g->>'id')::bigint,'completed',jsonb_build_object('proposal',jsonb_build_object('title','Generated test case '||i,'premise','Falsify this isolated hypothesis against SPY and cash after costs.',
-   'spec',jsonb_build_object('runner','momentum_v1','lookback_sessions',3,'quantile_count',10,'one_way_cost_bps',9+i,'borrow_bps_per_session',2))));
+   'spec',jsonb_build_object('runner','momentum_v1','lookback_sessions',3,'quantile_count',10,'one_way_cost_bps',(9+i)%101,'borrow_bps_per_session',2))));
  END LOOP;
  IF claim_incubator_ticket_generation() IS NOT NULL THEN RAISE EXCEPTION 'backlog cap not enforced'; END IF;
 END $$;
@@ -32,7 +32,7 @@ CREATE FUNCTION pg_temp.reject(q text, expected text DEFAULT 'P0001', message te
 END $$;
 SET LOCAL ROLE incubator_runner;
 SELECT pg_temp.assert(claim_incubator_campaign('vendor/model:free') IS NULL,'paused by default');
-SELECT pg_temp.reject('SELECT set_incubator_campaign(true,11,3,0,''vendor/creator:free'',10)');
+SELECT pg_temp.reject('SELECT set_incubator_campaign(true,101,3,0,''vendor/creator:free'',10)');
 SELECT set_incubator_campaign(true,10,1,0,'vendor/creator:free',10);
 SELECT pg_temp.reject('SELECT set_incubator_campaign(false,2,3,0,''vendor/creator:free'',10)');
 CREATE TEMP TABLE candidate AS SELECT claim_incubator_campaign('vendor/model:free') j;
@@ -102,8 +102,8 @@ CREATE FUNCTION pg_temp.reject(q text, expected text DEFAULT 'P0001', message te
  RAISE EXCEPTION 'expected rejection: %',q;
 END $$;
 DO $$ DECLARE j jsonb; i integer; scope_value jsonb; id bigint; seq integer; req jsonb:='{"model":"vendor/backup:free","max_tokens":2048,"provider":{"max_price":{"prompt":0,"completion":0}}}'; BEGIN
- PERFORM set_incubator_campaign(true,10,3,0,'vendor/creator:free',10);
- FOR i IN 1..10 LOOP
+ PERFORM set_incubator_campaign(true,25,3,0,'vendor/creator:free',10);
+ FOR i IN 1..25 LOOP
   UPDATE incubator_campaign SET next_at=now()-interval '1 minute';
   j:=claim_incubator_campaign('vendor/model:free');
   IF j IS NULL THEN RAISE EXCEPTION 'candidate missing at %',i; END IF;
@@ -124,14 +124,17 @@ DO $$ DECLARE j jsonb; i integer; scope_value jsonb; id bigint; seq integer; req
    PERFORM record_incubator_experiment_event(id,'failed','{"reason":"isolated fallback boundary probe"}');
   END IF;
  END LOOP;
- IF read_incubator_campaign()->>'created_count'<>'10' THEN RAISE EXCEPTION 'ten admission target not reached'; END IF;
- IF claim_incubator_campaign('vendor/model:free') IS NOT NULL THEN RAISE EXCEPTION 'eleventh ticket admitted'; END IF;
- IF read_incubator_campaign()->>'enabled'<>'false' THEN RAISE EXCEPTION 'target did not stop campaign'; END IF;
+ IF read_incubator_campaign()->>'created_count'<>'25' THEN RAISE EXCEPTION 'daily admission limit not reached'; END IF;
+ UPDATE incubator_campaign SET next_at=clock_timestamp()-interval '1 second';
+ IF claim_incubator_campaign('vendor/model:free') IS NOT NULL THEN RAISE EXCEPTION 'daily limit exceeded'; END IF;
+ IF read_incubator_campaign()->>'enabled'<>'true' THEN RAISE EXCEPTION 'milestone stopped campaign'; END IF;
+ PERFORM set_incubator_campaign(true,50,10,1,'vendor/creator:free',100);
+ IF claim_incubator_campaign('vendor/model:free') IS NULL THEN RAISE EXCEPTION 'continuous intake did not resume above 25'; END IF;
 END $$;
 ROLLBACK;
 BEGIN;
 DO $$ DECLARE g jsonb; next_job jsonb; req jsonb; candidate jsonb; BEGIN
- PERFORM set_incubator_campaign(true,10,3,0,'vendor/creator:free',20);
+ PERFORM set_incubator_campaign(true,10,3,0,'vendor/creator:free',100);
  candidate:=claim_incubator_campaign('vendor/model:free');
  g:=claim_incubator_ticket_generation();
  IF g IS NULL OR g->>'model'<>'vendor/creator:free' THEN RAISE EXCEPTION 'creator choice lost'; END IF;
@@ -139,15 +142,15 @@ DO $$ DECLARE g jsonb; next_job jsonb; req jsonb; candidate jsonb; BEGIN
  PERFORM prepare_incubator_ticket_generation((g->>'id')::bigint,req);
  PERFORM prepare_incubator_ticket_generation((g->>'id')::bigint,req);
  PERFORM dispatch_incubator_ticket_generation((g->>'id')::bigint);
- PERFORM set_incubator_campaign(true,10,3,1,'vendor/new-creator:free',20);
+ PERFORM set_incubator_campaign(true,10,3,1,'vendor/new-creator:free',100);
  PERFORM finish_incubator_ticket_generation((g->>'id')::bigint,'completed','{"proposal":{"title":"Stale output","premise":"Stale creator premise","spec":{"runner":"momentum_v1","lookback_sessions":5,"quantile_count":2,"one_way_cost_bps":99,"borrow_bps_per_session":0}}}');
- IF (SELECT state FROM incubator_ticket_generation WHERE id=(g->>'id')::bigint)<>'cancelled' OR (SELECT count(*) FROM incubator_campaign_candidate)<>20 THEN RAISE EXCEPTION 'stale creator admitted output'; END IF;
+ IF (SELECT state FROM incubator_ticket_generation WHERE id=(g->>'id')::bigint)<>'cancelled' OR (SELECT count(*) FROM incubator_campaign_candidate)<>100 THEN RAISE EXCEPTION 'stale creator admitted output'; END IF;
  next_job:=claim_incubator_ticket_generation();
  IF next_job->>'model'<>'vendor/new-creator:free' THEN RAISE EXCEPTION 'creator picker did not affect next job'; END IF;
  PERFORM prepare_incubator_ticket_generation((next_job->>'id')::bigint,'{"model":"vendor/new-creator:free","max_tokens":2048}');
- PERFORM set_incubator_campaign(false,10,3,2,'vendor/new-creator:free',20);
+ PERFORM set_incubator_campaign(false,10,3,2,'vendor/new-creator:free',100);
  IF dispatch_incubator_ticket_generation((next_job->>'id')::bigint) IS DISTINCT FROM false THEN RAISE EXCEPTION 'paused creator dispatched'; END IF;
- PERFORM set_incubator_campaign(true,10,3,3,'vendor/new-creator:free',20);
+ PERFORM set_incubator_campaign(true,10,3,3,'vendor/new-creator:free',100);
  next_job:=claim_incubator_ticket_generation();
  INSERT INTO openrouter_capacity_attempt(attempt_id,key,model,is_free,reserved_nanos,policy_revision,trigger,receipt_time,source_lineage,record_environment)
  VALUES('creator-crash-probe','ticket-creator:'||(next_job->>'id'),'vendor/new-creator:free',true,0,0,'free',clock_timestamp(),'{"source":"isolated-campaign-test","entitlement_version":"fixture-v1"}','local_research');
@@ -158,4 +161,13 @@ DO $$ DECLARE g jsonb; next_job jsonb; req jsonb; candidate jsonb; BEGIN
  IF NOT incubator_campaign_free_work('research:campaign-pilot-v1-1') OR NOT incubator_campaign_free_work('similarity:campaign-pilot-v1-1:0') OR incubator_campaign_free_work('ticket-creator:1') THEN RAISE EXCEPTION 'free worker purpose mapping'; END IF;
 END $$;
 ROLLBACK;
-SELECT jsonb_build_object('probe','research-campaign','passed',true,'checks',jsonb_build_array('paused_default','bounded_limits','settings_revision','restart_identity','pinned_scope','idempotent_admission','worker_pickup','no_manual_spend','automatic_origin','pacing','backpressure','role_restrictions','duplicates','pause_fence','no_check_replay','audit_chain','ten_ticket_cap','campaign_spec_fence','campaign_scope_fence','owner_request_fence','dataset_binding_fence','fallback_contract_fence','generated_backlog_ingestion','backlog_cap','creator_model_change_fence','creator_model_next_job','creator_intent_gap_no_replay','free_worker_routing','empty_backlog_array','creator_final_dispatch_pause_fence'));
+BEGIN;
+UPDATE incubator_ticket_generation SET state='failed',detail='{"usage":{"prompt_tokens":100,"completion_tokens":40,"completion_tokens_details":{"reasoning_tokens":10}}}' WHERE id=1;
+INSERT INTO openrouter_capacity_attempt(attempt_id,key,model,is_free,reserved_nanos,policy_revision,trigger,receipt_time,source_lineage,record_environment)
+SELECT 'creator-usage-'||n,'ticket-creator:'||n,'vendor/paid',false,125000000,0,'paid_primary',now()-CASE WHEN n=1 THEN interval '0 hours' ELSE interval '2 days' END,'{"source":"usage-probe","entitlement_version":"test"}','local_research' FROM generate_series(1,2)n;
+INSERT INTO openrouter_capacity_result VALUES('creator-usage-1','{"state":"failed"}',125000000,'{"source":"usage-probe","entitlement_version":"test"}',now(),'local_research');
+DO $$ DECLARE u jsonb:=read_incubator_campaign()->'creator_usage'; BEGIN
+ IF u->'lifetime'->>'calls'<>'2' OR u->'lifetime'->>'unknown_cost_calls'<>'1' OR (u->'lifetime'->>'known_cost_usd')::numeric<>0.125 OR u->'last_24h'->>'calls'<>'1' OR u->'last_24h'->>'input_tokens'<>'100' OR u->'last_24h'->>'output_tokens'<>'40' OR u->'last_24h'->>'reasoning_tokens'<>'10' THEN RAISE EXCEPTION 'creator usage accounting incorrect'; END IF;
+END $$;
+ROLLBACK;
+SELECT jsonb_build_object('probe','research-campaign','passed',true,'checks',jsonb_build_array('paused_default','bounded_limits','settings_revision','restart_identity','pinned_scope','idempotent_admission','worker_pickup','no_manual_spend','automatic_origin','pacing','backpressure','role_restrictions','duplicates','pause_fence','no_check_replay','audit_chain','continuous_intake_and_daily_cap','campaign_spec_fence','campaign_scope_fence','owner_request_fence','dataset_binding_fence','fallback_contract_fence','generated_backlog_ingestion','backlog_cap','creator_model_change_fence','creator_model_next_job','creator_intent_gap_no_replay','free_worker_routing','empty_backlog_array','creator_final_dispatch_pause_fence'));
