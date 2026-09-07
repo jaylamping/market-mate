@@ -564,6 +564,31 @@ async fn run_with_database(
         .as_ref()
         .and_then(|p| role_route(p, "research"))
         .cloned();
+    let existing = if let Some(run) = existing {
+        if run["config"]["campaign_model_spend"] == true {
+            if let Some(route) = &research_route {
+                if route.provider == "openrouter" && route.model_id.ends_with(":free") {
+                    Some(
+                        db.query_one(
+                            "SELECT reroute_incubator_campaign_research($1,$2)",
+                            &[&key, &route.model_id],
+                        )
+                        .await
+                        .map_err(|_| "database_unavailable")?
+                        .get(0),
+                    )
+                } else {
+                    Some(run)
+                }
+            } else {
+                Some(run)
+            }
+        } else {
+            Some(run)
+        }
+    } else {
+        None
+    };
     let primary = if let Some(existing) = &existing {
         let stored = existing["config"]["model"].as_str().ok_or("invalid_run")?;
         if !model.is_empty() && model != stored {

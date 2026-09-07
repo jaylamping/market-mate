@@ -11,7 +11,7 @@ A model may be advertised by a provider or available through an IDE without bein
 
 ## Decision
 
-Consume persisted model approvals and the applicable dispatch policy. Keep campaign paid-creator selection scoped to that creator for Ticket Creator, similarity, and Research Scout. Later campaign evaluation and experiment stages stay free-only. Preserve capability, token, price, reservation, and unknown-cost gates when adapting or recovering a request.
+Consume persisted model approvals and the applicable dispatch policy. Keep campaign paid-creator selection scoped to Ticket Creator. Automated campaign workers, including Research Scout, stay on the configured free runners while automated paid spending is off. Later campaign evaluation and experiment stages stay free-only. Preserve capability, token, price, reservation, and unknown-cost gates when adapting or recovering a request.
 
 ## Alternatives and consequences
 

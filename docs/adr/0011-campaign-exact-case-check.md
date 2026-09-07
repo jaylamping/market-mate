@@ -11,7 +11,7 @@ Campaign admission already treats a duplicate as the same momentum_v1 lookback, 
 
 ## Decision
 
-Campaign Check compares the pinned assignment corpus locally for that exact four-tuple. It does not call a model, reserve capacity, or wait on `next_at`. The campaign worker claims and finishes every eligible Created card in one tick until the daily limit, unfinished-ticket limit, or empty backlog stops it. A claimed check still resumes after a crash; a recorded result stays immutable. Manual assignment similarity stays on the existing model path. Paid campaign creator authority remains for Ticket Creator and Research Scout. Evaluation and experiment stay on free routes.
+Campaign Check compares the pinned assignment corpus locally for that exact four-tuple. It does not call a model, reserve capacity, or wait on `next_at`. The campaign worker claims and finishes every eligible Created card in one tick until the daily limit, unfinished-ticket limit, or empty backlog stops it. A claimed check still resumes after a crash; a recorded result stays immutable. Manual assignment similarity stays on the existing model path. Paid campaign creator authority remains for Ticket Creator only. Research Scout and later campaign stages stay on free routes while automated paid spending is off.
 
 ## Alternatives and consequences
 
