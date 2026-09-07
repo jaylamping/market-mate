@@ -156,6 +156,23 @@ async fn tick() -> Result<(), String> {
         return Ok(());
     };
     let id = job["id"].as_i64().ok_or("invalid_generation_job")?;
+    if let Err(error) = process_job(&db, &job).await {
+        let dispatched: bool = db
+            .client
+            .query_one("SELECT incubator_ticket_dispatch_recorded($1)", &[&id])
+            .await
+            .map_err(|e| {
+                format!("ticket-creator:{id}: {error}; failure persistence unavailable: {e}")
+            })?
+            .get(0);
+        record_result(&db,id,if dispatched {"indeterminate"}else{"failed"},&json!({
+            "request_id":format!("ticket-creator:{id}"),"stage":"worker_control","reason":"ticket_creator_worker_failed","validation_error":error
+        })).await?;
+    }
+    Ok(())
+}
+async fn process_job(db: &crate::incubator_requests::Database, job: &Value) -> Result<(), String> {
+    let id = job["id"].as_i64().ok_or("invalid_generation_job")?;
     if job["state"] == "dispatching" || job["uncertain"] == true {
         db.client
             .query_one(
@@ -308,6 +325,91 @@ pub async fn worker() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[tokio::test]
+    #[ignore = "requires isolated campaign acceptance database"]
+    async fn campaign_creator_failures_are_persisted_before_and_after_dispatch() {
+        let db = database().await.unwrap();
+        let state: Value = db
+            .client
+            .query_one("SELECT read_incubator_campaign()", &[])
+            .await
+            .unwrap()
+            .get(0);
+        let revision = state["revision"].as_i64().unwrap() as i32;
+        db.client
+            .query_one(
+                "SELECT set_incubator_campaign(true,100,20,$1,'vendor/missing-model:free',100)",
+                &[&revision],
+            )
+            .await
+            .unwrap();
+        // Consume one pending fixture proposal to leave one generation slot.
+        db.client
+            .query_one("SELECT claim_incubator_campaign('vendor/model:free')", &[])
+            .await
+            .unwrap();
+        let job: Value = db
+            .client
+            .query_one("SELECT claim_incubator_ticket_generation()", &[])
+            .await
+            .unwrap()
+            .get(0);
+        process_job(&db, &job).await.unwrap();
+        let state: Value = db
+            .client
+            .query_one("SELECT read_incubator_campaign()", &[])
+            .await
+            .unwrap()
+            .get(0);
+        assert_eq!(state["creator_calls"][0]["state"], "failed");
+        assert_eq!(
+            state["creator_calls"][0]["request_id"],
+            format!("ticket-creator:{}", job["id"])
+        );
+        assert_eq!(
+            state["creator_calls"][0]["diagnostics"]["stage"],
+            "model_preparation"
+        );
+        let job: Value = db
+            .client
+            .query_one("SELECT claim_incubator_ticket_generation()", &[])
+            .await
+            .unwrap()
+            .get(0);
+        let id = job["id"].as_i64().unwrap();
+        let req = request("vendor/missing-model:free", &json!([]));
+        db.client
+            .query_one(
+                "SELECT prepare_incubator_ticket_generation($1,$2)",
+                &[&id, &req],
+            )
+            .await
+            .unwrap();
+        db.client
+            .query_one("SELECT dispatch_incubator_ticket_generation($1)", &[&id])
+            .await
+            .unwrap();
+        record_result(&db,id,"completed",&json!({"proposal":{"title":"","premise":"Invalid storage test","spec":{}},"response_text":"invalid stored proposal"})).await.unwrap();
+        let state: Value = db
+            .client
+            .query_one("SELECT read_incubator_campaign()", &[])
+            .await
+            .unwrap()
+            .get(0);
+        assert_eq!(state["creator_calls"][0]["state"], "failed");
+        assert_eq!(
+            state["creator_calls"][0]["reason"],
+            "ticket_storage_validation_failed"
+        );
+        assert_eq!(
+            state["creator_calls"][0]["response_text"],
+            "invalid stored proposal"
+        );
+        assert_eq!(
+            state["creator_calls"][0]["validation_error"],
+            "invalid_ticket_proposal"
+        );
+    }
     #[test]
     fn creator_field_failures_and_truncation_are_linkable() {
         let response = |content: String, finish: &str| json!({"id":"generation-evidence","model":"v/m","choices":[{"finish_reason":finish,"message":{"content":content}}]});

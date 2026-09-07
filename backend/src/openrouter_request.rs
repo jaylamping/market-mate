@@ -69,6 +69,15 @@ impl Capabilities {
         );
         if !supports("response_format") {
             fields.remove("response_format");
+        } else if !supports("structured_outputs")
+            && fields
+                .get("response_format")
+                .is_some_and(|f| f["type"] == "json_schema")
+        {
+            fields.insert(
+                "response_format".into(),
+                serde_json::json!({"type":"json_object"}),
+            );
         }
         if fields
             .get("reasoning")
@@ -85,6 +94,29 @@ impl Capabilities {
 mod tests {
     use super::*;
     use serde_json::json;
+    #[test]
+    fn strict_schema_requires_structured_output_support() {
+        let mut original = request();
+        original["response_format"] =
+            crate::incubator_output::response_format("test", json!({"type":"object"}));
+        for (parameters, expected) in [
+            (json!(["max_tokens"]), Value::Null),
+            (
+                json!(["max_tokens", "response_format"]),
+                json!({"type":"json_object"}),
+            ),
+            (
+                json!(["max_tokens", "response_format", "structured_outputs"]),
+                original["response_format"].clone(),
+            ),
+        ] {
+            let adapted = capabilities(parameters).adapt(&original).unwrap();
+            assert_eq!(adapted["response_format"], expected);
+            for field in ["model", "messages", "max_tokens", "provider"] {
+                assert_eq!(adapted[field], original[field]);
+            }
+        }
+    }
     #[test]
     fn optional_setup_reasoning_is_disabled_only_when_catalog_permits_it() {
         let mut request = request();
