@@ -23,7 +23,8 @@ COPY --from=build /app/target/release/incubator-requests /usr/local/bin/incubato
 COPY --from=build /app/target/release/market-data-download /usr/local/bin/market-data-download
 COPY --from=build /app/target/release/market-data-store /usr/local/bin/market-data-store
 COPY --from=build /app/target/release/market-data-acquire /usr/local/bin/market-data-acquire
-RUN mkdir -p /var/lib/custody /var/lib/model-policy && chown app /var/lib/custody /var/lib/model-policy
+COPY --from=build /app/target/release/market-data-service /usr/local/bin/market-data-service
+RUN mkdir -p /var/lib/custody /var/lib/model-policy /var/lib/market-data && chown app /var/lib/custody /var/lib/model-policy /var/lib/market-data
 USER app
 EXPOSE 8080
 CMD ["backend"]

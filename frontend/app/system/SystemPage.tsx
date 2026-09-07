@@ -1,4 +1,5 @@
 "use client";
+import {MarketDataIntegration} from "./MarketDataIntegration";
 import { CursorIntegration } from "./CursorIntegration";
 import { OpenRouterIntegration } from "./OpenRouterIntegration";
 import { WorkspacePage } from "../WorkspacePage";
@@ -24,6 +25,7 @@ export function SystemPage() {
             <a className="text-link" href="https://app.alpaca.markets/signup" target="_blank" rel="noreferrer">Open Alpaca signup</a>
         </IntegrationDisclosure>
       </IntegrationSection>
+      <MarketDataIntegration />
       <OpenRouterIntegration />
       <CursorIntegration />
     </section>

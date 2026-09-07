@@ -1,0 +1,29 @@
+{
+  "work_unit": "WU-63",
+  "passed": true,
+  "checks": [
+    "owner_account_review_required",
+    "historical_provider_check",
+    "private_credentials_no_status_leak",
+    "owner_request_idempotency",
+    "collection_pause",
+    "calendar_morning_refresh",
+    "holiday_and_preopen_skip",
+    "catchup_window",
+    "repeat_schedule_dedup",
+    "original_snapshot_preserved",
+    "paused_refresh_fence",
+    "archived_research_stops",
+    "restricted_roles",
+    "audit_chain",
+    "legacy_regressions"
+  ],
+  "source_sha256": {
+    "db/migrations/0065_market_data_setup_refresh.sql": "85696548553458b2faa070a2aa9e5f2101ef22ab18268fcb196a09c33d12a2f6",
+    "backend/src/market_data_connection.rs": "e519fafeeac8a1800aeff6fc5da8b16bc38b99e6aaf9511cd14b0a2ca17dc1dd",
+    "backend/src/market_data_connection/tests.rs": "50442047373788104ac457e7f07cc939d6797e83747248c843af4975d4e4fd42",
+    "backend/src/market_data_acquisition.rs": "def91930345d25b96b7eb912177e5e4a95aed1150b4aa060e66fae0337549a19",
+    "scripts/wu63_market_data_test.sh": "0ab3e13f9e7ef3e812a430424271b3d104c7f0224f590b192adf74033c22aadb"
+  },
+  "live_provider_tested": false
+}
