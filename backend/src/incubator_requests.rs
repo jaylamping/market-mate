@@ -190,6 +190,24 @@ impl ComparisonModels for LiveModels {
         })
     }
 }
+struct CampaignComparison<'a> {
+    models: &'a dyn ComparisonModels,
+    model: &'a str,
+}
+impl ComparisonModels for CampaignComparison<'_> {
+    fn resolve(&self, _choice: &str) -> Result<String, ApiError> {
+        if !self.model.ends_with(":free") {
+            return Err(error("zero_spend_budget_denied"));
+        }
+        self.models.resolve(self.model)
+    }
+    fn prepare<'a>(
+        &'a self,
+        model: &'a str,
+    ) -> ModelFuture<'a, Result<Box<dyn PreparedComparison>, &'static str>> {
+        self.models.prepare(model)
+    }
+}
 struct Intake {
     slots: Arc<Semaphore>,
     models: Arc<dyn ComparisonModels>,
@@ -492,7 +510,11 @@ pub(crate) async fn campaign_check(db: &Database, candidate: &Value) -> Result<(
         .map_err(|e| e.to_string())?
         .get(0);
     let corpus = started["corpus"].as_array().ok_or("history_unavailable")?;
-    let result = assess(db, &input, corpus, &LiveModels).await;
+    let models = CampaignComparison {
+        models: &LiveModels,
+        model: &input.model,
+    };
+    let result = assess(db, &input, corpus, &models).await;
     db.client
         .query_one(
             "SELECT finish_incubator_request_check($1,$2)",
@@ -706,6 +728,24 @@ mod tests {
         let mut bad = good;
         bad["usage"] = json!({"cost":0.1});
         assert_eq!(similarity_completion(bad, "v/m:free").0, "indeterminate");
+    }
+    #[test]
+    fn campaign_comparison_uses_pinned_free_model_instead_of_default() {
+        let models = MockModels(Arc::new(MockState::default()));
+        let campaign = CampaignComparison {
+            models: &models,
+            model: "vendor/research:free",
+        };
+        assert_eq!(campaign.resolve("").unwrap(), "vendor/research:free");
+        assert_eq!(
+            campaign.resolve("vendor/other:free").unwrap(),
+            "vendor/research:free"
+        );
+        let paid = CampaignComparison {
+            models: &models,
+            model: "vendor/paid",
+        };
+        assert!(paid.resolve("").is_err());
     }
     #[derive(Default)]
     struct MockState {
