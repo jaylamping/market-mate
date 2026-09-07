@@ -72,7 +72,7 @@
     "backend/src/incubator.rs": "8088473311769e6aad658b22a9542edcf04282f8302383442d39a9c6bb253ded",
     "backend/src/incubator_campaign.rs": "496992733aeb65c57e110b2da10574d74af2faae71f0ba1bc2f3652e081329a0",
     "backend/src/incubator_ticket_creator.rs": "0a439cdc09e3fd2dbe725e0d57316b6152a8d695cace33243d27d5b913e9c1f2",
-    "backend/src/incubator_requests.rs": "ecbc099588cebe7fa3ef206081beebbd2fd0e63dd0b4d0b57e4afa036cf11546",
+    "backend/src/incubator_requests.rs": "cbbe37dc4c7975f85a60164e5c88164e017a87f3b8199839af8bee20d79aff2f",
     "backend/src/openrouter_capacity.rs": "84fbba679f513d1048dc68546aabddced46689bfcd6339f077758e05f6bd17ac",
     "scripts/research_campaign_test.sh": "16f0593f296ef2c7580fed7072a0153c23bd6b2a57ffd372b5156c3dd1bb7970"
   }

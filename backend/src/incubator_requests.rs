@@ -335,12 +335,10 @@ fn material_matches(request_text: &str, matches: Vec<Value>) -> Vec<Value> {
         .collect()
 }
 #[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
 struct SimilarityReply {
     matches: Vec<SimilarityMatch>,
 }
 #[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
 struct SimilarityMatch {
     id: String,
     reason: String,
@@ -353,24 +351,26 @@ fn similarity_completion(v: Value, model: &str) -> (&'static str, Value) {
     }
     let parsed = crate::incubator_output::content(&v, model, 24000)
         .and_then(|content| {
-            serde_json::from_str::<SimilarityReply>(content)
+            let object = crate::incubator_output::first_json_object(content)
+                .ok_or_else(|| "Invalid similarity JSON: missing object".to_string())?;
+            serde_json::from_str::<SimilarityReply>(object)
                 .map_err(|e| format!("Invalid similarity JSON: {e}"))
         })
         .and_then(|reply| {
             if reply.matches.len() > 100 {
                 return Err("matches exceeds 100 entries.".into());
             }
-            for (index, m) in reply.matches.iter().enumerate() {
-                if m.id.is_empty() || m.id.len() > 96 {
-                    return Err(format!("matches[{index}].id must contain 1..96 bytes."));
-                }
-                if m.reason.trim().is_empty() || m.reason.len() > 1000 {
-                    return Err(format!(
-                        "matches[{index}].reason must contain 1..1000 nonblank bytes."
-                    ));
-                }
-            }
-            Ok(reply)
+            let matches = reply
+                .matches
+                .into_iter()
+                .filter(|m| {
+                    !m.id.is_empty()
+                        && m.id.len() <= 96
+                        && !m.reason.trim().is_empty()
+                        && m.reason.len() <= 1000
+                })
+                .collect::<Vec<_>>();
+            Ok(SimilarityReply { matches })
         });
     match parsed {
         Ok(reply) => {
@@ -396,6 +396,21 @@ fn similarity_schema(rows: &[Value]) -> Value {
 }
 fn matching_row(row: &Value, reason: &str) -> Value {
     json!({"id":row["id"],"run_key":row["run_key"],"title":row["title"],"text":row["text"],"state":row["state"],"reason":reason})
+}
+fn accepted_similarity_matches(found: &[Value], rows: &[Value]) -> Vec<Value> {
+    let mut ids = BTreeSet::new();
+    let mut kept = vec![];
+    for m in found {
+        let id = m["id"].as_str().unwrap_or_default();
+        if id.is_empty() || !ids.insert(id.to_string()) {
+            continue;
+        }
+        let Some(row) = rows.iter().find(|r| r["id"] == m["id"]) else {
+            continue;
+        };
+        kept.push(matching_row(row, m["reason"].as_str().unwrap_or_default()));
+    }
+    kept
 }
 async fn assess(
     db: &Database,
@@ -524,19 +539,7 @@ async fn assess(
                         break;
                     }
                     let found = detail["matches"].as_array().unwrap();
-                    let mut ids = BTreeSet::new();
-                    if found.iter().any(|m| {
-                        !ids.insert(m["id"].to_string()) || !rows.iter().any(|r| r["id"] == m["id"])
-                    }) {
-                        issues.push(
-                            "The comparison model returned invalid assignment references.".into(),
-                        );
-                        break;
-                    }
-                    for m in found {
-                        let row = rows.iter().find(|r| r["id"] == m["id"]).unwrap();
-                        matches.push(matching_row(row, m["reason"].as_str().unwrap()));
-                    }
+                    matches.extend(accepted_similarity_matches(found, rows));
                 }
                 if cursor < uncertain.len() {
                     issues.push("The comparison budget was reached before all history could be assessed semantically.".into());
@@ -824,11 +827,6 @@ mod tests {
         for (text, finish, expected) in [
             ("{broken", "stop", "Invalid similarity JSON"),
             ("{", "length", "length"),
-            (
-                r#"{"matches":[{"id":"x","reason":""}]}"#,
-                "stop",
-                "reason must contain",
-            ),
         ] {
             let (state, detail) = similarity_completion(response(text, finish), "v/m:free");
             assert_eq!(state, "failed");
@@ -889,14 +887,40 @@ mod tests {
         tool["choices"][0]["message"]["tool_calls"] = json!([{"function":{"name":"anything"}}]);
         assert_eq!(similarity_completion(tool, "v/m:free").0, "failed");
         let mut bad = good.clone();
-        bad["choices"][0]["message"]["content"] = json!("{\"matches\":[],\"matches\":[]}");
-        assert_eq!(similarity_completion(bad, "v/m:free").0, "failed");
-        let mut bad = good.clone();
         bad["model"] = json!("other");
         assert_eq!(similarity_completion(bad, "v/m:free").0, "failed");
         let mut bad = good;
         bad["usage"] = json!({"cost":0.1});
         assert_eq!(similarity_completion(bad, "v/m:free").0, "indeterminate");
+    }
+    #[test]
+    fn sloppy_similarity_json_completes_and_drops_unknown_ids() {
+        let envelope = |text: &str| json!({"id":"similarity-generation","model":"v/m:free","usage":{"cost":0},"choices":[{"finish_reason":"stop","message":{"content":text}}]});
+        let note_and_chatter = r#"{"matches":[{"id":"ok","reason":"same exact case"}],"note":"those were topical, not exact"} leftover prose"#;
+        let (state, detail) = similarity_completion(envelope(note_and_chatter), "v/m:free");
+        assert_eq!(state, "completed");
+        assert_eq!(detail["matches"][0]["id"], "ok");
+        let blank =
+            r#"{"matches":[{"id":"x","reason":""},{"id":"ok","reason":"same exact case"}]}"#;
+        let (state, detail) = similarity_completion(envelope(blank), "v/m:free");
+        assert_eq!(state, "completed");
+        assert_eq!(
+            detail["matches"],
+            json!([{"id":"ok","reason":"same exact case"}])
+        );
+        let rows = [
+            json!({"id":"1e183fda-1111-4111-8111-111111111111","run_key":"a","title":"A","text":"A","state":"queued"}),
+            json!({"id":"2e183fda-1111-4111-8111-111111111111","run_key":"b","title":"B","text":"B","state":"queued"}),
+        ];
+        let found = json!([
+            {"id":"1e183fd-1111-4111-8111-111111111111","reason":"truncated"},
+            {"id":"2e183fda-1111-4111-8111-111111111111","reason":"same exact case"},
+            {"id":"2e183fda-1111-4111-8111-111111111111","reason":"duplicate"}
+        ]);
+        let kept = accepted_similarity_matches(found.as_array().unwrap(), &rows);
+        assert_eq!(kept.len(), 1);
+        assert_eq!(kept[0]["id"], rows[1]["id"]);
+        assert_eq!(kept[0]["reason"], "same exact case");
     }
     #[test]
     fn campaign_comparison_uses_pinned_free_model_instead_of_default() {
