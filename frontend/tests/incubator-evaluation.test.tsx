@@ -63,3 +63,11 @@ test("refinement displays bounded progress and directs blocked revisions to Chat
  assert.equal(parseWorkflow({evaluations:[blocked]})[0].status,"needs_input");
  assert.throws(()=>parseWorkflow({evaluations:[{...blocked,refinement_rounds_used:3}]}));
 });
+
+import {experimentReason} from "../app/incubator/evaluation";
+test("invalid workflow replies have actionable readable explanations",()=>{
+ assert.match(experimentReason("invalid_experiment_agent_response"),/usable answer/);
+ assert.match(experimentReason("experiment_agent_output_truncated"),/response limit/);
+ assert.equal(experimentReason("Known concrete blocker"),"Known concrete blocker");
+ assert.equal(experimentReason(null),"");
+});

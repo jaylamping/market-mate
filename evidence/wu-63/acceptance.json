@@ -24,18 +24,24 @@
     "concurrent_revisit_once",
     "revisit_context_survives_clarification",
     "revisit_respects_capacity_wait",
-    "revisit_owner_answer_to_completion"
+    "revisit_owner_answer_to_completion",
+    "confirmed_setup_retry_once",
+    "retry_download_to_completion",
+    "retry_archive_and_budget_fences"
   ],
   "source_sha256": {
+    "db/migrations/0072_setup_response_recovery.sql": "e668d7e2a0f9fd07efc7404ede1d8fc5e4bca7d84fdb2c9bd151aff5365743b2",
+    "db/fixtures/setup_response_recovery_probe.sql": "c628a476cf3bfea6614ce87ad4a1cf47dba9e81f21579a558d08b45bcc7ce451",
+    "backend/src/openrouter_request.rs": "f9ee6820f92f8b96c791503d0c7d400fc8e26ae81fc607efe1008b344022e3e7",
     "db/migrations/0071_market_data_setup_revisit.sql": "42951c044140edc900c2d34202e77155cf7c121a6ab503f08867254c1c05c3a5",
     "db/fixtures/market_data_setup_revisit_probe.sql": "ec8eaaa068d8d656f6fea3f4623372ce9afe959c626811b689a4e91cd1c0b7d8",
-    "backend/src/incubator_experiment.rs": "c8a9c3177845f5ff43ee15a1895c3c28d10d8ef8b0a4147076f21180cb214759",
+    "backend/src/incubator_experiment.rs": "67e84068de89f66ee2a36a351f961ffed8af5c5271181b6f6fe8fc2061f398fd",
     "db/migrations/0067_market_data_setup_refresh.sql": "85696548553458b2faa070a2aa9e5f2101ef22ab18268fcb196a09c33d12a2f6",
     "db/fixtures/wu63_market_data_setup_probe.sql": "dae8bcae3aa52893db370c68e08ab6a1d3042207cdbf7b809e8a602db0acfa2c",
     "backend/src/market_data_connection.rs": "7b9d475412cac2523d7eed610a780b90884e12a4cadb95a967d0337aa3026677",
-    "backend/src/market_data_connection/tests.rs": "082703e93899bdc74f2579ec5203f3edb14e3d0b2d27e58e86e04ec4e20c9ae1",
+    "backend/src/market_data_connection/tests.rs": "96a9b911075426d1b742a064cfe062b9b2367770f3f5970f1c8bab1956c3c83b",
     "backend/src/market_data_acquisition.rs": "def91930345d25b96b7eb912177e5e4a95aed1150b4aa060e66fae0337549a19",
-    "scripts/wu63_market_data_test.sh": "c1e613e9977cced6e5056fdb17d7dab4b113f2dbfac512b7937b6c2cfcd11658"
+    "scripts/wu63_market_data_test.sh": "0c28b2fc49cda9e08b338dd955e26d2f2b1a729ab4abf21272c7c0becd1983fa"
   },
   "live_provider_tested": false
 }
