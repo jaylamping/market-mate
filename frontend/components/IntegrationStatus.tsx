@@ -3,6 +3,10 @@ import { Check, AlertTriangle, CircleAlert, LoaderCircle } from "lucide-react";
 
 const states = {
   connected: { label: "Connected", tone: "success" },
+  credentials_verified: { label: "Credentials verified", tone: "success" },
+  collection_active: { label: "Collection active", tone: "success" },
+  collection_paused: { label: "Collection paused", tone: "attention" },
+  ready_to_activate: { label: "Ready to activate", tone: "attention" },
   loading: { label: "Checking…", tone: "neutral" },
   not_configured: { label: "Setup needed", tone: "attention" },
   rate_limited: { label: "Rate limited", tone: "attention" },
