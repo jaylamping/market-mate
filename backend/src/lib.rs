@@ -28,3 +28,4 @@ pub mod market_data_acquisition;
 pub mod openrouter_request;
 
 pub mod incubator_refinement;
+pub mod market_data_connection;

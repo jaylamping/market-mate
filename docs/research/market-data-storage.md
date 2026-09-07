@@ -1,6 +1,6 @@
 # WU-61: governed local market-data storage
 
-Implements the storage and registration step of the [data/graph plan](automatic-experiment-data-plan.md). The worker scheduler and automatic acquisition remain WU-62; source setup UI and daily housekeeping scheduling remain WU-63.
+Implements the storage and registration step of the [data/graph plan](automatic-experiment-data-plan.md). The worker scheduler and automatic acquisition are WU-62; [source setup and daily housekeeping](market-data-setup.md) are WU-63.
 
 ## Operations
 
@@ -30,7 +30,7 @@ Every import/bind/result/source-removal operation serializes on the configured s
 
 ## Retention and removal
 
-`cleanup` expires panels unused for 90 days only when no experiment references them. Archived experiments retain their inputs. Shared observations survive until no retained panel uses them. The command is available now; daily invocation is added with WU-63.
+`cleanup` expires panels unused for 90 days only when no experiment references them. Archived experiments retain their inputs. Shared observations survive until no retained panel uses them. The command is also invoked daily by the WU-63 connector, including while collection is paused.
 
 `remove-source` is an explicit destructive operation: it stops subsequent imports for that configuration and removes all its active panels, source observations, membership links and managed results, including referenced experiments. Dataset/experiment identities and permitted non-content audit facts remain. Dataset lists exclude unavailable panels, input reads return no prices, result projections remove unavailable calculations, and the experiment explains that replay is unavailable. Other configured sources are unaffected.
 

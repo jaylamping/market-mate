@@ -161,8 +161,29 @@ async fn control(
         .map_err(|_| StatusCode::CONFLICT)?;
     Ok(Json(json!({"accepted":true})))
 }
+async fn supply(
+    Path(id): Path<i64>,
+    Json(request): Json<DataRequest>,
+) -> Result<Json<Value>, StatusCode> {
+    let db = crate::incubator_requests::database()
+        .await
+        .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+    db.client
+        .query_one(
+            "SELECT supply_market_data_request($1,$2)",
+            &[
+                &id,
+                &serde_json::to_value(request).map_err(|_| StatusCode::BAD_REQUEST)?,
+            ],
+        )
+        .await
+        .map_err(|_| StatusCode::CONFLICT)?;
+    Ok(Json(json!({"requested":true})))
+}
 pub fn router() -> Router {
-    Router::new().route("/workflow/{id}/acquisition", get(status).post(control))
+    Router::new()
+        .route("/workflow/{id}/acquisition", get(status).post(control))
+        .route("/workflow/{id}/data-request", axum::routing::post(supply))
 }
 
 #[cfg(test)]
