@@ -17,7 +17,7 @@ DO $$ DECLARE g jsonb; req jsonb; i integer; BEGIN
   PERFORM prepare_incubator_ticket_generation((g->>'id')::bigint,req);
   PERFORM dispatch_incubator_ticket_generation((g->>'id')::bigint);
   PERFORM finish_incubator_ticket_generation((g->>'id')::bigint,'completed',jsonb_build_object('proposal',jsonb_build_object('title','Generated test case '||i,'premise','Falsify this isolated hypothesis against SPY and cash after costs.',
-   'spec',jsonb_build_object('runner','momentum_v1','lookback_sessions',3,'quantile_count',10,'one_way_cost_bps',(9+i)%101,'borrow_bps_per_session',2))));
+   'spec',jsonb_build_object('runner','momentum_v1','lookback_sessions',1+((i+1)%5),'quantile_count',(ARRAY[10,2,4,5])[1+(((i-1)/5)%4)],'one_way_cost_bps',10+10*(((i-1)/20)%5),'borrow_bps_per_session',2))));
  END LOOP;
  IF claim_incubator_ticket_generation() IS NOT NULL THEN RAISE EXCEPTION 'backlog cap not enforced'; END IF;
 END $$;
