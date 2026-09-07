@@ -1,0 +1,22 @@
+{
+  "probe": "incubator-refinement",
+  "passed": true,
+  "checks": [
+    "two_round_ticket_limit",
+    "automatic_revision_and_reevaluation",
+    "duplicate_dispatch_denied",
+    "idempotent_result",
+    "paid_model_denied",
+    "append_only_nonempty",
+    "preserved_revision_history",
+    "manual_revision_preserves_budget",
+    "unchanged_report_stops",
+    "external_data_blocker_stops",
+    "interrupted_attempt_not_retried",
+    "repeated_feedback_stops",
+    "owner_revision_wins_dispatch_race",
+    "archived_ticket_not_queued"
+  ],
+  "migration_sha256": "5b89fff2ef9bb5dc22e4557c46f738ebec4e4ae7f8801d6de54a2886f4d9ad8b",
+  "archive_migration_sha256": "e6141a81f888559ecc702b8989bda3d69bc13bb53a348d51202737a8e1c921ef"
+}
