@@ -1,4 +1,4 @@
-export type RunState = "admitted" | "dispatched" | "completed" | "failed" | "indeterminate";
+export type RunState = "admitted" | "preparing" | "dispatched" | "completed" | "failed" | "indeterminate";
 export type Report = { hypothesis: string; evidence_gaps: string[]; experiment: string[]; falsification_rule: string; limitations: string[] };
 type Detail = { fallback_of: string | null; response_text: string | null; validation_error: string | null; response_truncated: boolean; reason: string | null; generation_id: string | null; returned_model: string | null; serving_provider: string | null; report: Report | null; usage: { prompt_tokens: number | null; completion_tokens: number | null; cost_usd: number | null }; request_sha256: string | null; policy_revision: number | null };
 export type Run = { run_key: string; assignment_id: string; created_at: string; updated_at: string; state: RunState; config: { agent_name: string; model: string; input: { title: string; text: string }; limits: { max_requests: number; max_output_tokens: number; timeout_seconds: number; max_cost_usd: number } }; detail: Detail; events: { sequence: number; state: RunState; at: string; detail: Detail }[] };
@@ -7,7 +7,7 @@ function string(v: unknown): string { if (typeof v !== "string" || !v.trim()) th
 function number(v: unknown): number { if (typeof v !== "number" || !Number.isFinite(v) || v < 0) throw Error("Invalid run number"); return v; }
 function array(v: unknown): unknown[] { if (!Array.isArray(v)) throw Error("Invalid run list"); return v; }
 function date(v: unknown): string { const s=string(v); if (!Number.isFinite(Date.parse(s))) throw Error("Invalid run date"); return s; }
-function state(v: unknown): RunState { if (!["admitted","dispatched","completed","failed","indeterminate"].includes(string(v))) throw Error("Invalid run state"); return v as RunState; }
+function state(v: unknown): RunState { if (!["admitted","preparing","dispatched","completed","failed","indeterminate"].includes(string(v))) throw Error("Invalid run state"); return v as RunState; }
 function nullable<T>(v: unknown, parse: (v: unknown) => T): T | null { return v === null || v === undefined ? null : parse(v); }
 function report(v: unknown): Report { const r=object(v); return { hypothesis:string(r.hypothesis), evidence_gaps:array(r.evidence_gaps).map(string), experiment:array(r.experiment).map(string), falsification_rule:string(r.falsification_rule), limitations:array(r.limitations).map(string) }; }
 function detail(v: unknown): Detail {
@@ -28,6 +28,6 @@ export function parseRuns(v: unknown): Run[] {
 }
 export function stateLabel(run: Run, now = Date.now()): string {
   if (run.state === "dispatched" && now - Date.parse(run.updated_at) > (run.config.limits.timeout_seconds + 15) * 1000) return "Outcome unknown";
-  return { admitted:"Preparing", dispatched:"Researching", completed:"Report ready", failed:"Failed", indeterminate:"Outcome unknown" }[run.state];
+  return { admitted:"Assigned", preparing:"Preparing", dispatched:"Researching", completed:"Report ready", failed:"Failed", indeterminate:"Outcome unknown" }[run.state];
 }
 export function costLabel(value: number | null): string { return value === null ? "Unavailable" : value === 0 ? "$0.00" : `$${value.toFixed(6)}`; }

@@ -1,0 +1,12 @@
+{
+  "request_id": "semantic-qa-1e5c8d1a-f3bf-447d-a818-9c6476c98e95",
+  "complete": false,
+  "matches": 0,
+  "issues": [
+    "provider_http_error"
+  ],
+  "models": [
+    "inclusionai/ling-3.0-flash-fin:free"
+  ],
+  "assignment_submitted": false
+}

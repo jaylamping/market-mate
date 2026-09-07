@@ -1,0 +1,31 @@
+{
+  "probe": "incubator-manual-requests",
+  "checks": [
+    "all_history_over_100",
+    "request_identity",
+    "idempotent_submission",
+    "stale_check_rejected",
+    "warning_requires_confirmation",
+    "incomplete_check_requires_confirmation",
+    "queued_while_busy",
+    "single_dispatch",
+    "custom_brief_fallback",
+    "no_fallback_chain",
+    "uncertain_outcome_pauses_queue",
+    "append_only_nonempty",
+    "least_privilege",
+    "workflow_events",
+    "audit_chain",
+    "http_idempotency",
+    "durable_queue_worker",
+    "sse_initial_snapshot",
+    "sse_workflow_update",
+    "no_provider_dispatch_without_policy",
+    "startup_resumes_persisted_assignment_once",
+    "semantic_http_default_model",
+    "semantic_warning_requires_confirmation",
+    "approval_revocation_stops_next_batch"
+  ],
+  "passed": true,
+  "migration_sha256": "c847acc102940bafbda9bf2501d8ef58f72fd8b92447e45034d82abd18915b97"
+}
