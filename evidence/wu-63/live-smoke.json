@@ -1,0 +1,29 @@
+{
+  "work_unit": "WU-63",
+  "tested_at": "2026-09-07T08:46:47.210148+00:00",
+  "passed": true,
+  "provider": "Alpaca",
+  "feed": "sip",
+  "symbols": [
+    "AAPL",
+    "XOM",
+    "JPM",
+    "NEE"
+  ],
+  "benchmark": "SPY",
+  "sessions": [
+    "2026-01-05",
+    "2026-01-06",
+    "2026-01-07",
+    "2026-01-08"
+  ],
+  "observations": 20,
+  "panel_sha256": "b3a39b7c129f4828740d5c7151df9ae63948ffaf6dc04e157c9deef5d3f7545c",
+  "request_sha256": "9398fabb70addd043263a44b4fd2d075c353008945d6fa6ef6a0d50e2dc8c6b6",
+  "validation": "production AlpacaDailyClient downloader returned a validated observed panel",
+  "credential_source": "existing local Paper connector volume; mounted read-only",
+  "registered": false,
+  "account_terms_acknowledged": false,
+  "raw_data_committed": false,
+  "downloader_source_sha256": "705b9c5d7023b0bf3ee4b729035415d1cf08263b3e4b3515bdc2cca803dc3762"
+}
