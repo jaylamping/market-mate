@@ -1,0 +1,51 @@
+BEGIN;
+CREATE FUNCTION pg_temp.reject(q text) RETURNS void LANGUAGE plpgsql AS $$ BEGIN
+ BEGIN EXECUTE q; EXCEPTION WHEN OTHERS THEN RETURN; END;
+ RAISE EXCEPTION 'expected rejection: %',q;
+END $$;
+SET LOCAL ROLE incubator_runner;
+SELECT admit_incubator_agent_run('evaluation-probe','vendor/model:free','momentum-brief-v1');
+SELECT record_incubator_agent_event('evaluation-probe','dispatched','{}');
+SELECT record_incubator_agent_event('evaluation-probe','completed','{"report":{"hypothesis":"Test net momentum","evidence_gaps":["Prices"],"experiment":["Compare to cash"],"falsification_rule":"Reject net underperformance","limitations":["No data yet"]}}');
+SELECT queue_incubator_evaluations();
+SELECT queue_incubator_evaluations();
+DO $$ DECLARE id bigint; request jsonb:='{"model":"vendor/model:free","max_tokens":2048,"provider":{"max_price":{"prompt":0,"completion":0}}}'; s integer; v jsonb; BEGIN
+ id:=next_incubator_evaluation();
+ IF id IS NULL THEN RAISE EXCEPTION 'not queued'; END IF;
+ IF jsonb_array_length(read_incubator_workflow()->'evaluations')<>1 THEN RAISE EXCEPTION 'duplicate queue'; END IF;
+ FOR round IN 1..2 LOOP
+  s:=begin_incubator_evaluation_step(id,'evaluation',request);
+  PERFORM finish_incubator_evaluation_step(id,s,'completed',jsonb_build_object('decision','clarify','reason','Need method detail','question','Question '||round));
+  IF read_incubator_evaluation(id)->>'status'<>'awaiting_clarification' THEN RAISE EXCEPTION 'question not surfaced'; END IF;
+  s:=begin_incubator_evaluation_step(id,'clarification',request);
+  PERFORM finish_incubator_evaluation_step(id,s,'completed','{"answer":"Method clarified; no evidence invented"}');
+ END LOOP;
+ s:=begin_incubator_evaluation_step(id,'evaluation',request);
+ PERFORM finish_incubator_evaluation_step(id,s,'completed','{"decision":"clarify","reason":"Need owner","question":"Which dataset?"}');
+ IF read_incubator_evaluation(id)->>'status'<>'needs_input' THEN RAISE EXCEPTION 'round limit missing'; END IF;
+ PERFORM pg_temp.reject(format('SELECT begin_incubator_evaluation_step(%s,''clarification'',%L)',id,request));
+ PERFORM answer_incubator_evaluation(id,'Use permitted local fixtures');
+ PERFORM answer_incubator_evaluation(id,'Use permitted local fixtures');
+ PERFORM pg_temp.reject(format('SELECT answer_incubator_evaluation(%s,''different answer'')',id));
+ s:=begin_incubator_evaluation_step(id,'evaluation',request);
+ PERFORM finish_incubator_evaluation_step(id,s,'completed','{"decision":"advance","reason":"Feasible test plan","question":null}');
+ PERFORM finish_incubator_evaluation_step(id,s,'completed','{"decision":"advance","reason":"Feasible test plan","question":null}');
+ v:=read_incubator_evaluation(id);
+ IF v->>'status'<>'advance' OR v->'experiment'->>'status'<>'awaiting_setup' OR jsonb_array_length(v->'steps')<>6 THEN RAISE EXCEPTION 'handoff failed'; END IF;
+ PERFORM pg_temp.reject(format('SELECT finish_incubator_evaluation_step(%s,%s,''completed'',''{"decision":"close","reason":"Changed"}'')',id,s));
+ PERFORM pg_temp.reject(format('SELECT begin_incubator_evaluation_step(%s,''evaluation'',%L)',id,request));
+END $$;
+SELECT pg_temp.reject('UPDATE incubator_evaluation SET report=''{}''');
+SELECT pg_temp.reject('DELETE FROM incubator_experiment_ticket');
+RESET ROLE;
+SELECT pg_temp.reject('UPDATE incubator_evaluation SET report=''{}''');
+SELECT pg_temp.reject('DELETE FROM incubator_evaluation_step');
+SELECT pg_temp.reject('TRUNCATE incubator_evaluation_result CASCADE');
+SELECT pg_temp.reject('DELETE FROM incubator_evaluation_input');
+SELECT pg_temp.reject('TRUNCATE incubator_experiment_ticket');
+DO $$ BEGIN
+ IF (SELECT count(*) FROM incubator_experiment_ticket)<>1 THEN RAISE EXCEPTION 'duplicate ticket'; END IF;
+ IF NOT (SELECT valid FROM verify_audit_event_chain()) THEN RAISE EXCEPTION 'audit invalid'; END IF;
+END $$;
+SELECT jsonb_build_object('probe','incubator-evaluation','passed',true,'checks',jsonb_build_array('completed_report_queued_once','two_clarification_rounds','owner_answer_resumes','six_call_limit','one_experiment_ticket','append_only_populated_tables','restricted_role','audit_chain'));
+ROLLBACK;

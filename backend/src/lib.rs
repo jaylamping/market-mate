@@ -16,3 +16,5 @@ pub mod model_routing;
 pub mod incubator_chat;
 
 pub mod incubator_requests;
+
+pub mod incubator_evaluation;
