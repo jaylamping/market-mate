@@ -13,6 +13,7 @@ button, select { cursor: pointer; }
 a { text-underline-offset: 4px; }
 ::selection { background: var(--accent); color: var(--accent-foreground); }
 :focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.incubator-chat-composer textarea:focus-visible { outline: none; }
 input { caret-color: var(--primary); }
 * { scrollbar-width: thin; scrollbar-color: var(--input) transparent; }
 .skip-link { position: fixed; top: 8px; left: 8px; transform: translateY(-150%); z-index: 99; background: var(--card); border: 1px solid var(--ring); padding: 12px; border-radius: 7px; }
