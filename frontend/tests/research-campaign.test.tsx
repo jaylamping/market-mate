@@ -36,6 +36,9 @@ test("fresh empty backlog renders the independent Ticket Creator picker",()=>{
  assert.match(archived,/Archived campaign checks/); assert.match(archived,/Reason for blocked/);
  const current=renderToStaticMarkup(<CampaignBacklog campaign={retried} view="current"/>);
  assert.doesNotMatch(current,/Reason for blocked/);
+ const emptyCurrent=renderToStaticMarkup(<CampaignBacklog campaign={campaign} view="current"/>);
+ assert.match(emptyCurrent,/Campaign backlog/);
+ assert.match(emptyCurrent,/No current campaign backlog/);
  const failed=renderToStaticMarkup(<CampaignBacklog campaign={outcomes} status="Failed"/>);
  assert.match(failed,/Reason for blocked/); assert.doesNotMatch(failed,/Reason for duplicate/);
  client.setQueryData(["research-campaign"],{...campaign,enabled:true,creator_in_progress:true,creator_model:"vendor/creator-paid",creator_status:"dispatching"});
