@@ -491,7 +491,7 @@ impl Completion {
             detail["reason"] = json!("stream_interrupted_no_retry");
             return ("indeterminate", detail);
         }
-        let parsed = serde_json::from_str::<Reply>(&self.raw);
+        let parsed = serde_json::from_str::<Reply>(chat_json_body(&self.raw));
         if self.model.is_some() && self.finish.as_deref() == Some("stop") {
             if let Ok(reply) = parsed {
                 if !reply.reply.trim().is_empty()
@@ -527,6 +527,21 @@ impl Completion {
         ("failed", detail)
     }
 }
+// Only remove an enclosing fence, never extract a JSON fragment from prose.
+fn chat_json_body(raw: &str) -> &str {
+    let text = raw.trim();
+    if let Some((header, rest)) = text.split_once('\n') {
+        if matches!(header.trim_end(), "```json" | "```") {
+            if let Some((body, closing)) = rest.rsplit_once('\n') {
+                if closing.trim() == "```" {
+                    return body.trim();
+                }
+            }
+        }
+    }
+    text
+}
+
 async fn stream_reply(
     provider: &crate::incubator::OpenRouter,
     request: &Value,
@@ -736,6 +751,40 @@ mod tests {
         c.raw = r#"{"reply":"Ordinary reply"}"#.into();
         assert_eq!(c.finish().0, "completed");
         assert_eq!(c.finish().1["proposal"], Value::Null);
+    }
+    #[test]
+    fn fenced_json_uses_the_same_strict_chat_contract() {
+        let mut c = Completion {
+            model: Some("v/m".into()),
+            finish: Some("stop".into()),
+            done: true,
+            ..Default::default()
+        };
+        for raw in [
+            "```json\n{\"reply\":\"Use Archive research.\",\"proposal\":null}\n```",
+            "```\r\n{\"reply\":\"Hello\"}\r\n```",
+        ] {
+            c.raw = raw.into();
+            assert_eq!(c.finish().0, "completed");
+            assert_eq!(c.finish().1["proposal"], Value::Null);
+            assert_eq!(c.finish().1["response_text"], raw);
+        }
+        for raw in [
+            "```json\n{\"reply\":\"Hello\"}",
+            "```json\n{\"reply\":\"Hello\",\"reply\":\"Other\"}\n```",
+            "```json\n{\"reply\":\"Change\",\"proposal\":{\"hypothesis\":\"Incomplete\"}}\n```",
+            "```json\n{\"reply\":\"Hello\"}\n```\nExtra prose",
+            "```json\n{}\n```\n```json\n{}\n```",
+        ] {
+            c.raw = raw.into();
+            assert_eq!(c.finish().0, "failed");
+        }
+        c.raw = "```json\n{\"reply\":\"Hello\"}\n```".into();
+        c.done = false;
+        assert_eq!(c.finish().0, "indeterminate");
+        c.done = true;
+        c.finish = Some("length".into());
+        assert_eq!(c.finish().0, "failed");
     }
     #[test]
     fn proposal_must_be_a_complete_valid_plan() {
