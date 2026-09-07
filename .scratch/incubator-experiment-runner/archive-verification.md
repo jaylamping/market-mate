@@ -1,0 +1,3 @@
+Verified head 97863fc. Passed scripts/incubator_research_archive_test.sh, cargo test --locked, cargo fmt --check, frontend npm test (39 passed), npm run typecheck, npm run build, and git diff --check. SQL, application and acceptance read-only reviewers completed with no material findings. No external discussion findings were present.
+
+The isolated acceptance exercises archive and restore, immutable command identity, stale-version rejection, delayed replay after restoration, preserved research and evaluation scheduling, populated append-only enforcement, audit chain, HTTP mutations and live SSE updates. Existing compiler private_interfaces warning is unchanged.
