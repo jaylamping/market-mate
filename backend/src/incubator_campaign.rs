@@ -103,18 +103,7 @@ async fn tick() -> Result<(), String> {
     if !locked {
         return Ok(());
     }
-    let campaign: Value = db
-        .client
-        .query_one("SELECT read_incubator_campaign()", &[])
-        .await
-        .map_err(|e| e.to_string())?
-        .get(0);
-    let creator = campaign["creator_model"].as_str().unwrap_or_default();
-    let model = if creator.is_empty() {
-        selected_role_model("", "research").unwrap_or_default()
-    } else {
-        select_role_model(creator, "research", true).unwrap_or_default()
-    };
+    let model = selected_role_model("", "research").unwrap_or_default();
     let mut first_error = None;
     loop {
         let candidate: Option<Value> = db
@@ -134,7 +123,10 @@ async fn tick() -> Result<(), String> {
             .ok_or("invalid_campaign_candidate")? as i32;
         if let Err(reason) = db
             .client
-            .query_one("SELECT finish_incubator_campaign($1)", &[&ordinal])
+            .query_one(
+                "SELECT finish_incubator_campaign($1,$2)",
+                &[&ordinal, &model],
+            )
             .await
             .map_err(|e| e.to_string())
         {
