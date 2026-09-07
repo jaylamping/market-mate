@@ -118,7 +118,7 @@ Complete all response pages, enforce bounded bytes/pages/attempts, recognize non
 
 Depends on WU-60. Reuse source/entitlement/EOD contracts; add bounded personal-research source configuration and deletable payload references where current inline append-only data prevents cleanup. Add normalized observation/version identity, experiment dependencies, ingestion receipt and source-level cleanup. Retain referenced inputs; evict prices unused for 90 days. Preserve permitted metadata and mark replay unavailable after input removal. No counterfeit certification records or source payloads in audit JSON. Prove source cleanup removes downstream source-bearing copies without deleting unrelated saved experiments. Apply new migrations and isolated SQL probes.
 
-### WU-62 — Automatic acquisition and experiment handoff
+### WU-62 — Automatic acquisition and experiment handoff (implemented)
 
 Depends on WU-61. Extend Setup with a structured request, generate exact sessions from a pinned exchange calendar, and add durable jobs with leases, idempotency and restart recovery. Reuse compatible observations, fetch gaps, validate before binding, register with real registry lineage and atomically pin the snapshot. Consume existing worker notification path. Retry/cancel semantics and revoked/unavailable-source handling are explicit. No silent universe/date/benchmark substitutions. End-to-end acceptance: waiting ticket becomes executed diagnostic on a valid provider double; missing coverage cannot advance; two workers and restart create one binding.
 
@@ -154,4 +154,4 @@ Depends on WU-61 and useful retained document volume; independent of numerical g
 
 ## Completion boundaries
 
-WU-60 and WU-61 are implemented; WU-62–67 remain planned. See [storage operations](market-data-storage.md) for registration, cleanup and the active-store-only deletion boundary. After each merged unit, continue from its documented dependency-ready successor when requested. A credentialed live test, source setup, automatic handoff, scheduled refresh and graph UI each have distinct completion evidence; passing a mock downloader test cannot stand in for any of them.
+WU-60–62 are implemented; WU-63–67 remain planned. See [automatic acquisition operations](automatic-market-data-acquisition.md) for supported requests, calendar coverage and worker recovery. See [storage operations](market-data-storage.md) for registration, cleanup and the active-store-only deletion boundary. After each merged unit, continue from its documented dependency-ready successor when requested. A credentialed live test, source setup, automatic handoff, scheduled refresh and graph UI each have distinct completion evidence; passing a mock downloader test cannot stand in for any of them.

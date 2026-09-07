@@ -24,4 +24,5 @@ mod momentum;
 
 pub mod market_data;
 
+pub mod market_data_acquisition;
 pub mod openrouter_request;

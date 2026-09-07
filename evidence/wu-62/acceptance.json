@@ -1,0 +1,32 @@
+{
+  "work_unit": "WU-62",
+  "passed": true,
+  "checks": [
+    "calendar_closures_and_early_close",
+    "unsupported_requests_rejected",
+    "setup_to_executed_diagnostic",
+    "two_workers_one_lease",
+    "complete_cache_no_http",
+    "missing_symbol_fetch",
+    "missing_coverage_no_binding",
+    "explicit_retry",
+    "expired_lease_recovery",
+    "stale_worker_fenced",
+    "cancel_fences_commit",
+    "source_removal_fences_commit",
+    "restricted_runtime_role",
+    "audit_chain",
+    "wu61_and_legacy_regressions"
+  ],
+  "source_sha256": {
+    "db/migrations/0064_market_data_acquisition.sql": "b3c5026c220efc0b24327acc19eed17150b74b4c65f8e4a073ee5566aca73422",
+    "db/fixtures/wu62_market_data_seed.sql": "34b5e1e507d2013de959439f0806a9c4354df93773da03a01ad75906cb58b1bb",
+    "db/fixtures/wu62_calendar_probe.sql": "08517aae409787cfa6626c6225b441665a5b9b11ca5b4b1d09d7d6c5034230c0",
+    "backend/src/market_data_acquisition.rs": "2c4402040d8409c3f059008a71c8a0be295ecc6945cc5aee3b98f6e0ae08f15a",
+    "backend/src/market_data_acquisition/tests.rs": "2e775d2c9108795ee9aa7395cf64a2994284a3ecdf6a348a20d114c4637e5f84",
+    "backend/src/market_data.rs": "705b9c5d7023b0bf3ee4b729035415d1cf08263b3e4b3515bdc2cca803dc3762",
+    "backend/src/incubator_experiment.rs": "f9e0bc3090b3d73a38e2797873c16f7e68b850242e1e8e513cff278538e36328",
+    "scripts/wu62_market_data_test.sh": "57d2dd0df5f07a2d66c8946d9fd3adff1e9cd8a719e02cd3125df0f92381dc25"
+  },
+  "live_provider_tested": false
+}
