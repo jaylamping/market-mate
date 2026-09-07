@@ -219,6 +219,8 @@ mod tests {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub(crate) struct Model {
+    #[serde(flatten)]
+    pub(crate) capabilities: crate::openrouter_request::Capabilities,
     pub(crate) id: String,
     name: String,
     context_length: u64,

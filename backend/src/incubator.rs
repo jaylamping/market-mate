@@ -56,8 +56,78 @@ fn free_pricing(pricing: &std::collections::BTreeMap<String, Value>) -> bool {
 }
 pub(crate) fn payload(model: &str, brief: &str) -> Value {
     json!({"model":model,"messages":[{"role":"system","content":format!("{SYSTEM}\n\n{RESPONSE_CONTRACT}")},{"role":"user","content":brief}],
-        "max_tokens":2048,"stream":false,"provider":{"allow_fallbacks":false,"require_parameters":true,
+        "max_tokens":2048,"stream":false,"provider":{"allow_fallbacks":true,"require_parameters":true,
         "max_price":{"prompt":0,"completion":0}},"response_format":{"type":"json_object"}})
+}
+fn research_brief(input: &Value) -> Result<String, &'static str> {
+    let title = input["title"].as_str().ok_or("input_unavailable")?;
+    let text = input["text"].as_str().ok_or("input_unavailable")?;
+    Ok(format!("Title: {title}\n\nRequest:\n{text}"))
+}
+fn assignment_payload(model: &str, brief: &str, manual: bool) -> Value {
+    let mut request = payload(model, brief);
+    if manual {
+        request["provider"]
+            .as_object_mut()
+            .unwrap()
+            .remove("max_price");
+    }
+    request
+}
+fn provider_error_detail(
+    status: u16,
+    headers: &reqwest::header::HeaderMap,
+    body: &Value,
+    secret: Option<&str>,
+) -> Value {
+    let mut detail = json!({"reason":"provider_http_error","http_status":status});
+    let clean = |text: &str| {
+        let redacted = match secret.filter(|key| !key.is_empty()) {
+            Some(key) => text.replace(key, "[redacted]"),
+            None => text.to_string(),
+        };
+        redacted
+            .chars()
+            .filter(|c| !c.is_control())
+            .take(2000)
+            .collect::<String>()
+    };
+    for (key, value) in [
+        ("provider_message", &body["error"]["message"]),
+        (
+            "provider_error_type",
+            &body["error"]["metadata"]["error_type"],
+        ),
+        (
+            "provider_limit_source",
+            &body["error"]["metadata"]["limit_source"],
+        ),
+        ("provider_remedy", &body["error"]["metadata"]["remedy_hint"]),
+        (
+            "serving_provider",
+            &body["error"]["metadata"]["provider_name"],
+        ),
+    ] {
+        if let Some(text) = value.as_str().filter(|v| !v.trim().is_empty()) {
+            let text = clean(text);
+            if !text.trim().is_empty() {
+                detail[key] = json!(text);
+            }
+        }
+    }
+    for (key, header) in [
+        ("retry_after", "retry-after"),
+        ("rate_limit_reset", "x-ratelimit-reset"),
+        ("rate_limit_remaining", "x-ratelimit-remaining"),
+    ] {
+        if let Some(text) = headers.get(header).and_then(|v| v.to_str().ok()) {
+            let text = clean(text);
+            if !text.trim().is_empty() {
+                detail[key] = json!(text);
+            }
+        }
+    }
+    detail
 }
 fn safe_id(value: &Value) -> Value {
     value
@@ -77,6 +147,16 @@ fn usage(value: &Value) -> Value {
         "total_tokens":u["total_tokens"].as_u64(),"cost_usd":cost})
 }
 fn completion(value: Value, requested_model: &str) -> (&'static str, Value) {
+    completion_with_spend(value, requested_model, false)
+}
+fn manual_completion(value: Value, requested_model: &str) -> (&'static str, Value) {
+    completion_with_spend(value, requested_model, true)
+}
+fn completion_with_spend(
+    value: Value,
+    requested_model: &str,
+    manual: bool,
+) -> (&'static str, Value) {
     let mut detail = json!({"generation_id":safe_id(&value["id"]),"returned_model":safe_id(&value["model"]),
         "serving_provider":safe_id(&value["provider"]),"usage":usage(&value)});
     if let Some(content) = value["choices"][0]["message"]["content"].as_str() {
@@ -100,9 +180,10 @@ fn completion(value: Value, requested_model: &str) -> (&'static str, Value) {
     } else {
         None
     };
-    if detail["usage"]["cost_usd"]
-        .as_f64()
-        .is_some_and(|cost| cost > 0.0)
+    if !manual
+        && detail["usage"]["cost_usd"]
+            .as_f64()
+            .is_some_and(|cost| cost > 0.0)
     {
         detail["reason"] = json!("unexpected_provider_charge");
         return ("indeterminate", detail);
@@ -138,11 +219,15 @@ fn completion(value: Value, requested_model: &str) -> (&'static str, Value) {
 }
 
 pub(crate) struct OpenRouter {
+    capabilities: crate::openrouter_request::Capabilities,
     pub(crate) client: Client,
     pub(crate) auth: HeaderValue,
 }
 impl OpenRouter {
-    fn new(credentials_path: &std::path::Path) -> Result<Self, &'static str> {
+    fn new(
+        credentials_path: &std::path::Path,
+        capabilities: crate::openrouter_request::Capabilities,
+    ) -> Result<Self, &'static str> {
         #[derive(Deserialize)]
         #[serde(deny_unknown_fields)]
         struct Credentials {
@@ -163,7 +248,14 @@ impl OpenRouter {
             .timeout(Duration::from_secs(120))
             .build()
             .map_err(|_| "client_unavailable")?;
-        Ok(Self { client, auth })
+        Ok(Self {
+            client,
+            auth,
+            capabilities,
+        })
+    }
+    pub(crate) fn adapt_request(&self, request: &Value) -> Result<Value, &'static str> {
+        self.capabilities.adapt(request)
     }
     pub(crate) async fn send(&self, request: &Value) -> (&'static str, Value) {
         self.send_with_parser(request, completion).await
@@ -198,9 +290,26 @@ impl OpenRouter {
             } else {
                 "indeterminate"
             };
+            let headers = response.headers().clone();
+            let mut bytes = Vec::new();
+            while let Ok(Some(chunk)) = response.chunk().await {
+                if bytes.len() + chunk.len() > 16_000 {
+                    break;
+                }
+                bytes.extend_from_slice(&chunk);
+            }
+            let body = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
             return (
                 state,
-                json!({"reason":"provider_http_error","http_status":status}),
+                provider_error_detail(
+                    status,
+                    &headers,
+                    &body,
+                    self.auth
+                        .to_str()
+                        .ok()
+                        .and_then(|value| value.strip_prefix("Bearer ")),
+                ),
             );
         }
         let mut bytes = Vec::new();
@@ -391,6 +500,20 @@ pub(crate) async fn prepare_model(
     ),
     &'static str,
 > {
+    prepare_model_with_spend(model, false).await
+}
+async fn prepare_model_with_spend(
+    model: &str,
+    manual: bool,
+) -> Result<
+    (
+        OpenRouter,
+        u64,
+        std::collections::BTreeMap<String, Value>,
+        Vec<crate::model_routing::Route>,
+    ),
+    &'static str,
+> {
     let path = PathBuf::from("/var/lib/openrouter/credentials.json");
     let policy_path = PathBuf::from("/var/lib/model-policy/policy.json");
     let routing_path = policy_path.with_file_name("routing.json");
@@ -426,10 +549,10 @@ pub(crate) async fn prepare_model(
         .iter()
         .find(|m| m.id == model)
         .ok_or("model_unavailable")?;
-    if !model.ends_with(":free") || !free_pricing(&selected.pricing) {
+    if !manual && (!model.ends_with(":free") || !free_pricing(&selected.pricing)) {
         return Err("zero_spend_budget_denied");
     }
-    let provider = OpenRouter::new(&path)?;
+    let provider = OpenRouter::new(&path, selected.capabilities.clone())?;
     let current = read_policy(&policy_path)?;
     if crate::model_routing::stored(&routing_path)? != routing
         || current.revision != policy.revision
@@ -485,12 +608,12 @@ async fn run_once(
         _ => return Ok(run),
     }
     event(db, key, "preparing", json!({"fallback_of":fallback_of})).await?;
+    let manual = run["config"]["manual_model_spend"] == true;
     let prepared = async {
-        let (provider, revision, pricing, routes) = prepare_model(model).await?;
-        let brief = run["config"]["input"]["text"]
-            .as_str()
-            .ok_or("input_unavailable")?;
-        Ok::<_, &'static str>((provider, payload(model, brief), revision, pricing, routes))
+        let (provider, revision, pricing, routes) = prepare_model_with_spend(model, manual).await?;
+        let brief = research_brief(&run["config"]["input"])?;
+        let request = provider.adapt_request(&assignment_payload(model, &brief, manual))?;
+        Ok::<_, &'static str>((provider, request, revision, pricing, routes))
     }
     .await;
     let (provider, request, revision, pricing, routes) = match prepared {
@@ -515,7 +638,11 @@ async fn run_once(
         "request":request,"request_sha256":crate::migrate::checksum(&request.to_string())}),
     )
     .await?;
-    let (state, mut detail) = provider.send(&request).await;
+    let (state, mut detail) = if manual {
+        provider.send_with_parser(&request, manual_completion).await
+    } else {
+        provider.send(&request).await
+    };
     detail["fallback_of"] = json!(fallback_of);
     event(db, key, state, detail).await
 }
@@ -576,12 +703,66 @@ mod tests {
         assert!(parse_report(&"x".repeat(24_001)).is_err());
     }
     #[test]
-    fn request_is_bounded_and_has_no_tools_or_fallback() {
+    fn provider_errors_keep_bounded_diagnostics_and_retry_hint_without_credentials() {
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert("retry-after", HeaderValue::from_static("30"));
+        let body = json!({"error":{"message":"Upstream throttled secret-key","metadata":{"error_type":"rate_limit_exceeded","provider_name":"Meta","raw":"sensitive raw response"}}});
+        let detail = provider_error_detail(429, &headers, &body, Some("secret-key"));
+        assert_eq!(detail["http_status"], 429);
+        assert_eq!(detail["retry_after"], "30");
+        assert_eq!(detail["serving_provider"], "Meta");
+        assert_eq!(detail["provider_message"], "Upstream throttled [redacted]");
+        assert!(!detail.to_string().contains("sensitive raw response"));
+        assert!(!detail.to_string().contains("secret-key"));
+        let long = provider_error_detail(
+            400,
+            &headers,
+            &json!({"error":{"message":"x".repeat(3000)}}),
+            None,
+        );
+        assert_eq!(long["provider_message"].as_str().unwrap().len(), 2000);
+    }
+    #[test]
+    fn research_request_includes_the_question_from_the_title() {
+        let brief = research_brief(
+            &json!({"title":"Why does an investor like this business?","text":"I must know"}),
+        )
+        .unwrap();
+        let request = assignment_payload("vendor/model", &brief, true);
+        assert_eq!(
+            request["messages"][1]["content"],
+            "Title: Why does an investor like this business?\n\nRequest:\nI must know"
+        );
+        assert!(research_brief(&json!({"text":"Missing question"})).is_err());
+    }
+    #[test]
+    fn paid_dispatch_and_cost_accounting_require_manual_assignment() {
+        let manual = assignment_payload("vendor/paid", "brief", true);
+        assert!(manual["provider"].get("max_price").is_none());
+        assert_eq!(manual["provider"]["allow_fallbacks"], true);
+        assert_eq!(manual["max_tokens"], 2048);
+        let automatic = assignment_payload("vendor/paid", "brief", false);
+        assert_eq!(automatic["provider"]["max_price"]["prompt"], 0);
+        assert_eq!(automatic["provider"]["allow_fallbacks"], true);
+        assert!(manual.get("models").is_none());
+        let response = json!({"model":"vendor/paid","usage":{"cost":0.02},
+            "choices":[{"finish_reason":"stop","message":{"content":report().to_string()}}]});
+        assert_eq!(
+            completion(response.clone(), "vendor/paid").0,
+            "indeterminate"
+        );
+        let (state, detail) = manual_completion(response, "vendor/paid");
+        assert_eq!(state, "completed");
+        assert_eq!(detail["usage"]["cost_usd"], 0.02);
+    }
+    #[test]
+    fn request_is_bounded_with_provider_fallback_but_no_tools_or_model_substitution() {
         let p = payload("vendor/model:free", "brief");
-        assert_eq!(p["provider"]["allow_fallbacks"], false);
+        assert_eq!(p["provider"]["allow_fallbacks"], true);
         assert_eq!(p["provider"]["max_price"]["prompt"], 0);
         assert_eq!(p["max_tokens"], 2048);
         assert!(p.get("tools").is_none());
+        assert!(p.get("models").is_none());
         assert_eq!(p["response_format"]["type"], "json_object");
         assert_eq!(p["provider"]["require_parameters"], true);
         assert!(p["messages"][0]["content"]

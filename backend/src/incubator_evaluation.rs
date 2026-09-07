@@ -89,9 +89,17 @@ fn payload(model: &str, job: &Value, run: &Value, kind: &str) -> Result<Value, &
 }
 type Future<'a, T> = std::pin::Pin<Box<dyn std::future::Future<Output = T> + Send + 'a>>;
 trait Dispatch: Send + Sync {
+    fn adapt_request(&self, request: &Value) -> Result<Value, &'static str> {
+        Ok(request.clone())
+    }
+
     fn send<'a>(&'a self, request: &'a Value, kind: &'a str) -> Future<'a, (&'static str, Value)>;
 }
 impl Dispatch for crate::incubator::OpenRouter {
+    fn adapt_request(&self, request: &Value) -> Result<Value, &'static str> {
+        self.adapt_request(request)
+    }
+
     fn send<'a>(&'a self, request: &'a Value, kind: &'a str) -> Future<'a, (&'static str, Value)> {
         Box::pin(self.send_with_parser(
             request,
@@ -208,14 +216,20 @@ async fn tick(models: &dyn Models) -> Result<(), String> {
         "unavailable/model:free"
     });
     let request = payload(model, &job, &run, kind);
-    let prepared = match (&selected, &request) {
+    let mut prepared = match (&selected, &request) {
         (Ok(model), Ok(_)) => models.prepare(model).await,
         (Err(e), _) => Err(e.clone()),
         (_, Err(e)) => Err(e.to_string()),
     };
-    let record_request = request.unwrap_or_else(|_| {
+    let mut record_request = request.unwrap_or_else(|_| {
         crate::incubator::payload(model, "Context exceeds the permitted size; no dispatch.")
     });
+    if let Ok((provider, _)) = &prepared {
+        match provider.adapt_request(&record_request) {
+            Ok(request) => record_request = request,
+            Err(reason) => prepared = Err(reason.into()),
+        }
+    }
     let mut recorded = record_request.clone();
     if let Ok((_, metadata)) = &prepared {
         recorded["preflight"] = metadata.clone();

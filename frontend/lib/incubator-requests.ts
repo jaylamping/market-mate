@@ -14,9 +14,9 @@ export function needsWarning(check:RequestCheck){return !!check.result&&(!check.
 export function requestError(code:string):string {
  const messages:Record<string,string>={
   default_model_not_configured:"Choose a default model in Models, or select an approved model for this assignment.",
-  preferred_provider_execution_unavailable:"The preferred provider cannot execute research yet. Choose an approved free OpenRouter model in Models.",
+  preferred_provider_execution_unavailable:"The preferred provider cannot execute research yet. Choose an approved OpenRouter model in Models.",
   model_not_whitelisted:"This model is no longer approved. Refresh the model choices.",
-  zero_spend_budget_denied:"Research currently requires an approved free model.",
+  zero_spend_budget_denied:"This operation requires an approved free model.",
   history_changed_recheck:"Assignments changed while you reviewed this request. Check again to review the latest matches.",
   warning_confirmation_required:"Review the similarity warning before creating the assignment.",
   provider_http_error:"The default model provider could not complete the similarity check.",
