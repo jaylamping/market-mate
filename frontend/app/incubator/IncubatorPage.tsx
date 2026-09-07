@@ -117,7 +117,6 @@ export function IncubatorPage() {
       <header className="page-header">
         <div><div className="flex items-center gap-3"><h1>Incubator</h1><Badge variant="outline" role="status" title="Workflow connection" className={connected?"gap-1.5 border-[var(--good)]/35 text-[var(--good)]":"gap-1.5 text-muted-foreground"}><span aria-hidden="true" className={`size-1.5 rounded-full ${connected?"bg-[var(--good)]":"bg-muted-foreground"}`}/>{connected?"Live":"Connecting"}</Badge></div><p>Research assignments, progress, and preserved results.</p></div>
       </header>
-      <p className="mb-6 max-w-4xl pt-2 text-sm leading-relaxed text-muted-foreground">Research planning only. Reports propose hypotheses and experiments; they contain no validated performance or trading approval.</p>
       {linkError&&<p role="alert" className="mb-4 text-sm text-destructive">{linkError}</p>}
       {linkedRun&&<div className="hidden"><RunCard run={runs.find(r=>r.run_key===linkedRun.run_key)??linkedRun} evaluation={evaluationFor(linkedRun.run_key)} evaluationHistory={evaluations.filter(e=>e.run_key===linkedRun.run_key)} initialVersion={linkedRevision} initiallyOpen/></div>}
       <h2 className="mb-3 text-xl font-semibold">Research</h2>
