@@ -51,6 +51,46 @@ fn normalize(value: Value) -> Result<Value, &'static str> {
     let mut body = envelope("connected");
     body["is_free_tier"] = json!(free);
     body["key_usage_credits"] = json!(usage);
+    // Missing metadata stays unknown. A null credit cap means unlimited, not zero.
+    let mut limits = serde_json::Map::new();
+    for key in [
+        "limit",
+        "limit_remaining",
+        "usage_daily",
+        "usage_weekly",
+        "usage_monthly",
+        "byok_usage",
+        "byok_usage_daily",
+        "byok_usage_weekly",
+        "byok_usage_monthly",
+    ] {
+        if let Some(value) = data.get(key) {
+            let nullable = matches!(key, "limit" | "limit_remaining");
+            if !(nullable && value.is_null())
+                && !value.as_f64().is_some_and(|n| n.is_finite() && n >= 0.0)
+            {
+                return Err("invalid_response");
+            }
+            limits.insert(key.into(), value.clone());
+        }
+    }
+    if let Some(value) = data.get("limit_reset") {
+        if !value.is_null()
+            && !value
+                .as_str()
+                .is_some_and(|s| s.len() <= 128 && !s.chars().any(char::is_control))
+        {
+            return Err("invalid_response");
+        }
+        limits.insert("limit_reset".into(), value.clone());
+    }
+    if let Some(value) = data.get("include_byok_in_limit") {
+        if !value.is_boolean() {
+            return Err("invalid_response");
+        }
+        limits.insert("include_byok_in_limit".into(), value.clone());
+    }
+    body["key_limits"] = Value::Object(limits);
     body["checked_at_ms"] = json!(SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
@@ -125,7 +165,7 @@ async fn status(
 ) -> ([(header::HeaderName, &'static str); 1], Json<Value>) {
     let mut cache = reader.cache.lock().await;
     if let Some((at, body)) = &*cache {
-        let ttl = if body["state"] == "rate_limited" {
+        let ttl = if body["state"] == "rate_limited" || body["state"] == "connected" {
             60
         } else {
             5
@@ -154,6 +194,54 @@ pub fn router(reader: Arc<OpenRouterReader>) -> Router {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn key_limits_preserve_unknown_unlimited_zero_and_usage_without_leaking_metadata() {
+        let body = normalize(json!({"data":{"is_free_tier":false,"usage":3,
+            "limit":null,"limit_remaining":0,"limit_reset":"monthly","include_byok_in_limit":false,
+            "usage_daily":0,"usage_weekly":1,"usage_monthly":2,"byok_usage":4,
+            "byok_usage_daily":0,"byok_usage_weekly":1,"byok_usage_monthly":2,
+            "label":"private","rate_limit":{"requests":999}}}))
+        .unwrap();
+        assert!(body["key_limits"]["limit"].is_null());
+        assert_eq!(body["key_limits"]["limit_remaining"], 0);
+        assert_eq!(body["key_limits"]["usage_daily"], 0);
+        assert_eq!(body["key_limits"]["byok_usage_monthly"], 2);
+        assert_eq!(body["key_limits"]["include_byok_in_limit"], false);
+        assert_eq!(body["key_limits"]["limit_reset"], "monthly");
+        assert!(!body.to_string().contains("private"));
+        assert!(!body.to_string().contains("999"));
+        let absent = normalize(json!({"data":{"is_free_tier":true,"usage":0}})).unwrap();
+        assert_eq!(absent["key_limits"], json!({}));
+        for (key, value) in [
+            ("limit", json!(-1)),
+            ("limit_remaining", json!("0")),
+            ("usage_daily", Value::Null),
+            ("byok_usage", json!(-1)),
+            ("limit_reset", json!({})),
+            ("include_byok_in_limit", json!(0)),
+        ] {
+            let mut input = json!({"data":{"is_free_tier":true,"usage":0}});
+            input["data"][key] = value;
+            assert!(normalize(input).is_err(), "{key}");
+        }
+    }
+    #[tokio::test]
+    async fn connected_status_is_cached_and_expired_success_is_not_reused_on_failure() {
+        let reader = Arc::new(
+            OpenRouterReader::new(
+                PathBuf::from("/nonexistent-openrouter-limits/credentials.json"),
+                PathBuf::from("/nonexistent-openrouter-limits/policy.json"),
+            )
+            .unwrap(),
+        );
+        let body = normalize(json!({"data":{"is_free_tier":true,"usage":0,"limit":null}})).unwrap();
+        *reader.cache.lock().await = Some((Instant::now(), body.clone()));
+        assert_eq!(status(State(reader.clone())).await.1 .0, body);
+        *reader.cache.lock().await = Some((Instant::now() - Duration::from_secs(61), body));
+        let unavailable = status(State(reader)).await.1 .0;
+        assert_eq!(unavailable["state"], "not_configured");
+        assert!(unavailable.get("key_limits").is_none());
+    }
     #[test]
     fn projects_only_safe_fields_and_rejects_invalid_metadata() {
         let body = normalize(json!({"data":{"is_free_tier":true,"usage":0,"label":"private-key-name","secret":"private"}})).unwrap();
