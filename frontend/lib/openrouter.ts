@@ -1,4 +1,10 @@
-export type OpenRouterStatus = { provider: "openrouter"; state: string; model_policy: "whitelist"; inference_enabled: false; checked_at_ms?: number };
+export type KeyLimits = {
+  limit?: number | null; limit_remaining?: number | null; limit_reset?: string | null;
+  include_byok_in_limit?: boolean;
+  usage_daily?: number; usage_weekly?: number; usage_monthly?: number;
+  byok_usage?: number; byok_usage_daily?: number; byok_usage_weekly?: number; byok_usage_monthly?: number;
+};
+export type OpenRouterStatus = { provider: "openrouter"; state: string; model_policy: "whitelist"; inference_enabled: false; checked_at_ms?: number; is_free_tier?: boolean; key_usage_credits?: number; key_limits?: KeyLimits };
 export type ModelPricing = { prompt: string; completion: string; [key: string]: unknown };
 export type Model = { id: string; name: string; context_length: number; created?: number; pricing: ModelPricing };
 export type ModelPolicy = { revision: number; allowed_models: string[] };
@@ -10,7 +16,36 @@ export function parseStatus(value: unknown): OpenRouterStatus {
   const row = object(value);
   if (row.provider !== "openrouter" || row.model_policy !== "whitelist" || row.inference_enabled !== false || !["connected","not_configured","invalid_credentials","credentials_rejected","rate_limited","provider_unavailable","connection_failed","invalid_response"].includes(String(row.state))) throw new Error("Invalid OpenRouter status");
   if (row.state === "connected" && (typeof row.checked_at_ms !== "number" || !Number.isSafeInteger(row.checked_at_ms))) throw new Error("Invalid check time");
-  return { provider: "openrouter", state: String(row.state), model_policy: "whitelist", inference_enabled: false, checked_at_ms: row.checked_at_ms as number | undefined };
+  const result: OpenRouterStatus = { provider: "openrouter", state: String(row.state), model_policy: "whitelist", inference_enabled: false, checked_at_ms: row.checked_at_ms as number | undefined };
+  if (row.state !== "connected") return result;
+  const amount = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v >= 0;
+  if (row.is_free_tier !== undefined) {
+    if (typeof row.is_free_tier !== "boolean") throw new Error("Invalid account tier");
+    result.is_free_tier = row.is_free_tier;
+  }
+  if (row.key_usage_credits !== undefined) {
+    if (!amount(row.key_usage_credits)) throw new Error("Invalid key usage");
+    result.key_usage_credits = row.key_usage_credits as number;
+  }
+  if (row.key_limits !== undefined) {
+    const limits = object(row.key_limits);
+    const safe: Record<string, unknown> = {};
+    for (const key of ["limit", "limit_remaining", "usage_daily", "usage_weekly", "usage_monthly", "byok_usage", "byok_usage_daily", "byok_usage_weekly", "byok_usage_monthly"]) {
+      if (!(key in limits)) continue;
+      if (!amount(limits[key]) && !(["limit", "limit_remaining"].includes(key) && limits[key] === null)) throw new Error("Invalid key limits");
+      safe[key] = limits[key];
+    }
+    if ("limit_reset" in limits) {
+      if (limits.limit_reset !== null && (typeof limits.limit_reset !== "string" || limits.limit_reset.length > 128 || /[\u0000-\u001f\u007f]/.test(limits.limit_reset))) throw new Error("Invalid limit reset");
+      safe.limit_reset = limits.limit_reset;
+    }
+    if ("include_byok_in_limit" in limits) {
+      if (typeof limits.include_byok_in_limit !== "boolean") throw new Error("Invalid BYOK limit");
+      safe.include_byok_in_limit = limits.include_byok_in_limit;
+    }
+    result.key_limits = safe as KeyLimits;
+  }
+  return result;
 }
 export function parseModels(value: unknown): Model[] {
   const rows = object(value).models;

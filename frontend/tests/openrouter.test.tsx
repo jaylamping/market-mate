@@ -2,6 +2,18 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { parseModels, parsePolicy, parseStatus, isFree, tokenPrice } from "../lib/openrouter";
 
+const connected = {provider:"openrouter",state:"connected",model_policy:"whitelist",inference_enabled:false,checked_at_ms:1,is_free_tier:false,key_usage_credits:0};
+test("key limits distinguish missing metadata, unlimited caps and zero remaining", () => {
+  assert.equal(parseStatus(connected).key_limits, undefined);
+  const key_limits={limit:null,limit_remaining:0,limit_reset:null,usage_daily:0,usage_weekly:1,usage_monthly:2,byok_usage:3,byok_usage_daily:0,byok_usage_weekly:1,byok_usage_monthly:2,include_byok_in_limit:false};
+  assert.deepEqual(parseStatus({...connected,key_limits}).key_limits,key_limits);
+  assert.deepEqual(parseStatus({...connected,key_limits:{label:"private",rate_limit:{requests:999}}}).key_limits,{});
+  for (const key_limits of [{limit:-1},{limit_remaining:"0"},{usage_daily:null},{usage_weekly:Infinity},{byok_usage:-1},{limit_reset:{}},{include_byok_in_limit:0}]) {
+    assert.throws(()=>parseStatus({...connected,key_limits}));
+  }
+  assert.equal(parseStatus({...connected,state:"connection_failed",key_limits}).key_limits,undefined);
+});
+
 test("tiered model pricing survives parsing without being labeled free", () => {
   const pricing = {prompt:"0",completion:"0",overrides:[{min_prompt_tokens:272000,prompt:"0.0000004"}]};
   const [model] = parseModels({models:[{id:"openai/gpt-5.6-luna",name:"GPT-5.6 Luna",context_length:1050000,pricing}]});

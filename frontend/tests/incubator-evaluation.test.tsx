@@ -54,3 +54,12 @@ test("live experiment states ingest and failures stay in their workflow stage",(
  const steps=experimentProgress(experiment);assert.equal(steps[1].state,"complete");assert.equal(steps[2].state,"failed");assert.equal(steps[3].state,"pending");
  assert.throws(()=>parseWorkflow({evaluations:[{...evaluations[0],experiment:{...experiment,events:[{state:"execute_live"}]}}]}));
 });
+test("refinement displays bounded progress and directs blocked revisions to Chat",()=>{
+ const render=(e:Evaluation)=>renderToStaticMarkup(<QueryClientProvider client={new QueryClient()}><ReportEvaluation evaluations={[e]} revision={e.revision}/></QueryClientProvider>);
+ const e:Evaluation={...evaluations[0],status:"refining",refinement_rounds_used:0};
+ assert.match(render(e),/Refining · Round 1 of 2/);
+ const blocked:Evaluation={...e,status:"needs_input",refinement_rounds_used:2,refinement_stop_reason:"Two rounds used"};
+ assert.match(render(blocked),/Two rounds used/);assert.match(render(blocked),/Use Chat/);assert.doesNotMatch(render(blocked),/Answer and resume/);
+ assert.equal(parseWorkflow({evaluations:[blocked]})[0].status,"needs_input");
+ assert.throws(()=>parseWorkflow({evaluations:[{...blocked,refinement_rounds_used:3}]}));
+});

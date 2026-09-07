@@ -22,7 +22,7 @@ export const surfacesQuery = queryOptions({
   queryFn: async ({ signal }) => parseStage1Surfaces(await getJson("/api/surfaces", signal)),
 });
 
-export const openrouterStatusQuery = queryOptions({ queryKey: ["api","openrouter","status"] as const, queryFn: async ({signal}) => parseStatus(await getJson("/api/openrouter/status",signal)) });
+export const openrouterStatusQuery = queryOptions({ queryKey: ["api","openrouter","status"] as const, staleTime:60_000, refetchInterval:60_000, queryFn: async ({signal}) => parseStatus(await getJson("/api/openrouter/status",signal)) });
 export const openrouterModelsQuery = queryOptions({ queryKey: ["api","openrouter","models"] as const, staleTime:300_000, queryFn: async ({signal}) => parseModels(await getJson("/api/openrouter/models",signal)) });
 export const openrouterPolicyQuery = queryOptions({ queryKey: ["api","openrouter","policy"] as const, queryFn: async ({signal}) => parsePolicy(await getJson("/api/openrouter/policy",signal)) });
 

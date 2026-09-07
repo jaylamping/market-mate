@@ -1,4 +1,6 @@
 import { OpenRouterBalance } from "@/components/OpenRouterBalance";
+import { OpenRouterLimits } from "@/components/OpenRouterLimits";
+import { openrouterStatusQuery } from "@/lib/api-queries";
 import { ModelsTable } from "./ModelsTable";
 import { cursorModelsQuery, cursorPolicyQuery, cursorStatusQuery } from "@/lib/api-queries";
 import { modelRoutingQuery, openrouterBalanceQuery, openrouterModelsQuery, openrouterPolicyQuery } from "@/lib/api-queries";
@@ -11,9 +13,10 @@ export const metadata = { title: "Agents | Market Mate" };
 export default function Page() {
   return <RoutingEditor><WorkspacePage title="Agents" description="Configure the providers, models, and identities behind your agents." activePage="/agents">
     <section className="workspace-panel mb-6" aria-labelledby="agents-models">
-      <header className="panel-heading"><div><h2 id="agents-models">Models</h2><p>Choose the models available to future agent tasks.</p></div><RefreshQueries label="Refresh models" queryKeys={[modelRoutingQuery.queryKey, openrouterBalanceQuery.queryKey, openrouterModelsQuery.queryKey, openrouterPolicyQuery.queryKey, cursorModelsQuery.queryKey, cursorPolicyQuery.queryKey, cursorStatusQuery.queryKey]} /></header>
+      <header className="panel-heading"><div><h2 id="agents-models">Models</h2><p>Choose the models available to future agent tasks.</p></div><RefreshQueries label="Refresh models" queryKeys={[modelRoutingQuery.queryKey, openrouterStatusQuery.queryKey, openrouterBalanceQuery.queryKey, openrouterModelsQuery.queryKey, openrouterPolicyQuery.queryKey, cursorModelsQuery.queryKey, cursorPolicyQuery.queryKey, cursorStatusQuery.queryKey]} /></header>
       <div className="grid min-w-0 gap-5 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3"><OpenRouterBalance/><a href="/system#integrations" className="text-link">Manage connections</a></div>
+        <OpenRouterLimits/>
         <IntegrationDisclosure title="Configure models"><ModelsTable/></IntegrationDisclosure>
       </div>
     </section>
