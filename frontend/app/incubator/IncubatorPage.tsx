@@ -152,7 +152,7 @@ export function IncubatorPage() {
       {archiveView!=="duplicates"&&!query.isPending&&!visibleRuns.length&&<div className={ticketCardStyles.empty}>{archiveView==="archived"?"No archived research.":"No current research."}</div>}
 
       <div className={ticketCardStyles.grid}>{visibleRuns.map(run=><RunCard key={run.run_key} run={run} fallbacks={runs.filter(attempt=>attempt.detail.fallback_of===run.run_key)} evaluation={evaluationFor(run.run_key)} evaluationHistory={evaluations.filter(e=>e.run_key===run.run_key)}/>)}</div>
-      {campaign.isError&&<p role="alert" className="text-sm text-destructive">Campaign proposals could not be refreshed. Displayed proposals may be outdated.</p>}<CampaignBacklog campaign={campaign.data} view={archiveView} search={search}/>
+      {campaign.isError&&<p role="alert" className="text-sm text-destructive">Seed proposals could not be refreshed. Displayed proposals may be outdated.</p>}<CampaignBacklog campaign={campaign.data} view={archiveView} search={search}/>
     </main>
   </div>;
 }

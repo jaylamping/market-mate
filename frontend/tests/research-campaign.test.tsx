@@ -12,13 +12,13 @@ test("fresh empty backlog renders the independent Ticket Creator picker",()=>{
  client.setQueryData(["research-campaign"],campaign);
  client.setQueryData(modelRoutingQuery.queryKey,{revision:0,legacy_revisions:[0,0],models:[{model_id:"creator:free",routes:[{provider:"openrouter",model_id:"vendor/creator:free"}]},{model_id:"creator-paid",routes:[{provider:"openrouter",model_id:"vendor/creator-paid"}]}]});
  const html=renderToStaticMarkup(<QueryClientProvider client={client}><ResearchCampaign/></QueryClientProvider>);
- assert.match(html,/Ticket Creator model/);assert.match(html,/vendor\/creator:free/);assert.match(html,/vendor\/creator-paid/);assert.match(html,/Enable campaign/);
+ assert.match(html,/Ticket Creator model/);assert.match(html,/vendor\/creator:free/);assert.match(html,/vendor\/creator-paid/);assert.match(html,/Enable seed/);
  assert.match(html,/Detailed validation evidence was not recorded/); assert.match(html,/Cost pending/); assert.match(html,/0.125000/); assert.match(html,/Includes failed calls/); assert.match(html,/>100<\/option>/);
  const seed:CampaignAgenda={ordinal:1,generation_id:3,title:"A fresh momentum question",premise:"Test whether short-horizon continuation survives costs.",spec:{runner:"momentum_v1",lookback_sessions:3,quantile_count:5,one_way_cost_bps:8,borrow_bps_per_session:4},state:"pending",reason:null,run_key:null,scope:null};
  const backlog={...campaign,creator_model:"vendor/creator:free",backlog_count:1,agenda:[seed]};
  const backlogHtml=renderToStaticMarkup(<CampaignBacklog campaign={backlog}/>);
- assert.match(backlogHtml,/Campaign backlog/); assert.match(backlogHtml,/A fresh momentum question/); assert.match(backlogHtml,/short-horizon continuation/); assert.match(backlogHtml,/Backlog workflow/);
- assert.match(backlogHtml,/Open campaign ticket A fresh momentum question, Created/); assert.match(backlogHtml,/aria-haspopup="dialog"/);
+ assert.match(backlogHtml,/Seed backlog/); assert.match(backlogHtml,/A fresh momentum question/); assert.match(backlogHtml,/short-horizon continuation/); assert.match(backlogHtml,/Backlog workflow/);
+ assert.match(backlogHtml,/Open seed ticket A fresh momentum question, Created/); assert.match(backlogHtml,/aria-haspopup="dialog"/);
  const outcomes={...backlog,agenda:["pending","checking","blocked","cancelled","duplicate"].map((state,index)=>({...backlog.agenda[0],ordinal:index+1,state,reason:state==="pending"?null:`Reason for ${state}`}))};
  assert.deepEqual(campaignCandidates(outcomes,"current").map(c=>c.state),["pending","checking","blocked","cancelled"]);
  const retried={...outcomes,agenda:outcomes.agenda.map(item=>item.ordinal===3?{...item,retry_candidate:6}:item).concat([{...outcomes.agenda[0],ordinal:6,state:"pending",reason:null,retry_of:3}])};
@@ -33,12 +33,12 @@ test("fresh empty backlog renders the independent Ticket Creator picker",()=>{
  assert.match(duplicates,/Reason for duplicate/); assert.doesNotMatch(duplicates,/Reason for blocked/);
  assert.match(duplicates,/exact diagnostic case/);
  const archived=renderToStaticMarkup(<CampaignBacklog campaign={retried} view="archived"/>);
- assert.match(archived,/Archived campaign checks/); assert.match(archived,/Reason for blocked/);
+ assert.match(archived,/Archived seed checks/); assert.match(archived,/Reason for blocked/);
  const current=renderToStaticMarkup(<CampaignBacklog campaign={retried} view="current"/>);
  assert.doesNotMatch(current,/Reason for blocked/);
  const emptyCurrent=renderToStaticMarkup(<CampaignBacklog campaign={campaign} view="current"/>);
- assert.match(emptyCurrent,/Campaign backlog/);
- assert.match(emptyCurrent,/No current campaign backlog/);
+ assert.match(emptyCurrent,/Seed backlog/);
+ assert.match(emptyCurrent,/No current seed backlog/);
  const failed=renderToStaticMarkup(<CampaignBacklog campaign={outcomes} status="Failed"/>);
  assert.match(failed,/Reason for blocked/); assert.doesNotMatch(failed,/Reason for duplicate/);
  client.setQueryData(["research-campaign"],{...campaign,enabled:true,creator_in_progress:true,creator_model:"vendor/creator-paid",creator_status:"dispatching"});
@@ -49,13 +49,13 @@ test("fresh empty backlog renders the independent Ticket Creator picker",()=>{
  assert.match(stopping,/Stopping generation…/); assert.match(stopping,/disabled/);
  client.clear();
 });
-test("campaign controls stay inside the dialog until opened",()=>{
+test("seed controls stay inside the dialog until opened",()=>{
  const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});
  const html=renderToStaticMarkup(<QueryClientProvider client={client}><CampaignDialog/></QueryClientProvider>);
- assert.match(html,/Campaign/); assert.doesNotMatch(html,/Ticket Creator model/);
+ assert.match(html,/Seed/); assert.doesNotMatch(html,/Ticket Creator model/);
  client.setQueryData(["research-campaign"],{enabled:true});
  const active=renderToStaticMarkup(<QueryClientProvider client={client}><CampaignDialog/></QueryClientProvider>);
- assert.match(active,/Campaign generating/); assert.match(active,/animate-spin/);
+ assert.match(active,/Seed generating/); assert.match(active,/animate-spin/);
 });
 
 test("backlog timelines stop at the check and never imply research has started",()=>{

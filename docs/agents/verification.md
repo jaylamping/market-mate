@@ -26,7 +26,7 @@ Verification writes normal build artifacts; it does not migrate the running data
 
 | Changed behavior | Additional acceptance script(s) |
 | --- | --- |
-| Campaign/creator/similarity/research retry | `bash scripts/research_campaign_test.sh` |
+| Seed (campaign)/creator/similarity/research retry | `bash scripts/research_campaign_test.sh` |
 | Provider capacity/spending/recovery | `bash scripts/openrouter_capacity_test.sh` |
 | Manual research intake | `bash scripts/incubator_manual_requests_test.sh` |
 | Evaluation/refinement/experiment | Corresponding `incubator_evaluation_test.sh`, `incubator_refinement_test.sh`, `incubator_experiment_test.sh` in [scripts](../../scripts) |
@@ -39,7 +39,7 @@ Inspect a suite before running it: identify its Compose project, published ports
 
 A build is not a deployment. Rust embeds migrations at build time. Compare source migration hashes, stored hashes, and the running image before diagnosing a mismatch. The doctor detects live database/source differences and container/tag differences; it does not prove that a local image tag was built from the current commit.
 
-Starting/restarting a configured worker can resume paid creator calls, research, or data acquisition. Inspect campaign/policy state and the user's authorization before changing runtime. Use the existing Compose definitions and explicitly scoped services. Apply migrations with the newly built backend's `backend migrate` command only when deployment is in scope. Recheck readiness and actual image IDs afterward. Preserve volumes and applied migration history.
+Starting/restarting a configured worker can resume paid creator calls, research, or data acquisition. Inspect seed (campaign)/policy state and the user's authorization before changing runtime. Use the existing Compose definitions and explicitly scoped services. Apply migrations with the newly built backend's `backend migrate` command only when deployment is in scope. Recheck readiness and actual image IDs afterward. Preserve volumes and applied migration history.
 
 ## Maintaining evidence
 

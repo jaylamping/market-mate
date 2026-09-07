@@ -35,7 +35,7 @@ test("mixed free and owner-selected paid history remains readable without invent
  const campaignRun=parseRuns(history([campaign]))[0];
  assert.equal(campaignRun.state,"research_retry");
  assert.equal(campaignRun.config.limits.max_cost_usd,null);
- assert.match(spendingLimitLabel(campaignRun.config.limits),/Campaign-selected model pricing/);
+ assert.match(spendingLimitLabel(campaignRun.config.limits),/Seed-selected model pricing/);
  for(const config of [
   {...paid.config,manual_model_spend:false},
   {...paid.config,limits:{...paid.config.limits,spend_policy:"unknown"}},
