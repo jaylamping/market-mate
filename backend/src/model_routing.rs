@@ -25,6 +25,12 @@ pub struct RoutingPolicy {
     pub models: Vec<Preference>,
     #[serde(default)]
     pub default_model: Option<String>,
+    #[serde(default)]
+    pub research_model: Option<String>,
+    #[serde(default)]
+    pub setup_model: Option<String>,
+    #[serde(default)]
+    pub experiment_model: Option<String>,
 }
 
 pub fn canonical(_provider: &str, id: &str) -> String {
@@ -62,6 +68,9 @@ pub fn read(path: &Path, openrouter: &Path, cursor: &Path) -> Result<RoutingPoli
     Ok(RoutingPolicy {
         revision: 0,
         default_model: None,
+        research_model: None,
+        setup_model: None,
+        experiment_model: None,
         legacy_revisions: [policies[0].revision, policies[1].revision],
         models: groups
             .into_iter()
@@ -89,12 +98,18 @@ pub fn validate(
     if next.revision != current.revision || next.legacy_revisions != current.legacy_revisions {
         return Err("routing_policy_conflict");
     }
-    if next
-        .default_model
-        .as_ref()
-        .is_some_and(|id| !next.models.iter().any(|m| &m.model_id == id))
-    {
-        return Err("default_model_not_selected");
+    for (selected, reason) in [
+        (&next.default_model, "default_model_not_selected"),
+        (&next.research_model, "research_model_not_selected"),
+        (&next.setup_model, "setup_model_not_selected"),
+        (&next.experiment_model, "experiment_model_not_selected"),
+    ] {
+        if selected
+            .as_ref()
+            .is_some_and(|id| !next.models.iter().any(|m| &m.model_id == id))
+        {
+            return Err(reason);
+        }
     }
     if next.models.len() > 200 {
         return Err("invalid_model_selection");
@@ -196,6 +211,66 @@ mod tests {
         std::fs::remove_dir_all(directory).unwrap();
     }
     #[test]
+    fn role_preferences_are_optional_validated_and_resolve_before_default() {
+        let old = r#"{"revision":0,"legacy_revisions":[0,0],"models":[],"default_model":null}"#;
+        let mut policy: RoutingPolicy = serde_json::from_str(old).unwrap();
+        assert_eq!(policy.research_model, None);
+        for name in [
+            "basic:free",
+            "research:free",
+            "setup:free",
+            "experiment:free",
+        ] {
+            policy.models.push(Preference {
+                model_id: name.into(),
+                routes: vec![Route {
+                    provider: "openrouter".into(),
+                    model_id: format!("vendor/{name}"),
+                }],
+            });
+        }
+        policy.default_model = Some("basic:free".into());
+        assert_eq!(
+            crate::incubator::role_route(&policy, "research")
+                .unwrap()
+                .model_id,
+            "vendor/basic:free"
+        );
+        policy.setup_model = Some("setup:free".into());
+        policy.research_model = Some("research:free".into());
+        policy.experiment_model = Some("experiment:free".into());
+        assert_eq!(
+            crate::incubator::role_route(&policy, "research")
+                .unwrap()
+                .model_id,
+            "vendor/research:free"
+        );
+        assert_eq!(
+            crate::incubator::role_route(&policy, "experiment")
+                .unwrap()
+                .model_id,
+            "vendor/experiment:free"
+        );
+        assert_eq!(
+            crate::incubator::role_route(&policy, "setup")
+                .unwrap()
+                .model_id,
+            "vendor/setup:free"
+        );
+        let mut invalid = policy.clone();
+        invalid.setup_model = Some("missing".into());
+        assert_eq!(
+            validate(&policy, invalid, &[]).unwrap_err(),
+            "setup_model_not_selected"
+        );
+        let mut next = policy.clone();
+        next.models.retain(|p| p.model_id != "research:free");
+        assert_eq!(
+            validate(&policy, next, &[]).unwrap_err(),
+            "research_model_not_selected"
+        );
+    }
+    #[test]
     fn identity_keeps_variants_and_unknown_models_separate() {
         assert_eq!(
             canonical("cursor", "gpt-5.6-luna"),
@@ -224,6 +299,9 @@ mod tests {
         let current = RoutingPolicy {
             revision: 0,
             default_model: None,
+            research_model: None,
+            setup_model: None,
+            experiment_model: None,
             legacy_revisions: [3, 0],
             models: vec![],
         };

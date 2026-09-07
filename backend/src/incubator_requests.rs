@@ -91,12 +91,15 @@ fn validate(input: &CheckInput) -> Result<(), ApiError> {
     Ok(())
 }
 pub(crate) fn selected_model(choice: &str) -> Result<String, ApiError> {
+    selected_role_model(choice, "default")
+}
+pub(crate) fn selected_role_model(choice: &str, role: &str) -> Result<String, ApiError> {
     let policy =
         crate::model_routing::stored(std::path::Path::new("/var/lib/model-policy/routing.json"))
             .map_err(error)?
             .ok_or_else(|| error("default_model_not_configured"))?;
     let route = if choice.is_empty() {
-        crate::incubator::default_route(&policy)
+        crate::incubator::role_route(&policy, role)
     } else {
         policy
             .models
@@ -130,6 +133,9 @@ impl PreparedComparison for crate::incubator::OpenRouter {
 }
 trait ComparisonModels: Send + Sync {
     fn resolve(&self, choice: &str) -> Result<String, ApiError>;
+    fn research(&self, choice: &str) -> Result<String, ApiError> {
+        self.resolve(choice)
+    }
     fn prepare<'a>(
         &'a self,
         model: &'a str,
@@ -137,6 +143,9 @@ trait ComparisonModels: Send + Sync {
 }
 struct LiveModels;
 impl ComparisonModels for LiveModels {
+    fn research(&self, choice: &str) -> Result<String, ApiError> {
+        selected_role_model(choice, "research")
+    }
     fn resolve(&self, choice: &str) -> Result<String, ApiError> {
         selected_model(choice)
     }
@@ -367,7 +376,7 @@ async fn check(
             if prior["input"]["title"]!=input.title || prior["input"]["text"]!=input.text || prior["input"]["selected_model"]!=input.model { return Err(error("request_identity_mismatch")); }
             return Ok(Json(prior));
         }
-        let model=intake.models.resolve(&input.model)?;
+        let model=intake.models.research(&input.model)?;
         let stored=json!({"title":input.title,"text":input.text,"model":model,"selected_model":input.model});
         let started:Value=db.client.query_one("SELECT begin_incubator_request_check($1,$2)",&[&input.request_id,&stored]).await.map_err(sql_error)?.get(0);
         if started.get("existing").is_some() { return Ok(Json(started["existing"].clone())); }

@@ -283,6 +283,10 @@ async fn run_with_database(
     let policy =
         crate::model_routing::stored(std::path::Path::new("/var/lib/model-policy/routing.json"))?;
     let default_route = policy.as_ref().and_then(default_route).cloned();
+    let research_route = policy
+        .as_ref()
+        .and_then(|p| role_route(p, "research"))
+        .cloned();
     let primary = if let Some(existing) = &existing {
         let stored = existing["config"]["model"].as_str().ok_or("invalid_run")?;
         if !model.is_empty() && model != stored {
@@ -310,7 +314,7 @@ async fn run_with_database(
         }
         stored
     } else if model.is_empty() {
-        let route = default_route
+        let route = research_route
             .as_ref()
             .ok_or("default_model_not_configured")?;
         if route.provider != "openrouter" {
@@ -345,6 +349,24 @@ pub(crate) fn default_route(
         .models
         .iter()
         .find(|m| Some(&m.model_id) == policy.default_model.as_ref())?
+        .routes
+        .first()
+}
+pub(crate) fn role_route<'a>(
+    policy: &'a crate::model_routing::RoutingPolicy,
+    role: &str,
+) -> Option<&'a crate::model_routing::Route> {
+    let selected = match role {
+        "research" => policy.research_model.as_ref(),
+        "setup" => policy.setup_model.as_ref(),
+        "experiment" => policy.experiment_model.as_ref(),
+        _ => None,
+    }
+    .or(policy.default_model.as_ref());
+    policy
+        .models
+        .iter()
+        .find(|m| Some(&m.model_id) == selected)?
         .routes
         .first()
 }

@@ -33,3 +33,10 @@ test("default fallback must be approved and clears when its last provider is rem
  assert.throws(()=>parseRouting({...policy,default_model:"unapproved"}));
  assert.equal(parseRouting({revision:0,legacy_revisions:[0,0],models:[]}).default_model,null);
 });
+
+test("role runners persist independently and clear when their final route is removed",()=>{
+ const model={model_id:"advanced:free",routes:[{provider:"openrouter" as const,model_id:"vendor/advanced:free"}]};
+ const p=parseRouting({revision:1,legacy_revisions:[0,0],models:[model],default_model:null,research_model:model.model_id,setup_model:model.model_id,experiment_model:model.model_id});
+ const cleared=setRoutes(p,model.model_id,[]);assert.equal(cleared.research_model,null);assert.equal(cleared.setup_model,null);assert.equal(cleared.experiment_model,null);
+ assert.throws(()=>parseRouting({...p,setup_model:"not-selected"}));assert.throws(()=>parseRouting({...p,research_model:"not-selected"}));assert.throws(()=>parseRouting({...p,experiment_model:"not-selected"}));
+});

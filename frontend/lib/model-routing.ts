@@ -1,7 +1,7 @@
 export type Provider = "openrouter" | "cursor";
 export type ModelRoute = {provider:Provider;model_id:string};
 export type ModelPreference = {model_id:string;routes:ModelRoute[]};
-export type RoutingPolicy = {revision:number;legacy_revisions:[number,number];models:ModelPreference[];default_model?:string|null};
+export type RoutingPolicy = {revision:number;legacy_revisions:[number,number];models:ModelPreference[];default_model?:string|null;research_model?:string|null;setup_model?:string|null;experiment_model?:string|null};
 export function canonicalModel(_provider:Provider,id:string):string {
   return id.split("/").at(-1)??id;
 }
@@ -18,11 +18,11 @@ export function parseRouting(value:unknown):RoutingPolicy {
       providers.add(r.provider);if(++counts[r.provider]>100) throw new Error("Too many approved models");
     }
   }
-  if(p.default_model!=null&&(typeof p.default_model!=="string"||!groups.has(p.default_model)))throw new Error("Default model must be selected");
-  return {...p,default_model:p.default_model??null};
+  for(const key of ["default_model","research_model","setup_model","experiment_model"] as const)if(p[key]!=null&&(typeof p[key]!=="string"||!groups.has(p[key]!)))throw new Error("Runner model must be selected");
+  return {...p,default_model:p.default_model??null,research_model:p.research_model??null,setup_model:p.setup_model??null,experiment_model:p.experiment_model??null};
 }
 export function setRoutes(policy:RoutingPolicy,model_id:string,routes:ModelRoute[]):RoutingPolicy {
-  return {...policy,default_model:policy.default_model===model_id&&!routes.length?null:policy.default_model,models:[...policy.models.filter(m=>m.model_id!==model_id),...(routes.length?[{model_id,routes}]:[])].sort((a,b)=>a.model_id.localeCompare(b.model_id))};
+  return {...policy,setup_model:policy.setup_model===model_id&&!routes.length?null:policy.setup_model,research_model:policy.research_model===model_id&&!routes.length?null:policy.research_model,experiment_model:policy.experiment_model===model_id&&!routes.length?null:policy.experiment_model,default_model:policy.default_model===model_id&&!routes.length?null:policy.default_model,models:[...policy.models.filter(m=>m.model_id!==model_id),...(routes.length?[{model_id,routes}]:[])].sort((a,b)=>a.model_id.localeCompare(b.model_id))};
 }
 export function moveRoute(routes:ModelRoute[],index:number,direction:-1|1):ModelRoute[] {
   const next=[...routes],target=index+direction;
