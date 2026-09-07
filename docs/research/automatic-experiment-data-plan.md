@@ -114,7 +114,7 @@ Deliver a reusable Alpaca daily-bars client and an executable local download com
 
 Complete all response pages, enforce bounded bytes/pages/attempts, recognize non-200 and in-band errors, wait between requests, and reject partial coverage, duplicates, unexpected symbols/dates and inconsistent bars. Preserve normalized source observations so the cents transformation is inspectable. Do not classify isolated fixtures as observed research; test transport is test-only. This unit produces data files, not a registered or auto-attached dataset. No database schema change is needed yet. Acceptance runs the real client against a local HTTP provider double, validates the resulting panel with the existing momentum engine, and verifies failure paths and credential non-disclosure. A real-provider smoke test is distinct and requires configured credentials.
 
-### WU-61 — Local data storage and lifecycle
+### WU-61 — Local data storage and lifecycle (implemented)
 
 Depends on WU-60. Reuse source/entitlement/EOD contracts; add bounded personal-research source configuration and deletable payload references where current inline append-only data prevents cleanup. Add normalized observation/version identity, experiment dependencies, ingestion receipt and source-level cleanup. Retain referenced inputs; evict prices unused for 90 days. Preserve permitted metadata and mark replay unavailable after input removal. No counterfeit certification records or source payloads in audit JSON. Prove source cleanup removes downstream source-bearing copies without deleting unrelated saved experiments. Apply new migrations and isolated SQL probes.
 
@@ -154,4 +154,4 @@ Depends on WU-61 and useful retained document volume; independent of numerical g
 
 ## Completion boundaries
 
-The present implementation starts with WU-60 and does not claim WU-61–67 complete. After each merged unit, continue from its documented dependency-ready successor when requested. A credentialed live test, source setup, automatic handoff, scheduled refresh and graph UI each have distinct completion evidence; passing a mock downloader test cannot stand in for any of them.
+WU-60 and WU-61 are implemented; WU-62–67 remain planned. See [storage operations](market-data-storage.md) for registration, cleanup and the active-store-only deletion boundary. After each merged unit, continue from its documented dependency-ready successor when requested. A credentialed live test, source setup, automatic handoff, scheduled refresh and graph UI each have distinct completion evidence; passing a mock downloader test cannot stand in for any of them.
