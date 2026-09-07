@@ -12,7 +12,7 @@ mkdir -p .scratch/campaign evidence/research-campaign
 "${compose[@]}" up -d --wait postgres
 cargo build --locked --bin backend --bin incubator-requests
 env -i DATABASE_URL=postgres://mm:local-only@127.0.0.1:15439/market_mate ./target/debug/backend migrate
-cat db/fixtures/wu62_market_data_seed.sql db/fixtures/research_campaign_probe.sql | "${compose[@]}" exec -T postgres psql -X -qAt -v ON_ERROR_STOP=1 -U mm -d market_mate > .scratch/campaign/probe.log
+cat db/fixtures/wu62_market_data_seed.sql db/fixtures/research_campaign_probe.sql db/fixtures/campaign_recovery_probe.sql | "${compose[@]}" exec -T postgres psql -X -qAt -v ON_ERROR_STOP=1 -U mm -d market_mate > .scratch/campaign/probe.log
 python3 - <<'EVIDENCE'
 import json,pathlib,hashlib,subprocess,urllib.request,urllib.error,time,os
 worker=subprocess.Popen(['./target/debug/incubator-requests'],env={**os.environ,'DATABASE_URL':'postgres://incubator_runner:local-poc-only@127.0.0.1:15439/market_mate','INCUBATOR_REQUESTS_BIND':'127.0.0.1:15440'},stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
@@ -36,7 +36,9 @@ finally:
 subprocess.run(['cargo','test','campaign_comparison_waits_for_capacity_and_observes_pause','--','--ignored'],env={**os.environ,'DATABASE_URL':'postgres://incubator_runner:local-poc-only@127.0.0.1:15439/market_mate'},check=True)
 r=[json.loads(l) for l in pathlib.Path('.scratch/campaign/probe.log').read_text().splitlines() if l.startswith('{') and '"probe": "research-campaign"' in l][-1]
 assert r['passed']
+assert any(json.loads(l).get('probe')=='campaign-recovery' and json.loads(l).get('passed') for l in pathlib.Path('.scratch/campaign/probe.log').read_text().splitlines() if l.startswith('{'))
+r['checks']+=['linked_idempotent_retry','no_uncertain_retry','retry_preserves_pause_and_original','pre_dispatch_failure_visible','pause_cause_visible']
 r['checks']+=['campaign_paid_payload_fence','campaign_creator_role_fence','campaign_cancellation_pending_cost','http_campaign_read','http_campaign_save','http_stale_settings_rejected']
-r['sha256']={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in ['db/migrations/0074_research_campaign.sql','db/migrations/0075_continuous_research_campaign.sql','db/migrations/0076_campaign_selected_spending.sql','db/migrations/0077_campaign_backlog_premise.sql','db/migrations/0078_campaign_failure_visibility.sql','db/fixtures/research_campaign_probe.sql','backend/src/incubator.rs','backend/src/incubator_campaign.rs','backend/src/incubator_ticket_creator.rs','backend/src/incubator_requests.rs','backend/src/openrouter_capacity.rs','scripts/research_campaign_test.sh']}
+r['sha256']={p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in ['db/migrations/0074_research_campaign.sql','db/migrations/0075_continuous_research_campaign.sql','db/migrations/0076_campaign_selected_spending.sql','db/migrations/0077_campaign_backlog_premise.sql','db/migrations/0078_campaign_failure_visibility.sql','db/migrations/0079_campaign_recovery.sql','db/fixtures/campaign_recovery_probe.sql','backend/src/incubator_output.rs','db/fixtures/research_campaign_probe.sql','backend/src/incubator.rs','backend/src/incubator_campaign.rs','backend/src/incubator_ticket_creator.rs','backend/src/incubator_requests.rs','backend/src/openrouter_capacity.rs','scripts/research_campaign_test.sh']}
 pathlib.Path('evidence/research-campaign/acceptance.json').write_text(json.dumps(r,indent=2)+'\n')
 EVIDENCE
