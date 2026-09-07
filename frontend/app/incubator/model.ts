@@ -1,7 +1,11 @@
 export type RunState = "admitted" | "preparing" | "dispatched" | "completed" | "failed" | "indeterminate";
 export type Report = { hypothesis: string; evidence_gaps: string[]; experiment: string[]; falsification_rule: string; limitations: string[] };
-type Detail = { provider_limit_source: string | null; provider_remedy: string | null; provider_message: string | null; retry_after: string | null; http_status: number | null; fallback_of: string | null; response_text: string | null; validation_error: string | null; response_truncated: boolean; reason: string | null; generation_id: string | null; returned_model: string | null; serving_provider: string | null; report: Report | null; usage: { prompt_tokens: number | null; completion_tokens: number | null; cost_usd: number | null }; request_sha256: string | null; policy_revision: number | null };
-export type Run = { archived?:boolean; archive_version?:number; created_by?: "principal"|"agent"|"local_runner"; run_key: string; assignment_id: string; created_at: string; updated_at: string; state: RunState; config: { agent_name: string; model: string; input: { title: string; text: string }; limits: { max_requests: number; max_output_tokens: number; timeout_seconds: number; max_cost_usd: number | null; spend_policy?: "owner_selected_model" } }; detail: Detail; events: { sequence: number; state: RunState; at: string; detail: Detail }[] };
+export type CapacityReceipt = {attempt_id:string;model:string;trigger:string;reserved_nanos:number;cost_nanos:number|null};
+export type CapacityAttempt = {state:RunState;capacity:CapacityReceipt|null;http_status:number|null;reason:string|null};
+type Detail = { capacity?:CapacityReceipt|null;capacity_attempts?:CapacityAttempt[]; provider_limit_source: string | null; provider_remedy: string | null; provider_message: string | null; retry_after: string | null; http_status: number | null; fallback_of: string | null; response_text: string | null; validation_error: string | null; response_truncated: boolean; reason: string | null; generation_id: string | null; returned_model: string | null; serving_provider: string | null; report: Report | null; usage: { prompt_tokens: number | null; completion_tokens: number | null; cost_usd: number | null }; request_sha256: string | null; policy_revision: number | null };
+export type CapacityWait = {reason:string;next_eligible_at:string};
+export function capacityWaitLabel(wait:CapacityWait):string {return ({dispatch_outcome_unknown:"Outcome unknown · not retried",paused:"Automated work paused",daily_free_exhausted:"Daily free capacity used",provider_cooldown:"Provider cooling down",account_cooldown:"Provider cooling down",paid_budget:"Paid budget used"} as Record<string,string>)[wait.reason]??"Waiting for request capacity";}
+export type Run = { capacity_wait?:CapacityWait|null; archived?:boolean; archive_version?:number; created_by?: "principal"|"agent"|"local_runner"; run_key: string; assignment_id: string; created_at: string; updated_at: string; state: RunState; config: { agent_name: string; model: string; input: { title: string; text: string }; limits: { max_requests: number; max_output_tokens: number; timeout_seconds: number; max_cost_usd: number | null; spend_policy?: "owner_selected_model" } }; detail: Detail; events: { sequence: number; state: RunState; at: string; detail: Detail }[] };
 function object(v: unknown): Record<string, unknown> { if (!v || typeof v !== "object" || Array.isArray(v)) throw Error("Invalid run history"); return v as Record<string, unknown>; }
 function string(v: unknown): string { if (typeof v !== "string" || !v.trim()) throw Error("Invalid run text"); return v; }
 function number(v: unknown): number { if (typeof v !== "number" || !Number.isFinite(v) || v < 0) throw Error("Invalid run number"); return v; }
@@ -9,6 +13,10 @@ function array(v: unknown): unknown[] { if (!Array.isArray(v)) throw Error("Inva
 function date(v: unknown): string { const s=string(v); if (!Number.isFinite(Date.parse(s))) throw Error("Invalid run date"); return s; }
 function state(v: unknown): RunState { if (!["admitted","preparing","dispatched","completed","failed","indeterminate"].includes(string(v))) throw Error("Invalid run state"); return v as RunState; }
 function nullable<T>(v: unknown, parse: (v: unknown) => T): T | null { return v === null || v === undefined ? null : parse(v); }
+function capacityReceipt(v:unknown):CapacityReceipt {
+  const row=object(v),nanos=(v:unknown)=>{const n=number(v);if(!Number.isSafeInteger(n))throw Error("Invalid capacity amount");return n;};
+  return {attempt_id:string(row.attempt_id),model:string(row.model),trigger:string(row.trigger),reserved_nanos:nanos(row.reserved_nanos),cost_nanos:nullable(row.cost_nanos,nanos)};
+}
 export function parseReport(v: unknown): Report {
  const r=object(v),fields=["hypothesis","evidence_gaps","experiment","falsification_rule","limitations"];
  if(Object.keys(r).length!==fields.length||fields.some(k=>!(k in r)))throw Error("Invalid report fields");
@@ -19,7 +27,8 @@ export function parseReport(v: unknown): Report {
 }
 function detail(v: unknown): Detail {
   const d=object(v), u=d.usage == null ? {} : object(d.usage);
-  return { provider_limit_source:nullable(d.provider_limit_source,string),provider_remedy:nullable(d.provider_remedy,string),provider_message:nullable(d.provider_message,string),retry_after:nullable(d.retry_after,string),http_status:nullable(d.http_status,number),fallback_of:nullable(d.fallback_of,string),response_text:nullable(d.response_text,v=>{if(typeof v!=="string") throw Error("Invalid response text");return v;}),validation_error:nullable(d.validation_error,string),response_truncated:d.response_truncated === true,reason:nullable(d.reason,string), generation_id:nullable(d.generation_id,string), returned_model:nullable(d.returned_model,string), serving_provider:nullable(d.serving_provider,string), report:nullable(d.report,parseReport), usage:{ prompt_tokens:nullable(u.prompt_tokens,number), completion_tokens:nullable(u.completion_tokens,number), cost_usd:nullable(u.cost_usd,number) }, request_sha256:nullable(d.request_sha256,string), policy_revision:nullable(d.policy_revision,number) };
+  const attempts=d.capacity_attempts==null?[]:array(d.capacity_attempts).map(v=>{const a=object(v);return {state:state(a.state),capacity:nullable(a.capacity,capacityReceipt),http_status:nullable(a.http_status,number),reason:nullable(a.reason,string)};});
+  return { capacity:nullable(d.capacity,capacityReceipt),capacity_attempts:attempts,provider_limit_source:nullable(d.provider_limit_source,string),provider_remedy:nullable(d.provider_remedy,string),provider_message:nullable(d.provider_message,string),retry_after:nullable(d.retry_after,string),http_status:nullable(d.http_status,number),fallback_of:nullable(d.fallback_of,string),response_text:nullable(d.response_text,v=>{if(typeof v!=="string") throw Error("Invalid response text");return v;}),validation_error:nullable(d.validation_error,string),response_truncated:d.response_truncated === true,reason:nullable(d.reason,string), generation_id:nullable(d.generation_id,string), returned_model:nullable(d.returned_model,string), serving_provider:nullable(d.serving_provider,string), report:nullable(d.report,parseReport), usage:{ prompt_tokens:nullable(u.prompt_tokens,number), completion_tokens:nullable(u.completion_tokens,number), cost_usd:nullable(u.cost_usd,number) }, request_sha256:nullable(d.request_sha256,string), policy_revision:nullable(d.policy_revision,number) };
 }
 export function parseRuns(v: unknown): Run[] {
   const body=object(v); if (body.environment !== "local_research" || body.artifact_kind !== "research_planning") throw Error("Invalid history scope");
@@ -31,7 +40,8 @@ export function parseRuns(v: unknown): Run[] {
     const ownerSelected = limits.spend_policy === "owner_selected_model" && c.manual_model_spend === true;
     if (limits.spend_policy !== undefined && !ownerSelected) throw Error("Invalid spending policy");
     const maxCost = ownerSelected && limits.max_cost_usd === undefined ? null : number(limits.max_cost_usd);
-    const result: Run={ archived:r.archived===true,archive_version:r.archive_version===undefined?0:number(r.archive_version), created_by:r.created_by==="principal"||r.created_by==="agent"?r.created_by:"local_runner", run_key:string(r.run_key), assignment_id:string(r.assignment_id), created_at:date(r.created_at), updated_at:date(r.updated_at), state:state(r.state),
+    const capacityWait=r.capacity_wait==null?null:object(r.capacity_wait);
+    const result: Run={ capacity_wait:capacityWait?{reason:string(capacityWait.reason),next_eligible_at:date(capacityWait.next_eligible_at)}:null, archived:r.archived===true,archive_version:r.archive_version===undefined?0:number(r.archive_version), created_by:r.created_by==="principal"||r.created_by==="agent"?r.created_by:"local_runner", run_key:string(r.run_key), assignment_id:string(r.assignment_id), created_at:date(r.created_at), updated_at:date(r.updated_at), state:state(r.state),
       config:{agent_name:string(c.agent_name),model:string(c.model),input:{title:string(input.title),text:string(input.text)},limits:{max_requests:number(limits.max_requests),max_output_tokens:number(limits.max_output_tokens),timeout_seconds:number(limits.timeout_seconds),max_cost_usd:maxCost,...(ownerSelected?{spend_policy:"owner_selected_model" as const}:{})}}, detail:detail(r.detail),
       events:array(r.events).map(v => { const e=object(v); return {sequence:number(e.sequence),state:state(e.state),at:date(e.at),detail:detail(e.detail)}; }) };
     if (!result.events.length || result.events.at(-1)?.state !== result.state || (result.state === "completed" && !result.detail.report)) throw Error("Incomplete run history");
@@ -39,6 +49,7 @@ export function parseRuns(v: unknown): Run[] {
   });
 }
 export function stateLabel(run: Run, now = Date.now()): string {
+  if(run.state==="admitted" && run.capacity_wait)return capacityWaitLabel(run.capacity_wait);
   if (run.state === "dispatched" && now - Date.parse(run.updated_at) > (run.config.limits.timeout_seconds + 15) * 1000) return "Outcome unknown";
   return { admitted:"Assigned", preparing:"Preparing", dispatched:"Researching", completed:"Report ready", failed:"Failed", indeterminate:"Outcome unknown" }[run.state];
 }

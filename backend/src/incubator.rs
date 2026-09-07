@@ -74,7 +74,7 @@ fn assignment_payload(model: &str, brief: &str, manual: bool) -> Value {
     }
     request
 }
-fn provider_error_detail(
+pub(crate) fn provider_error_detail(
     status: u16,
     headers: &reqwest::header::HeaderMap,
     body: &Value,
@@ -119,6 +119,7 @@ fn provider_error_detail(
         ("retry_after", "retry-after"),
         ("rate_limit_reset", "x-ratelimit-reset"),
         ("rate_limit_remaining", "x-ratelimit-remaining"),
+        ("rate_limit_limit", "x-ratelimit-limit"),
     ] {
         if let Some(text) = headers.get(header).and_then(|v| v.to_str().ok()) {
             let text = clean(text);
@@ -181,6 +182,7 @@ fn completion_with_spend(
         None
     };
     if !manual
+        && requested_model.ends_with(":free")
         && detail["usage"]["cost_usd"]
             .as_f64()
             .is_some_and(|cost| cost > 0.0)
@@ -220,8 +222,9 @@ fn completion_with_spend(
 
 pub(crate) struct OpenRouter {
     capabilities: crate::openrouter_request::Capabilities,
-    pub(crate) client: Client,
-    pub(crate) auth: HeaderValue,
+    client: Client,
+    auth: HeaderValue,
+    permit: std::sync::Mutex<Option<crate::openrouter_capacity::Permit>>,
 }
 impl OpenRouter {
     fn new(
@@ -252,10 +255,38 @@ impl OpenRouter {
             client,
             auth,
             capabilities,
+            permit: std::sync::Mutex::new(None),
         })
     }
     pub(crate) fn adapt_request(&self, request: &Value) -> Result<Value, &'static str> {
         self.capabilities.adapt(request)
+    }
+    pub(crate) async fn admit(
+        &self,
+        db: &tokio_postgres::Client,
+        key: &str,
+        request: &Value,
+        purpose: &str,
+    ) -> Result<bool, &'static str> {
+        let permit = crate::openrouter_capacity::admit(db, key, request, purpose).await?;
+        let admitted = permit.is_some();
+        *self.permit.lock().map_err(|_| "capacity_unavailable")? = permit;
+        Ok(admitted)
+    }
+    pub(crate) fn take_permit(
+        &self,
+        request: &Value,
+    ) -> Result<crate::openrouter_capacity::Permit, &'static str> {
+        let permit = self
+            .permit
+            .lock()
+            .map_err(|_| "capacity_unavailable")?
+            .take()
+            .ok_or("capacity_permit_required")?;
+        if permit.original_hash != crate::migrate::checksum(&request.to_string()) {
+            return Err("capacity_request_changed");
+        }
+        Ok(permit)
     }
     pub(crate) async fn send(&self, request: &Value) -> (&'static str, Value) {
         self.send_with_parser(request, completion).await
@@ -265,22 +296,99 @@ impl OpenRouter {
         request: &Value,
         parse: fn(Value, &str) -> (&'static str, Value),
     ) -> (&'static str, Value) {
-        let response = self
-            .client
+        let original = match self.take_permit(request) {
+            Ok(p) => p,
+            Err(reason) => return ("indeterminate", json!({"reason":reason,"dispatched":false})),
+        };
+        let mut replacement = None;
+        let mut attempts = Vec::new();
+        for ordinal in 0..=2 {
+            let permit = replacement.as_ref().unwrap_or(&original);
+            let (mut state, mut detail) = self.send_once(permit, parse).await;
+            if crate::openrouter_capacity::finish(permit, state, &mut detail)
+                .await
+                .is_err()
+            {
+                state = "indeterminate";
+                detail["reason"] = json!("capacity_result_unavailable");
+            }
+            let cost = detail["capacity"]["cost_nanos"].as_i64();
+            if permit.trigger != "manual" && cost.is_some_and(|n| n > permit.reserve_nanos) {
+                state = "indeterminate";
+                detail["reason"] = json!("unexpected_provider_charge");
+            }
+            attempts.push(json!({"state":state,"capacity":detail["capacity"],"http_status":detail["http_status"],"reason":detail["reason"]}));
+            if ordinal < 2
+                && state == "failed"
+                && detail["http_status"] == 429
+                && crate::openrouter_capacity::limit_scope(&detail) != "unknown"
+            {
+                match crate::openrouter_capacity::recover(&original, request, ordinal + 1).await {
+                    Ok(Some(next)) => {
+                        replacement = Some(next);
+                        continue;
+                    }
+                    Ok(None) => (),
+                    Err(reason) => {
+                        detail["paid_recovery_unavailable"] = json!(reason);
+                    }
+                }
+            }
+            detail["capacity_attempts"] = json!(attempts);
+            return (state, detail);
+        }
+        unreachable!("bounded send loop returns its final attempt")
+    }
+
+    pub(crate) async fn start(
+        &self,
+        permit: &crate::openrouter_capacity::Permit,
+    ) -> Result<reqwest::Response, &'static str> {
+        if permit.created.elapsed() > Duration::from_secs(1) {
+            return Err("capacity_send_window_expired");
+        }
+        let model = permit.request["model"]
+            .as_str()
+            .ok_or("model_unavailable")?;
+        let policy = read_policy(std::path::Path::new("/var/lib/model-policy/policy.json"))?;
+        if !policy.allowed_models.iter().any(|m| m == model) {
+            return Err("model_policy_changed");
+        }
+        self.client
             .post("https://openrouter.ai/api/v1/chat/completions")
             .header("Authorization", self.auth.clone())
-            .header("X-OpenRouter-Title", "Market Mate Research POC")
-            .json(request)
+            .header("X-OpenRouter-Title", "Market Mate Research")
+            .json(&permit.request)
             .send()
-            .await;
+            .await
+            .map_err(|_| "provider_acceptance_unknown")
+    }
+    pub(crate) fn error_detail(
+        &self,
+        status: u16,
+        headers: &reqwest::header::HeaderMap,
+        body: &Value,
+    ) -> Value {
+        provider_error_detail(
+            status,
+            headers,
+            body,
+            self.auth
+                .to_str()
+                .ok()
+                .and_then(|v| v.strip_prefix("Bearer ")),
+        )
+    }
+    async fn send_once(
+        &self,
+        permit: &crate::openrouter_capacity::Permit,
+        parse: fn(Value, &str) -> (&'static str, Value),
+    ) -> (&'static str, Value) {
+        let request = &permit.request;
+        let response = self.start(permit).await;
         let mut response = match response {
             Ok(r) => r,
-            Err(_) => {
-                return (
-                    "indeterminate",
-                    json!({"reason":"provider_acceptance_unknown"}),
-                )
-            }
+            Err(reason) => return ("indeterminate", json!({"reason":reason})),
         };
         let status = response.status().as_u16();
         if !(200..300).contains(&status) {
@@ -502,7 +610,7 @@ pub(crate) async fn prepare_model(
 > {
     prepare_model_with_spend(model, false).await
 }
-async fn prepare_model_with_spend(
+pub(crate) async fn prepare_model_with_spend(
     model: &str,
     manual: bool,
 ) -> Result<
@@ -607,7 +715,6 @@ async fn run_once(
         Some("admitted") => (),
         _ => return Ok(run),
     }
-    event(db, key, "preparing", json!({"fallback_of":fallback_of})).await?;
     let manual = run["config"]["manual_model_spend"] == true;
     let prepared = async {
         let (provider, revision, pricing, routes) = prepare_model_with_spend(model, manual).await?;
@@ -628,6 +735,18 @@ async fn run_once(
             .await
         }
     };
+    if !provider
+        .admit(
+            db,
+            &format!("research:{key}"),
+            &request,
+            if manual { "manual" } else { "research" },
+        )
+        .await?
+    {
+        return Ok(run);
+    }
+    event(db, key, "preparing", json!({"fallback_of":fallback_of})).await?;
     // The dispatch intent commits before the only POST. A crash here sacrifices
     // liveness rather than risking a second accepted generation.
     event(
@@ -736,7 +855,7 @@ mod tests {
         assert!(research_brief(&json!({"text":"Missing question"})).is_err());
     }
     #[test]
-    fn paid_dispatch_and_cost_accounting_require_manual_assignment() {
+    fn paid_usage_is_parsed_while_transport_admission_owns_spend_authorization() {
         let manual = assignment_payload("vendor/paid", "brief", true);
         assert!(manual["provider"].get("max_price").is_none());
         assert_eq!(manual["provider"]["allow_fallbacks"], true);
@@ -747,10 +866,7 @@ mod tests {
         assert!(manual.get("models").is_none());
         let response = json!({"model":"vendor/paid","usage":{"cost":0.02},
             "choices":[{"finish_reason":"stop","message":{"content":report().to_string()}}]});
-        assert_eq!(
-            completion(response.clone(), "vendor/paid").0,
-            "indeterminate"
-        );
+        assert_eq!(completion(response.clone(), "vendor/paid").0, "completed");
         let (state, detail) = manual_completion(response, "vendor/paid");
         assert_eq!(state, "completed");
         assert_eq!(detail["usage"]["cost_usd"], 0.02);

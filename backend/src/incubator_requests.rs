@@ -127,6 +127,14 @@ fn select_role_model(choice: &str, role: &str, manual: bool) -> Result<String, A
 }
 type ModelFuture<'a, T> = std::pin::Pin<Box<dyn std::future::Future<Output = T> + Send + 'a>>;
 trait PreparedComparison: Send + Sync {
+    fn admit<'a>(
+        &'a self,
+        _db: &'a tokio_postgres::Client,
+        _key: &'a str,
+        _request: &'a Value,
+    ) -> ModelFuture<'a, Result<bool, &'static str>> {
+        Box::pin(async { Ok(true) })
+    }
     fn adapt_request(&self, request: &Value) -> Result<Value, &'static str> {
         Ok(request.clone())
     }
@@ -134,6 +142,14 @@ trait PreparedComparison: Send + Sync {
     fn send<'a>(&'a self, request: &'a Value) -> ModelFuture<'a, (&'static str, Value)>;
 }
 impl PreparedComparison for crate::incubator::OpenRouter {
+    fn admit<'a>(
+        &'a self,
+        db: &'a tokio_postgres::Client,
+        key: &'a str,
+        request: &'a Value,
+    ) -> ModelFuture<'a, Result<bool, &'static str>> {
+        Box::pin(self.admit(db, key, request, "similarity"))
+    }
     fn adapt_request(&self, request: &Value) -> Result<Value, &'static str> {
         self.adapt_request(request)
     }
@@ -211,7 +227,7 @@ fn similarity_completion(v: Value, model: &str) -> (&'static str, Value) {
         .unwrap_or_default();
     let mut detail =
         json!({"generation_id":v["id"],"usage":v["usage"],"returned_model":v["model"]});
-    if v["usage"]["cost"].as_f64().is_some_and(|c| c > 0.0) {
+    if model.ends_with(":free") && v["usage"]["cost"].as_f64().is_some_and(|c| c > 0.0) {
         detail["reason"] = json!("unexpected_provider_charge");
         return ("indeterminate", detail);
     }
@@ -326,6 +342,28 @@ async fn assess(
                             break;
                         }
                     };
+                    let key = format!("similarity:{}:{batch}", input.request_id);
+                    match provider.admit(&db.client, &key, &request).await {
+                        Ok(true) => (),
+                        Ok(false) => {
+                            if db
+                                .client
+                                .query_one("SELECT cancel_openrouter_capacity($1)", &[&key])
+                                .await
+                                .is_err()
+                            {
+                                issues.push(
+                                    "Capacity queue cancellation could not be recorded.".into(),
+                                );
+                            }
+                            issues.push("Comparison was not completed because request capacity is unavailable. No model request was sent for this batch; run the comparison again when capacity is available.".into());
+                            break;
+                        }
+                        Err(reason) => {
+                            issues.push(reason.into());
+                            break;
+                        }
+                    }
                     if let Err(_) = db
                         .client
                         .query_one(
@@ -580,6 +618,7 @@ fn router_with_models(models: Arc<dyn ComparisonModels>) -> Router {
         }))
         .merge(crate::incubator_evaluation::router())
         .merge(crate::incubator_experiment::router())
+        .merge(crate::openrouter_capacity::router())
 }
 #[cfg(test)]
 mod tests {

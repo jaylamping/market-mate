@@ -248,12 +248,31 @@ async fn send_message(
         let model = run["config"]["model"].as_str().ok_or_else(unavailable)?;
         let request = request_payload(model, &run, &prior, &input.text)
             .map_err(|e| error(StatusCode::CONFLICT, e))?;
-        let (provider, _, _, _) = crate::incubator::prepare_model(model)
-            .await
-            .map_err(|e| error(StatusCode::CONFLICT, e))?;
-        let request = provider
+        let (provider, _, _, _) =
+            crate::incubator::prepare_model_with_spend(model, !model.ends_with(":free"))
+                .await
+                .map_err(|e| error(StatusCode::CONFLICT, e))?;
+        let mut request = provider
             .adapt_request(&request)
             .map_err(|e| error(StatusCode::CONFLICT, e))?;
+        if !model.ends_with(":free") {
+            request["provider"]
+                .as_object_mut()
+                .unwrap()
+                .remove("max_price");
+        }
+        if !provider
+            .admit(
+                &db.client,
+                &format!("chat:{key}:{}", input.request_id),
+                &request,
+                "manual",
+            )
+            .await
+            .map_err(|e| error(StatusCode::CONFLICT, e))?
+        {
+            return Err(error(StatusCode::TOO_MANY_REQUESTS,"Waiting for request capacity. Your message has not been sent; retry when capacity is available."));
+        }
         let admitted: bool = db
             .client
             .query_one(
@@ -442,6 +461,7 @@ struct Completion {
     usage: Value,
     finish: Option<String>,
     done: bool,
+    rate_limited: bool,
 }
 impl Completion {
     fn accept(&mut self, frame: &str, requested: &str) -> Result<(), &'static str> {
@@ -451,6 +471,7 @@ impl Completion {
         }
         let v: Value = serde_json::from_str(frame).map_err(|_| "invalid_provider_frame")?;
         if v.get("error").is_some() {
+            self.rate_limited = v["error"]["code"] == 429;
             return Err("provider_stream_error");
         }
         if let Some(model) = v["model"].as_str() {
@@ -465,7 +486,7 @@ impl Completion {
         if v["usage"].is_object() {
             self.usage = v["usage"].clone();
         }
-        if self.usage["cost"].as_f64().is_some_and(|c| c > 0.0) {
+        if requested.ends_with(":free") && self.usage["cost"].as_f64().is_some_and(|c| c > 0.0) {
             return Err("unexpected_provider_charge");
         }
         if v["choices"][0]["delta"].get("tool_calls").is_some() {
@@ -483,7 +504,7 @@ impl Completion {
         Ok(())
     }
     fn detail(&self) -> Value {
-        json!({"response_text":self.raw,"generation_id":self.id,"returned_model":self.model,"usage":self.usage})
+        json!({"response_text":self.raw,"generation_id":self.id,"returned_model":self.model,"usage":self.usage,"http_status":if self.rate_limited {Some(429)} else {None},"stream_partial":!self.raw.is_empty()})
     }
     fn finish(&self) -> (&'static str, Value) {
         let mut detail = self.detail();
@@ -549,20 +570,32 @@ async fn stream_reply(
     live: &watch::Sender<Value>,
     request_id: &str,
 ) -> (&'static str, Value) {
+    let permit = match provider.take_permit(request) {
+        Ok(permit) => permit,
+        Err(reason) => return ("indeterminate", json!({"reason":reason})),
+    };
+    let request = &permit.request;
     let mut completion = Completion::default();
+    let mut rejection = Value::Null;
     let attempt = async {
-        let mut response = provider
-            .client
-            .post("https://openrouter.ai/api/v1/chat/completions")
-            .header("Authorization", provider.auth.clone())
-            .header("X-OpenRouter-Title", "Market Mate Research Discussion")
-            .json(request)
-            .send()
-            .await
-            .map_err(|_| "provider_acceptance_unknown")?;
+        let mut response = provider.start(&permit).await?;
         if !response.status().is_success() {
+            let status = response.status().as_u16();
+            let headers = response.headers().clone();
+            let mut bytes = Vec::new();
+            while let Ok(Some(chunk)) = response.chunk().await {
+                if bytes.len() + chunk.len() > 16000 {
+                    break;
+                }
+                bytes.extend_from_slice(&chunk);
+            }
+            rejection = provider.error_detail(
+                status,
+                &headers,
+                &serde_json::from_slice(&bytes).unwrap_or(Value::Null),
+            );
             return Err(
-                if [400, 401, 402, 403, 404, 413, 422, 429].contains(&response.status().as_u16()) {
+                if [400, 401, 402, 403, 404, 413, 422, 429].contains(&status) {
                     "provider_rejected_request"
                 } else {
                     "provider_acceptance_unknown"
@@ -589,32 +622,46 @@ async fn stream_reply(
         }
         Ok(())
     };
-    match tokio::time::timeout(Duration::from_secs(125), attempt).await {
-        Ok(Ok(())) => completion.finish(),
-        outcome => {
-            let reason = match outcome {
-                Ok(Err(reason)) => reason,
-                _ => "stream_timeout_no_retry",
-            };
-            let mut detail = completion.detail();
-            detail["reason"] = json!(reason);
-            (
-                if [
-                    "provider_rejected_request",
-                    "provider_stream_error",
-                    "unexpected_tool_call",
-                    "unexpected_model",
-                ]
-                .contains(&reason)
-                {
-                    "failed"
-                } else {
-                    "indeterminate"
-                },
-                detail,
-            )
+    let (mut state, mut detail) =
+        match tokio::time::timeout(Duration::from_secs(125), attempt).await {
+            Ok(Ok(())) => completion.finish(),
+            outcome => {
+                let reason = match outcome {
+                    Ok(Err(reason)) => reason,
+                    _ => "stream_timeout_no_retry",
+                };
+                let mut detail = completion.detail();
+                detail["reason"] = json!(reason);
+                (
+                    if [
+                        "provider_rejected_request",
+                        "provider_stream_error",
+                        "unexpected_tool_call",
+                        "unexpected_model",
+                    ]
+                    .contains(&reason)
+                    {
+                        "failed"
+                    } else {
+                        "indeterminate"
+                    },
+                    detail,
+                )
+            }
+        };
+    if let Some(fields) = rejection.as_object() {
+        for (key, value) in fields {
+            detail[key] = value.clone();
         }
     }
+    if crate::openrouter_capacity::finish(&permit, state, &mut detail)
+        .await
+        .is_err()
+    {
+        state = "indeterminate";
+        detail["reason"] = json!("capacity_result_unavailable");
+    }
+    (state, detail)
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]

@@ -7,6 +7,7 @@ pub mod secrets;
 pub mod tracer;
 
 pub mod openrouter;
+pub mod openrouter_capacity;
 
 pub mod cursor;
 pub mod incubator;

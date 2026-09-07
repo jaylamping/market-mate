@@ -44,7 +44,7 @@ with urllib.request.urlopen(url+'/assignments/stream',timeout=10) as stream:
   if line.startswith(b'data: '):
    runs=json.loads(line[6:])['runs']
    if runs and runs[0]['state']=='failed':final=runs[0];break
- assert final and [e['state'] for e in final['events']]==['admitted','preparing','failed']
+ assert final and [e['state'] for e in final['events']]==['admitted','failed']
  assert final['detail']['reason'] in ['model_not_whitelisted','credentials_unavailable','routing_policy_unavailable']
  again=json.load(urllib.request.urlopen(request,timeout=5));assert again['run_key']==run['run_key'] and again['state']=='failed'
 report=[json.loads(l) for l in (base/'probe.log').read_text().splitlines() if l.startswith('{') and 'incubator-manual-requests' in l][-1]
@@ -76,7 +76,7 @@ for _ in range(100):
  except OSError:pass
  time.sleep(.1)
 else:raise AssertionError('persisted assignment not picked up after restart')
-assert [e['state'] for e in run['events']]==['admitted','preparing','failed']
+assert [e['state'] for e in run['events']]==['admitted','failed']
 PYTEST
 kill "$worker_pid"
 wait "$worker_pid" 2>/dev/null || true
