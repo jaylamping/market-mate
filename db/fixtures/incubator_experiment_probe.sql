@@ -6,8 +6,8 @@ SELECT append_research_snapshot('incubator_momentum_daily_v1',jsonb_build_object
  'benchmark',(SELECT jsonb_agg(jsonb_build_object('session',d,'open_cents',10000,'close_cents',10010) ORDER BY d) FROM (VALUES('2026-01-05'),('2026-01-06'),('2026-01-07'),('2026-01-08')) day(d)),
  'cash_bps',jsonb_build_array(0,0,0,0)), '{"source":"isolated-experiment-fixture","entitlement_version":"fixture-v1"}',NULL,NULL);
 BEGIN;
-CREATE FUNCTION pg_temp.reject(q text, expected text DEFAULT 'P0001') RETURNS void LANGUAGE plpgsql AS $$ BEGIN
- BEGIN EXECUTE q; EXCEPTION WHEN OTHERS THEN IF SQLSTATE=expected THEN RETURN; END IF; RAISE; END;
+CREATE FUNCTION pg_temp.reject(q text, expected text DEFAULT 'P0001', message text DEFAULT NULL) RETURNS void LANGUAGE plpgsql AS $$ BEGIN
+ BEGIN EXECUTE q; EXCEPTION WHEN OTHERS THEN IF SQLSTATE=expected AND (message IS NULL OR SQLERRM=message) THEN RETURN; END IF; RAISE; END;
  RAISE EXCEPTION 'expected rejection: %',q;
 END $$;
 SET LOCAL ROLE incubator_runner;
@@ -69,12 +69,12 @@ DO $$ DECLARE id bigint; seq integer; snapshot uuid; successor research_snapshot
  PERFORM bind_incubator_experiment_dataset(id,snapshot);
  PERFORM record_incubator_experiment_event(id,'ready',jsonb_build_object('spec',spec));
  successor:=append_research_snapshot('incubator_momentum_daily_v1',(SELECT payload FROM research_snapshot WHERE snapshot_id=snapshot),'{"source":"isolated-experiment-fixture","entitlement_version":"fixture-v1"}',snapshot,'Correction fixture');
- PERFORM pg_temp.reject(format('SELECT record_incubator_experiment_event(%s,''dispatching'',%L)',id,jsonb_build_object('request',request)));
+ PERFORM pg_temp.reject(format('SELECT record_incubator_experiment_event(%s,''dispatching'',%L)',id,jsonb_build_object('request',request)),'P0001','dataset_superseded');
  IF EXISTS(SELECT 1 FROM jsonb_array_elements(read_incubator_momentum_datasets()) d WHERE d->>'id'=snapshot::text) THEN RAISE EXCEPTION 'superseded dataset listed'; END IF;
  PERFORM admit_incubator_chat('superseded-experiment','new-plan',0,'Refine',request||'{"stream":true}');
  PERFORM finish_incubator_chat('superseded-experiment','new-plan','completed',jsonb_build_object('reply','Refined','proposal',report||'{"hypothesis":"New hypothesis"}'));
  PERFORM apply_incubator_plan('superseded-experiment',1,0);
- PERFORM pg_temp.reject(format('SELECT record_incubator_experiment_event(%s,''dispatching'',%L)',id,jsonb_build_object('request',request)));
+ PERFORM pg_temp.reject(format('SELECT record_incubator_experiment_event(%s,''dispatching'',%L)',id,jsonb_build_object('request',request)),'P0001','research_superseded');
  IF read_incubator_experiment_input(id)->'evaluation'->'report' IS DISTINCT FROM report THEN RAISE EXCEPTION 'pinned report changed'; END IF;
 END $$;
 SELECT jsonb_build_object('probe','incubator-experiment','passed',true,'checks',jsonb_build_array('null_transition_denied','bounded_request_required','owner_input_idempotency','dataset_required','ready_idempotency_after_digest_enrichment','completion_shape','restricted_role','populated_append_only_tables','audit_chain','superseded_dataset_denied','superseded_research_denied','pinned_report_preserved'));

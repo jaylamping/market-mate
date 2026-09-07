@@ -69,20 +69,27 @@ DECLARE prior incubator_experiment_event%ROWTYPE; lineage jsonb; registration ex
  SELECT source_lineage INTO STRICT lineage FROM incubator_experiment_ticket WHERE evaluation_id=id_value;
  SELECT run_key INTO STRICT run_value FROM incubator_evaluation WHERE id=id_value;
  PERFORM pg_advisory_xact_lock(55001,hashtext(run_value));
+ IF state_value='answered' AND EXISTS(SELECT 1 FROM incubator_experiment_event WHERE experiment_id=id_value AND state='answered') THEN
+  IF NOT EXISTS(SELECT 1 FROM incubator_experiment_event WHERE experiment_id=id_value AND state='answered' AND detail=detail_value) THEN RAISE EXCEPTION 'immutable_answer'; END IF;
+  RETURN;
+ END IF;
  SELECT * INTO prior FROM incubator_experiment_event WHERE experiment_id=id_value ORDER BY sequence DESC LIMIT 1;
  IF FOUND AND prior.state=state_value AND (prior.detail=detail_value OR (state_value='ready' AND NOT detail_value ?| ARRAY['registration_id','registration_digest'] AND prior.detail - 'registration_id' - 'registration_digest'=detail_value)) THEN RETURN; END IF;
  IF NOT coalesce(( (prior.state IS NULL AND state_value IN ('preparing','failed'))
  OR (prior.state='preparing' AND state_value IN ('awaiting_data','ready','needs_input','clarifying','failed','indeterminate'))
  OR (prior.state='clarifying' AND state_value IN ('clarified','failed','indeterminate'))
- OR (prior.state IN ('clarified','answered') AND state_value IN ('preparing','failed'))
+ OR (prior.state='clarified' AND state_value IN ('preparing','failed'))
+ OR (prior.state='answered' AND state_value IN ('preparing','dispatching','failed'))
  OR (prior.state='needs_input' AND state_value='answered')
  OR (prior.state='awaiting_data' AND state_value IN ('ready','needs_input','failed'))
  OR (prior.state='ready' AND state_value IN ('dispatching','failed'))
  OR (prior.state='dispatching' AND state_value IN ('running','needs_input','failed','indeterminate'))
  OR (prior.state='running' AND state_value IN ('completed','failed')) ),false) THEN RAISE EXCEPTION 'invalid_experiment_transition'; END IF;
  IF state_value='preparing' AND (SELECT count(*) FROM incubator_experiment_event WHERE experiment_id=id_value AND state='preparing')>=3 THEN RAISE EXCEPTION 'setup_budget_exhausted'; END IF;
+ IF state_value='preparing' AND EXISTS(SELECT 1 FROM incubator_experiment_event WHERE experiment_id=id_value AND state='ready') THEN RAISE EXCEPTION 'package_already_registered'; END IF;
+ IF state_value='dispatching' AND (NOT EXISTS(SELECT 1 FROM incubator_experiment_event WHERE experiment_id=id_value AND state='ready') OR (SELECT count(*) FROM incubator_experiment_event WHERE experiment_id=id_value AND state='dispatching')>=2) THEN RAISE EXCEPTION 'experiment_budget_exhausted'; END IF;
  IF state_value='clarifying' AND EXISTS(SELECT 1 FROM incubator_experiment_event WHERE experiment_id=id_value AND state='clarifying') THEN RAISE EXCEPTION 'clarification_budget_exhausted'; END IF;
- IF state_value='answered' AND (EXISTS(SELECT 1 FROM incubator_experiment_event WHERE experiment_id=id_value AND state='answered') OR EXISTS(SELECT 1 FROM incubator_experiment_event WHERE experiment_id=id_value AND state='ready')) THEN RAISE EXCEPTION 'input_budget_exhausted'; END IF;
+ IF state_value='answered' AND (EXISTS(SELECT 1 FROM incubator_experiment_event WHERE experiment_id=id_value AND state='answered')) THEN RAISE EXCEPTION 'input_budget_exhausted'; END IF;
  IF state_value IN ('answered','clarified') AND (jsonb_typeof(detail_value->'answer') IS DISTINCT FROM 'string' OR length(btrim(detail_value->>'answer'))=0 OR octet_length(detail_value->>'answer')>6000) THEN RAISE EXCEPTION 'invalid_answer'; END IF;
  IF state_value IN ('preparing','clarifying','ready','dispatching','running','completed') AND read_incubator_evaluation(id_value)->>'status'='superseded' THEN RAISE EXCEPTION 'research_superseded'; END IF;
  IF state_value IN ('ready','dispatching','running','completed') AND EXISTS(SELECT 1 FROM incubator_experiment_dataset x JOIN research_snapshot_revision r ON r.predecessor_snapshot_id=x.snapshot_id WHERE x.experiment_id=id_value) THEN RAISE EXCEPTION 'dataset_superseded'; END IF;
@@ -97,7 +104,7 @@ DECLARE prior incubator_experiment_event%ROWTYPE; lineage jsonb; registration ex
    OR strategy_sandbox_integer(spec->'one_way_cost_bps') IS NULL OR strategy_sandbox_integer(spec->'one_way_cost_bps') NOT BETWEEN 0 AND 100
    OR strategy_sandbox_integer(spec->'borrow_bps_per_session') IS NULL OR strategy_sandbox_integer(spec->'borrow_bps_per_session') NOT BETWEEN 0 AND 100 THEN RAISE EXCEPTION 'invalid_momentum_spec'; END IF;
   d:=read_incubator_experiment_input(id_value);
-  registration:=register_experiment_preregistration('incubator-experiment:'||id_value,jsonb_build_object('hypothesis',d->'evaluation'->'report'->'hypothesis','windows',jsonb_build_object('snapshot_id',d->'experiment'->'snapshot_id','sessions',d->'payload'->'sessions'),'estimators','Equal-weight daily mean return, gross and net, diagnostic comparison only','budget',jsonb_build_object('max_symbols',32,'max_sessions',60,'max_model_calls',5,'max_cost_usd',0),'stopping_rule','One deterministic pass over the pinned snapshot; no parameter search','multiplicity_plan','One fixed diagnostic specification; no significance or qualification claim','runner_spec',spec),NULL,lineage);
+  registration:=register_experiment_preregistration('incubator-experiment:'||id_value,jsonb_build_object('hypothesis',d->'evaluation'->'report'->'hypothesis','windows',jsonb_build_object('snapshot_id',d->'experiment'->'snapshot_id','sessions',d->'payload'->'sessions'),'estimators','Equal-weight daily mean return, gross and net, diagnostic comparison only','budget',jsonb_build_object('max_symbols',32,'max_sessions',60,'max_model_calls',6,'max_cost_usd',0),'stopping_rule','One deterministic pass over the pinned snapshot; no parameter search','multiplicity_plan','One fixed diagnostic specification; no significance or qualification claim','runner_spec',spec),NULL,lineage);
   detail_value:=detail_value||jsonb_build_object('registration_id',registration.registration_id,'registration_digest',registration.spec_digest);
  END IF;
  IF state_value='completed' AND (detail_value->'result'->>'engine' IS DISTINCT FROM 'momentum_v1' OR detail_value->'result'->>'outcome' IS DISTINCT FROM 'diagnostic_only') THEN RAISE EXCEPTION 'diagnostic_result_required'; END IF;

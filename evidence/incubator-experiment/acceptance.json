@@ -22,8 +22,10 @@
     "preregistration_digest",
     "sse_executed_results",
     "model_intent_no_replay",
-    "local_execution_restart"
+    "local_execution_restart",
+    "post_handoff_owner_answer_resumes_same_package",
+    "evaluation_owner_constraint_preserved"
   ],
   "passed": true,
-  "migration_sha256": "bbc55709e2eccbc1fe04313741715e26896d9c28df18beaa339054f335e5e742"
+  "migration_sha256": "9bb5c69d60ed7b97a319cdb1cb1ecee1c7b471527473001fd60f9a2ed7943b53"
 }
