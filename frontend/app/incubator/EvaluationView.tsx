@@ -1,11 +1,6 @@
 "use client";
-import {ResearchReport} from "./ResearchReport";
-import {ProgressFooter} from "./ProgressFooter";
-import {OriginBadge} from "./OriginBadge";
 import {useState} from "react";
 import {useQueryClient} from "@tanstack/react-query";
-import {Dialog} from "radix-ui";
-import {X,FlaskConical} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {evaluationLabel,workflowKey,parseWorkflow,type Evaluation} from "./evaluation";
@@ -21,11 +16,5 @@ export function EvaluationView({evaluation:e}:{evaluation:Evaluation}){
  {e.status==="needs_input"&&(!!e.owner_answer||e.steps.length>=6)&&<p className="text-sm text-muted-foreground">The clarification allowance is exhausted. Discuss the remaining question in Chat and apply a revised research plan to start a fresh evaluation.</p>}
  {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
  {e.experiment&&<a className="text-sm text-primary underline" href={`#experiment-${e.id}`}>Experiment ticket created · Awaiting setup</a>}
- </section>
-}
-export function Experiments({evaluations}:{evaluations:Evaluation[]}){
- const tickets=evaluations.filter(e=>e.experiment);
- return <section aria-labelledby="experiments-heading" className="mt-8 border-t border-border pt-7"><div className="mb-5"><h2 id="experiments-heading" className="text-xl font-semibold">Experiments <span className="ml-2 text-sm font-normal text-muted-foreground">{tickets.length}</span></h2><p className="mt-2 text-sm text-muted-foreground">Linked research plans awaiting data, setup, and a supported experiment runner.</p></div>
- {!tickets.length?<div className="rounded-xl border border-dashed border-border p-8 text-sm text-muted-foreground"><FlaskConical className="mb-3 size-5" aria-hidden="true"/>Research that advances through evaluation will appear here.</div>:<div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,14rem),15rem))] gap-4">{tickets.map(e=><Dialog.Root key={e.id}><Dialog.Trigger asChild><button id={`experiment-${e.id}`} className="flex min-h-60 flex-col items-start gap-4 rounded-xl border border-border bg-card p-5 text-left hover:border-primary/60"><Badge variant="outline">Awaiting setup</Badge><OriginBadge origin="agent"/><span className="font-medium">{e.experiment!.title}</span><span className="text-xs text-muted-foreground">Research revision {e.revision}{e.status==="superseded"?" · Research has a newer revision":""}</span><div className="mt-auto w-full"><ProgressFooter label="Experiment workflow" steps={[{label:"Created",state:"complete"},{label:"Setup",state:"pending"},{label:"Evaluate",state:"pending"},{label:"Results",state:"pending"}]}/></div></button></Dialog.Trigger><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-black/60"/><Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-border bg-background p-6"><Dialog.Title className="pr-10 text-xl font-semibold">{e.experiment!.title}</Dialog.Title><Dialog.Description className="mt-2 text-sm text-muted-foreground">Awaiting setup · No experiment has executed.</Dialog.Description><Dialog.Close asChild><button aria-label="Close experiment" className="absolute right-3 top-3 grid size-11 place-items-center"><X className="size-5"/></button></Dialog.Close><div className="my-5 space-y-3"><a href={`?run=${encodeURIComponent(e.run_key)}&revision=${e.revision}`} className="text-sm text-primary underline">Open originating research · Revision {e.revision}</a><ResearchReport report={e.report}/></div><EvaluationView evaluation={e}/></Dialog.Content></Dialog.Portal></Dialog.Root>)}</div>}
  </section>
 }

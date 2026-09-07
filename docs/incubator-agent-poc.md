@@ -270,3 +270,13 @@ The isolated evaluation suite exercises actual worker orchestration with a
 deterministic model adapter, owner-answer HTTP idempotency, SSE experiment delivery,
 and recovery without replaying an orphaned model request. It makes no live model
 calls. Evidence is stored in `evidence/incubator-evaluation/acceptance.json`.
+
+
+Experiment details use the research modal layout: a timestamped workflow beside
+the title, Report and Chat tabs, and the same strict five-field report parser and
+shared list renderer. The Report stays pinned to the evaluated revision, including
+its source link. Chat explicitly opens the originating research agent's current
+conversation while no experiment agent is assigned. Applying a research revision
+can start another research evaluation; it never rewrites the existing experiment.
+Legacy numbered list text is preserved in storage, with numbering supplied once
+by the shared renderer in both report views.
