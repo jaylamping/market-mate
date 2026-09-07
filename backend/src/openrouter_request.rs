@@ -10,6 +10,12 @@ pub struct Capabilities {
     pub architecture: Option<Architecture>,
     #[serde(default)]
     pub top_provider: Option<ProviderLimits>,
+    #[serde(default)]
+    pub reasoning: Option<ReasoningCapabilities>,
+}
+#[derive(Clone, Serialize, Deserialize)]
+pub struct ReasoningCapabilities {
+    mandatory: Option<bool>,
 }
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Architecture {
@@ -64,6 +70,14 @@ impl Capabilities {
         if !supports("response_format") {
             fields.remove("response_format");
         }
+        if fields
+            .get("reasoning")
+            .is_some_and(|r| r["enabled"] == false)
+            && (!supports("reasoning")
+                || self.reasoning.as_ref().and_then(|r| r.mandatory) != Some(false))
+        {
+            fields.remove("reasoning");
+        }
         Ok(result)
     }
 }
@@ -71,6 +85,30 @@ impl Capabilities {
 mod tests {
     use super::*;
     use serde_json::json;
+    #[test]
+    fn optional_setup_reasoning_is_disabled_only_when_catalog_permits_it() {
+        let mut request = request();
+        request["reasoning"] = json!({"enabled":false});
+        for (metadata, expected) in [
+            (json!({"mandatory":false}), true),
+            (json!({"mandatory":true}), false),
+            (Value::Null, false),
+        ] {
+            let c: Capabilities = serde_json::from_value(
+                json!({"supported_parameters":["max_tokens","reasoning"],"reasoning":metadata}),
+            )
+            .unwrap();
+            let adapted = c.adapt(&request).unwrap();
+            assert_eq!(adapted.get("reasoning").is_some(), expected);
+            assert_eq!(adapted["max_tokens"], 2048);
+            assert_eq!(adapted["provider"], request["provider"]);
+        }
+        assert!(capabilities(json!(["max_tokens"]))
+            .adapt(&request)
+            .unwrap()
+            .get("reasoning")
+            .is_none());
+    }
     fn request() -> Value {
         crate::incubator::payload("vendor/model:free", "Return JSON.")
     }

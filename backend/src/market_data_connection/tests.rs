@@ -654,6 +654,71 @@ async fn setup_and_refresh() {
             .await
             .unwrap()
     );
+    let recovery_id =
+        crate::incubator_experiment::tests::ticket(&admin.client, "wu63-setup-recovery").await;
+    assert!(crate::incubator_experiment::tests::invalid_setup_tick()
+        .await
+        .unwrap());
+    let failed: Value = admin
+        .client
+        .query_one("SELECT read_incubator_experiment($1)", &[&recovery_id])
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(failed["status"], "failed");
+    assert_eq!(
+        failed["detail"]["reason"],
+        "experiment_agent_output_truncated"
+    );
+    assert_eq!(failed["detail"]["provider"]["finish_reason"], "length");
+    assert_eq!(failed["setup_retry_available"], true);
+    let (first, second) = tokio::join!(
+        crate::incubator_experiment::tests::retry_setup_ticket(recovery_id),
+        crate::incubator_experiment::tests::retry_setup_ticket(recovery_id)
+    );
+    first.unwrap();
+    second.unwrap();
+    assert!(
+        crate::incubator_experiment::tests::acquisition_tick(request.clone())
+            .await
+            .unwrap()
+    );
+    assert!(
+        crate::market_data_acquisition::tick(&admin.client, src, &client)
+            .await
+            .unwrap()
+    );
+    for _ in 0..3 {
+        assert!(
+            crate::incubator_experiment::tests::acquisition_tick(Value::Null)
+                .await
+                .unwrap()
+        );
+    }
+    let recovered: Value = admin
+        .client
+        .query_one("SELECT read_incubator_experiment($1)", &[&recovery_id])
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(recovered["status"], "completed");
+    assert_eq!(recovered["setup_retry_available"], false);
+    let events = recovered["events"].as_array().unwrap();
+    assert_eq!(
+        events
+            .iter()
+            .filter(|e| e["state"] == "setup_retry")
+            .count(),
+        1
+    );
+    assert!(events
+        .iter()
+        .any(|e| e["state"] == "failed"
+            && e["detail"]["reason"] == "experiment_agent_output_truncated"));
+    assert_eq!(
+        crate::incubator_experiment::tests::retry_setup_ticket(question_id).await,
+        Err(StatusCode::CONFLICT)
+    );
     // Setup serializes only credential writers. Holding its lock cannot stall the worker.
     let setup_gate = s.gate.lock().await;
     tokio::time::timeout(Duration::from_secs(3), work(&s))
