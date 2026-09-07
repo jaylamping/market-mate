@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-06T23:49:57.194581+00:00",
+  "generatedAt": "2026-09-07T02:32:00.809Z",
   "title": "Design System: Market Mate Spectral Edge",
   "extensions": {
     "colorMeta": {
@@ -16,7 +16,8 @@
           "oklch(72.14% 0.0029 264.54)",
           "oklch(83.57% 0.0029 264.54)",
           "oklch(95.00% 0.0029 264.54)"
-        ]
+        ],
+        "canonical": "#f7f8fa"
       },
       "foreground": {
         "role": "neutral",
@@ -30,7 +31,8 @@
           "oklch(72.14% 0.0244 255.69)",
           "oklch(83.57% 0.0244 255.69)",
           "oklch(95.00% 0.0244 255.69)"
-        ]
+        ],
+        "canonical": "#303945"
       },
       "card": {
         "role": "neutral",
@@ -44,7 +46,8 @@
           "oklch(72.14% 0.0000 89.88)",
           "oklch(83.57% 0.0000 89.88)",
           "oklch(95.00% 0.0000 89.88)"
-        ]
+        ],
+        "canonical": "#ffffff"
       },
       "primary": {
         "role": "primary",
@@ -58,7 +61,8 @@
           "oklch(72.14% 0.1439 295.17)",
           "oklch(83.57% 0.1439 295.17)",
           "oklch(95.00% 0.1439 295.17)"
-        ]
+        ],
+        "canonical": "#7154b2"
       },
       "primary-foreground": {
         "role": "neutral",
@@ -72,7 +76,8 @@
           "oklch(72.14% 0.0000 89.88)",
           "oklch(83.57% 0.0000 89.88)",
           "oklch(95.00% 0.0000 89.88)"
-        ]
+        ],
+        "canonical": "#ffffff"
       },
       "secondary": {
         "role": "neutral",
@@ -86,7 +91,8 @@
           "oklch(72.14% 0.0058 264.53)",
           "oklch(83.57% 0.0058 264.53)",
           "oklch(95.00% 0.0058 264.53)"
-        ]
+        ],
+        "canonical": "#eef0f4"
       },
       "secondary-foreground": {
         "role": "neutral",
@@ -100,7 +106,8 @@
           "oklch(72.14% 0.0239 262.84)",
           "oklch(83.57% 0.0239 262.84)",
           "oklch(95.00% 0.0239 262.84)"
-        ]
+        ],
+        "canonical": "#3f4653"
       },
       "muted": {
         "role": "neutral",
@@ -114,7 +121,8 @@
           "oklch(72.14% 0.0054 274.96)",
           "oklch(83.57% 0.0054 274.96)",
           "oklch(95.00% 0.0054 274.96)"
-        ]
+        ],
+        "canonical": "#f0f1f5"
       },
       "muted-foreground": {
         "role": "neutral",
@@ -128,7 +136,8 @@
           "oklch(72.14% 0.0247 259.19)",
           "oklch(83.57% 0.0247 259.19)",
           "oklch(95.00% 0.0247 259.19)"
-        ]
+        ],
+        "canonical": "#626b79"
       },
       "accent": {
         "role": "primary",
@@ -142,7 +151,8 @@
           "oklch(72.14% 0.0194 302.20)",
           "oklch(83.57% 0.0194 302.20)",
           "oklch(95.00% 0.0194 302.20)"
-        ]
+        ],
+        "canonical": "#eee9f7"
       },
       "accent-foreground": {
         "role": "primary",
@@ -156,7 +166,8 @@
           "oklch(72.14% 0.1392 295.49)",
           "oklch(83.57% 0.1392 295.49)",
           "oklch(95.00% 0.1392 295.49)"
-        ]
+        ],
+        "canonical": "#61449d"
       },
       "destructive": {
         "role": "secondary",
@@ -170,7 +181,8 @@
           "oklch(72.14% 0.1565 13.65)",
           "oklch(83.57% 0.1565 13.65)",
           "oklch(95.00% 0.1565 13.65)"
-        ]
+        ],
+        "canonical": "#ad344b"
       },
       "border": {
         "role": "neutral",
@@ -184,7 +196,8 @@
           "oklch(72.14% 0.0105 261.79)",
           "oklch(83.57% 0.0105 261.79)",
           "oklch(95.00% 0.0105 261.79)"
-        ]
+        ],
+        "canonical": "#dde1e8"
       },
       "input": {
         "role": "neutral",
@@ -198,7 +211,8 @@
           "oklch(72.14% 0.0148 264.49)",
           "oklch(83.57% 0.0148 264.49)",
           "oklch(95.00% 0.0148 264.49)"
-        ]
+        ],
+        "canonical": "#cdd2dc"
       },
       "ring": {
         "role": "primary",
@@ -212,7 +226,8 @@
           "oklch(72.14% 0.1031 298.88)",
           "oklch(83.57% 0.1031 298.88)",
           "oklch(95.00% 0.1031 298.88)"
-        ]
+        ],
+        "canonical": "#9b84c9"
       },
       "good": {
         "role": "secondary",
@@ -226,7 +241,8 @@
           "oklch(72.14% 0.0874 162.77)",
           "oklch(83.57% 0.0874 162.77)",
           "oklch(95.00% 0.0874 162.77)"
-        ]
+        ],
+        "canonical": "#277052"
       },
       "warning": {
         "role": "secondary",
@@ -240,7 +256,8 @@
           "oklch(72.14% 0.1031 69.57)",
           "oklch(83.57% 0.1031 69.57)",
           "oklch(95.00% 0.1031 69.57)"
-        ]
+        ],
+        "canonical": "#92601c"
       },
       "spectral-mint": {
         "role": "secondary",
@@ -254,7 +271,8 @@
           "oklch(72.14% 0.0549 184.56)",
           "oklch(83.57% 0.0549 184.56)",
           "oklch(95.00% 0.0549 184.56)"
-        ]
+        ],
+        "canonical": "#a4d8d0"
       },
       "spectral-rose": {
         "role": "secondary",
@@ -268,7 +286,8 @@
           "oklch(72.14% 0.0620 346.38)",
           "oklch(83.57% 0.0620 346.38)",
           "oklch(95.00% 0.0620 346.38)"
-        ]
+        ],
+        "canonical": "#edbed6"
       },
       "spectral-violet": {
         "role": "secondary",
@@ -282,7 +301,8 @@
           "oklch(72.14% 0.0972 299.14)",
           "oklch(83.57% 0.0972 299.14)",
           "oklch(95.00% 0.0972 299.14)"
-        ]
+        ],
+        "canonical": "#b8a2e5"
       },
       "sidebar-bg": {
         "role": "neutral",
@@ -296,7 +316,8 @@
           "oklch(72.14% 0.0026 286.35)",
           "oklch(83.57% 0.0026 286.35)",
           "oklch(95.00% 0.0026 286.35)"
-        ]
+        ],
+        "canonical": "#fbfbfd"
       },
       "background-dark": {
         "role": "neutral",
@@ -310,7 +331,8 @@
           "oklch(72.14% 0.0144 272.55)",
           "oklch(83.57% 0.0144 272.55)",
           "oklch(95.00% 0.0144 272.55)"
-        ]
+        ],
+        "canonical": "#14161d"
       },
       "foreground-dark": {
         "role": "neutral",
@@ -324,7 +346,8 @@
           "oklch(72.14% 0.0084 271.32)",
           "oklch(83.57% 0.0084 271.32)",
           "oklch(95.00% 0.0084 271.32)"
-        ]
+        ],
+        "canonical": "#e5e7ed"
       },
       "card-dark": {
         "role": "neutral",
@@ -338,7 +361,8 @@
           "oklch(72.14% 0.0178 270.57)",
           "oklch(83.57% 0.0178 270.57)",
           "oklch(95.00% 0.0178 270.57)"
-        ]
+        ],
+        "canonical": "#1c1f28"
       },
       "primary-dark": {
         "role": "primary",
@@ -352,7 +376,8 @@
           "oklch(72.14% 0.0913 301.05)",
           "oklch(83.57% 0.0913 301.05)",
           "oklch(95.00% 0.0913 301.05)"
-        ]
+        ],
+        "canonical": "#c2abea"
       },
       "primary-foreground-dark": {
         "role": "neutral",
@@ -366,7 +391,8 @@
           "oklch(72.14% 0.0409 300.83)",
           "oklch(83.57% 0.0409 300.83)",
           "oklch(95.00% 0.0409 300.83)"
-        ]
+        ],
+        "canonical": "#21192e"
       },
       "secondary-dark": {
         "role": "neutral",
@@ -380,7 +406,8 @@
           "oklch(72.14% 0.0208 269.41)",
           "oklch(83.57% 0.0208 269.41)",
           "oklch(95.00% 0.0208 269.41)"
-        ]
+        ],
+        "canonical": "#292d38"
       },
       "secondary-foreground-dark": {
         "role": "neutral",
@@ -394,7 +421,8 @@
           "oklch(72.14% 0.0084 271.32)",
           "oklch(83.57% 0.0084 271.32)",
           "oklch(95.00% 0.0084 271.32)"
-        ]
+        ],
+        "canonical": "#e5e7ed"
       },
       "muted-dark": {
         "role": "neutral",
@@ -408,7 +436,8 @@
           "oklch(72.14% 0.0211 269.35)",
           "oklch(83.57% 0.0211 269.35)",
           "oklch(95.00% 0.0211 269.35)"
-        ]
+        ],
+        "canonical": "#252934"
       },
       "muted-foreground-dark": {
         "role": "neutral",
@@ -422,7 +451,8 @@
           "oklch(72.14% 0.0248 264.41)",
           "oklch(83.57% 0.0248 264.41)",
           "oklch(95.00% 0.0248 264.41)"
-        ]
+        ],
+        "canonical": "#a2aaba"
       },
       "accent-dark": {
         "role": "primary",
@@ -436,7 +466,8 @@
           "oklch(72.14% 0.0452 298.43)",
           "oklch(83.57% 0.0452 298.43)",
           "oklch(95.00% 0.0452 298.43)"
-        ]
+        ],
+        "canonical": "#332b44"
       },
       "accent-foreground-dark": {
         "role": "primary",
@@ -450,7 +481,8 @@
           "oklch(72.14% 0.0672 302.45)",
           "oklch(83.57% 0.0672 302.45)",
           "oklch(95.00% 0.0672 302.45)"
-        ]
+        ],
+        "canonical": "#d6c4f3"
       },
       "destructive-dark": {
         "role": "secondary",
@@ -464,7 +496,8 @@
           "oklch(72.14% 0.1169 8.73)",
           "oklch(83.57% 0.1169 8.73)",
           "oklch(95.00% 0.1169 8.73)"
-        ]
+        ],
+        "canonical": "#f494a5"
       },
       "border-dark": {
         "role": "neutral",
@@ -478,7 +511,8 @@
           "oklch(72.14% 0.0255 269.61)",
           "oklch(83.57% 0.0255 269.61)",
           "oklch(95.00% 0.0255 269.61)"
-        ]
+        ],
+        "canonical": "#333846"
       },
       "input-dark": {
         "role": "neutral",
@@ -492,7 +526,8 @@
           "oklch(72.14% 0.0298 267.51)",
           "oklch(83.57% 0.0298 267.51)",
           "oklch(95.00% 0.0298 267.51)"
-        ]
+        ],
+        "canonical": "#464d5e"
       },
       "ring-dark": {
         "role": "primary",
@@ -506,7 +541,8 @@
           "oklch(72.14% 0.0983 300.45)",
           "oklch(83.57% 0.0983 300.45)",
           "oklch(95.00% 0.0983 300.45)"
-        ]
+        ],
+        "canonical": "#b39bde"
       },
       "good-dark": {
         "role": "secondary",
@@ -520,7 +556,8 @@
           "oklch(72.14% 0.0872 165.28)",
           "oklch(83.57% 0.0872 165.28)",
           "oklch(95.00% 0.0872 165.28)"
-        ]
+        ],
+        "canonical": "#8ad4b4"
       },
       "warning-dark": {
         "role": "secondary",
@@ -534,7 +571,8 @@
           "oklch(72.14% 0.0945 80.63)",
           "oklch(83.57% 0.0945 80.63)",
           "oklch(95.00% 0.0945 80.63)"
-        ]
+        ],
+        "canonical": "#e4be7c"
       },
       "spectral-mint-dark": {
         "role": "secondary",
@@ -548,7 +586,8 @@
           "oklch(72.14% 0.0488 190.87)",
           "oklch(83.57% 0.0488 190.87)",
           "oklch(95.00% 0.0488 190.87)"
-        ]
+        ],
+        "canonical": "#729f9c"
       },
       "spectral-rose-dark": {
         "role": "secondary",
@@ -562,7 +601,8 @@
           "oklch(72.14% 0.0707 343.92)",
           "oklch(83.57% 0.0707 343.92)",
           "oklch(95.00% 0.0707 343.92)"
-        ]
+        ],
+        "canonical": "#b685a1"
       },
       "spectral-violet-dark": {
         "role": "secondary",
@@ -576,7 +616,8 @@
           "oklch(72.14% 0.0927 300.23)",
           "oklch(83.57% 0.0927 300.23)",
           "oklch(95.00% 0.0927 300.23)"
-        ]
+        ],
+        "canonical": "#a08ac8"
       },
       "sidebar-bg-dark": {
         "role": "neutral",
@@ -590,7 +631,8 @@
           "oklch(72.14% 0.0163 268.92)",
           "oklch(83.57% 0.0163 268.92)",
           "oklch(95.00% 0.0163 268.92)"
-        ]
+        ],
+        "canonical": "#181b23"
       }
     },
     "typographyMeta": {
@@ -704,7 +746,7 @@
       "kind": "input",
       "refersTo": "input-search",
       "description": "Local filter of displayed evidence.",
-      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input aria-label=\"Filter displayed evidence\" placeholder=\"Filter displayed evidence\u2026\"/></label>",
+      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input aria-label=\"Filter displayed evidence\" placeholder=\"Filter displayed evidence…\"/></label>",
       "css": ".ds-search{display:block;position:relative;width:250px;color:var(--muted-foreground)}.ds-search svg{position:absolute;left:10px;top:11px;width:14px;height:14px}.ds-search input{width:100%;height:36px;border:1px solid var(--input);border-radius:calc(var(--radius) - 2px);background:transparent;color:var(--foreground);font:400 12px var(--font-overview),sans-serif;padding:4px 12px 4px 32px;box-shadow:none;caret-color:var(--primary)}.ds-search input::placeholder{color:var(--muted-foreground)}.ds-search input:focus-visible{outline:2px solid var(--ring);outline-offset:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 50%,transparent)}:host-context(.dark) .ds-search input{background:color-mix(in srgb,var(--input) 30%,transparent)}"
     },
     {
@@ -737,11 +779,18 @@
       "description": "Shared order and activity disclosure in Paper; retains native keyboard behavior and provider identifier wrapping.",
       "html": "<details class=\"ds-paper-record\"><summary>View record</summary><p>Provider type: Not reported</p><code>Provider identifier appears here</code></details>",
       "css": ".ds-paper-record{font:400 12px var(--font-overview),sans-serif;color:var(--foreground)}.ds-paper-record summary{color:var(--primary);cursor:pointer}.ds-paper-record summary:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-paper-record p{margin:8px 0}.ds-paper-record code{display:block;max-width:240px;overflow-wrap:anywhere;white-space:normal;color:var(--muted-foreground);margin-top:8px;font-family:var(--font-overview-mono),monospace}"
+    },
+    {
+      "name": "Integration Section",
+      "kind": "custom",
+      "description": "System connections share 24px padding, 16px vertical rhythm, a wrapping header, and a collapsed setup disclosure.",
+      "html": "<section class=\"ds-integration\"><div class=\"ds-integration-heading\"><div><strong>Provider connection</strong><p>Connection status and provider details.</p></div><button>Configure</button></div><details><summary>Setup details</summary><p>Provider-specific setup instructions.</p></details></section>",
+      "css": ".ds-integration{padding:24px;display:grid;gap:16px;color:var(--foreground);border-bottom:1px solid var(--border);font:400 14px var(--font-overview),sans-serif}.ds-integration-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}.ds-integration-heading strong{font-size:16px;font-weight:600}.ds-integration-heading button{padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--foreground)}.ds-integration p{margin:8px 0 0;color:var(--muted-foreground)}.ds-integration summary{cursor:pointer;color:var(--primary);padding:4px 0}.ds-integration button:focus-visible,.ds-integration summary:focus-visible{outline:2px solid var(--ring);outline-offset:3px}"
     }
   ],
   "narrative": {
     "northStar": "Spectral Edge",
-    "overview": "A calm working console with cloud-white and mist surfaces in light mode, charcoal and soft white in dark mode. Violet identifies selection and inspection links; a narrow mint\u2013rose\u2013violet edge supplies the distinctive atmospheric detail. The interface keeps evidence, timing, and authority readable without adopting the reference's hairline display type.\n\nThis refresh records the implemented frontend and supersedes the Night Desk palette and density. The incumbent commitments to display-only authority, visible distrust, and preserved evidence remain. Source authority is `frontend/app/globals.css`, the final cascade in `supervisory-overview.css`, and the shipped shadcn components; `command-ledger.css` supplies surviving Stage-1 layout rules.",
+    "overview": "A calm working console with cloud-white and mist surfaces in light mode, charcoal and soft white in dark mode. Violet identifies selection and inspection links; a narrow mint–rose–violet edge supplies the distinctive atmospheric detail. The interface keeps evidence, timing, and authority readable without adopting the reference's hairline display type.\n\nThis refresh records the implemented frontend and supersedes the Night Desk palette and density. The incumbent commitments to display-only authority, visible distrust, and preserved evidence remain. Source authority is `frontend/app/globals.css`, the final cascade in `supervisory-overview.css`, and the shipped shadcn components; `command-ledger.css` supplies surviving Stage-1 layout rules.",
     "keyCharacteristics": [
       "Paired light and dark themes with persistent system, light, or dark preference.",
       "Softly rounded, bordered panels with restrained violet selection.",

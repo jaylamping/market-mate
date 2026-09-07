@@ -1,0 +1,18 @@
+{
+  "run_key": "poc-minimax-m3-002",
+  "state": "completed",
+  "generation_id": "gen-1788748110-LFk1jAYaeKUJhdoAnc66",
+  "serving_provider": "GMICloud",
+  "usage": {
+    "completion_tokens": 681,
+    "cost_usd": 0.0,
+    "prompt_tokens": 385,
+    "total_tokens": 1066
+  },
+  "identical_replay": true,
+  "report_sha256": "2b07226d89d2f765c2bacd6b5d5e636521dbfbcb42fa9294f621576527b1ace0",
+  "lifecycle_event_count": 3,
+  "dispatch_intent_count": 1,
+  "audit_chain_valid": true,
+  "audit_events_checked": 82
+}

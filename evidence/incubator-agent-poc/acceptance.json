@@ -1,0 +1,19 @@
+{
+  "runs": 3,
+  "probe": "incubator-agent-poc",
+  "checks": [
+    "input_denial",
+    "zero_spend_admission",
+    "run_identity",
+    "single_lane",
+    "restricted_role_writes",
+    "append_only_nonempty_records",
+    "terminal_no_redispatch",
+    "uncertain_acceptance_holds_lane",
+    "success_failure_lineage",
+    "audit_chain"
+  ],
+  "passed": true,
+  "alpha_shots": 2,
+  "migration_sha256": "11fa3120f22c3ad70bfb8886b3fb5a061f299944944c1b3352685a3482168653"
+}

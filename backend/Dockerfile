@@ -1,6 +1,7 @@
 FROM rust:1.85-slim AS build
 WORKDIR /app
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
+RUN rustup show active-toolchain
 COPY backend ./backend
 COPY db/migrations ./db/migrations
 WORKDIR /app/backend
@@ -16,6 +17,7 @@ COPY --from=build /app/target/release/custody /usr/local/bin/custody
 COPY --from=build /app/target/release/paper-connector /usr/local/bin/paper-connector
 COPY --from=build /app/target/release/openrouter-connector /usr/local/bin/openrouter-connector
 COPY --from=build /app/target/release/cursor-connector /usr/local/bin/cursor-connector
+COPY --from=build /app/target/release/research-agent /usr/local/bin/research-agent
 RUN mkdir -p /var/lib/custody /var/lib/model-policy && chown app /var/lib/custody /var/lib/model-policy
 USER app
 EXPOSE 8080

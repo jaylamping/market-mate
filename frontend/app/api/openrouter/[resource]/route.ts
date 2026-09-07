@@ -1,7 +1,7 @@
-const resources = ["status", "models", "policy", "balance"];
+const resources = ["status", "models", "policy", "balance", "routing"];
 export const dynamic = "force-dynamic";
 async function forward(request: Request, resource: string, method: "GET" | "PUT") {
-  if (!resources.includes(resource) || (method === "PUT" && resource !== "policy")) return Response.json({error:"Not found"},{status:404});
+  if (!resources.includes(resource) || (method === "PUT" && !(["policy", "routing"].includes(resource)))) return Response.json({error:"Not found"},{status:404});
   const base = process.env.OPENROUTER_CONNECTOR_URL;
   if (!base) return Response.json({error:"OpenRouter connector unavailable"},{status:503});
   try {

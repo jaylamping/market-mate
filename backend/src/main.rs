@@ -398,6 +398,24 @@ async fn stage1_surfaces(State(state): State<AppState>) -> (StatusCode, Json<ser
     }
 }
 
+async fn incubator_runs(State(state): State<AppState>) -> (StatusCode, Json<serde_json::Value>) {
+    let (client, _connection, _) = match verified_surface_client(State(state), "incubator").await {
+        Ok(pair) => pair,
+        Err(response) => return response,
+    };
+    let result = client
+        .query_one("SELECT read_incubator_agent_runs()", &[])
+        .await;
+    let _ = client.batch_execute("ROLLBACK").await;
+    match result {
+        Ok(row) => (StatusCode::OK, Json(row.get(0))),
+        Err(_) => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({"error":"Incubator history unavailable"})),
+        ),
+    }
+}
+
 async fn create_checkpoint(State(state): State<AppState>) -> (StatusCode, Json<serde_json::Value>) {
     let verification = state.verification_snapshot();
     if verification.pending || !verification.valid {
@@ -716,6 +734,7 @@ async fn serve() {
         .route("/readyz", get(readyz))
         .route("/command-ledger", get(command_ledger))
         .route("/stage1-surfaces", get(stage1_surfaces))
+        .route("/incubator/runs", get(incubator_runs))
         .route("/checkpoints", post(create_checkpoint))
         .route("/restore-verification", post(restore_verification))
         .route("/tracer/run", post(run_tracer_endpoint))

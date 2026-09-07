@@ -1,0 +1,191 @@
+# First Incubator agent POC
+
+Research Scout makes one OpenRouter request and records a hypothesis, evidence
+gaps, proposed experiment, falsification rule, and limitations. Incubator shows
+the assignment, lifecycle, report, provider metadata, and returned usage. This
+is research planning, not a backtest, qualification, or authority decision.
+
+## Run locally
+
+Select and save a concrete free OpenRouter model on Agents. The POC reads that
+same saved policy volume immediately before recording its dispatch intent.
+It does not change the whitelist or expose an inference route through the UI.
+
+```sh
+docker compose build backend research-agent openrouter-connector frontend
+docker compose up -d --no-deps --wait backend openrouter-connector frontend
+docker compose run --rm --no-deps research-agent my-unique-run minimax/minimax-m3:free
+```
+
+Visit `http://localhost:3000/incubator`. The history refreshes every five seconds.
+Repeating a completed or failed run key returns the existing outcome. A key
+cannot be reused for a different model. The CLI returns a nonzero exit status
+for failed or uncertain runs.
+
+## Boundaries
+
+- Input is exclusively `momentum-brief-v1`, original project-authored text stored
+  by `incubator_poc_brief()`. It contains no observations or account data. The
+  admission function rejects other input IDs. This is a narrow POC input
+  allowlist; it does **not** certify external processing rights for vendor
+  evidence. Connecting entitled research artifacts remains subsequent work.
+- Saved model whitelist, a concrete `:free` ID, and freshly retrieved zero
+  catalog pricing are all required. Prompt and completion price ceilings of
+  zero are sent to OpenRouter. No tools, plugins, automatic model selection,
+  provider failover or repeat dispatch within an assignment is configured.
+- One request, at most 2,048 output tokens, 120-second HTTP request timeout,
+  three-second connect timeout, and 64 KB response limit. Preflight catalog
+  access has its existing eight-second timeout. This is not a claim that a
+  remote provider stops compute when the local timeout expires.
+- The POC permits no spending. Paid models remain selectable in Agents, but
+  dispatching them requires a later positive-budget implementation with
+  Operating Cost Register reservations and reconciliation. Migration 0039
+  models simulated trading costs and must not be used for model charges.
+- The command is trusted local orchestration; the model only receives the
+  fixed prompt and brief. It has no tools or database session. The runner
+  mounts only OpenRouter credentials and its policy, read-only; no broker key.
+  The `incubator_runner` database login has no direct privileges on the new
+  run/event tables and invokes bounded functions. Existing database PUBLIC
+  privileges and host administration remain outside this POC's isolation claim.
+
+## Persistence and failure
+
+Every POC inference request includes the same provider-independent response
+contract (`research-json-v1`) in its system message, plus JSON-object response
+mode. The contract requires exactly the five typed report fields, bounded
+nonempty strings and lists, and plain text list entries without numbering.
+The dispatch event stores the contract version and exact request for audit.
+The local typed parser is the acceptance boundary: missing, duplicate, extra,
+mistyped, fenced, or trailing content fails without automatic repair or retry.
+Invalid source text remains inspectable. JSON mode alone does not enforce the
+report schema, and models unable to honor the request cannot produce an
+accepted report. This standardizes parsing and rendering, not model reasoning
+or repeatability of conclusions. The UI owns list numbering, including for
+older reports that contain numeric prefixes.
+
+Migration 0053 builds on `engine_admit_research_assignment` and
+`record_alpha_shot`. Immutable run configuration is separate from append-only
+events; existing immutable assignment rows are never updated to fake progress.
+Completed and failed runs each produce an Alpha Shot with result/failure lineage.
+Run state comes from ordered events, not the assignment's original scheduled state.
+
+A session advisory lock holds a single runner, while SQL admission prevents a
+second active assignment. Dispatch intent commits **before** the sole generation
+POST. A crash after intent is not automatically replayable, even if the request
+may never have left the machine. Rerunning that key records `indeterminate` and
+never calls the provider again. Uncertain runs hold the lane; clearing that hold
+requires a subsequent evidenced reconciliation workflow, not a new run key or
+an automatic timeout. There is intentionally no operator override in this POC.
+
+Explicit HTTP rejection and invalid/incomplete report output are preserved as
+failures. Transport errors, ambiguous server errors, and interrupted response
+reads are indeterminate. Unexpected reported charges also hold the lane.
+Generation ID, returned model, serving provider, and usage are stored when
+supplied. Missing usage stays null, including for a nominally free model.
+The exact request and its SHA-256 are in the dispatch event. Reports are rendered
+as plain text, never as commands, HTML, or a source of authority.
+
+## Verify
+
+```sh
+bash scripts/incubator_agent_poc_test.sh
+cargo test --locked
+cargo fmt --all -- --check
+cd frontend
+npm test
+npm run typecheck
+npm run build
+```
+
+The acceptance script owns only the `market-mate-agent-poc-test` Compose project
+and port 15433. It removes that isolated test database on exit and does not stop
+or clear the user's stack. Its probe uses nonempty records and both the restricted
+runner role and the schema owner to check mutation denial. JSON evidence records
+the migration checksum. It does not use API credentials or call a model.
+
+Provider contracts checked for this implementation:
+[routing and price caps](https://openrouter.ai/docs/guides/routing/provider-selection),
+[usage accounting](https://openrouter.ai/docs/cookbook/administration/usage-accounting).
+
+## Models table
+
+The default sort places saved selections first across both providers, then sorts
+alphabetically. Draft checkbox edits do not move rows; saving or refreshing the
+policy updates the ordering. Every header can toggle ascending/descending order,
+with unavailable values last. A refreshed catalog/policy returns pagination to
+the first page. The user-requested **Release Date** heading displays OpenRouter's
+`created` catalog-added timestamp in UTC; its tooltip distinguishes that from a
+verified original release date. Cursor does not currently supply this date.
+
+## First observed runs
+
+On 2026-09-07 UTC, `poc-minimax-m3-002` completed using
+`minimax/minimax-m3:free`, served by GMICloud. The provider reported 385 input
+and 681 output tokens, with $0 cost. Reopening that exact key returned an
+identical result; the database retained exactly three lifecycle events and one
+dispatch intent. See `evidence/incubator-agent-poc/live-run.json`.
+
+The earlier `poc-minimax-m3-001` response failed report validation and remains
+visible with its generation ID and reported $0 usage. That initial version did
+not preserve its invalid response text; the POC now records bounded response
+text, a truncation flag, and a validation diagnostic for future malformed reports.
+`poc-whitelist-denial` demonstrates denial before dispatch. No saved policy was
+changed by these tests. Neither report is an empirical qualification artifact.
+
+Experiment list numbering is supplied by the UI. Numeric list prefixes produced
+by a model are removed only when rendering an ordered list; the recorded report
+and raw response are preserved exactly.
+
+## Model preferences and provider order
+
+Agents groups catalog entries by the final model slug, ignoring the prefix
+before `/`. Full provider IDs are retained for dispatch. Exact suffixes remain
+part of the identity, so free, Pro, preview, and batch entries remain separate;
+spelling differences in slugs are not guessed into equivalence.
+
+One atomic `routing.json` in the existing OpenRouter policy volume stores model
+approvals and each model's ordered provider routes. Its initial read imports
+existing OpenRouter and Cursor whitelists without changing them (OpenRouter
+first when both were approved, since the old policies had no cross-provider
+order). The first save activates this policy; the legacy per-provider GETs
+project its selections and legacy PUTs refuse writes. Saved revisions reject
+stale updates, including legacy revisions during the initial import. New
+selections must exist in their provider catalog; unavailable saved selections
+can still be retained, reordered, or removed. Up to 100 selections per provider
+remain enforced. Conflict recovery offers a contextual reload action and preserves drafts when reload fails.
+
+The runner checks the saved first route and records the priority snapshot with
+its dispatch intent. A Cursor-first preference currently fails before dispatch
+because there is no Cursor execution adapter. It never silently skips the
+preferred provider or retries another provider after an uncertain response.
+The POC's existing free-model restriction still applies. Automatic provider failover conditions and additional execution adapters remain subsequent work.
+
+Table pricing/context use the saved primary provider's metadata, falling back
+to OpenRouter where missing. These are reference values, not a claim about
+Cursor billing or effective context guarantees. Catalog parsing preserves nested
+pricing tiers; those models are not automatically classified as free.
+
+
+## Default and fallback model
+
+The selector below the model table stores an optional `default_model` slug in
+model preferences. Only approved models can be selected; removing its last
+provider clears it. Existing policies default to none. Omitting the model CLI
+argument uses this selection and its first provider route.
+
+For a newly started primary run, a confirmed failed outcome can admit exactly
+one separate fallback assignment using the saved default. It must differ from
+the primary, use an implemented OpenRouter route, and meet the existing free
+model budget. Policy changes during the primary prevent automatic fallback.
+Completed, dispatched, or indeterminate outcomes never trigger a fallback.
+There is no provider retry or fallback chain. Each assignment has its own
+one-request limit; a primary plus fallback can therefore make two requests.
+
+Migration 0054 records an immutable, unique parent/child link and checks the
+parent is failed, the model differs, and the parent is not itself a fallback.
+Repeated admission returns the same child. Run-key replay resumes or returns an
+already linked child but never invents a fallback for an old failed primary.
+A crash between primary failure and fallback admission sacrifices fallback
+liveness rather than guessing whether to start new work. Fallback events retain
+the parent run key for display in Incubator provenance. An unsupported or paid
+default cannot bypass the POC's execution or zero-spend restrictions.

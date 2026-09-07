@@ -2,6 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { parseModels, parsePolicy, parseStatus, isFree, tokenPrice } from "../lib/openrouter";
 
+test("tiered model pricing survives parsing without being labeled free", () => {
+  const pricing = {prompt:"0",completion:"0",overrides:[{min_prompt_tokens:272000,prompt:"0.0000004"}]};
+  const [model] = parseModels({models:[{id:"openai/gpt-5.6-luna",name:"GPT-5.6 Luna",context_length:1050000,pricing}]});
+  assert.deepEqual(model.pricing, pricing);
+  assert.equal(isFree(model),false);
+});
+
 test("model pricing distinguishes free, token costs and extra charges", () => {
   const [free,paid,extra] = parseModels({models:[
     {id:"a/free:free",name:"Free",context_length:1000,pricing:{prompt:"0",completion:"0"}},

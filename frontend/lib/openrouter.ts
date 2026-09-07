@@ -1,5 +1,6 @@
 export type OpenRouterStatus = { provider: "openrouter"; state: string; model_policy: "whitelist"; inference_enabled: false; checked_at_ms?: number };
-export type Model = { id: string; name: string; context_length: number; pricing: Record<string, string> };
+export type ModelPricing = { prompt: string; completion: string; [key: string]: unknown };
+export type Model = { id: string; name: string; context_length: number; created?: number; pricing: ModelPricing };
 export type ModelPolicy = { revision: number; allowed_models: string[] };
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid OpenRouter response");
@@ -16,8 +17,9 @@ export function parseModels(value: unknown): Model[] {
   if (!Array.isArray(rows)) throw new Error("Invalid model catalog");
   return rows.map(value => {
     const row = object(value), pricing = object(row.pricing);
-    if (typeof row.id !== "string" || typeof row.name !== "string" || typeof row.context_length !== "number" || !Number.isSafeInteger(row.context_length) || row.context_length <= 0 || Object.values(pricing).some(v => typeof v !== "string") || ["prompt","completion"].some(key => typeof pricing[key] !== "string" || !Number.isFinite(Number(pricing[key])) || Number(pricing[key]) < 0)) throw new Error("Invalid model");
-    return { id: row.id, name: row.name, context_length: row.context_length, pricing: pricing as Record<string,string> };
+    if (typeof row.id !== "string" || typeof row.name !== "string" || typeof row.context_length !== "number" || !Number.isSafeInteger(row.context_length) || row.context_length <= 0 || ["prompt","completion"].some(key => typeof pricing[key] !== "string" || !Number.isFinite(Number(pricing[key])) || Number(pricing[key]) < 0)) throw new Error("Invalid model");
+    if (row.created != null && (typeof row.created !== "number" || !Number.isSafeInteger(row.created) || row.created < 0 || row.created > 8640000000000)) throw new Error("Invalid catalog date");
+    return { created: row.created == null ? undefined : row.created as number, id: row.id, name: row.name, context_length: row.context_length, pricing: pricing as ModelPricing };
   });
 }
 export function parsePolicy(value: unknown): ModelPolicy {
@@ -25,7 +27,7 @@ export function parsePolicy(value: unknown): ModelPolicy {
   if (typeof row.revision !== "number" || !Number.isSafeInteger(row.revision) || row.revision < 0 || !Array.isArray(row.allowed_models) || row.allowed_models.length > 100 || row.allowed_models.some(v => typeof v !== "string")) throw new Error("Invalid model whitelist");
   return { revision: row.revision, allowed_models: row.allowed_models as string[] };
 }
-export function isFree(model: Model) { return Object.values(model.pricing).every(price => price.trim() !== "" && Number(price) === 0); }
+export function isFree(model: Model) { return Object.values(model.pricing).every(price => typeof price === "string" && /^(?=.*0)[0.]+$/.test(price) && Number(price) === 0); }
 export function tokenPrice(value: string) { return new Intl.NumberFormat("en-US", {style:"currency",currency:"USD",maximumFractionDigits:4}).format(Number(value)*1_000_000); }
 
 export type AccountBalance = {state:"available";balance_usd:number;checked_at_ms:number} | {state:"not_configured"|"invalid_credentials"|"management_key_required"|"rate_limited"|"unavailable"|"invalid_response"};

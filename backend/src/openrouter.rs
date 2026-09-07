@@ -20,7 +20,7 @@ use tokio::sync::Mutex;
 struct Credentials {
     api_key: String,
 }
-fn authorization(key: &str) -> Result<HeaderValue, &'static str> {
+pub(crate) fn authorization(key: &str) -> Result<HeaderValue, &'static str> {
     if key.is_empty()
         || key.len() > 512
         || !key
@@ -148,6 +148,7 @@ pub fn router(reader: Arc<OpenRouterReader>) -> Router {
         .route("/openrouter/balance", get(balance))
         .route("/openrouter/models", get(models))
         .route("/openrouter/policy", get(policy).put(save_policy))
+        .route("/openrouter/routing", get(routing).put(save_routing))
         .with_state(reader)
 }
 #[cfg(test)]
@@ -217,11 +218,13 @@ mod tests {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-struct Model {
-    id: String,
+pub(crate) struct Model {
+    pub(crate) id: String,
     name: String,
     context_length: u64,
-    pricing: std::collections::BTreeMap<String, String>,
+    #[serde(default)]
+    created: Option<u64>,
+    pub(crate) pricing: std::collections::BTreeMap<String, Value>,
 }
 fn catalog(value: Value) -> Result<Vec<Model>, &'static str> {
     let rows = value
@@ -246,6 +249,7 @@ fn catalog(value: Value) -> Result<Vec<Model>, &'static str> {
             model
                 .pricing
                 .get(*key)
+                .and_then(Value::as_str)
                 .and_then(|v| v.parse::<f64>().ok())
                 .is_some_and(|v| v.is_finite() && v >= 0.0)
         });
@@ -261,7 +265,7 @@ fn catalog(value: Value) -> Result<Vec<Model>, &'static str> {
     Ok(result)
 }
 impl OpenRouterReader {
-    async fn models(&self) -> Result<Vec<Model>, &'static str> {
+    pub(crate) async fn models(&self) -> Result<Vec<Model>, &'static str> {
         let mut cache = self.models_cache.lock().await;
         if let Some((at, models)) = &*cache {
             if at.elapsed() < Duration::from_secs(300) {
@@ -291,11 +295,11 @@ impl OpenRouterReader {
 }
 #[derive(Default, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Policy {
-    revision: u64,
-    allowed_models: Vec<String>,
+pub(crate) struct Policy {
+    pub(crate) revision: u64,
+    pub(crate) allowed_models: Vec<String>,
 }
-fn read_policy(path: &std::path::Path) -> Result<Policy, &'static str> {
+pub(crate) fn read_policy(path: &std::path::Path) -> Result<Policy, &'static str> {
     match std::fs::read(path) {
         Ok(bytes) => serde_json::from_slice(&bytes).map_err(|_| "policy_unavailable"),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Policy::default()),
@@ -341,7 +345,7 @@ async fn models(State(reader): State<Arc<OpenRouterReader>>) -> ApiReply {
     }
 }
 async fn policy(State(reader): State<Arc<OpenRouterReader>>) -> ApiReply {
-    match read_policy(&reader.policy_path) {
+    match effective_policy(&reader.policy_path) {
         Ok(policy) => reply(StatusCode::OK, json!(policy)),
         Err(code) => reply(StatusCode::SERVICE_UNAVAILABLE, json!({"error":code})),
     }
@@ -351,6 +355,12 @@ async fn save_policy(
     Json(requested): Json<Policy>,
 ) -> ApiReply {
     let _guard = reader.policy_lock.lock().await;
+    if reader.policy_path.with_file_name("routing.json").exists() {
+        return reply(
+            StatusCode::CONFLICT,
+            json!({"error":"use_model_preferences"}),
+        );
+    }
     let current = match read_policy(&reader.policy_path) {
         Ok(value) => value,
         Err(code) => return reply(StatusCode::SERVICE_UNAVAILABLE, json!({"error":code})),
@@ -381,6 +391,16 @@ async fn save_policy(
 #[cfg(test)]
 mod policy_tests {
     use super::*;
+    #[test]
+    fn tiered_pricing_preserves_models_and_nested_cost_metadata() {
+        let pricing = json!({"prompt":"0.0000002","completion":"0.0000012",
+            "overrides":[{"min_prompt_tokens":272000,"prompt":"0.0000004"}]});
+        let models = catalog(json!({"data":[{"id":"openai/gpt-5.6-luna",
+            "name":"GPT-5.6 Luna","context_length":1050000,"pricing":pricing}]}))
+        .unwrap();
+        assert_eq!(models.len(), 1);
+        assert_eq!(json!(models[0].pricing), pricing);
+    }
     #[test]
     fn whitelist_allows_paid_and_free_but_rejects_unknown_and_stale_writes() {
         let models = catalog(json!({"data":[
@@ -508,28 +528,48 @@ mod route_tests {
     }
 }
 
-
 fn normalize_balance(value: Value) -> Result<Value, &'static str> {
     let data = value.get("data").ok_or("invalid_response")?;
-    let credits = data.get("total_credits").and_then(Value::as_f64).filter(|v| v.is_finite() && *v >= 0.0).ok_or("invalid_response")?;
-    let usage = data.get("total_usage").and_then(Value::as_f64).filter(|v| v.is_finite() && *v >= 0.0).ok_or("invalid_response")?;
+    let credits = data
+        .get("total_credits")
+        .and_then(Value::as_f64)
+        .filter(|v| v.is_finite() && *v >= 0.0)
+        .ok_or("invalid_response")?;
+    let usage = data
+        .get("total_usage")
+        .and_then(Value::as_f64)
+        .filter(|v| v.is_finite() && *v >= 0.0)
+        .ok_or("invalid_response")?;
     let remaining = credits - usage;
-    if !remaining.is_finite() { return Err("invalid_response"); }
-    Ok(json!({"state":"available","balance_usd":remaining,"checked_at_ms":SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64}))
+    if !remaining.is_finite() {
+        return Err("invalid_response");
+    }
+    Ok(
+        json!({"state":"available","balance_usd":remaining,"checked_at_ms":SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64}),
+    )
 }
 impl OpenRouterReader {
     async fn balance(&self) -> Result<Value, &'static str> {
         let path = self.path.with_file_name("management.json");
         let bytes = match std::fs::read(path) {
             Ok(bytes) => bytes,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => std::fs::read(&self.path).map_err(|_| "not_configured")?,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                std::fs::read(&self.path).map_err(|_| "not_configured")?
+            }
             Err(_) => return Err("invalid_credentials"),
         };
-        if bytes.len() > 1024 { return Err("invalid_credentials"); }
-        let credentials: Credentials = serde_json::from_slice(&bytes).map_err(|_| "invalid_credentials")?;
-        let mut response = self.client.get("https://openrouter.ai/api/v1/credits")
+        if bytes.len() > 1024 {
+            return Err("invalid_credentials");
+        }
+        let credentials: Credentials =
+            serde_json::from_slice(&bytes).map_err(|_| "invalid_credentials")?;
+        let mut response = self
+            .client
+            .get("https://openrouter.ai/api/v1/credits")
             .header(header::AUTHORIZATION, authorization(&credentials.api_key)?)
-            .send().await.map_err(|_| "unavailable")?;
+            .send()
+            .await
+            .map_err(|_| "unavailable")?;
         match response.status().as_u16() {
             200 => (),
             401 | 403 => return Err("management_key_required"),
@@ -538,30 +578,162 @@ impl OpenRouterReader {
         }
         let mut bytes = Vec::new();
         while let Some(chunk) = response.chunk().await.map_err(|_| "unavailable")? {
-            if bytes.len() + chunk.len() > 64_000 { return Err("invalid_response"); }
+            if bytes.len() + chunk.len() > 64_000 {
+                return Err("invalid_response");
+            }
             bytes.extend_from_slice(&chunk);
         }
         normalize_balance(serde_json::from_slice(&bytes).map_err(|_| "invalid_response")?)
     }
 }
-async fn balance(State(reader): State<Arc<OpenRouterReader>>) -> ([(header::HeaderName, &'static str); 1], Json<Value>) {
+async fn balance(
+    State(reader): State<Arc<OpenRouterReader>>,
+) -> ([(header::HeaderName, &'static str); 1], Json<Value>) {
     let mut cache = reader.balance_cache.lock().await;
     if let Some((at, body)) = &*cache {
-        if at.elapsed() < Duration::from_secs(60) { return ([(header::CACHE_CONTROL,"no-store")],Json(body.clone())); }
+        if at.elapsed() < Duration::from_secs(60) {
+            return ([(header::CACHE_CONTROL, "no-store")], Json(body.clone()));
+        }
     }
-    let body = reader.balance().await.unwrap_or_else(|state|json!({"state":state}));
-    *cache = Some((Instant::now(),body.clone()));
-    ([(header::CACHE_CONTROL,"no-store")],Json(body))
+    let body = reader
+        .balance()
+        .await
+        .unwrap_or_else(|state| json!({"state":state}));
+    *cache = Some((Instant::now(), body.clone()));
+    ([(header::CACHE_CONTROL, "no-store")], Json(body))
 }
 #[cfg(test)]
 mod balance_tests {
     use super::*;
     #[test]
     fn balance_uses_account_totals_and_preserves_zero_and_negative() {
-        assert_eq!(normalize_balance(json!({"data":{"total_credits":100.5,"total_usage":25.75}})).unwrap()["balance_usd"],74.75);
-        assert_eq!(normalize_balance(json!({"data":{"total_credits":0,"total_usage":0}})).unwrap()["balance_usd"],0.0);
-        assert_eq!(normalize_balance(json!({"data":{"total_credits":1,"total_usage":2}})).unwrap()["balance_usd"],-1.0);
+        assert_eq!(
+            normalize_balance(json!({"data":{"total_credits":100.5,"total_usage":25.75}})).unwrap()
+                ["balance_usd"],
+            74.75
+        );
+        assert_eq!(
+            normalize_balance(json!({"data":{"total_credits":0,"total_usage":0}})).unwrap()
+                ["balance_usd"],
+            0.0
+        );
+        assert_eq!(
+            normalize_balance(json!({"data":{"total_credits":1,"total_usage":2}})).unwrap()
+                ["balance_usd"],
+            -1.0
+        );
         assert!(normalize_balance(json!({"data":{"usage":0,"limit_remaining":100}})).is_err());
-        assert!(normalize_balance(json!({"data":{"total_credits":100,"total_usage":null}})).is_err());
+        assert!(
+            normalize_balance(json!({"data":{"total_credits":100,"total_usage":null}})).is_err()
+        );
     }
+}
+
+pub(crate) fn effective_policy(path: &std::path::Path) -> Result<Policy, &'static str> {
+    match crate::model_routing::stored(&path.with_file_name("routing.json"))? {
+        Some(policy) => Ok(crate::model_routing::provider_policy(&policy, "openrouter")),
+        None => read_policy(path),
+    }
+}
+async fn routing(State(reader): State<Arc<OpenRouterReader>>) -> ApiReply {
+    match crate::model_routing::read(
+        &reader.policy_path.with_file_name("routing.json"),
+        &reader.policy_path,
+        std::path::Path::new("/var/lib/cursor-policy/policy.json"),
+    ) {
+        Ok(policy) => reply(StatusCode::OK, json!(policy)),
+        Err(code) => reply(StatusCode::SERVICE_UNAVAILABLE, json!({"error":code})),
+    }
+}
+async fn save_routing(
+    State(reader): State<Arc<OpenRouterReader>>,
+    Json(requested): Json<crate::model_routing::RoutingPolicy>,
+) -> ApiReply {
+    let _guard = reader.policy_lock.lock().await;
+    let path = reader.policy_path.with_file_name("routing.json");
+    let current = match crate::model_routing::read(
+        &path,
+        &reader.policy_path,
+        std::path::Path::new("/var/lib/cursor-policy/policy.json"),
+    ) {
+        Ok(p) => p,
+        Err(code) => return reply(StatusCode::SERVICE_UNAVAILABLE, json!({"error":code})),
+    };
+    let (or_models, cursor_models) = tokio::join!(reader.models(), routing_cursor_models());
+    let mut available: Vec<crate::model_routing::Route> = or_models
+        .unwrap_or_default()
+        .into_iter()
+        .map(|m| crate::model_routing::Route {
+            provider: "openrouter".into(),
+            model_id: m.id,
+        })
+        .collect();
+    available.extend(cursor_models.unwrap_or_default());
+    let latest = match crate::model_routing::read(
+        &path,
+        &reader.policy_path,
+        std::path::Path::new("/var/lib/cursor-policy/policy.json"),
+    ) {
+        Ok(p) => p,
+        Err(code) => return reply(StatusCode::SERVICE_UNAVAILABLE, json!({"error":code})),
+    };
+    if latest != current {
+        return reply(
+            StatusCode::CONFLICT,
+            json!({"error":"routing_policy_conflict"}),
+        );
+    }
+    let next = match crate::model_routing::validate(&current, requested, &available) {
+        Ok(p) => p,
+        Err(code) => {
+            return reply(
+                if code == "routing_policy_conflict" {
+                    StatusCode::CONFLICT
+                } else {
+                    StatusCode::BAD_REQUEST
+                },
+                json!({"error":code}),
+            )
+        }
+    };
+    match crate::model_routing::write(&path, &next) {
+        Ok(()) => reply(StatusCode::OK, json!(next)),
+        Err(code) => reply(StatusCode::SERVICE_UNAVAILABLE, json!({"error":code})),
+    }
+}
+
+async fn routing_cursor_models() -> Result<Vec<crate::model_routing::Route>, ()> {
+    let client = Client::builder()
+        .no_proxy()
+        .redirect(reqwest::redirect::Policy::none())
+        .connect_timeout(Duration::from_secs(2))
+        .timeout(Duration::from_secs(9))
+        .build()
+        .map_err(|_| ())?;
+    let mut response = client
+        .get("http://cursor-connector:8084/cursor/models")
+        .send()
+        .await
+        .map_err(|_| ())?;
+    if !response.status().is_success() {
+        return Err(());
+    }
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response.chunk().await.map_err(|_| ())? {
+        if bytes.len() + chunk.len() > 1_000_000 {
+            return Err(());
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+    let value: Value = serde_json::from_slice(&bytes).map_err(|_| ())?;
+    Ok(value["models"]
+        .as_array()
+        .ok_or(())?
+        .iter()
+        .filter_map(|m| m["id"].as_str())
+        .map(|id| crate::model_routing::Route {
+            provider: "cursor".into(),
+            model_id: id.into(),
+        })
+        .collect())
 }

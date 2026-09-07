@@ -39,7 +39,8 @@ fn envelope(state: &str) -> Value {
 }
 fn normalize(value: Value) -> Result<Value, &'static str> {
     if !value.get("apiKeyName").is_some_and(Value::is_string)
-        || !value.get("createdAt").is_some_and(Value::is_string) {
+        || !value.get("createdAt").is_some_and(Value::is_string)
+    {
         return Err("invalid_response");
     }
     let mut body = envelope("connected");
@@ -145,23 +146,42 @@ struct Model {
     name: String,
 }
 fn catalog(value: Value) -> Result<Vec<Model>, &'static str> {
-    let rows = value.get("items").and_then(Value::as_array).ok_or("invalid_catalog")?;
+    let rows = value
+        .get("items")
+        .and_then(Value::as_array)
+        .ok_or("invalid_catalog")?;
     let mut models = Vec::new();
     for row in rows {
-        let id = row.get("id").and_then(Value::as_str).filter(|v| !v.is_empty() && v.len() <= 256).ok_or("invalid_catalog")?;
-        let name = row.get("displayName").and_then(Value::as_str).filter(|v| !v.is_empty()).ok_or("invalid_catalog")?;
-        if ["auto", "auto-smart", "default"].contains(&id) { continue; }
-        models.push(Model { id: id.into(), name: name.into() });
+        let id = row
+            .get("id")
+            .and_then(Value::as_str)
+            .filter(|v| !v.is_empty() && v.len() <= 256)
+            .ok_or("invalid_catalog")?;
+        let name = row
+            .get("displayName")
+            .and_then(Value::as_str)
+            .filter(|v| !v.is_empty())
+            .ok_or("invalid_catalog")?;
+        if ["auto", "auto-smart", "default"].contains(&id) {
+            continue;
+        }
+        models.push(Model {
+            id: id.into(),
+            name: name.into(),
+        });
     }
-    models.sort_by(|a,b| a.id.cmp(&b.id));
-    models.dedup_by(|a,b| a.id == b.id);
+    models.sort_by(|a, b| a.id.cmp(&b.id));
+    models.dedup_by(|a, b| a.id == b.id);
     Ok(models)
 }
 impl CursorReader {
     async fn models(&self) -> Result<Vec<Model>, &'static str> {
         let bytes = std::fs::read(&self.path).map_err(|_| "not_configured")?;
-        if bytes.len() > 1024 { return Err("invalid_credentials"); }
-        let credentials: Credentials = serde_json::from_slice(&bytes).map_err(|_| "invalid_credentials")?;
+        if bytes.len() > 1024 {
+            return Err("invalid_credentials");
+        }
+        let credentials: Credentials =
+            serde_json::from_slice(&bytes).map_err(|_| "invalid_credentials")?;
         let credential_bytes = bytes.clone();
         let auth = authorization(&credentials.api_key)?;
         let mut cache = self.models_cache.lock().await;
@@ -244,6 +264,17 @@ async fn models(State(reader): State<Arc<CursorReader>>) -> ApiReply {
     }
 }
 async fn policy(State(reader): State<Arc<CursorReader>>) -> ApiReply {
+    match crate::model_routing::stored(std::path::Path::new("/var/lib/routing-policy/routing.json"))
+    {
+        Ok(Some(policy)) => {
+            return reply(
+                StatusCode::OK,
+                json!(crate::model_routing::provider_policy(&policy, "cursor")),
+            )
+        }
+        Err(code) => return reply(StatusCode::SERVICE_UNAVAILABLE, json!({"error":code})),
+        Ok(None) => {}
+    }
     match read_policy(&reader.policy_path) {
         Ok(policy) => reply(StatusCode::OK, json!(policy)),
         Err(code) => reply(StatusCode::SERVICE_UNAVAILABLE, json!({"error":code})),
@@ -254,6 +285,12 @@ async fn save_policy(
     Json(requested): Json<Policy>,
 ) -> ApiReply {
     let _guard = reader.policy_lock.lock().await;
+    if std::path::Path::new("/var/lib/routing-policy/routing.json").exists() {
+        return reply(
+            StatusCode::CONFLICT,
+            json!({"error":"use_model_preferences"}),
+        );
+    }
     let current = match read_policy(&reader.policy_path) {
         Ok(value) => value,
         Err(code) => return reply(StatusCode::SERVICE_UNAVAILABLE, json!({"error":code})),
@@ -281,45 +318,102 @@ async fn save_policy(
     reply(StatusCode::OK, json!(next))
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
     fn validates_and_projects_cursor_metadata() {
         let body=normalize(json!({"apiKeyName":"private","createdAt":"2026-09-06","userEmail":"private@example.com"})).unwrap();
-        assert_eq!(body["state"],"connected");
+        assert_eq!(body["state"], "connected");
         assert!(!body.to_string().contains("private"));
         assert!(normalize(json!({"data":{"usage":0}})).is_err());
         assert!(authorization("bad\r\nheader").is_err());
         assert!(authorization("crsr_test-key").unwrap().is_sensitive());
         let models=catalog(json!({"items":[{"id":"composer-2","displayName":"Composer"},{"id":"auto","displayName":"Auto"}]})).unwrap();
-        assert_eq!(models.len(),1);
+        assert_eq!(models.len(), 1);
         assert!(catalog(json!({"items":[{"id":"broken"}]})).is_err());
-        assert!(next_policy(&Policy::default(),Policy{revision:0,allowed_models:vec!["unknown".into()]},&models).is_err());
-        assert!(next_policy(&Policy::default(),Policy{revision:1,allowed_models:vec![]},&models).is_err());
+        assert!(next_policy(
+            &Policy::default(),
+            Policy {
+                revision: 0,
+                allowed_models: vec!["unknown".into()]
+            },
+            &models
+        )
+        .is_err());
+        assert!(next_policy(
+            &Policy::default(),
+            Policy {
+                revision: 1,
+                allowed_models: vec![]
+            },
+            &models
+        )
+        .is_err());
     }
     #[tokio::test]
     async fn routes_persist_policy_and_never_launch_agents() {
-        let dir=std::env::temp_dir().join(format!("cursor-test-{}",SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+        let dir = std::env::temp_dir().join(format!(
+            "cursor-test-{}",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
-        let reader=Arc::new(CursorReader::new(dir.join("key.json"),dir.join("policy.json")).unwrap());
-        assert!(matches!(reader.check().await,Err("not_configured")));
-        let credentials=br#"{"api_key":"synthetic-test"}"#.to_vec();
-        std::fs::write(&reader.path,&credentials).unwrap();
-        *reader.models_cache.lock().await=Some((Instant::now(),vec![Model{id:"composer-2".into(),name:"Composer".into()}],credentials));
-        let listener=tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let address=listener.local_addr().unwrap();
-        let server=tokio::spawn(async move {axum::serve(listener,router(reader)).await.unwrap()});
-        let client=Client::builder().no_proxy().build().unwrap();
-        let url=format!("http://{address}/cursor/policy");
-        let response=client.put(&url).json(&json!({"revision":0,"allowed_models":["composer-2"]})).send().await.unwrap();
-        assert_eq!(response.status(),200);
-        assert_eq!(response.headers()[header::CACHE_CONTROL],"no-store");
-        assert_eq!(read_policy(&dir.join("policy.json")).unwrap().allowed_models,vec!["composer-2"]);
-        assert_eq!(client.put(&url).json(&json!({"revision":0,"allowed_models":[]})).send().await.unwrap().status(),409);
-        for route in ["/v1/agents","/cursor/agents","/chat/completions"] {
-            assert_eq!(client.post(format!("http://{address}{route}")).send().await.unwrap().status(),404);
+        let reader =
+            Arc::new(CursorReader::new(dir.join("key.json"), dir.join("policy.json")).unwrap());
+        assert!(matches!(reader.check().await, Err("not_configured")));
+        let credentials = br#"{"api_key":"synthetic-test"}"#.to_vec();
+        std::fs::write(&reader.path, &credentials).unwrap();
+        *reader.models_cache.lock().await = Some((
+            Instant::now(),
+            vec![Model {
+                id: "composer-2".into(),
+                name: "Composer".into(),
+            }],
+            credentials,
+        ));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server =
+            tokio::spawn(async move { axum::serve(listener, router(reader)).await.unwrap() });
+        let client = Client::builder().no_proxy().build().unwrap();
+        let url = format!("http://{address}/cursor/policy");
+        let response = client
+            .put(&url)
+            .json(&json!({"revision":0,"allowed_models":["composer-2"]}))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(response.status(), 200);
+        assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+        assert_eq!(
+            read_policy(&dir.join("policy.json"))
+                .unwrap()
+                .allowed_models,
+            vec!["composer-2"]
+        );
+        assert_eq!(
+            client
+                .put(&url)
+                .json(&json!({"revision":0,"allowed_models":[]}))
+                .send()
+                .await
+                .unwrap()
+                .status(),
+            409
+        );
+        for route in ["/v1/agents", "/cursor/agents", "/chat/completions"] {
+            assert_eq!(
+                client
+                    .post(format!("http://{address}{route}"))
+                    .send()
+                    .await
+                    .unwrap()
+                    .status(),
+                404
+            );
         }
         server.abort();
         std::fs::remove_dir_all(dir).unwrap();

@@ -1,7 +1,9 @@
+import { parseRouting } from "./model-routing";
 import { parseStatus as parseCursorStatus, parseModels as parseCursorModels, parsePolicy as parseCursorPolicy } from "./cursor";
 import { parseStatus, parseModels, parsePolicy, parseBalance } from "./openrouter";
 import { queryOptions } from "@tanstack/react-query";
 import { parsePaper } from "../app/paper/model";
+import { parseRuns } from "../app/incubator/model";
 import { parseStage1Surfaces } from "../app/surfaces/stage1-surfaces-model";
 
 export async function getJson(path: string, signal: AbortSignal): Promise<unknown> {
@@ -14,6 +16,7 @@ export const paperQuery = queryOptions({
   queryKey: ["api", "paper", "account"] as const,
   queryFn: async ({ signal }) => parsePaper(await getJson("/api/paper", signal)),
 });
+export const incubatorQuery = queryOptions({ queryKey:["api","incubator","runs"] as const, queryFn:async ({signal}) => parseRuns(await getJson("/api/incubator/runs",signal)), refetchInterval:5_000 });
 export const surfacesQuery = queryOptions({
   queryKey: ["api", "research", "surfaces"] as const,
   queryFn: async ({ signal }) => parseStage1Surfaces(await getJson("/api/surfaces", signal)),
@@ -28,3 +31,5 @@ export const cursorModelsQuery = queryOptions({ queryKey: ["api","cursor","model
 export const cursorPolicyQuery = queryOptions({ queryKey: ["api","cursor","policy"] as const, queryFn: async ({signal}) => parseCursorPolicy(await getJson("/api/cursor/policy",signal)) });
 
 export const openrouterBalanceQuery = queryOptions({queryKey:["api","openrouter","balance"] as const,staleTime:60_000,queryFn:async ({signal})=>parseBalance(await getJson("/api/openrouter/balance",signal))});
+
+export const modelRoutingQuery = queryOptions({queryKey:["api","models","routing"] as const,queryFn:async({signal})=>parseRouting(await getJson("/api/openrouter/routing",signal))});

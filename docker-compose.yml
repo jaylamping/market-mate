@@ -93,6 +93,7 @@ services:
     volumes:
       - openrouter-secrets:/var/lib/openrouter:ro
       - openrouter-policy:/var/lib/model-policy
+      - cursor-policy:/var/lib/cursor-policy:ro
     restart: unless-stopped
     read_only: true
     cap_drop: [ALL]
@@ -132,6 +133,7 @@ services:
     volumes:
       - cursor-secrets:/var/lib/cursor:ro
       - cursor-policy:/var/lib/model-policy
+      - openrouter-policy:/var/lib/routing-policy:ro
     restart: unless-stopped
     read_only: true
     cap_drop: [ALL]
@@ -151,6 +153,24 @@ services:
     entrypoint: ["sh", "-ec"]
     command:
       - 'umask 077; cat > /var/lib/cursor/credentials.json.new; chown 10001:10001 /var/lib/cursor/credentials.json.new; chmod 600 /var/lib/cursor/credentials.json.new; mv /var/lib/cursor/credentials.json.new /var/lib/cursor/credentials.json'
+
+  research-agent:
+    profiles: [research]
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    entrypoint: ["research-agent"]
+    environment:
+      DATABASE_URL: postgres://incubator_runner:local-poc-only@postgres:5432/market_mate
+    volumes:
+      - openrouter-secrets:/var/lib/openrouter:ro
+      - openrouter-policy:/var/lib/model-policy:ro
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   frontend:
     build: ./frontend
