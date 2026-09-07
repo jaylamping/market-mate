@@ -150,9 +150,9 @@ export function IncubatorPage() {
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,14rem),15rem))] gap-4">{visibleRuns.map(run=><RunCard key={run.run_key} run={run} fallbacks={runs.filter(attempt=>attempt.detail.fallback_of===run.run_key)} evaluation={evaluationFor(run.run_key)} evaluationHistory={evaluations.filter(e=>e.run_key===run.run_key)}/>)}</div>
       {!!runs.length&&!visibleRuns.length&&<p className="rounded-xl border border-dashed border-border px-5 py-10 text-sm text-muted-foreground">{archiveView==="archived"?"No archived research matches this view.":"No current research matches this view."}</p>}
-      <CampaignBacklog campaign={campaign.data}/>
       {!!query.data?.length && <p className="pb-6 pt-6 text-xs leading-relaxed text-muted-foreground">Showing {visibleRuns.length} of {scopedRuns.length} {archiveView==="archived"?"archived research tickets · Latest 100 archived tickets.":"current assignments · All active work and the latest 100 finished or restored tickets."}</p>}
       <Experiments evaluations={evaluations}/>
+      <CampaignBacklog campaign={campaign.data}/>
     </main>
   </div>;
 }

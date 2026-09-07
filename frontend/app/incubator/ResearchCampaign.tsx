@@ -2,7 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Dialog, Tabs } from "radix-ui";
-import { ArrowUpRight, Plus, X } from "lucide-react";
+import { ArrowUpRight, LoaderCircle, Plus, X } from "lucide-react";
 import {modelRoutingQuery} from "@/lib/api-queries";
 import { Button } from "@/components/ui/button";
 import { ProgressFooter } from "./ProgressFooter";
@@ -116,7 +116,9 @@ export function ResearchCampaign() {
 }
 
 export function CampaignDialog() {
- return <Dialog.Root><Dialog.Trigger asChild><Button className="min-h-11" variant="outline"><Plus aria-hidden="true"/>Campaign</Button></Dialog.Trigger>
+ const campaign = useQuery({queryKey: researchCampaignQueryKey, queryFn: fetchResearchCampaign, refetchInterval: 10000});
+ const active = campaign.data?.enabled === true;
+ return <Dialog.Root><Dialog.Trigger asChild><Button className="min-h-11" variant="outline" aria-label={active ? "Campaign generating" : "Campaign"}>{active?<LoaderCircle className="animate-spin" aria-hidden="true"/>:<Plus aria-hidden="true"/>}{active?"Campaign generating":"Campaign"}</Button></Dialog.Trigger>
   <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-black/60"/>
    <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-border bg-background p-6 text-foreground shadow-xl">
     <Dialog.Title className="pr-10 text-xl font-semibold">Campaign controls</Dialog.Title>

@@ -27,6 +27,10 @@ test("fresh empty backlog renders the independent Ticket Creator picker",()=>{
  client.clear();
 });
 test("campaign controls stay inside the dialog until opened",()=>{
- const html=renderToStaticMarkup(<CampaignDialog/>);
+ const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});
+ const html=renderToStaticMarkup(<QueryClientProvider client={client}><CampaignDialog/></QueryClientProvider>);
  assert.match(html,/Campaign/); assert.doesNotMatch(html,/Ticket Creator model/);
+ client.setQueryData(["research-campaign"],{enabled:true});
+ const active=renderToStaticMarkup(<QueryClientProvider client={client}><CampaignDialog/></QueryClientProvider>);
+ assert.match(active,/Campaign generating/); assert.match(active,/animate-spin/);
 });
