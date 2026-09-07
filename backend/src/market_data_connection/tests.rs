@@ -688,13 +688,101 @@ async fn setup_and_refresh() {
             .await
             .unwrap()
     );
-    for _ in 0..3 {
-        assert!(
-            crate::incubator_experiment::tests::acquisition_tick(Value::Null)
-                .await
-                .unwrap()
-        );
-    }
+    assert!(
+        crate::incubator_experiment::tests::acquisition_tick(Value::Null)
+            .await
+            .unwrap()
+    );
+    let ready: Value = admin
+        .client
+        .query_one("SELECT read_incubator_experiment($1)", &[&recovery_id])
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(ready["status"], "ready");
+    let spec = ready["detail"]["spec"].clone();
+    let intent = json!({"request":{"model":"vendor/model:free","max_tokens":2048,"provider":{"max_price":{"prompt":0,"completion":0}}}});
+    let mut different = spec.clone();
+    different["lookback_sessions"] = json!(2);
+    admin
+        .client
+        .query_one(
+            "SELECT record_incubator_experiment_event($1,'dispatching',$2)",
+            &[&recovery_id, &intent],
+        )
+        .await
+        .unwrap();
+    admin.client.query_one("SELECT record_incubator_experiment_event($1,'needs_input',$2)", &[&recovery_id,&json!({"decision":"execute","reason":"Changed spec","question":null,"spec":different})]).await.unwrap();
+    assert!(admin
+        .client
+        .query_one("SELECT next_incubator_experiment()", &[])
+        .await
+        .unwrap()
+        .get::<_, Option<i64>>(0)
+        .is_none());
+    let rejected = admin
+        .client
+        .query_one(
+            "SELECT record_incubator_experiment_event($1,'running','{}')",
+            &[&recovery_id],
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(
+        rejected.as_db_error().unwrap().message(),
+        "spec_echo_recovery_unavailable"
+    );
+    admin
+        .client
+        .query_one(
+            "SELECT record_incubator_experiment_event($1,'answered',$2)",
+            &[
+                &recovery_id,
+                &json!({"answer":"Use only the pinned specification."}),
+            ],
+        )
+        .await
+        .unwrap();
+    admin
+        .client
+        .query_one(
+            "SELECT record_incubator_experiment_event($1,'dispatching',$2)",
+            &[&recovery_id, &intent],
+        )
+        .await
+        .unwrap();
+    admin.client.query_one("SELECT record_incubator_experiment_event($1,'needs_input',$2)", &[&recovery_id,&json!({"decision":"execute","reason":"Run the unchanged package","question":null,"spec":spec})]).await.unwrap();
+    let inspection: Value = admin.client.query_one("SELECT jsonb_build_object('eligible',incubator_identical_spec_echo_pending($1),'status',read_incubator_experiment($1)->'status','active',market_data_research_active($1))", &[&recovery_id]).await.unwrap().get(0);
+    assert_eq!(inspection["eligible"], true, "{inspection}");
+
+    assert!(
+        crate::incubator_experiment::tests::acquisition_tick(Value::Null)
+            .await
+            .unwrap()
+    );
+    let running: Value = admin
+        .client
+        .query_one("SELECT read_incubator_experiment($1)", &[&recovery_id])
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(running["status"], "running");
+    assert_eq!(running["detail"]["accepted_identical_spec_echo"], spec);
+    assert!(running["detail"]["spec"].is_null());
+    assert_eq!(
+        running["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|e| e["state"] == "dispatching")
+            .count(),
+        2
+    );
+    assert!(
+        crate::incubator_experiment::tests::acquisition_tick(Value::Null)
+            .await
+            .unwrap()
+    );
     let recovered: Value = admin
         .client
         .query_one("SELECT read_incubator_experiment($1)", &[&recovery_id])
