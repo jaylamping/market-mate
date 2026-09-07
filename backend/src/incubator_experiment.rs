@@ -291,6 +291,20 @@ async fn ready(
     })();
     match validation{Ok(metadata)=>{let mut d=detail;d["dataset_metadata"]=metadata;record(db,id,"ready",d).await},Err(e)=>record(db,id,"needs_input",json!({"reason":e,"question":"The pinned dataset does not meet the diagnostic contract. Create a new experiment with a compatible dataset."})).await}
 }
+fn execution_authorized(job: &Value, detail: &Value) -> bool {
+    detail["decision"] == "execute"
+        && detail["question"].is_null()
+        && event(job, "ready").is_some_and(|ready| {
+            detail["spec"].is_null() || detail["spec"] == ready["detail"]["spec"]
+        })
+}
+fn execution_detail(mut detail: Value) -> Value {
+    if !detail["spec"].is_null() {
+        detail["accepted_identical_spec_echo"] = detail["spec"].clone();
+        detail["spec"] = Value::Null;
+    }
+    detail
+}
 async fn tick(models: &dyn Models) -> Result<bool, String> {
     let db = database().await.map_err(|_| "database unavailable")?;
     let locked: bool = db
@@ -339,6 +353,16 @@ async fn tick(models: &dyn Models) -> Result<bool, String> {
     }
     if state == "awaiting_data" && !job["experiment"]["snapshot_id"].is_null() {
         ready(&db.client, id, &job, job["experiment"]["detail"].clone()).await?;
+        return Ok(true);
+    }
+    if state == "needs_input" && execution_authorized(&job, &job["experiment"]["detail"]) {
+        record(
+            &db.client,
+            id,
+            "running",
+            execution_detail(job["experiment"]["detail"].clone()),
+        )
+        .await?;
         return Ok(true);
     }
     if state == "running" {
@@ -431,11 +455,8 @@ async fn tick(models: &dyn Models) -> Result<bool, String> {
         return Ok(true);
     }
     if role == "experiment" {
-        if detail["decision"] == "execute"
-            && detail["spec"].is_null()
-            && detail["question"].is_null()
-        {
-            record(&db.client, id, "running", detail).await?
+        if execution_authorized(&job, &detail) {
+            record(&db.client, id, "running", execution_detail(detail)).await?
         } else {
             record(&db.client, id, "needs_input", detail).await?
         }
@@ -594,6 +615,22 @@ pub(crate) mod tests {
         assert_eq!(completion(response.clone(), model).0, "failed");
         response["usage"]["cost"] = json!(1);
         assert_eq!(completion(response, model).0, "indeterminate");
+    }
+    #[test]
+    fn execute_accepts_only_null_or_identical_registered_spec() {
+        let job = json!({"experiment":{"events":[{"state":"ready","detail":{"spec":spec()}}]}});
+        let mut detail = json!({"decision":"execute","question":null,"spec":spec()});
+        assert!(execution_authorized(&job, &detail));
+        assert!(execution_detail(detail.clone())["spec"].is_null());
+        detail["spec"]["lookback_sessions"] = json!(2);
+        assert!(!execution_authorized(&job, &detail));
+        detail["spec"] = Value::Null;
+        assert!(execution_authorized(&job, &detail));
+        detail["question"] = json!("Confirm a change?");
+        assert!(!execution_authorized(&job, &detail));
+        detail["question"] = Value::Null;
+        detail["decision"] = json!("ready");
+        assert!(!execution_authorized(&job, &detail));
     }
     #[derive(Clone, Default)]
     struct FakeModels(std::sync::Arc<std::sync::Mutex<Vec<Value>>>);

@@ -27,21 +27,24 @@
     "revisit_owner_answer_to_completion",
     "confirmed_setup_retry_once",
     "retry_download_to_completion",
-    "retry_archive_and_budget_fences"
+    "retry_archive_and_budget_fences",
+    "identical_execute_spec_echo_recovery",
+    "changed_execute_spec_rejected"
   ],
   "source_sha256": {
+    "db/migrations/0073_experiment_spec_echo.sql": "1a0af42a002ece30886cdd4b5d91e05d87148e45af91dbfc086083c3a31343a5",
     "db/migrations/0072_setup_response_recovery.sql": "e668d7e2a0f9fd07efc7404ede1d8fc5e4bca7d84fdb2c9bd151aff5365743b2",
     "db/fixtures/setup_response_recovery_probe.sql": "c628a476cf3bfea6614ce87ad4a1cf47dba9e81f21579a558d08b45bcc7ce451",
     "backend/src/openrouter_request.rs": "f9ee6820f92f8b96c791503d0c7d400fc8e26ae81fc607efe1008b344022e3e7",
     "db/migrations/0071_market_data_setup_revisit.sql": "42951c044140edc900c2d34202e77155cf7c121a6ab503f08867254c1c05c3a5",
     "db/fixtures/market_data_setup_revisit_probe.sql": "ec8eaaa068d8d656f6fea3f4623372ce9afe959c626811b689a4e91cd1c0b7d8",
-    "backend/src/incubator_experiment.rs": "67e84068de89f66ee2a36a351f961ffed8af5c5271181b6f6fe8fc2061f398fd",
+    "backend/src/incubator_experiment.rs": "af6570502b3574e3c95c7efde95739110c7769976986fe89e03fdfd344a24775",
     "db/migrations/0067_market_data_setup_refresh.sql": "85696548553458b2faa070a2aa9e5f2101ef22ab18268fcb196a09c33d12a2f6",
     "db/fixtures/wu63_market_data_setup_probe.sql": "dae8bcae3aa52893db370c68e08ab6a1d3042207cdbf7b809e8a602db0acfa2c",
     "backend/src/market_data_connection.rs": "7b9d475412cac2523d7eed610a780b90884e12a4cadb95a967d0337aa3026677",
-    "backend/src/market_data_connection/tests.rs": "96a9b911075426d1b742a064cfe062b9b2367770f3f5970f1c8bab1956c3c83b",
+    "backend/src/market_data_connection/tests.rs": "9ce74887710757f035063d45ec6127c4341bc81538a981a8dfbf7dd032465bac",
     "backend/src/market_data_acquisition.rs": "def91930345d25b96b7eb912177e5e4a95aed1150b4aa060e66fae0337549a19",
-    "scripts/wu63_market_data_test.sh": "0c28b2fc49cda9e08b338dd955e26d2f2b1a729ab4abf21272c7c0becd1983fa"
+    "scripts/wu63_market_data_test.sh": "908d48ce34ad8a4373e1acddf629c2e4756f11c190878b05105d0a765341c5d0"
   },
   "live_provider_tested": false
 }
