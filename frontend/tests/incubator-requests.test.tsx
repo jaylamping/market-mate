@@ -20,6 +20,9 @@ test("card timeline and detailed timestamps reflect persisted stages and never c
  assert.match(renderToStaticMarkup(<WorkflowTimeline run={run}/>),/dateTime="2026-09-07T01:00:01Z"/);
  assert.match(renderToStaticMarkup(<WorkflowTimeline run={{...run,state:"failed"}}/>),/Stopped · Failed/);
  assert.doesNotMatch(renderToStaticMarkup(<WorkflowTimeline run={{...run,state:"failed"}}/>),/aria-current/);
+ const failed=renderToStaticMarkup(<WorkflowTimeline run={{...run,state:"failed"}} compact/>);
+ assert.match(failed,/Preparing: Failed/);assert.match(failed,/bg-destructive/);assert.doesNotMatch(failed,/Stopped/);
+ assert.equal((failed.match(/<li /g)??[]).length,4);assert.match(failed,/h-9/);
  assert.equal(stateLabel({...run,state:"admitted"}),"Assigned");
 });
 test("assignment mutations reject foreign origins and oversized requests before forwarding",async()=>{

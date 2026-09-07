@@ -223,3 +223,60 @@ The internal `incubator-requests` service (8086, no published port) uses the res
 The page subscribes to `/api/incubator/assignments/stream`. The server checks persisted workflow state every second and pushes changed snapshots, including a fresh snapshot on reconnect. All active assignments and the latest 100 finished runs remain visible. Card footers show **Assigned → Preparing → Research → Ready**; the upper-right modal timeline shows the full labels and timestamps. Failures and uncertain outcomes are explicit stop states. The report retains the full event history and original provenance.
 
 Run `scripts/incubator_manual_requests_test.sh` for isolated database, restricted-role, HTTP idempotency, startup queue recovery, deterministic semantic checking, between-batch approval revocation, and SSE acceptance. Results are saved in `evidence/incubator-manual-requests/acceptance.json`. The original Incubator acceptance script remains required for CLI, fallback, and conversation regressions.
+
+
+## Research evaluation and experiment tickets
+
+Incubator separates Research from Experiments. A completed report, including an
+owner-applied plan revision, queues one advisory evaluation for that exact
+revision. The configured default model performs the evaluation; the original
+research model answers clarification questions. These are bounded phases within
+the original research assignment, not new supervisory roles or cross-assignment
+messages. They confer no independent-evaluation certification. Briefs, pinned
+reports and phase answers remain untrusted Task Memory.
+
+The evaluator returns advance, refine, close, or a specific clarification question.
+Two agent clarification rounds are allowed. A repeated normalized question or
+exhausted allowance exposes Needs your input. One recorded owner answer can resume
+evaluation; the overall limit is six model calls per report revision. Further work
+requires discussing and applying a revised plan through the existing owner chat.
+An answer does not overwrite the report. A later revision supersedes the earlier
+evaluation, and an in-flight result for an old revision cannot create a ticket.
+
+An advance result atomically creates one linked experiment planning ticket with
+the exact research revision and decision. It is always Awaiting setup: there is
+no experiment runner, data entitlement admission, preregistration, empirical result,
+or trading authority in this slice. Future experiment agents must use admitted
+artifact references and Assignment Handoffs; this phase transcript is not a
+cross-assignment communication capability.
+
+The persistent worker in incubator-requests discovers completed reports on startup
+and while running. It rechecks the approved free model and zero-price restrictions
+before each call and stores the exact request and preflight metadata. A recorded
+intent without a result becomes outcome unknown after worker recovery and is never
+resent. Failed preparation or provider responses remain visible, with no automatic
+retry. Another revised research plan creates a new evaluation; it cannot alter an
+existing experiment ticket. Live snapshots update both sections and open details.
+
+Cards show recorded origin: You for manual submissions, Agent for automatic
+fallbacks and experiment tickets, and Local runner for earlier CLI runs. Footers
+share a fixed-height structure. Failure replaces the affected stage label and bar;
+active work uses moving diagonal stripes, disabled under reduced-motion preferences.
+Waiting for setup is static and does not imply an experiment is running.
+
+Verify with `scripts/incubator_evaluation_test.sh`, the existing Incubator and
+manual-request acceptance scripts, Rust tests, and frontend tests/typecheck/build.
+The isolated evaluation suite exercises actual worker orchestration with a
+deterministic model adapter, owner-answer HTTP idempotency, SSE experiment delivery,
+and recovery without replaying an orphaned model request. It makes no live model
+calls. Evidence is stored in `evidence/incubator-evaluation/acceptance.json`.
+
+
+Experiment details use the research modal layout: a timestamped workflow beside
+the title, Report and Chat tabs, and the same strict five-field report parser and
+shared list renderer. The Report stays pinned to the evaluated revision, including
+its source link. Chat explicitly opens the originating research agent's current
+conversation while no experiment agent is assigned. Applying a research revision
+can start another research evaluation; it never rewrites the existing experiment.
+Legacy numbered list text is preserved in storage, with numbering supplied once
+by the shared renderer in both report views.

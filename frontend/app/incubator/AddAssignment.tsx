@@ -78,5 +78,5 @@ export function AddAssignment() {
     {phase==="warning"&&check?.result?<Button type="button" className="min-h-11" onClick={()=>void submit(check,true)}>{needsWarning(check)?"Create assignment anyway":"Retry submission"}</Button>:<Button type="submit" className="min-h-11" disabled={locked||!title.trim()||!text.trim()}>{phase==="submitting"?"Queueing…":phase==="checking"?"Checking…":"Check & create assignment"}</Button>}
    </div>
   </form>
- </Dialog.Content></Dialog.Portal></Dialog.Root>{notice&&<span role="status" className="max-w-64 text-xs text-muted-foreground">{notice}</span>}</>;
+ </Dialog.Content></Dialog.Portal></Dialog.Root>{notice&&<span role="status" className="order-first max-w-64 text-xs text-muted-foreground">{notice}</span>}</>;
 }

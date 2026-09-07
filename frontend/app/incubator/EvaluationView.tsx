@@ -1,0 +1,20 @@
+"use client";
+import {useState} from "react";
+import {useQueryClient} from "@tanstack/react-query";
+import {Button} from "@/components/ui/button";
+import {Badge} from "@/components/ui/badge";
+import {evaluationLabel,workflowKey,parseWorkflow,type Evaluation} from "./evaluation";
+export function EvaluationSummary({evaluation:e}:{evaluation:Evaluation}){return <span className="line-clamp-2 block w-full text-xs text-primary">{evaluationLabel[e.status]}</span>;}
+export function ReportEvaluation({evaluations,revision}:{evaluations:Evaluation[];revision:number}){const evaluation=evaluations.find(e=>e.revision===revision);return evaluation?<div className="mb-6"><EvaluationView key={evaluation.id} evaluation={evaluation}/></div>:null;}
+export function EvaluationView({evaluation:e}:{evaluation:Evaluation}){
+ const [answer,setAnswer]=useState(""),[pending,setPending]=useState(false),[error,setError]=useState("");const client=useQueryClient();
+ async function send(){setPending(true);setError("");try{const r=await fetch(`/api/incubator/workflow/${e.id}/answer`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({answer})});if(!r.ok)throw Error("The answer could not be saved. Refresh the workflow before trying again.");client.setQueryData(workflowKey,parseWorkflow(await r.json()));setAnswer("");}catch(err){setError((err as Error).message)}finally{setPending(false)}}
+ return <section className="space-y-4 rounded-xl border border-border p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-medium">Research evaluation</h3><Badge variant="outline">{evaluationLabel[e.status]}</Badge></div><p className="text-xs text-muted-foreground">Report revision {e.revision} · Advisory assessment · Clarifications do not change the report.</p>
+ <ol className="space-y-4">{e.steps.map(s=><li key={s.sequence} className="space-y-2 border-l-2 border-border pl-3"><div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground"><span>{s.kind==="evaluation"?"Research Evaluator":"Research agent"} · {s.model}</span><time>{new Date(s.created_at).toLocaleString()}</time></div>{s.state==="pending"?<p className="text-sm">{e.status==="indeterminate"?"Outcome unknown; no automatic retry.":"Waiting for response…"}</p>:<>{s.detail.reason&&<p className="whitespace-pre-wrap break-words text-sm">{s.detail.reason.replaceAll("_"," ")}</p>}{s.detail.question&&<p className="whitespace-pre-wrap break-words text-sm font-medium">Question: {s.detail.question}</p>}{s.detail.answer&&<p className="whitespace-pre-wrap break-words text-sm">{s.detail.answer}</p>}</>}</li>)}</ol>
+ {e.owner_answer&&<div className="border-l-2 border-primary pl-3"><p className="text-xs text-muted-foreground">Your clarification</p><p className="whitespace-pre-wrap break-words text-sm">{e.owner_answer}</p></div>}
+ {e.status==="needs_input"&&!e.owner_answer&&e.steps.length<6&&<div className="space-y-2"><label className="block text-sm" htmlFor={`answer-${e.id}`}>Help resolve the question above</label><textarea id={`answer-${e.id}`} value={answer} onChange={ev=>setAnswer(ev.target.value)} maxLength={6000} className="min-h-24 w-full rounded-md border border-input bg-background p-3 text-sm"/><Button disabled={pending||!answer.trim()} onClick={()=>void send()}>{pending?"Saving…":"Answer and resume evaluation"}</Button></div>}
+ {e.status==="needs_input"&&(!!e.owner_answer||e.steps.length>=6)&&<p className="text-sm text-muted-foreground">The clarification allowance is exhausted. Discuss the remaining question in Chat and apply a revised research plan to start a fresh evaluation.</p>}
+ {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
+ {e.experiment&&<a className="text-sm text-primary underline" href={`#experiment-${e.id}`}>Experiment ticket created · Awaiting setup</a>}
+ </section>
+}

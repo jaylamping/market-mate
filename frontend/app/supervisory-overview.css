@@ -246,3 +246,14 @@ h2 { font-size: 15px; font-weight: 550; line-height: 1.4; margin: 0; letter-spac
 }
 @media (max-width: 360px) { .summary-grid { grid-template-columns: 1fr; } .summary-section > p { min-height: 0; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+/* Moving stripes indicate activity, not a measured percentage. */
+.workflow-progress-active {
+  background-image: repeating-linear-gradient(120deg, transparent 0 5px, rgb(255 255 255 / .3) 5px 10px);
+  background-size: 24px 100%;
+  animation: workflow-stripes 1s linear infinite;
+}
+@keyframes workflow-stripes { to { background-position: 24px 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .workflow-progress-active { animation: none; }
+}

@@ -20,8 +20,8 @@ type ApiError = (StatusCode, Json<Value>);
 fn error(reason: &str) -> ApiError {
     (StatusCode::CONFLICT, Json(json!({"error":reason})))
 }
-struct Database {
-    client: tokio_postgres::Client,
+pub(crate) struct Database {
+    pub(crate) client: tokio_postgres::Client,
     task: JoinHandle<()>,
 }
 impl Drop for Database {
@@ -29,7 +29,7 @@ impl Drop for Database {
         self.task.abort();
     }
 }
-async fn database() -> Result<Database, ApiError> {
+pub(crate) async fn database() -> Result<Database, ApiError> {
     let url = std::env::var("DATABASE_URL").map_err(|_| error("database_unconfigured"))?;
     let (client, connection) =
         tokio::time::timeout(Duration::from_secs(5), tokio_postgres::connect(&url, NoTls))
@@ -90,7 +90,7 @@ fn validate(input: &CheckInput) -> Result<(), ApiError> {
     }
     Ok(())
 }
-fn selected_model(choice: &str) -> Result<String, ApiError> {
+pub(crate) fn selected_model(choice: &str) -> Result<String, ApiError> {
     let policy =
         crate::model_routing::stored(std::path::Path::new("/var/lib/model-policy/routing.json"))
             .map_err(error)?
@@ -455,7 +455,10 @@ async fn stream() -> impl axum::response::IntoResponse {
             let snapshot = async {
                 let db = database().await?;
                 db.client
-                    .query_one("SELECT read_incubator_agent_runs()", &[])
+                    .query_one(
+                        "SELECT read_incubator_agent_runs() || read_incubator_workflow()",
+                        &[],
+                    )
                     .await
                     .map(|r| r.get::<_, Value>(0))
                     .map_err(sql_error)
@@ -515,6 +518,7 @@ fn router_with_models(models: Arc<dyn ComparisonModels>) -> Router {
             slots: Arc::new(Semaphore::new(2)),
             models,
         }))
+        .merge(crate::incubator_evaluation::router())
 }
 #[cfg(test)]
 mod tests {

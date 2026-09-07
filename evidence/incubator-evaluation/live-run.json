@@ -1,0 +1,39 @@
+{
+  "run_key": "poc-minimax-m3-002",
+  "report_revision": 1,
+  "evaluation_id": "1",
+  "state": "advance",
+  "model": "minimax/minimax-m3:free",
+  "generation_id": "gen-1788759778-bXu1brsqbnooQi4jewUU",
+  "usage": {
+    "completion_tokens": 428,
+    "completion_tokens_details": {
+      "audio_tokens": 0,
+      "image_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "cost": 0,
+    "cost_details": {
+      "upstream_inference_completions_cost": 0,
+      "upstream_inference_cost": 0,
+      "upstream_inference_prompt_cost": 0
+    },
+    "is_byok": false,
+    "prompt_tokens": 1579,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 128,
+      "video_tokens": 0
+    },
+    "total_tokens": 2007
+  },
+  "finished_at": "2026-09-07T05:43:05.016983+00:00",
+  "experiment": {
+    "created_at": "2026-09-07T05:43:05.018354+00:00",
+    "id": "1",
+    "status": "awaiting_setup",
+    "title": "Can a simple momentum premise survive trading costs?"
+  },
+  "note": "Observed advisory planning decision; no experiment executed."
+}

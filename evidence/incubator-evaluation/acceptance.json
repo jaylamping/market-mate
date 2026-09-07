@@ -1,0 +1,24 @@
+{
+  "probe": "incubator-evaluation",
+  "checks": [
+    "completed_report_queued_once",
+    "two_clarification_rounds",
+    "owner_answer_resumes",
+    "six_call_limit",
+    "one_experiment_ticket",
+    "append_only_populated_tables",
+    "restricted_role",
+    "audit_chain",
+    "revision_pinning",
+    "superseded_result_cannot_create_ticket",
+    "old_experiment_preserved",
+    "worker_automatic_evaluation",
+    "original_model_clarification",
+    "repeated_question_escalation",
+    "owner_answer_http_idempotency",
+    "sse_experiment_creation",
+    "orphan_dispatch_no_replay"
+  ],
+  "passed": true,
+  "migration_sha256": "63482a4cd7789cd052022dc04d704553f38ad2e0693907df197df5d0896394b7"
+}
