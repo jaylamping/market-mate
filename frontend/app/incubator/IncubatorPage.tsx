@@ -25,16 +25,25 @@ import {STREAM_POLL_INTERVAL_MS} from "./stream-connection";
 import { useIncubatorStream } from "./useIncubatorStream";
 
 function time(value: string) { return new Date(value).toLocaleString(); }
-function RunDetails({run}:{run:Run}) {
+export function RunDetails({run}:{run:Run}) {
   const label=stateLabel(run), dispatch=run.events.find(e=>e.state==="dispatched");
   const elapsed=dispatch && ["completed","failed"].includes(run.state) ? Math.max(0,Math.round((Date.parse(run.updated_at)-Date.parse(dispatch.at))/1000)) : null;
+  const receipt=run.detail.capacity, attempts=run.detail.capacity_attempts??[], model=run.detail.returned_model??receipt?.model??run.config.model;
+  const automaticCapacity=!!receipt&&receipt.trigger!=="manual"&&run.config.limits.spend_policy!=="owner_selected_model";
+  const nanoCost=(n:number|null)=>costLabel(n===null?null:n/1e9);
   return <div className="space-y-6">
       <dl className="grid min-w-0 grid-cols-2 gap-4 border-y border-border py-4 text-sm lg:grid-cols-4">
-        <div className="min-w-0"><dt className="text-xs text-muted-foreground">Model</dt><dd className="mt-1 break-all"><ModelLink provider="openrouter" id={run.config.model} name={run.config.model}/></dd></div>
+        <div className="min-w-0"><dt className="text-xs text-muted-foreground">{receipt?"Final attempt model":"Model"}</dt><dd className="mt-1 break-all"><ModelLink provider="openrouter" id={model} name={model}/></dd></div>
         <div><dt className="text-xs text-muted-foreground">Reported cost</dt><dd className="mt-1 font-medium tabular-nums">{costLabel(run.detail.usage.cost_usd)}</dd></div>
         <div><dt className="text-xs text-muted-foreground">Input / output tokens</dt><dd className="mt-1 tabular-nums">{run.detail.usage.prompt_tokens ?? "—"} / {run.detail.usage.completion_tokens ?? "—"}</dd></div>
         <div><dt className="text-xs text-muted-foreground">Request duration</dt><dd className="mt-1">{elapsed === null ? "Not established" : `${elapsed}s`}</dd></div>
       </dl>
+      {receipt&&<section aria-label="Request capacity provenance" className="grid min-w-0 gap-3 rounded-md border border-border p-4 text-sm">
+        <h3 className="font-medium">{automaticCapacity?"Automated capacity policy":"Recorded request capacity"}</h3>
+        <p>{attempts.length?`${attempts.length} recorded provider attempt${attempts.length===1?"":"s"}`:"Attempt count unavailable"} · Final routing reason: {receipt.trigger.replaceAll("_"," ")}</p>
+        <p>Final attempt reservation: {nanoCost(receipt.reserved_nanos)} · Actual recorded cost: {nanoCost(receipt.cost_nanos)}. An unavailable cost is not zero.</p>
+        {!!attempts.length&&<ol className="grid gap-3">{attempts.map((attempt,index)=><li key={attempt.capacity?.attempt_id??index} className="min-w-0 border-l-2 border-border pl-3"><p className="break-words">Attempt {index+1} · {attempt.capacity?.model??"Model unavailable"} · {attempt.state}{attempt.http_status?` · HTTP ${attempt.http_status}`:""}</p><p className="text-xs text-muted-foreground">{attempt.capacity?`${attempt.capacity.trigger.replaceAll("_"," ")} · Reserved ${nanoCost(attempt.capacity.reserved_nanos)} · Actual ${nanoCost(attempt.capacity.cost_nanos)}`:"Capacity receipt unavailable"}{attempt.reason?` · ${attempt.reason.replaceAll("_"," ")}`:""}</p></li>)}</ol>}
+      </section>}
       {run.detail.reason && <p role="status" className="rounded-md border border-border p-3 text-sm">{reasonText(run.detail.reason,run.detail.http_status)}</p>}
       {run.detail.provider_message&&<p className="text-sm text-muted-foreground">Provider detail: {run.detail.provider_message}</p>}
       {run.detail.provider_limit_source&&<p className="text-sm text-muted-foreground">Limit source: {run.detail.provider_limit_source.replaceAll("_"," ")}</p>}
@@ -45,7 +54,7 @@ function RunDetails({run}:{run:Run}) {
       {run.detail.response_text && run.state !== "completed" && <details className="rounded-md border border-border p-4"><summary className="cursor-pointer text-sm font-medium">Unvalidated response{run.detail.response_truncated ? " (truncated)" : ""}</summary><div className="mt-3 space-y-3"><p className="text-sm text-muted-foreground">{run.detail.validation_error ?? "This response did not produce an accepted report."}</p><pre className="whitespace-pre-wrap break-words text-xs">{run.detail.response_text}</pre></div></details>}
       <details className="rounded-md border border-border p-4"><summary className="cursor-pointer text-sm font-medium">Assignment and provenance</summary><div className="mt-4 space-y-4 break-words text-sm text-muted-foreground">
         <p>{run.config.input.text}</p>
-        <p>Original project-authored brief · One request · {run.config.limits.max_output_tokens.toLocaleString()} maximum output tokens · {run.config.limits.timeout_seconds}s request timeout · {spendingLimitLabel(run.config.limits)}</p>
+        <p>Original project-authored brief · {receipt?"One logical request with bounded provider attempts":"One request"} · {run.config.limits.max_output_tokens.toLocaleString()} maximum output tokens · {run.config.limits.timeout_seconds}s request timeout · {automaticCapacity?"Automated capacity policy":spendingLimitLabel(run.config.limits)}</p>
         <dl className="space-y-2">{run.detail.fallback_of&&<div><dt>Fallback for run</dt><dd className="break-all">{run.detail.fallback_of}</dd></div>}<div><dt>Run</dt><dd className="break-all">{run.run_key}</dd></div><div><dt>Assignment</dt><dd className="break-all">{run.assignment_id}</dd></div><div><dt>Generation</dt><dd className="break-all">{run.detail.generation_id ?? "Unavailable"}</dd></div><div><dt>Returned model / serving provider</dt><dd className="break-all">{run.detail.returned_model ?? "Unavailable"} / {run.detail.serving_provider ?? "Unavailable"}</dd></div><div><dt>Whitelist revision</dt><dd>{dispatch?.detail.policy_revision ?? "Not dispatched"}</dd></div><div><dt>Request SHA-256</dt><dd className="break-all">{dispatch?.detail.request_sha256 ?? "Not dispatched"}</dd></div></dl>
       </div></details>
       <section className="space-y-3"><h3 className="text-sm font-medium">Run history</h3><ol className="space-y-2">{run.events.map(e=><li key={e.sequence} className="flex flex-wrap justify-between gap-2 border-l-2 border-border pl-3 text-sm"><span>{({admitted:"Assignment queued",preparing:"Preparing model and request",dispatched:"Dispatch intent recorded",completed:"Report recorded",failed:"Run failed",indeterminate:"Outcome unknown"})[e.state]}</span><time className="text-xs text-muted-foreground" dateTime={e.at}>{time(e.at)}</time></li>)}</ol></section>

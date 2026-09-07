@@ -1,5 +1,6 @@
 import { OpenRouterBalance } from "@/components/OpenRouterBalance";
 import { OpenRouterLimits } from "@/components/OpenRouterLimits";
+import { OpenRouterCapacity } from "@/components/OpenRouterCapacity";
 import { openrouterStatusQuery } from "@/lib/api-queries";
 import { ModelsTable } from "./ModelsTable";
 import { cursorModelsQuery, cursorPolicyQuery, cursorStatusQuery } from "@/lib/api-queries";
@@ -17,6 +18,7 @@ export default function Page() {
       <div className="grid min-w-0 gap-5 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3"><OpenRouterBalance/><a href="/system#integrations" className="text-link">Manage connections</a></div>
         <OpenRouterLimits/>
+        <OpenRouterCapacity/>
         <IntegrationDisclosure title="Configure models"><ModelsTable/></IntegrationDisclosure>
       </div>
     </section>

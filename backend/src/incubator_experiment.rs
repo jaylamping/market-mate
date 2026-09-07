@@ -81,7 +81,7 @@ fn completion(v: Value, model: &str) -> (&'static str, Value) {
         .as_str()
         .unwrap_or_default();
     let detail = json!({"generation_id":v["id"],"usage":v["usage"],"returned_model":v["model"]});
-    if v["usage"]["cost"].as_f64().is_some_and(|c| c > 0.0) {
+    if model.ends_with(":free") && v["usage"]["cost"].as_f64().is_some_and(|c| c > 0.0) {
         return (
             "indeterminate",
             json!({"reason":"unexpected_provider_charge","provider":detail}),
@@ -217,6 +217,21 @@ async fn dispatch(
     } else {
         request
     };
+    if let Some(provider) = &provider {
+        let sequence = job["experiment"]["events"].as_array().map_or(0, Vec::len) + 1;
+        if !provider
+            .admit(
+                db,
+                &format!("experiment:{id}:{sequence}:{role}"),
+                &request,
+                role,
+            )
+            .await
+            .map_err(str::to_string)?
+        {
+            return Ok(("waiting", Value::Null));
+        }
+    }
     record(
         db,
         id,
@@ -315,6 +330,39 @@ async fn tick(models: &dyn Models) -> Result<bool, String> {
         .await
         .map_err(|e| e.to_string())?
         .get(0);
+    if state == "setup_question" {
+        let (result, mut detail) = dispatch(
+            models,
+            &db.client,
+            id,
+            &job,
+            &run,
+            "research",
+            "clarifying",
+            job["experiment"]["detail"]["question"].clone(),
+        )
+        .await?;
+        if result == "waiting" || result == "recorded" {
+            return Ok(true);
+        }
+        if result == "completed" && detail["decision"] == "answer" {
+            detail["answer"] = detail["reason"].clone();
+            record(&db.client, id, "clarified", detail).await?;
+        } else {
+            record(
+                &db.client,
+                id,
+                if result == "completed" {
+                    "failed"
+                } else {
+                    result
+                },
+                detail,
+            )
+            .await?;
+        }
+        return Ok(true);
+    }
     let role = if state == "ready" || (state == "answered" && event(&job, "ready").is_some()) {
         "experiment"
     } else {
@@ -335,7 +383,7 @@ async fn tick(models: &dyn Models) -> Result<bool, String> {
         Value::Null,
     )
     .await?;
-    if result == "recorded" {
+    if result == "recorded" || result == "waiting" {
         return Ok(true);
     }
     if result != "completed" {
@@ -359,36 +407,7 @@ async fn tick(models: &dyn Models) -> Result<bool, String> {
             Some("clarify")
                 if event(&job, "clarifying").is_none() && detail["question"].is_string() =>
             {
-                let mut clarified_job = job.clone();
-                clarified_job["experiment"]["events"]
-                    .as_array_mut()
-                    .unwrap()
-                    .push(json!({"state":"setup_question","detail":detail}));
-                let (r, mut d) = dispatch(
-                    models,
-                    &db.client,
-                    id,
-                    &clarified_job,
-                    &run,
-                    "research",
-                    "clarifying",
-                    detail["question"].clone(),
-                )
-                .await?;
-                if r != "recorded" {
-                    if r == "completed" && d["decision"] == "answer" {
-                        d["answer"] = d["reason"].clone();
-                        record(&db.client, id, "clarified", d).await?
-                    } else {
-                        record(
-                            &db.client,
-                            id,
-                            if r == "completed" { "failed" } else { r },
-                            d,
-                        )
-                        .await?
-                    }
-                }
+                record(&db.client, id, "setup_question", detail).await?;
             }
             _ => record(&db.client, id, "needs_input", detail).await?,
         }
@@ -689,7 +708,12 @@ pub(crate) mod tests {
         assert!(waiting["snapshot_id"].is_null());
         assert_eq!(models.0.lock().unwrap().len(), 3);
         assert_eq!(
-            waiting["events"][1]["detail"]["request"]["model"],
+            waiting["events"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|event| event["state"] == "clarifying")
+                .unwrap()["detail"]["request"]["model"],
             "vendor/researcher:free"
         );
         assert_eq!(

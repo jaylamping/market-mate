@@ -1,0 +1,32 @@
+{
+  "review_status": "complete",
+  "scope": "capacity SQL, backend, frontend/API, acceptance",
+  "external_cross_model_review": "not_run_scope_limitation",
+  "findings": [
+    {
+      "id": 1,
+      "resolution": "Unsent queue fingerprints refresh before any immutable dispatch; SQL probe."
+    },
+    {
+      "id": 2,
+      "resolution": "Incremental migration0070 preserves daily and newer provider cooldowns after an older success; SQL probe."
+    },
+    {
+      "id": 3,
+      "resolution": "Pending workflow intents bypass capacity waits for no-retry recovery; evaluation, refinement, experiment SQL probes."
+    },
+    {
+      "id": 4,
+      "resolution": "Inherited paid selectors match default-role precedence; frontend tests."
+    },
+    {
+      "id": 5,
+      "resolution": "Free cooldown shown separately; frontend tests."
+    }
+  ],
+  "additional_browser_fix": "Next normalizes request URL host; validate browser Origin against actual Host and protocol. Regression and real-browser fixture save verified.",
+  "deployed_migrations_preserved": {
+    "68": "9575c59defededd6801fe6a43e0e13efa5f0152b198c25403ece7379b08cfd69",
+    "69": "e5bfd2faf6be2032ed1fefa698abd5f115d348b0734f1cd044d6c2daf895ee08"
+  }
+}
