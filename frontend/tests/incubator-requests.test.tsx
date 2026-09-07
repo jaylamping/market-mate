@@ -30,7 +30,9 @@ test("assignment mutations reject foreign origins and oversized requests before 
   assert.equal((await requestProxy(new Request("http://localhost/api",{method:"POST",headers:{host:"localhost",origin:"https://foreign.example"},body:"{}"}),"/assignments","POST")).status,403);
   assert.equal((await requestProxy(new Request("http://localhost/api",{method:"POST",headers:{host:"localhost",origin:"http://localhost"},body:"x".repeat(10001)}),"/assignments","POST")).status,413);
   assert.equal(sent,0);
-  assert.equal((await requestProxy(new Request("http://localhost/api",{method:"POST",headers:{host:"localhost",origin:"http://localhost"},body:"{}"}),"/assignments","POST")).status,200);
+  const forwarded=await requestProxy(new Request("http://localhost/api",{method:"POST",headers:{host:"localhost",origin:"http://localhost"},body:"{}"}),"/assignments","POST");
+  assert.equal(forwarded.status,200);
+  assert.deepEqual(await forwarded.json(),{});
   assert.equal(sent,1);
  }finally{globalThis.fetch=original;if(old===undefined)delete process.env.INCUBATOR_REQUESTS_URL;else process.env.INCUBATOR_REQUESTS_URL=old;}
 });
