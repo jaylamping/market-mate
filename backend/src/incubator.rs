@@ -137,9 +137,9 @@ fn completion(value: Value, requested_model: &str) -> (&'static str, Value) {
     }
 }
 
-struct OpenRouter {
-    client: Client,
-    auth: HeaderValue,
+pub(crate) struct OpenRouter {
+    pub(crate) client: Client,
+    pub(crate) auth: HeaderValue,
 }
 impl OpenRouter {
     fn new(credentials_path: &std::path::Path) -> Result<Self, &'static str> {
@@ -346,6 +346,66 @@ fn should_fallback(
             r.provider == "openrouter" && r.model_id != primary && r.model_id.ends_with(":free")
         })
 }
+pub(crate) async fn prepare_model(
+    model: &str,
+) -> Result<
+    (
+        OpenRouter,
+        u64,
+        std::collections::BTreeMap<String, Value>,
+        Vec<crate::model_routing::Route>,
+    ),
+    &'static str,
+> {
+    let path = PathBuf::from("/var/lib/openrouter/credentials.json");
+    let policy_path = PathBuf::from("/var/lib/model-policy/policy.json");
+    let routing_path = policy_path.with_file_name("routing.json");
+    let routing = crate::model_routing::stored(&routing_path)?;
+    let routes = if let Some(policy) = &routing {
+        let preference = policy
+            .models
+            .iter()
+            .find(|m| m.model_id == crate::model_routing::canonical("openrouter", model))
+            .ok_or("model_not_whitelisted")?;
+        let first = preference.routes.first().ok_or("model_not_whitelisted")?;
+        if first.provider != "openrouter" {
+            return Err("preferred_provider_execution_unavailable");
+        }
+        if first.model_id != model {
+            return Err("model_not_whitelisted");
+        }
+        preference.routes.clone()
+    } else {
+        vec![crate::model_routing::Route {
+            provider: "openrouter".into(),
+            model_id: model.into(),
+        }]
+    };
+    let policy = read_policy(&policy_path)?;
+    if !policy.allowed_models.iter().any(|m| m == model) {
+        return Err("model_not_whitelisted");
+    }
+    let reader = OpenRouterReader::new(path.clone(), policy_path.clone())
+        .map_err(|_| "client_unavailable")?;
+    let models = reader.models().await?;
+    let selected = models
+        .iter()
+        .find(|m| m.id == model)
+        .ok_or("model_unavailable")?;
+    if !model.ends_with(":free") || !free_pricing(&selected.pricing) {
+        return Err("zero_spend_budget_denied");
+    }
+    let provider = OpenRouter::new(&path)?;
+    let current = read_policy(&policy_path)?;
+    if crate::model_routing::stored(&routing_path)? != routing
+        || current.revision != policy.revision
+        || !current.allowed_models.iter().any(|m| m == model)
+    {
+        return Err("model_policy_changed");
+    }
+    Ok((provider, current.revision, selected.pricing.clone(), routes))
+}
+
 async fn run_once(
     db: &tokio_postgres::Client,
     key: &str,
@@ -373,65 +433,12 @@ async fn run_once(
         Some("admitted") => (),
         _ => return Ok(run),
     }
-    let path = PathBuf::from("/var/lib/openrouter/credentials.json");
-    let policy_path = PathBuf::from("/var/lib/model-policy/policy.json");
     let prepared = async {
-        let routing_path = policy_path.with_file_name("routing.json");
-        let routing = crate::model_routing::stored(&routing_path)?;
-        let routes = if let Some(policy) = &routing {
-            let preference = policy
-                .models
-                .iter()
-                .find(|m| m.model_id == crate::model_routing::canonical("openrouter", model))
-                .ok_or("model_not_whitelisted")?;
-            let first = preference.routes.first().ok_or("model_not_whitelisted")?;
-            if first.provider != "openrouter" {
-                return Err("preferred_provider_execution_unavailable");
-            }
-            if first.model_id != model {
-                return Err("model_not_whitelisted");
-            }
-            preference.routes.clone()
-        } else {
-            vec![crate::model_routing::Route {
-                provider: "openrouter".into(),
-                model_id: model.into(),
-            }]
-        };
-        let policy = read_policy(&policy_path)?;
-        if !policy.allowed_models.iter().any(|m| m == model) {
-            return Err("model_not_whitelisted");
-        }
-        let reader = OpenRouterReader::new(path.clone(), policy_path.clone())
-            .map_err(|_| "client_unavailable")?;
-        let models = reader.models().await?;
-        let selected = models
-            .iter()
-            .find(|m| m.id == model)
-            .ok_or("model_unavailable")?;
-        if !model.ends_with(":free") || !free_pricing(&selected.pricing) {
-            return Err("zero_spend_budget_denied");
-        }
-        let provider = OpenRouter::new(&path)?;
+        let (provider, revision, pricing, routes) = prepare_model(model).await?;
         let brief = run["config"]["input"]["text"]
             .as_str()
             .ok_or("input_unavailable")?;
-        let request = payload(model, brief);
-        // Snapshot the latest saved policy at the final admission boundary.
-        let current = read_policy(&policy_path)?;
-        if crate::model_routing::stored(&routing_path)? != routing
-            || current.revision != policy.revision
-            || !current.allowed_models.iter().any(|m| m == model)
-        {
-            return Err("model_policy_changed");
-        }
-        Ok((
-            provider,
-            request,
-            current.revision,
-            selected.pricing.clone(),
-            routes,
-        ))
+        Ok::<_, &'static str>((provider, payload(model, brief), revision, pricing, routes))
     }
     .await;
     let (provider, request, revision, pricing, routes) = match prepared {

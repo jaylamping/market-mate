@@ -1,0 +1,23 @@
+{
+  "probe": "incubator-chat",
+  "checks": [
+    "persistent_history",
+    "dispatch_idempotency",
+    "request_identity_binding",
+    "one_pending_turn_per_task",
+    "independent_tasks",
+    "stale_context_rejected",
+    "model_binding",
+    "result_immutable",
+    "restricted_role",
+    "populated_table_mutation_denied",
+    "unknown_outcome_blocks_resend",
+    "original_report_unchanged",
+    "plan_revision_applied_once",
+    "stale_plan_revision_rejected",
+    "plan_revision_append_only",
+    "audit_chain"
+  ],
+  "passed": true,
+  "migration_sha256": "f2baf7691253c9322e559c71626c2eb11f85f7c55dc0027dbd17458cb017bbb0"
+}

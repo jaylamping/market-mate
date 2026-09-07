@@ -1,0 +1,46 @@
+{
+  "observer_preview_count": 21,
+  "distinct_lengths": 21,
+  "first_preview": {
+    "seconds": 22.523,
+    "characters": 133
+  },
+  "last_preview": {
+    "seconds": 29.069,
+    "characters": 2479
+  },
+  "finished_seconds": 29.174,
+  "final_state": "completed",
+  "usage": {
+    "completion_tokens": 500,
+    "completion_tokens_details": {
+      "audio_tokens": 0,
+      "image_tokens": 0,
+      "reasoning_tokens": 0
+    },
+    "cost": 0,
+    "cost_details": {
+      "upstream_inference_completions_cost": 0,
+      "upstream_inference_cost": 0,
+      "upstream_inference_prompt_cost": 0
+    },
+    "is_byok": false,
+    "prompt_tokens": 3822,
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cache_write_tokens": 0,
+      "cached_tokens": 133,
+      "video_tokens": 0
+    },
+    "total_tokens": 4322
+  },
+  "run_key": "poc-minimax-m3-002",
+  "conversation_turn": 2,
+  "timing_origin": "observer subscription opened",
+  "preview_interval_seconds": 6.546,
+  "checks": [
+    "independent_observer_received_incremental_text",
+    "completed_result_persisted",
+    "reported_zero_cost"
+  ]
+}

@@ -189,3 +189,23 @@ A crash between primary failure and fallback admission sacrifices fallback
 liveness rather than guessing whether to start new work. Fallback events retain
 the parent run key for display in Incubator provenance. An unsupported or paid
 default cannot bypass the POC's execution or zero-spend restrictions.
+
+
+Model preference controls autosave each change. A write captures the exact new
+policy, temporarily disables preference edits while it is in flight, and uses
+the returned revision for the next write. Routine autosaves are silent; failed writes retain the draft and expose Retry saving. Conflicts block further
+edits until the user explicitly loads the latest policy. Search, filtering, and
+table sort remain local view controls. Catalog refresh resets pagination;
+autosaving a preference does not reset the current page.
+
+## Per-run research conversation
+
+The Incubator modal has Report and Chat tabs. The Chat view uses the official shadcn Message Scroller and streams decoded text from the model's strict `{"reply":"...","proposal":null}` JSON response (or a full validated plan in `proposal`). The final object is validated before it becomes a completed assistant turn. Streaming text is provisional. Original reports are immutable. A useful refinement can include a complete proposed hypothesis and experiment plan; the owner can inspect it and choose Apply update. This appends a plan revision linked to its originating chat turn. The newest revision becomes the current plan in Report and subsequent model context. The version selector retains access to the original and earlier revisions. A proposal made against an older plan cannot overwrite a newer revision; it must be refreshed in discussion.
+
+The local `incubator-chat` service (internal port 8085) has a separate restricted database identity. The frontend's same-origin POST proxy accepts only localhost origins; the chat service has no published port. It can read run context and append conversation turns/results and owner-applied plan revisions, but cannot admit research assignments, rewrite original reports, use tools, trade, or call other agents. This is the owner-authorized research-discussion exception to the supervisory UI's read-only presentation; order and policy authority remain unchanged.
+
+Every turn binds a client request identity, context revision, owner message, exact outbound request, model, receipt time and Local Research lineage. Dispatch intent and final result are append-only and audited. Conversations include the original assignment/report and all completed preceding turns; failed output remains inspectable but is excluded from model context. The limit is 50 messages and 96 KB outbound context, with an explicit refusal instead of silent history truncation. Each send has one request, 2048 output tokens and a 120-second provider timeout. Four conversations may run concurrently; one pending reply per run is enforced across service instances. Shared approved-model, provider-priority, concrete-free-model and zero-price checks apply on each send. Chat stays on the run's model; automatic fallback and agent-to-agent messaging are not enabled for discussion.
+
+Each open conversation subscribes to the service’s live text channel, including windows that did not initiate the request. Reopening during generation receives the latest partial text and subsequent updates. Decoding accepts either JSON field order. Closing the modal or losing the browser stream does not cancel the server task. Reload reads persisted history and never replays a generation. An uncertain provider outcome or orphaned dispatch pauses that conversation without automatic resend. A reply interrupted by a service restart is shown as outcome unknown after 150 seconds. Full provider responses (including incomplete output) and usage are retained when available. Messages are untrusted Task Memory; they do not become Canonical Evidence or Assignment Handoffs. Future collaboration must use the existing cross-assignment artifact and handoff boundaries rather than treating conversational text as authority.
+
+Verification: `cargo test --workspace --locked`, frontend tests/typecheck, and `scripts/incubator_agent_poc_test.sh` cover streaming framing, JSON validation, retained context, origin protection, idempotency, stale context, independent tasks, restricted role permissions, populated append-only records and audit-chain integrity. Database evidence is `evidence/incubator-agent-poc/chat-acceptance.json`.

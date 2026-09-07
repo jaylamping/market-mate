@@ -12,3 +12,5 @@ pub mod cursor;
 pub mod incubator;
 
 pub mod model_routing;
+
+pub mod incubator_chat;

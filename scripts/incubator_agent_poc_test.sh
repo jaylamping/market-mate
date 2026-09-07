@@ -13,6 +13,8 @@ env -i DATABASE_URL=postgres://mm:local-only@127.0.0.1:15433/market_mate ./targe
   < db/fixtures/incubator_agent_poc_probe.sql > evidence/incubator-agent-poc/probe.log
 "${compose[@]}" exec -T postgres psql -X -qAt -v ON_ERROR_STOP=1 -U mm -d market_mate \
   < db/fixtures/incubator_fallback_probe.sql > evidence/incubator-agent-poc/fallback-probe.log
+"${compose[@]}" exec -T postgres psql -X -qAt -v ON_ERROR_STOP=1 -U mm -d market_mate \
+  < db/fixtures/incubator_chat_probe.sql > evidence/incubator-agent-poc/chat-probe.log
 python3 - <<'PY'
 import hashlib,json,pathlib
 base=pathlib.Path('evidence/incubator-agent-poc')
@@ -24,5 +26,10 @@ fallback=[json.loads(line) for line in (base/'fallback-probe.log').read_text().s
 assert len(fallback)==1 and fallback[0]['passed'] is True
 fallback[0]['migration_sha256']=hashlib.sha256(pathlib.Path('db/migrations/0054_incubator_model_fallback.sql').read_bytes()).hexdigest()
 (base/'fallback-acceptance.json').write_text(json.dumps(fallback[0],indent=2)+'\n')
+chat=[json.loads(line) for line in (base/'chat-probe.log').read_text().splitlines() if line.startswith('{') and '"probe": "incubator-chat"' in line]
+assert len(chat)==1 and chat[0]['passed'] is True
+chat[0]['migration_sha256']=hashlib.sha256(pathlib.Path('db/migrations/0055_incubator_conversation.sql').read_bytes()).hexdigest()
+(base/'chat-acceptance.json').write_text(json.dumps(chat[0],indent=2)+'\n')
+
 PY
 echo 'Incubator database acceptance passed.'
