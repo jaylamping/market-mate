@@ -4,7 +4,7 @@ import React from "react";
 import {renderToStaticMarkup} from "react-dom/server";
 import {OriginBadge} from "../app/incubator/OriginBadge";
 import {ProgressFooter} from "../app/incubator/ProgressFooter";
-import {parseWorkflow} from "../app/incubator/evaluation";
+import {parseWorkflow,researchStatus,researchHasAdvanced} from "../app/incubator/evaluation";
 test("card origins distinguish owner, automatic agent, and legacy local runner",()=>{
  for(const [origin,label] of [["principal","You"],["agent","Agent"],["local_runner","Local runner"]] as const)assert.match(renderToStaticMarkup(<OriginBadge origin={origin}/>),new RegExp(`Created by ${label}`));
 });
@@ -70,4 +70,17 @@ test("invalid workflow replies have actionable readable explanations",()=>{
  assert.match(experimentReason("experiment_agent_output_truncated"),/response limit/);
  assert.equal(experimentReason("Known concrete blocker"),"Known concrete blocker");
  assert.equal(experimentReason(null),"");
+});
+
+test("advanced research has a separate status from reports awaiting evaluation",()=>{
+ const run={state:"completed"} as Run;
+ assert.equal(researchStatus(run,{...evaluations[0],status:"advance"}),"Advanced");
+ assert.equal(researchStatus(run,{...evaluations[0],status:"evaluating"}),"Report ready");
+ assert.equal(researchStatus(run,{...evaluations[0],status:"superseded"}),"Report ready");
+ assert.equal(researchStatus(run),"Report ready");
+ const advanced={...evaluations[0],status:"advance" as const};
+ assert.equal(researchHasAdvanced(advanced),true);
+ assert.equal(researchHasAdvanced({...advanced,status:"superseded",experiment:{id:"1"} as Evaluation["experiment"]}),true);
+ assert.equal(researchHasAdvanced(evaluations[0]),false);
+ assert.equal(researchHasAdvanced(undefined),false);
 });

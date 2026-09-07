@@ -1,4 +1,4 @@
-import {parseReport} from "./model";
+import {parseReport,stateLabel,type Run} from "./model";
 export type EvaluationStatus="refining"|"queued"|"evaluating"|"awaiting_clarification"|"needs_input"|"advance"|"refine"|"close"|"failed"|"indeterminate"|"superseded";
 export type ExperimentStatus="setup_retry"|"setup_question"|"awaiting_setup"|"preparing"|"clarifying"|"clarified"|"answered"|"awaiting_data"|"needs_input"|"ready"|"dispatching"|"running"|"completed"|"failed"|"indeterminate";
 export type ExperimentEvent={sequence:number;state:ExperimentStatus;at:string;detail:Record<string,unknown>};
@@ -32,4 +32,12 @@ export function experimentReason(value:unknown):string {
   experiment_agent_output_truncated:"The model reached its response limit before finishing its answer. The workflow stopped before continuing.",
  };
  return reasons[value]??value;
+}
+
+export function researchStatus(run:Run,evaluation?:Evaluation):string {
+ return run.state==="completed"&&evaluation?.status==="advance"?"Advanced":stateLabel(run);
+}
+
+export function researchHasAdvanced(evaluation:Evaluation|undefined):boolean {
+ return evaluation?.status==="advance"||!!evaluation?.experiment;
 }

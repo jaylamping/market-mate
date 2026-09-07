@@ -17,7 +17,7 @@ export function WorkflowTimeline({run,compact=false,evaluation}:{run:Run;compact
   return <ProgressFooter steps={steps}/>;
  }
 
- return <div className={compact?"mt-3 w-full":"min-w-0"} aria-label="Assignment workflow">
+ return <div className={compact?"mt-3 w-full":"min-w-0"} aria-label="Ticket workflow">
   {!compact&&<p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Workflow</p>}
   <ol className={`grid ${compact?"grid-cols-4 gap-1":"grid-cols-2 gap-3 sm:grid-cols-4"}`}>
    {stages.map((stage,i)=>{
