@@ -32,6 +32,8 @@ try:
     else: raise AssertionError('stale API settings accepted')
 finally:
     worker.terminate(); worker.wait(timeout=5)
+# Run the capacity wait regression in the disposable database with a provider double.
+subprocess.run(['cargo','test','campaign_comparison_waits_for_capacity_and_observes_pause','--','--ignored'],env={**os.environ,'DATABASE_URL':'postgres://incubator_runner:local-poc-only@127.0.0.1:15439/market_mate'},check=True)
 r=[json.loads(l) for l in pathlib.Path('.scratch/campaign/probe.log').read_text().splitlines() if l.startswith('{') and '"probe": "research-campaign"' in l][-1]
 assert r['passed']
 r['checks']+=['http_campaign_read','http_campaign_save','http_stale_settings_rejected']

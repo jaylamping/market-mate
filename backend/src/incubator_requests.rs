@@ -193,6 +193,7 @@ impl ComparisonModels for LiveModels {
 struct CampaignComparison<'a> {
     models: &'a dyn ComparisonModels,
     model: &'a str,
+    revision: i64,
 }
 impl ComparisonModels for CampaignComparison<'_> {
     fn resolve(&self, _choice: &str) -> Result<String, ApiError> {
@@ -205,7 +206,52 @@ impl ComparisonModels for CampaignComparison<'_> {
         &'a self,
         model: &'a str,
     ) -> ModelFuture<'a, Result<Box<dyn PreparedComparison>, &'static str>> {
-        self.models.prepare(model)
+        Box::pin(async move {
+            Ok(Box::new(CampaignPrepared {
+                inner: self.models.prepare(model).await?,
+                revision: self.revision,
+            }) as Box<dyn PreparedComparison>)
+        })
+    }
+}
+struct CampaignPrepared {
+    inner: Box<dyn PreparedComparison>,
+    revision: i64,
+}
+impl PreparedComparison for CampaignPrepared {
+    fn adapt_request(&self, request: &Value) -> Result<Value, &'static str> {
+        self.inner.adapt_request(request)
+    }
+    fn admit<'a>(
+        &'a self,
+        db: &'a tokio_postgres::Client,
+        key: &'a str,
+        request: &'a Value,
+    ) -> ModelFuture<'a, Result<bool, &'static str>> {
+        Box::pin(async move {
+            loop {
+                let campaign: Value = db
+                    .query_one("SELECT read_incubator_campaign()", &[])
+                    .await
+                    .map_err(|_| "campaign_unavailable")?
+                    .get(0);
+                if campaign["enabled"] != true
+                    || campaign["revision"].as_i64() != Some(self.revision)
+                {
+                    db.query_one("SELECT cancel_openrouter_capacity($1)", &[&key])
+                        .await
+                        .map_err(|_| "capacity_cancel_failed")?;
+                    return Err("campaign_changed_before_comparison");
+                }
+                if self.inner.admit(db, key, request).await? {
+                    return Ok(true);
+                }
+                tokio::time::sleep(Duration::from_secs(5)).await;
+            }
+        })
+    }
+    fn send<'a>(&'a self, request: &'a Value) -> ModelFuture<'a, (&'static str, Value)> {
+        self.inner.send(request)
     }
 }
 struct Intake {
@@ -513,6 +559,9 @@ pub(crate) async fn campaign_check(db: &Database, candidate: &Value) -> Result<(
     let models = CampaignComparison {
         models: &LiveModels,
         model: &input.model,
+        revision: candidate["campaign_revision"]
+            .as_i64()
+            .ok_or("invalid_campaign_revision")?,
     };
     let result = assess(db, &input, corpus, &models).await;
     db.client
@@ -735,6 +784,7 @@ mod tests {
         let campaign = CampaignComparison {
             models: &models,
             model: "vendor/research:free",
+            revision: 0,
         };
         assert_eq!(campaign.resolve("").unwrap(), "vendor/research:free");
         assert_eq!(
@@ -744,8 +794,62 @@ mod tests {
         let paid = CampaignComparison {
             models: &models,
             model: "vendor/paid",
+            revision: 0,
         };
         assert!(paid.resolve("").is_err());
+    }
+    #[tokio::test]
+    #[ignore = "requires isolated campaign acceptance database"]
+    async fn campaign_comparison_waits_for_capacity_and_observes_pause() {
+        struct Waiting(std::sync::atomic::AtomicUsize);
+        impl PreparedComparison for Waiting {
+            fn admit<'a>(
+                &'a self,
+                _db: &'a tokio_postgres::Client,
+                _key: &'a str,
+                _request: &'a Value,
+            ) -> ModelFuture<'a, Result<bool, &'static str>> {
+                Box::pin(
+                    async move { Ok(self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst) > 0) },
+                )
+            }
+            fn send<'a>(&'a self, _request: &'a Value) -> ModelFuture<'a, (&'static str, Value)> {
+                panic!("admission must not send")
+            }
+        }
+        let db = database().await.unwrap();
+        db.client
+            .query_one(
+                "SELECT set_incubator_campaign(true,10,3,1,'vendor/creator:free',10)",
+                &[],
+            )
+            .await
+            .unwrap();
+        let prepared = CampaignPrepared {
+            inner: Box::new(Waiting(std::sync::atomic::AtomicUsize::new(0))),
+            revision: 2,
+        };
+        assert!(tokio::time::timeout(
+            Duration::from_secs(12),
+            prepared.admit(&db.client, "campaign-wait-test", &json!({}))
+        )
+        .await
+        .unwrap()
+        .unwrap());
+        db.client
+            .query_one(
+                "SELECT set_incubator_campaign(false,10,3,2,'vendor/creator:free',10)",
+                &[],
+            )
+            .await
+            .unwrap();
+        assert_eq!(
+            prepared
+                .admit(&db.client, "campaign-wait-test", &json!({}))
+                .await
+                .unwrap_err(),
+            "campaign_changed_before_comparison"
+        );
     }
     #[derive(Default)]
     struct MockState {
