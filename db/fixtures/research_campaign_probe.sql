@@ -5,6 +5,9 @@ SELECT append_research_snapshot('incubator_momentum_daily_v1',jsonb_build_object
  'series',(SELECT jsonb_agg(jsonb_build_object('symbol',symbol,'bars',(SELECT jsonb_agg(jsonb_build_object('session',d,'open_cents',10000+i*t*100,'close_cents',10000+i*t*200) ORDER BY t) FROM (VALUES(0,'2026-01-05'),(1,'2026-01-06'),(2,'2026-01-07'),(3,'2026-01-08')) day(t,d)))) FROM (VALUES(-1,'A'),(0,'B'),(1,'C'),(2,'D')) stock(i,symbol)),
  'benchmark',(SELECT jsonb_agg(jsonb_build_object('session',d,'open_cents',10000,'close_cents',10010) ORDER BY d) FROM (VALUES('2026-01-05'),('2026-01-06'),('2026-01-07'),('2026-01-08')) day(d)),
  'cash_bps',jsonb_build_array(0,0,0,0)), '{"source":"isolated-experiment-fixture","entitlement_version":"fixture-v1"}',NULL,NULL);
+DO $$ BEGIN
+ IF read_incubator_campaign()->'agenda' IS DISTINCT FROM '[]'::jsonb THEN RAISE EXCEPTION 'empty backlog must be an array'; END IF;
+END $$;
 -- Disposable model double: all backlog candidates enter through the generator result API.
 UPDATE incubator_campaign SET enabled=true,daily_limit=10,open_limit=3,creator_model='vendor/creator:free',backlog_limit=20;
 DO $$ DECLARE g jsonb; req jsonb; i integer; BEGIN
@@ -141,12 +144,18 @@ DO $$ DECLARE g jsonb; next_job jsonb; req jsonb; candidate jsonb; BEGIN
  IF (SELECT state FROM incubator_ticket_generation WHERE id=(g->>'id')::bigint)<>'cancelled' OR (SELECT count(*) FROM incubator_campaign_candidate)<>20 THEN RAISE EXCEPTION 'stale creator admitted output'; END IF;
  next_job:=claim_incubator_ticket_generation();
  IF next_job->>'model'<>'vendor/new-creator:free' THEN RAISE EXCEPTION 'creator picker did not affect next job'; END IF;
+ PERFORM prepare_incubator_ticket_generation((next_job->>'id')::bigint,'{"model":"vendor/new-creator:free","max_tokens":2048}');
+ PERFORM set_incubator_campaign(false,10,3,2,'vendor/new-creator:free',20);
+ IF dispatch_incubator_ticket_generation((next_job->>'id')::bigint) IS DISTINCT FROM false THEN RAISE EXCEPTION 'paused creator dispatched'; END IF;
+ PERFORM set_incubator_campaign(true,10,3,3,'vendor/new-creator:free',20);
+ next_job:=claim_incubator_ticket_generation();
  INSERT INTO openrouter_capacity_attempt(attempt_id,key,model,is_free,reserved_nanos,policy_revision,trigger,receipt_time,source_lineage,record_environment)
  VALUES('creator-crash-probe','ticket-creator:'||(next_job->>'id'),'vendor/new-creator:free',true,0,0,'free',clock_timestamp(),'{"source":"isolated-campaign-test","entitlement_version":"fixture-v1"}','local_research');
- IF claim_incubator_ticket_generation()->>'uncertain'<>'true' THEN RAISE EXCEPTION 'capacity intent gap not recovered'; END IF;
+ g:=claim_incubator_ticket_generation();
+ IF g->>'uncertain' IS DISTINCT FROM 'true' OR g->>'id' IS DISTINCT FROM next_job->>'id' THEN RAISE EXCEPTION 'capacity intent gap not recovered'; END IF;
  PERFORM finish_incubator_ticket_generation((next_job->>'id')::bigint,'indeterminate','{"reason":"interrupted_after_dispatch_no_replay"}');
  IF read_incubator_campaign()->>'enabled'<>'false' THEN RAISE EXCEPTION 'uncertain creator not paused'; END IF;
  IF NOT incubator_campaign_free_work('research:campaign-pilot-v1-1') OR NOT incubator_campaign_free_work('similarity:campaign-pilot-v1-1:0') OR incubator_campaign_free_work('ticket-creator:1') THEN RAISE EXCEPTION 'free worker purpose mapping'; END IF;
 END $$;
 ROLLBACK;
-SELECT jsonb_build_object('probe','research-campaign','passed',true,'checks',jsonb_build_array('paused_default','bounded_limits','settings_revision','restart_identity','pinned_scope','idempotent_admission','worker_pickup','no_manual_spend','automatic_origin','pacing','backpressure','role_restrictions','duplicates','pause_fence','no_check_replay','audit_chain','ten_ticket_cap','campaign_spec_fence','campaign_scope_fence','owner_request_fence','dataset_binding_fence','fallback_contract_fence','generated_backlog_ingestion','backlog_cap','creator_model_change_fence','creator_model_next_job','creator_intent_gap_no_replay','free_worker_routing'));
+SELECT jsonb_build_object('probe','research-campaign','passed',true,'checks',jsonb_build_array('paused_default','bounded_limits','settings_revision','restart_identity','pinned_scope','idempotent_admission','worker_pickup','no_manual_spend','automatic_origin','pacing','backpressure','role_restrictions','duplicates','pause_fence','no_check_replay','audit_chain','ten_ticket_cap','campaign_spec_fence','campaign_scope_fence','owner_request_fence','dataset_binding_fence','fallback_contract_fence','generated_backlog_ingestion','backlog_cap','creator_model_change_fence','creator_model_next_job','creator_intent_gap_no_replay','free_worker_routing','empty_backlog_array','creator_final_dispatch_pause_fence'));

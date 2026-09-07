@@ -165,10 +165,20 @@ async fn tick() -> Result<(), String> {
     {
         return Ok(());
     }
-    db.client
+    let dispatched: bool = db
+        .client
         .query_one("SELECT dispatch_incubator_ticket_generation($1)", &[&id])
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| e.to_string())?
+        .get(0);
+    if !dispatched {
+        let permit = provider.take_permit(&req).map_err(str::to_string)?;
+        let mut detail = json!({"reason":"campaign_changed_before_dispatch","dispatched":false,"usage":{"cost":0}});
+        crate::openrouter_capacity::finish(&permit, "cancelled", &mut detail)
+            .await
+            .map_err(str::to_string)?;
+        return Ok(());
+    }
     let (state, detail) = provider.send_with_parser(&req, completion).await;
     db.client
         .query_one(

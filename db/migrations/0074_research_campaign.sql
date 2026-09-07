@@ -40,6 +40,7 @@ CREATE TABLE incubator_ticket_generation (
  detail jsonb,
  receipt_time timestamptz NOT NULL DEFAULT clock_timestamp()
 );
+ALTER TABLE incubator_campaign_candidate ADD COLUMN generation_id bigint NOT NULL REFERENCES incubator_ticket_generation;
 INSERT INTO schema_object(table_name,kind) VALUES('incubator_ticket_generation','control');
 REVOKE ALL ON incubator_ticket_generation FROM PUBLIC;
 CREATE FUNCTION incubator_campaign_open_count() RETURNS bigint
@@ -60,8 +61,8 @@ LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
  'symbols','["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","JPM","JNJ","V","UNH","PG","MA","HD","DIS","PYPL","ADBE","CRM","NFLX"]'::jsonb,
  'backlog_count',(SELECT count(*) FROM incubator_campaign_candidate WHERE ordinal NOT IN(SELECT ordinal FROM incubator_campaign_attempt)),
  'creator_status',(SELECT state FROM incubator_ticket_generation ORDER BY id DESC LIMIT 1),
- 'agenda',(SELECT jsonb_agg(jsonb_build_object('ordinal',p.ordinal,'title',p.title,'spec',p.spec,'state',coalesce(a.state,'pending'),'reason',a.reason,'run_key',a.run_key,'scope',a.scope) ORDER BY p.ordinal)
- FROM incubator_campaign_candidate p LEFT JOIN incubator_campaign_attempt a USING(ordinal))) FROM incubator_campaign c
+ 'agenda',coalesce((SELECT jsonb_agg(jsonb_build_object('ordinal',p.ordinal,'generation_id',p.generation_id,'title',p.title,'spec',p.spec,'state',coalesce(a.state,'pending'),'reason',a.reason,'run_key',a.run_key,'scope',a.scope) ORDER BY p.ordinal)
+ FROM incubator_campaign_candidate p LEFT JOIN incubator_campaign_attempt a USING(ordinal)),'[]'::jsonb)) FROM incubator_campaign c
 $$;
 CREATE FUNCTION set_incubator_campaign(enabled_value boolean,daily_value integer,open_value integer,revision_value integer,creator_value text,backlog_value integer) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
@@ -243,21 +244,28 @@ DECLARE c incubator_campaign%ROWTYPE; g incubator_ticket_generation%ROWTYPE;
 BEGIN
  SELECT * INTO c FROM incubator_campaign WHERE id FOR UPDATE;
  SELECT * INTO STRICT g FROM incubator_ticket_generation WHERE id=id_value FOR UPDATE;
- IF NOT c.enabled OR c.revision<>g.campaign_revision THEN UPDATE incubator_ticket_generation SET state='cancelled',detail='{"reason":"campaign_changed"}' WHERE id=id_value; RETURN false; END IF;
+ IF NOT c.enabled OR c.revision<>g.campaign_revision THEN UPDATE incubator_ticket_generation SET state='cancelled',detail='{"reason":"campaign_changed"}' WHERE id=id_value; PERFORM cancel_openrouter_capacity('ticket-creator:'||id_value); RETURN false; END IF;
  IF g.state<>'queued' THEN RAISE EXCEPTION 'generation_already_dispatched'; END IF;
  IF request_value->>'model' IS DISTINCT FROM g.model OR coalesce((request_value->>'max_tokens')::int,(request_value->>'max_completion_tokens')::int,0) NOT BETWEEN 1 AND 2048 OR octet_length(request_value::text)>96000 THEN RAISE EXCEPTION 'invalid_generation_request'; END IF;
  IF g.request IS NOT NULL AND g.request IS DISTINCT FROM request_value THEN RAISE EXCEPTION 'generation_request_changed'; END IF;
  UPDATE incubator_ticket_generation SET request=request_value WHERE id=id_value;
  RETURN true;
 END $$;
-CREATE FUNCTION dispatch_incubator_ticket_generation(id_value bigint) RETURNS void
+CREATE FUNCTION dispatch_incubator_ticket_generation(id_value bigint) RETURNS boolean
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
-DECLARE g incubator_ticket_generation%ROWTYPE;
+DECLARE g incubator_ticket_generation%ROWTYPE; c incubator_campaign%ROWTYPE;
 BEGIN
+ SELECT * INTO c FROM incubator_campaign WHERE id FOR UPDATE;
  SELECT * INTO STRICT g FROM incubator_ticket_generation WHERE id=id_value FOR UPDATE;
+ IF NOT c.enabled OR c.revision<>g.campaign_revision THEN
+  UPDATE incubator_ticket_generation SET state='cancelled',detail='{"reason":"campaign_changed_before_dispatch"}' WHERE id=id_value;
+  PERFORM append_audit_event('ticket-creator:'||g.id||':cancelled','research.ticket_generation_cancelled',now(),jsonb_build_object('model',g.model,'reason','campaign_changed_before_dispatch'),'{"source":"ticket-creator","entitlement_version":"campaign-v1"}',now(),'local_research');
+  RETURN false;
+ END IF;
  IF g.state<>'queued' OR g.request IS NULL THEN RAISE EXCEPTION 'generation_not_prepared'; END IF;
  UPDATE incubator_ticket_generation SET state='dispatching' WHERE id=id_value;
  PERFORM append_audit_event('ticket-creator:'||g.id||':dispatch','research.ticket_generation_dispatched',now(),jsonb_build_object('model',g.model,'request',g.request),'{"source":"ticket-creator","entitlement_version":"campaign-v1"}',now(),'local_research');
+ RETURN true;
 END $$;
 CREATE FUNCTION finish_incubator_ticket_generation(id_value bigint,state_value text,detail_value jsonb) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
@@ -275,10 +283,11 @@ BEGIN
    scope_value:=incubator_campaign_scope();
    PERFORM expand_market_data_request(scope_value,p->'spec');
    IF NOT EXISTS(SELECT 1 FROM incubator_campaign_candidate WHERE spec=p->'spec') THEN
-    INSERT INTO incubator_campaign_candidate(title,premise,spec) VALUES(p->>'title',p->>'premise',p->'spec');
+    INSERT INTO incubator_campaign_candidate(title,premise,spec,generation_id) VALUES(p->>'title',p->>'premise',p->'spec',g.id);
    ELSE detail_value:=detail_value||'{"deduplicated":true}'; END IF;
   END IF;
  END IF;
+ IF g.state='queued' THEN PERFORM cancel_openrouter_capacity('ticket-creator:'||id_value); END IF;
  UPDATE incubator_ticket_generation SET state=state_value,detail=detail_value WHERE id=id_value;
  IF state_value='indeterminate' OR (SELECT count(*) FROM (SELECT state FROM incubator_ticket_generation ORDER BY id DESC LIMIT 3) recent WHERE state='failed')=3 THEN
   UPDATE incubator_campaign SET enabled=false,note='Ticket Creator needs attention. Its recorded attempts are preserved; uncertain requests are not replayed.';
