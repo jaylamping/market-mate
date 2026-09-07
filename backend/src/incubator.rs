@@ -54,7 +54,7 @@ fn free_pricing(pricing: &std::collections::BTreeMap<String, Value>) -> bool {
             .values()
             .all(|v| v.as_str().is_some_and(is_zero_price))
 }
-fn payload(model: &str, brief: &str) -> Value {
+pub(crate) fn payload(model: &str, brief: &str) -> Value {
     json!({"model":model,"messages":[{"role":"system","content":format!("{SYSTEM}\n\n{RESPONSE_CONTRACT}")},{"role":"user","content":brief}],
         "max_tokens":2048,"stream":false,"provider":{"allow_fallbacks":false,"require_parameters":true,
         "max_price":{"prompt":0,"completion":0}},"response_format":{"type":"json_object"}})
@@ -165,7 +165,14 @@ impl OpenRouter {
             .map_err(|_| "client_unavailable")?;
         Ok(Self { client, auth })
     }
-    async fn send(&self, request: &Value) -> (&'static str, Value) {
+    pub(crate) async fn send(&self, request: &Value) -> (&'static str, Value) {
+        self.send_with_parser(request, completion).await
+    }
+    pub(crate) async fn send_with_parser(
+        &self,
+        request: &Value,
+        parse: fn(Value, &str) -> (&'static str, Value),
+    ) -> (&'static str, Value) {
         let response = self
             .client
             .post("https://openrouter.ai/api/v1/chat/completions")
@@ -212,7 +219,7 @@ impl OpenRouter {
             }
         }
         match serde_json::from_slice(&bytes) {
-            Ok(value) => completion(value, request["model"].as_str().unwrap_or_default()),
+            Ok(value) => parse(value, request["model"].as_str().unwrap_or_default()),
             Err(_) => (
                 "indeterminate",
                 json!({"reason":"invalid_provider_response"}),
@@ -273,9 +280,12 @@ async fn run_with_database(
         .await
         .map_err(|_| "database_unavailable")?
         .get(0);
-    if let Some(existing) = existing {
-        let stored_model = existing["config"]["model"].as_str().ok_or("invalid_run")?;
-        if !model.is_empty() && model != stored_model {
+    let policy =
+        crate::model_routing::stored(std::path::Path::new("/var/lib/model-policy/routing.json"))?;
+    let default_route = policy.as_ref().and_then(default_route).cloned();
+    let primary = if let Some(existing) = &existing {
+        let stored = existing["config"]["model"].as_str().ok_or("invalid_run")?;
+        if !model.is_empty() && model != stored {
             return Err("run_key_model_mismatch");
         }
         let child: Option<Value> = db
@@ -292,19 +302,21 @@ async fn run_with_database(
             )
             .await;
         }
-        return run_once(db, key, stored_model, None).await;
-    }
-    let policy =
-        crate::model_routing::stored(std::path::Path::new("/var/lib/model-policy/routing.json"))?;
-    let default_route = policy.as_ref().and_then(default_route).cloned();
-    let primary = if model.is_empty() {
-        let default = default_route
+        // A terminal invocation is a read, never a delayed retry under new policy.
+        if ["completed", "failed", "indeterminate"]
+            .contains(&existing["state"].as_str().unwrap_or_default())
+        {
+            return Ok(existing.clone());
+        }
+        stored
+    } else if model.is_empty() {
+        let route = default_route
             .as_ref()
             .ok_or("default_model_not_configured")?;
-        if default.provider != "openrouter" {
+        if route.provider != "openrouter" {
             return Err("preferred_provider_execution_unavailable");
         }
-        default.model_id.as_str()
+        route.model_id.as_str()
     } else {
         model
     };
@@ -326,7 +338,7 @@ async fn run_with_database(
     }
     Ok(result)
 }
-fn default_route(
+pub(crate) fn default_route(
     policy: &crate::model_routing::RoutingPolicy,
 ) -> Option<&crate::model_routing::Route> {
     policy
@@ -412,14 +424,22 @@ async fn run_once(
     model: &str,
     fallback_of: Option<&str>,
 ) -> Result<Value, &'static str> {
-    let row = db
-        .query_one(
+    let existing: Option<Value> = db
+        .query_one("SELECT read_incubator_agent_run($1)", &[&key])
+        .await
+        .map_err(|_| "database_unavailable")?
+        .get(0);
+    let run = if let Some(run) = existing {
+        run
+    } else {
+        db.query_one(
             "SELECT admit_incubator_agent_run($1,$2,$3)",
             &[&key, &model, &INPUT_KEY],
         )
         .await
-        .map_err(|_| "admission_denied_check_identity_input_or_existing_run")?;
-    let run: Value = row.get(0);
+        .map_err(|_| "admission_denied_check_identity_input_or_existing_run")?
+        .get(0)
+    };
     match run["state"].as_str() {
         Some("dispatched") => {
             return event(
@@ -430,9 +450,19 @@ async fn run_once(
             )
             .await
         }
+        Some("preparing") => {
+            return event(
+                db,
+                key,
+                "failed",
+                json!({"reason":"interrupted_before_dispatch", "fallback_of":fallback_of}),
+            )
+            .await
+        }
         Some("admitted") => (),
         _ => return Ok(run),
     }
+    event(db, key, "preparing", json!({"fallback_of":fallback_of})).await?;
     let prepared = async {
         let (provider, revision, pricing, routes) = prepare_model(model).await?;
         let brief = run["config"]["input"]["text"]

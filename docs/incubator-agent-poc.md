@@ -9,30 +9,29 @@ is research planning, not a backtest, qualification, or authority decision.
 
 Select and save a concrete free OpenRouter model on Agents. The POC reads that
 same saved policy volume immediately before recording its dispatch intent.
-It does not change the whitelist or expose an inference route through the UI.
+It does not change the whitelist. The Incubator request modal uses the same bounded runner.
 
 ```sh
-docker compose build backend research-agent openrouter-connector frontend
-docker compose up -d --no-deps --wait backend openrouter-connector frontend
+docker compose build backend research-agent incubator-requests openrouter-connector frontend
+docker compose up -d --no-deps --wait backend incubator-requests openrouter-connector frontend
 docker compose run --rm --no-deps research-agent my-unique-run minimax/minimax-m3:free
 ```
 
-Visit `http://localhost:3000/incubator`. The history refreshes every five seconds.
+Visit `http://localhost:3000/incubator`. Workflow changes arrive through SSE without a manual reload.
 Repeating a completed or failed run key returns the existing outcome. A key
 cannot be reused for a different model. The CLI returns a nonzero exit status
 for failed or uncertain runs.
 
 ## Boundaries
 
-- Input is exclusively `momentum-brief-v1`, original project-authored text stored
+- The CLI input is `momentum-brief-v1`, original project-authored text stored
   by `incubator_poc_brief()`. It contains no observations or account data. The
-  admission function rejects other input IDs. This is a narrow POC input
+  CLI admission function rejects other input IDs. The modal separately admits owner-authored research briefs (see below). This is a narrow POC input
   allowlist; it does **not** certify external processing rights for vendor
   evidence. Connecting entitled research artifacts remains subsequent work.
 - Saved model whitelist, a concrete `:free` ID, and freshly retrieved zero
   catalog pricing are all required. Prompt and completion price ceilings of
-  zero are sent to OpenRouter. No tools, plugins, automatic model selection,
-  provider failover or repeat dispatch within an assignment is configured.
+  zero are sent to OpenRouter. No tools, plugins, provider failover, or repeat dispatch within an assignment is configured. Model selection and separately admitted fallback assignments are described below.
 - One request, at most 2,048 output tokens, 120-second HTTP request timeout,
   three-second connect timeout, and 64 KB response limit. Preflight catalog
   access has its existing eight-second timeout. This is not a claim that a
@@ -70,7 +69,7 @@ Completed and failed runs each produce an Alpha Shot with result/failure lineage
 Run state comes from ordered events, not the assignment's original scheduled state.
 
 A session advisory lock holds a single runner, while SQL admission prevents a
-second active assignment. Dispatch intent commits **before** the sole generation
+second CLI assignment while occupied. Manual requests may queue, but preparing and dispatch remain exclusive. Dispatch intent commits **before** the sole generation
 POST. A crash after intent is not automatically replayable, even if the request
 may never have left the machine. Rerunning that key records `indeterminate` and
 never calls the provider again. Uncertain runs hold the lane; clearing that hold
@@ -209,3 +208,18 @@ Every turn binds a client request identity, context revision, owner message, exa
 Each open conversation subscribes to the service’s live text channel, including windows that did not initiate the request. Reopening during generation receives the latest partial text and subsequent updates. Decoding accepts either JSON field order. Closing the modal or losing the browser stream does not cancel the server task. Reload reads persisted history and never replays a generation. An uncertain provider outcome or orphaned dispatch pauses that conversation without automatic resend. A reply interrupted by a service restart is shown as outcome unknown after 150 seconds. Full provider responses (including incomplete output) and usage are retained when available. Messages are untrusted Task Memory; they do not become Canonical Evidence or Assignment Handoffs. Future collaboration must use the existing cross-assignment artifact and handoff boundaries rather than treating conversational text as authority.
 
 Verification: `cargo test --workspace --locked`, frontend tests/typecheck, and `scripts/incubator_agent_poc_test.sh` cover streaming framing, JSON validation, retained context, origin protection, idempotency, stale context, independent tasks, restricted role permissions, populated append-only records and audit-chain integrity. Database evidence is `evidence/incubator-agent-poc/chat-acceptance.json`.
+
+
+## Manual assignments and live workflow
+
+**Add assignment** accepts a title, up to 6,000 UTF-8 bytes of owner-authored research text, and an optional approved free OpenRouter model. Leaving the model blank resolves and pins the configured default at check time. Execution revalidates the whitelist and current pricing. This starts a bounded planning report, not an empirical experiment or a trading action.
+
+Similarity checks cover the full assignment corpus, including queued and finished work and owner-applied plan revisions. Obvious wording overlap is detected locally. Uncertain comparisons use the configured default/fallback model in batches; historical content without an established export permission is compared locally only. At most eight bounded comparison calls are made. An unavailable model, invalid response, interrupted check, or context limit produces an explicit incomplete-check warning. Neither similarity warnings nor incomplete results create an assignment until the owner chooses **Create assignment anyway**. A clean check queues automatically. Matching records include explanations and links, including records outside the recent-history view.
+
+Checks bind immutable request identities, model choices, and a digest of the compared objectives and plans. Submission verifies that this history has not changed and records the owner's warning decision. Repeating a submission returns the same run. Changing the request requires a fresh check. Comparison dispatches and results remain audited; provider-generated explanations are advisory and never authorize execution.
+
+The internal `incubator-requests` service (8086, no published port) uses the restricted `incubator_runner` identity. Its persistent queue survives browser closure and service restart. A single worker prepares and dispatches each accepted request. An interrupted preparation fails without a primary dispatch; a previously recorded dispatch becomes outcome unknown and holds the lane without automatic retry. A separately admitted fallback preserves the full custom brief. Existing zero-spend and no-tools restrictions remain in force.
+
+The page subscribes to `/api/incubator/assignments/stream`. The server checks persisted workflow state every second and pushes changed snapshots, including a fresh snapshot on reconnect. All active assignments and the latest 100 finished runs remain visible. Card footers show **Assigned → Preparing → Research → Ready**; the upper-right modal timeline shows the full labels and timestamps. Failures and uncertain outcomes are explicit stop states. The report retains the full event history and original provenance.
+
+Run `scripts/incubator_manual_requests_test.sh` for isolated database, restricted-role, HTTP idempotency, queue pickup, and SSE acceptance. Results are saved in `evidence/incubator-manual-requests/acceptance.json`. The original Incubator acceptance script remains required for CLI, fallback, and conversation regressions.

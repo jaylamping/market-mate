@@ -16,7 +16,7 @@ export const paperQuery = queryOptions({
   queryKey: ["api", "paper", "account"] as const,
   queryFn: async ({ signal }) => parsePaper(await getJson("/api/paper", signal)),
 });
-export const incubatorQuery = queryOptions({ queryKey:["api","incubator","runs"] as const, queryFn:async ({signal}) => parseRuns(await getJson("/api/incubator/runs",signal)), refetchInterval:5_000 });
+export const incubatorQuery = queryOptions({ queryKey:["api","incubator","runs"] as const, queryFn:async ({signal}) => parseRuns(await getJson("/api/incubator/runs",signal)), refetchInterval:false });
 export const surfacesQuery = queryOptions({
   queryKey: ["api", "research", "surfaces"] as const,
   queryFn: async ({ signal }) => parseStage1Surfaces(await getJson("/api/surfaces", signal)),

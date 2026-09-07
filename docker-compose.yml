@@ -195,10 +195,34 @@ services:
       timeout: 3s
       retries: 20
 
+  incubator-requests:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["incubator-requests"]
+    environment:
+      DATABASE_URL: postgres://incubator_runner:local-poc-only@postgres:5432/market_mate
+    volumes:
+      - openrouter-secrets:/var/lib/openrouter:ro
+      - openrouter-policy:/var/lib/model-policy:ro
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8086/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   frontend:
     build: ./frontend
     command: ["npm", "run", "start:container"]
     environment:
+      INCUBATOR_REQUESTS_URL: http://incubator-requests:8086
       INCUBATOR_CHAT_URL: http://incubator-chat:8085
       BACKEND_URL: http://backend:8080
       CURSOR_CONNECTOR_URL: http://cursor-connector:8084

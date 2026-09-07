@@ -19,6 +19,7 @@ COPY --from=build /app/target/release/openrouter-connector /usr/local/bin/openro
 COPY --from=build /app/target/release/cursor-connector /usr/local/bin/cursor-connector
 COPY --from=build /app/target/release/research-agent /usr/local/bin/research-agent
 COPY --from=build /app/target/release/incubator-chat /usr/local/bin/incubator-chat
+COPY --from=build /app/target/release/incubator-requests /usr/local/bin/incubator-requests
 RUN mkdir -p /var/lib/custody /var/lib/model-policy && chown app /var/lib/custody /var/lib/model-policy
 USER app
 EXPOSE 8080
