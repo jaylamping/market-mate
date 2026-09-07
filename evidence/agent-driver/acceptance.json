@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "checks": [
+    "tier_walk_prefers_subscription",
+    "threshold_moves_to_next_route",
+    "pacing_moves_to_free_tier",
+    "paid_tier_requires_allow_paid",
+    "reset_returns_to_primary",
+    "idempotent_admission",
+    "rate_limit_cooldown",
+    "openrouter_delegation_links_receipt",
+    "append_only_evidence",
+    "expired_attempts_indeterminate"
+  ],
+  "sha256": {
+    "db/migrations/0088_agent_driver.sql": "321396a19ec74ff3a02f4a2ce35ab5c2d7072547bc957a37cd285110d6741913",
+    "db/fixtures/agent_driver_probe.sql": "1e3c55e1b6d85d5b65eb895b16f4fc0817004da3af8c154320599b7a02b4c894"
+  }
+}

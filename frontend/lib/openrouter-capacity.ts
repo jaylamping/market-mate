@@ -49,10 +49,10 @@ export function canSaveCapacity(p: CapacityPolicy, approvedPaidModels: string[])
       p.paid_models.includes(p.paid_model ?? "") && p.paid_models.every(id => approvedPaidModels.includes(id)) &&
       [p.paid_request_limit_nanos,p.paid_daily_limit_nanos,p.paid_monthly_limit_nanos,p.paid_attempt_limit].every(n => n > 0)));
 }
-export const capacityQuery = queryOptions({ queryKey: ["api", "incubator", "capacity"] as const,
-  refetchInterval: 10_000, queryFn: async ({signal}) => parseCapacity(await getJson("/api/incubator/capacity",signal)) });
+export const capacityQuery = queryOptions({ queryKey: ["api", "providers", "capacity"] as const,
+  refetchInterval: 10_000, queryFn: async ({signal}) => parseCapacity(await getJson("/api/providers/capacity",signal)) });
 export async function updateCapacity(policy: CapacityPolicy): Promise<void> {
-  const response = await fetch("/api/incubator/capacity", {method:"PUT",headers:{"Content-Type":"application/json"},
+  const response = await fetch("/api/providers/capacity", {method:"PUT",headers:{"Content-Type":"application/json"},
     signal:AbortSignal.timeout(15_000),body:JSON.stringify({expected_revision:policy.revision,policy})});
   if (response.status === 409) throw Error("Settings changed elsewhere. Reload current settings before saving.");
   if (!response.ok) throw Error("Capacity settings could not be saved. Reload to check current settings before retrying.");
@@ -67,7 +67,7 @@ export async function capacityProxy(request: Request, method: "GET" | "PUT" | "P
         !["http:","https:"].includes(origin.protocol) || !["localhost","127.0.0.1","[::1]"].includes(origin.hostname)) throw Error();
     } catch {return Response.json({error:"Local same-origin request required"},{status:403,headers});}
   }
-  const base = process.env.INCUBATOR_REQUESTS_URL;
+  const base = process.env.AGENT_DRIVER_URL;
   if (!base) return Response.json({error:"Capacity service unavailable"},{status:503,headers});
   try {
     let body: Uint8Array | undefined;

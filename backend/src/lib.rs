@@ -10,6 +10,7 @@ pub mod openrouter;
 pub mod openrouter_capacity;
 
 pub mod cursor;
+pub mod driver;
 pub mod incubator;
 
 pub mod model_routing;

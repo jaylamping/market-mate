@@ -5,6 +5,7 @@ import "./command-ledger.css";
 import "./supervisory-overview.css";
 import { QueryProvider } from "./QueryProvider";
 import { ThemeProvider } from "./ThemeProvider";
+import { UsageWidget } from "@/components/UsageWidget";
 
 const overviewFont = Geist({
   display: "swap",
@@ -25,7 +26,7 @@ export const metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${overviewFont.variable} ${overviewMono.variable}`}><ThemeProvider><QueryProvider>{children}</QueryProvider></ThemeProvider></body>
+      <body className={`${overviewFont.variable} ${overviewMono.variable}`}><ThemeProvider><QueryProvider>{children}<UsageWidget /></QueryProvider></ThemeProvider></body>
     </html>
   );
 }

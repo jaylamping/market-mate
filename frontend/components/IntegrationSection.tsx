@@ -4,11 +4,8 @@ import { IntegrationLogo } from "./IntegrationLogo";
 import { IntegrationStatus } from "./IntegrationStatus";
 import { Button } from "./ui/button";
 
-const names = { alpaca: "Alpaca", openrouter: "OpenRouter", cursor: "Cursor" } as const;
-type Provider = keyof typeof names;
-
 export function IntegrationSection({ provider, description, state, metric, action, children }: {
-  provider: Provider;
+  provider: string;
   description: string;
   state?: string;
   metric?: ReactNode;
@@ -19,7 +16,7 @@ export function IntegrationSection({ provider, description, state, metric, actio
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="grid min-w-0 gap-2">
         <div className="flex flex-wrap items-center gap-3">
-          <h3 className="inline-flex items-center gap-2.5 text-base font-semibold"><IntegrationLogo provider={provider}/>{names[provider]}</h3>
+          <h3 className="inline-flex items-center gap-2.5 text-base font-semibold"><IntegrationLogo provider={provider}/>{provider}</h3>
           {state && <IntegrationStatus state={state}/>}
           {metric}
         </div>

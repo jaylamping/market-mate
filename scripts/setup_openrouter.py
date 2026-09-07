@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Store OpenRouter credentials through stdin in the connector's private Docker volume."""
+"""Store OpenRouter credentials through stdin in the agent driver's private Docker volume."""
 import getpass
 import json
 from pathlib import Path
@@ -23,7 +23,7 @@ def main():
         stderr=subprocess.DEVNULL,
     )
     if result.returncode:
-        sys.exit("Could not store credentials. Start Docker and build the openrouter-connector service, then retry.")
+        sys.exit("Could not store credentials. Start Docker and build the agent-driver service, then retry.")
     print("OpenRouter credentials saved privately in Docker. Refresh http://localhost:3000/system#integrations after 5 seconds.")
 
 

@@ -14,7 +14,6 @@ export function needsWarning(check:RequestCheck){return !!check.result&&(!check.
 export function requestError(code:string):string {
  const messages:Record<string,string>={
   default_model_not_configured:"Choose a default model in Models, or select an approved model for this ticket.",
-  preferred_provider_execution_unavailable:"The preferred provider cannot execute research yet. Choose an approved OpenRouter model in Models.",
   model_not_whitelisted:"This model is no longer approved. Refresh the model choices.",
   zero_spend_budget_denied:"This operation requires an approved free model.",
   history_changed_recheck:"Tickets changed while you reviewed this request. Check again to review the latest matches.",

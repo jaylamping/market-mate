@@ -21,6 +21,10 @@ Choosing a similar available model or assuming that a free label grants permissi
 
 [routing](../../backend/src/model_routing.rs), [capacity](../../backend/src/openrouter_capacity.rs), [campaign spending SQL](../../db/migrations/0076_campaign_selected_spending.sql), [capability adapter](../../backend/src/openrouter_request.rs). Run `bash scripts/openrouter_capacity_test.sh` and `bash scripts/research_campaign_test.sh`.
 
+## Amended by ADR-0013
+
+Approvals are now agent routes per tier. OpenRouter spending authorization is unchanged; subscription providers are admitted by `admit_dispatch`.
+
 ## Reconsider when
 
 The Principal explicitly changes a spending/model policy or a provider contract changes. An agent/IDE transition alone grants nothing.

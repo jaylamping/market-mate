@@ -29,4 +29,4 @@ Outputs are diagnostic integer-basis-point means, not compounded returns, statis
 
 Run `bash scripts/incubator_experiment_test.sh` for isolated SQL, two-worker notification pickup, role handoff, dataset HTTP attachment, SSE and restart checks. Run `bash scripts/incubator_evaluation_test.sh` for the upstream regression path. Neither script inserts synthetic data into the normal project.
 
-Migration 0058 must be applied before starting the new request worker. Rebuild all role-routing consumers together (`backend`, `openrouter-connector`, `cursor-connector`, `research-agent`, `incubator-chat`, `incubator-requests`) and the frontend. Older binaries reject the new optional routing fields. Preserve the saved routing selections.
+Migration 0058 must be applied before starting the new request worker. Rebuild all role-routing consumers together (`backend`, `agent-driver`, `research-agent`, `incubator-chat`, `incubator-requests`) and the frontend. Older binaries reject the new optional routing fields. Preserve the saved routing selections.
