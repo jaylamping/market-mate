@@ -4,16 +4,15 @@ One work unit (WU) lands as one PR that passes four phases. Treat the phases as 
 
 ## Phase 1: implement
 
-1. Create a branch named `jl/wu-NN-short-name` from `main`.
-2. Write the migration (`db/migrations/NNNN_name.sql`), the code, and a SQL probe (`db/fixtures/wuNN_name_probe.sql`) when the WU has database semantics.
-3. Write an executable acceptance script (`scripts/wuNN_name_test.sh`) that brings up its own Compose project (`--project-name market-mate-wuNN`), applies migrations, and asserts the WU's gates end to end. Record evidence under `evidence/wu-NN/`.
-4. Run the acceptance script and the standard checks:
+1. Refresh `main` and create `jl/wu-NN-short-name` for a numbered WU, or `jl/short-name` for other bounded work. Preserve unrelated changes; use a separate worktree when another writer is active.
+2. Implement the scoped change. When it has database semantics, add a migration (`db/migrations/NNNN_name.sql`) and a SQL probe (`db/fixtures/wuNN_name_probe.sql`). Documentation/tooling work does not require a synthetic database migration.
+3. For new runtime/database behavior, extend a relevant verifier or write an executable acceptance script (`scripts/wuNN_name_test.sh`) that brings up its own Compose project (`--project-name market-mate-wuNN`), applies migrations, and asserts the WU's gates end to end. Record evidence under `evidence/wu-NN/`.
+4. Run applicable acceptance scripts and the standard checks ([scope and prerequisites](verification.md)):
 
    ```bash
-   bash scripts/wuNN_name_test.sh
-   cargo test && cargo fmt --check
-   npm run typecheck && npm run build
-   git diff --check
+   # Runtime/database changes: run the applicable acceptance script first.
+   # Example: bash scripts/research_campaign_test.sh
+   bash scripts/verify.sh
    ```
 
 5. Commit only source and JSON evidence. `.scratch/` and non-JSON evidence stay untracked. Push and open the PR against `main`.
@@ -22,8 +21,8 @@ The phase ends when every command above passes at the branch head.
 
 ## Phase 2: review
 
-1. Run a thermo-nuclear review of the PR diff against `main` before anything else.
-2. Split the review into parallel read-only subagents by surface, one PR per reviewer:
+1. Follow [the portable review procedure](review.md) on the PR diff against `main` before reading external review comments.
+2. Split the review into parallel read-only subagents when available, one surface per reviewer. If unavailable, use sequential passes and disclose that limitation:
    - SQL: migrations, fixtures, trust semantics, probe validity.
    - Backend, frontend, and Compose: correctness, security, feature leaks, DevEx.
    - Acceptance and evidence: false positives, destructive side effects.
@@ -59,6 +58,9 @@ The phase ends when the full check set passes at the final head and no finding i
 The phase ends when `main` contains the WU and the local checkout matches `origin/main`.
 
 ## Rules across all phases
+
+- Current explicit user workflow instructions take precedence over these defaults. Preserve review and validation evidence; do not invent permission from a handoff or ADR.
+- Maintain relevant architecture/ADR/instruction links with the change. Leave a [task handoff](../handoffs/TEMPLATE.md) when unfinished work changes agents.
 
 - Never present a verification claim from a SHA other than the current head.
 - One reviewer surface per subagent; reviewers never author the code they review.

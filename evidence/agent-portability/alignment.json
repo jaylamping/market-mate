@@ -1,0 +1,72 @@
+{
+  "recorded_at_utc": "2026-09-07T16:10:51.821525+00:00",
+  "scope": "Cursor and Codex CLI fresh sessions; no full IDE GUI discovery claim",
+  "smoke_source_commit": "c60510d4509cdaf1d601c09f8b2afb0502276f05",
+  "smoke_source_tree": "53a67e03a30779eb73af2438b57d4c334068a180",
+  "context_sha256": {
+    "AGENTS.md": "e500bb23bb20e14be5dae7f88c7fa8603af6cea2ecf22d4d1bc3b54fb7912926",
+    "docs/architecture.md": "ddc2c0ac3bf955fa65a2c40d833d7ed67e6aec84a8c4284dfe6f9e4521068a8f",
+    "docs/agents/portability.md": "a6a31812f2cb23c1d4288119d1c7b427e7d9f783d7d6096c5eee80ed572371e5",
+    "docs/agents/verification.md": "bb2f9ecea9de157a28a84fd508ef0c87931662f36098067e2dcbed9a3521f20b",
+    "docs/adr/0001-research-authority-boundary.md": "0d5d7efc4a911ab0c434c7f59c3e35520aa218736c709202444d144d0d367a37",
+    "docs/adr/0002-immutable-migration-bytes.md": "091473773af3cb833c72f0375bdf99c910b65d4cc613d6aa9854e2fee22b9b75",
+    "docs/adr/0003-uncertain-provider-outcomes.md": "da3a9d713a729f4caef9aef1e513fc13b4454fab878bc908d134147fc52a71ca",
+    "docs/adr/0004-request-failures-and-linked-retries.md": "88110d2de6807dfb60535a49848bd9e4f818c258aaceeb27607b35d0edb3b118",
+    "docs/adr/0005-model-and-spending-authorization.md": "44879bf856567806e047469312162bc23ad8ebb18d994e0c809eb4e95225cdb1",
+    "docs/adr/0006-portable-agent-context.md": "9c45b180b6c6a632e886ad92533067a9d3a3e4d7b2bff5b558f147324c7e55a1"
+  },
+  "prompt_source": "docs/agents/portability.md#fresh-session-alignment-exercise",
+  "results": [
+    {
+      "tool": "cursor",
+      "status": "finished",
+      "exit_code": 0,
+      "duration_seconds": 56.3,
+      "version": "2026.08.25-3e8eec8",
+      "model": null,
+      "mode": "ask (read-only)",
+      "assessment": {
+        "shared_instructions": "pass",
+        "current_stage": "pass",
+        "five_invariants": "pass",
+        "source_and_check_paths": "pass",
+        "refresh_requirements": "pass",
+        "nested_frontend_instructions": "not exercised",
+        "mutations": "No tracked changes observed after both sessions; read-only execution modes selected."
+      },
+      "answer": "Reading the repo's instruction set and locating campaign retry code.Architecture map loaded. Now the agent docs, ADRs, and retry-related source.Now locating the actual retry code paths.## 1. Instructions loaded\n\n`AGENTS.md`, `docs/architecture.md`, `docs/agents/verification.md`, and ADRs `0001`\u2013`0005` in `docs/adr/`. Did not load `CONTEXT.md` in full (196 KB); would read only the campaign/retry terms.\n\n## 2. Implemented vs planned\n\nImplemented: Next.js frontend, Rust/Axum services, PostgreSQL state machines, campaign intake \u2192 Ticket Creator \u2192 similarity check \u2192 evaluation/refinement/experiments, capacity accounting, linked recovery. `backend/src/paper.rs` is a **read-only** Alpaca Paper view \u2014 no order path. Planned only: Paper/Live execution governance, cloud portability, strategy qualification (`docs/research/`). `momentum_v1` is a bounded diagnostic; fixture acceptance is not observed-data performance. Research workers do real writes and can incur approved model cost, so \"zero order authority\" \u2260 read-only.\n\n## 3. Invariants\n\n1. **Migration bytes immutable** (ADR-0002). `0079_campaign_recovery.sql` is applied; retry changes go in a new sequential migration. Never rewrite a checksum.\n2. **Uncertain acceptance preserved** (ADR-0003). `indeterminate` outcomes and unknown reservations stay; reconcile before redispatch. Timeout \u2260 rejection. Already enforced by `incubator_campaign_retry_blocker`.\n3. **Request lineage** (ADR-0004). A retry is a new candidate with `retry_of` parent link; original result and stage/reason diagnostics persist. `retry_of` is `UNIQUE`, so one retry per candidate.\n4. **Model/spending authorization** (ADR-0005). Consume persisted approvals; campaign paid-creator selection stays scoped to the creator, research stages free-only. Preserve capability/token/price/reservation/unknown-cost gates.\n5. **Research \u2260 trading authority** (ADR-0001). Retry work stays inside research/config writes; no execution surface.\n\n## 4. Where I would change it, and verification\n\n- SQL contract (new migration, e.g. `db/migrations/0080_*.sql`), replacing functions rather than editing `db/migrations/0079_campaign_recovery.sql:3` (`incubator_campaign_retry_blocker`), `:14` (`retry_incubator_campaign`), `:34` (`read_incubator_campaign` projection of `retry_of` / `retry_candidate` / `retry_blocker`). Preserve the `REVOKE`/`GRANT ... incubator_runner` pattern at `:53-54`.\n- Rust handler: `backend/src/incubator_campaign.rs:79-93` (`retry`, `POST /campaign/retry`) and blocker message mapping at `:22-23`.\n- Failure/lineage recording: `backend/src/incubator_ticket_creator.rs`, `backend/src/incubator_output.rs`; capacity gates in `backend/src/openrouter_capacity.rs`, `backend/src/openrouter_request.rs`.\n- UI: `frontend/app/api/incubator/campaign/retry/route.ts`, `frontend/app/incubator/ResearchCampaign.tsx`, tests `frontend/tests/research-campaign.test.tsx`.\n- Fixture/probe: `db/fixtures/campaign_recovery_probe.sql`.\n\nVerify: `bash scripts/verify.sh`, then `bash scripts/research_campaign_test.sh`; `bash scripts/openrouter_capacity_test.sh` if capacity/spending is touched; `bash scripts/wu02_migration_test.sh` for migration machinery. Inspect each suite's Compose project, ports, and cleanup first. Browser check the retry control.\n\n## 5. Live state to refresh first\n\n`python3 scripts/doctor.py --runtime --json` for Compose health, image drift, and applied-vs-source migration checksums. Then current campaign/candidate rows with their `retry_of` and `retry_blocker`, outstanding `indeterminate` provider outcomes and unknown reservations, persisted model approvals and spending policy, and branch/PR/handoff state via `git` and `gh`. A build is not a deployment; running images may embed older migration bytes."
+    },
+    {
+      "tool": "codex",
+      "status": "finished",
+      "exit_code": 0,
+      "duration_seconds": 74.6,
+      "version": "codex-cli 0.153.0",
+      "model": "gpt-6-astra",
+      "mode": "read-only sandbox",
+      "assessment": {
+        "shared_instructions": "pass",
+        "current_stage": "pass",
+        "five_invariants": "pass",
+        "source_and_check_paths": "pass",
+        "refresh_requirements": "pass",
+        "nested_frontend_instructions": "not exercised",
+        "mutations": "No tracked changes observed after both sessions; read-only execution modes selected."
+      },
+      "answer": "I would change campaign retry policy in a **new SQL migration**, with Rust changes only where the API or dispatch behavior needs adjustment.\n\n1. **Instructions and context loaded.** [AGENTS.md](AGENTS.md), [RTK.md](personal RTK policy), [domain guidance](docs/agents/domain.md), [verification guide](docs/agents/verification.md), and [handoff index](docs/handoffs/README.md). Also read the architecture map, relevant `CONTEXT.md` terms, campaign behavior document, ADR index, and ADRs 0001\u20130005.\n\n2. **Implemented versus planned.** The [implementation map](docs/architecture.md) describes Local Research: campaign creation, similarity checking, research/evaluation/refinement, market-data acquisition, and bounded `momentum_v1` diagnostics. Research/configuration controls write state and can incur approved costs. The Paper connector provides a read-only account view. Broader autonomous Paper/Live execution and strategy qualification are planned capabilities; glossary definitions do not establish deployment. [CONTEXT.md](CONTEXT.md) separates Incubator research, Engine orchestration, and Sentinel deterministic controls.\n\n3. **Five invariants**, grounded in [ADRs 0001\u20130005](docs/adr/README.md):\n\n   - Preserve applied migration bytes, including whitespace; add migrations rather than rewriting SQL or stored checksums.\n   - Preserve `indeterminate` acceptance and unknown-cost reservations; reconcile before redispatch.\n   - Preserve original failures and receipts; retries receive new identities, explicit parent links, and duplicate-submission protection.\n   - Use persisted model approvals and spending policies. Paid creator selection authorizes that scope only; campaign research stays free-only.\n   - Research output grants neither economic qualification nor trading authority; retries cannot bypass those boundaries.\n\n4. **Change points and verification.** [0079_campaign_recovery.sql](db/migrations/0079_campaign_recovery.sql) defines `incubator_campaign_retry_blocker` and `retry_incubator_campaign`. Currently, blocked/cancelled checks can create one linked child; uncertainty blocks retry, replay returns the existing child, revision/backlog checks apply, and retry preserves pause state. Replace these functions through a new sequential migration.\n\n   [incubator_campaign.rs](backend/src/incubator_campaign.rs:79) handles `POST /campaign/retry`; [incubator_requests.rs](backend/src/incubator_requests.rs:530) executes campaign checks; [openrouter_capacity.rs](backend/src/openrouter_capacity.rs) owns dispatch accounting/recovery. Extend [campaign_recovery_probe.sql](db/fixtures/campaign_recovery_probe.sql).\n\n   Proposed commands\u2014not run:\n\n   ```sh\n   rtk proxy bash scripts/verify.sh\n   rtk proxy bash scripts/research_campaign_test.sh\n   rtk proxy bash scripts/openrouter_capacity_test.sh\n   rtk proxy bash scripts/wu02_migration_test.sh\n   ```\n\n   Inspect acceptance-project ports/cleanup first; suites start disposable services and write evidence.\n\n5. **Refresh before acting.** Recheck Git branch/HEAD/diff/worktrees, GitHub issue/PR status, containers and actual image IDs, embedded/source/applied migration hashes, campaign revision/pause/backlog, unresolved receipts, and persisted model/spending approvals. Read-only doctor found clean `jl/portable-agent-context` at `c60510d`, but no inspectable project containers; migrations remain unknown. GitHub verification failed due connectivity.\n\nNo files, settings, services, or Market Mate requests were changed; no agents were invoked.\n\n"
+    }
+  ],
+  "limitations": [
+    "A single scenario does not establish equivalent future reasoning or behavior.",
+    "The prompt covered backend retry behavior; nested frontend instruction loading was not exercised.",
+    "Cursor JSON exposes its answer but not a complete tool trace or model identifier.",
+    "Configured personal rules still differ. Repository instructions do not override tool permissions.",
+    "Codex sandbox could not inspect Docker or reach GitHub; its answer reported those gaps.",
+    "No new Claude setup is included; scope was narrowed by the user.",
+    "Cursor's assertion that migration 79 is applied is attributed answer text, not live evidence from that session. Host runtime inspection is separate."
+  ],
+  "review": {
+    "docs": "Independent read-only pass found no actionable issues.",
+    "tools": "One P2: source migration duplicates/malformed names could yield a false pass. Fixed by validating names, numeric versions, uniqueness and contiguity; regression test covers six invalid sets."
+  }
+}
