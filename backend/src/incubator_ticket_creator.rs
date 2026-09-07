@@ -15,7 +15,7 @@ fn proposal(content: &str) -> Result<Proposal, &'static str> {
     if content.len() > 6000 {
         return Err("proposal_too_large");
     }
-    let p: Proposal = serde_json::from_str(content).map_err(|_| "invalid_ticket_proposal")?;
+    let p: Proposal = serde_json::from_str(content).map_err(|_| "invalid_ticket_json")?;
     if p.title.trim().is_empty()
         || p.title.len() > 240
         || p.premise.trim().is_empty()
@@ -46,6 +46,18 @@ fn completion(value: Value, requested: &str) -> (&'static str, Value) {
     let mut detail =
         json!({"usage":value["usage"],"generation_id":value["id"],"returned_model":value["model"]});
     let message = &value["choices"][0]["message"];
+    if let Some(content) = message["content"].as_str() {
+        let mut end = content.len().min(12_000);
+        while !content.is_char_boundary(end) {
+            end -= 1;
+        }
+        detail["response_text"] = json!(&content[..end]);
+        detail["response_truncated"] = json!(end < content.len());
+        if let Err(error) = serde_json::from_str::<Proposal>(content) {
+            detail["validation_error"] = json!(error.to_string());
+        }
+    }
+    detail["finish_reason"] = value["choices"][0]["finish_reason"].clone();
     let model = value["model"].as_str().unwrap_or_default();
     if (model != requested && Some(model) != requested.strip_suffix(":free"))
         || value["choices"][0]["finish_reason"] != "stop"
@@ -231,6 +243,21 @@ pub async fn worker() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn invalid_creator_output_preserves_validation_evidence() {
+        let response = |content: String| json!({"model":"v/m","choices":[{"finish_reason":"stop","message":{"content":content}}]});
+        let (state, detail) = completion(response("{broken".into()), "v/m");
+        assert_eq!(state, "failed");
+        assert_eq!(detail["reason"], "invalid_ticket_json");
+        assert_eq!(detail["response_text"], "{broken");
+        assert!(detail["validation_error"]
+            .as_str()
+            .unwrap()
+            .contains("line"));
+        let (_, detail) = completion(response("€".repeat(5000)), "v/m");
+        assert_eq!(detail["response_text"].as_str().unwrap().len(), 12000);
+        assert_eq!(detail["response_truncated"], true);
+    }
     #[test]
     fn creator_contract_rejects_unexecutable_specs_and_extra_fields() {
         let mut p = json!({"title":"A question","premise":"A falsifiable economic premise","spec":{"runner":"momentum_v1","lookback_sessions":3,"quantile_count":5,"one_way_cost_bps":10,"borrow_bps_per_session":2}});

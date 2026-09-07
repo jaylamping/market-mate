@@ -44,12 +44,13 @@
     "db/migrations/0075_continuous_research_campaign.sql": "52999053aeabd86e3758c334ac449795514c429a6a5e257e3d7c8d7f42cd5b1f",
     "db/migrations/0076_campaign_selected_spending.sql": "9d5bd2408980ab4584fa8c8d1be6b74afca1a5c692bd58e2a46e9f217bb8e7bd",
     "db/migrations/0077_campaign_backlog_premise.sql": "ecb65a7928d33c322cd66e309690f0901ce49241d16193a9e7e04c7de10432e6",
-    "db/fixtures/research_campaign_probe.sql": "fee949be9f8a4993db069e6a51f6f22bb86472750f02d569103b7935e4b2cf85",
+    "db/migrations/0078_campaign_failure_visibility.sql": "21690dd6b02ae6e7bb397b9a488e12fce11012cd4fe040d05e34775dcc6d2cfd",
+    "db/fixtures/research_campaign_probe.sql": "8c8ab67054f7e96654ceed3e37a08d04a91edcae935644eeb922d034a99b59d3",
     "backend/src/incubator.rs": "614eb7ea9520316a7b8a260b3eedaca8fbbdca84afed3b22a7364323f86861e3",
     "backend/src/incubator_campaign.rs": "050affcd79d8e959e6312797093fb1fc20ea803f98465458373692e31074c0c3",
-    "backend/src/incubator_ticket_creator.rs": "005f357e759f1792e569b4f0c89766c34680ca6b83f5cd0c1f10b0fa32b1930c",
+    "backend/src/incubator_ticket_creator.rs": "bf169ac0c8cf9f1c57f755c57fe66fd434104f148e42fe6ffd660c9304a8571f",
     "backend/src/incubator_requests.rs": "84ec022ec5d4c89dbd122efa7f5f204f6b3cc1168f0552f96d2ee2bf5592170f",
     "backend/src/openrouter_capacity.rs": "1bb0b544210177e015f03dcb7a135007a918c0c2f0af508888fc7daa2da3d8c7",
-    "scripts/research_campaign_test.sh": "27f7908e25403279bcae58945e75faf5f0f5a725a0a1017e7d3edc9a3ca2a53f"
+    "scripts/research_campaign_test.sh": "e5a9dfa284ba902432f46d754c423b9859bc49ca4da11931a3bb5fe41bafbd4d"
   }
 }
