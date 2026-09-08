@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "pr": "PR1 contracts + artifact verification (map #171, decision #172)",
+  "base_commit": "251ace59338a3ef175d1ff746ad96b9c8523c7df",
+  "project": "market-mate-research-contract-test",
+  "postgres_port": 15441,
+  "runtime": "isolated Compose postgres; no credentials or outbound model calls",
+  "migrations": "1 through 96 applied to a fresh isolated database using the repository migrator",
+  "module_tests": "cargo test --locked research_contract: 16 passed",
+  "probe": {"probe": "research-contract", "checks": ["admit_pins", "pure_pin_validator", "pure_spec_validator", "contract_quantile_set", "idempotent_admit", "parent_assignment_lineage", "reject_bad_pins", "reject_changed_pins", "reject_unknown_parent", "record_manifest", "idempotent_record", "reject_changed_artifact", "validity_gate", "reproducibility_gate", "readiness_gate", "reject_bad_spec", "reject_authority_claim", "reject_partial_reviewer", "reject_unknown_assignment", "expired_assignment_invalid", "same_family_held", "missing_critique_held", "missing_dissent_held", "same_assignment_or_run_held", "same_role_held", "pinned_replay_byte_identical", "diverged_digest_rejected", "digest_distinguishes_bytes", "lineage_open_diverged", "indeterminate_preserved", "unknown_outcome_indeterminate", "failed_dispatch_diverged", "unlinked_artifact_reproduces", "append_only", "insert_guard", "no_worker_grants"], "passed": true},
+  "map_notes": {
+    "invalid_artifacts": "bad pins, bad spec, authority claims, and diverged digests rejected",
+    "missing_critique": "held, with same-family, same-role, same-run, and missing-dissent holds",
+    "pinned_replay": "pinned-version replay reproduces byte-identical digests",
+    "indeterminate_dispatches": "indeterminate and unknown outcomes stay indeterminate, never failed",
+    "cost_controls_unchanged": "no provider cost admission or tier-cost references in PR1 behavior files"
+  },
+  "sha256": {
+    "db/migrations/0096_research_contract.sql": "a7104675fb4f96aee2ed5d51bfcf49b42e705861d3467a8a852e18ff3a283d3a",
+    "backend/src/research_contract.rs": "3eafea30a737ee9dd1d07bf39f91a2028767bd4903c0c012258a60254daa6fc9",
+    "backend/src/lib.rs": "580b7c78b55f5f0f9db129168d3a47f330016815e5de6b6f32959e7439bd468f",
+    "db/fixtures/research_contract_probe.sql": "489fef0894935cbdd0b2233b80d76d87329091a66c5431c372e9764c7a27a3dd",
+    "scripts/research_contract_test.sh": "bdc053995a3ebfcbf6eb6c5fc766b5e15e8981fe2d369792d469802bf81bad41"
+  }
+}
