@@ -12,16 +12,20 @@
 //! reuses [`crate::momentum::Spec::valid`] for the momentum ranges and
 //! [`crate::momentum::evaluate`] determinism for replay checks.
 //!
-//! Digest note: each runtime recomputes digests in its own canonical JSON
-//! form (SQL uses `jsonb::text`, Rust uses `serde_json::to_string` with
-//! sorted keys), so a replay must use the same canonicalizer that recorded
-//! the digest. Within one canonicalizer, pinned-version replay reproduces
-//! byte-identical digests.
+//! Digest note (B1): canonicalization is caller-owned. SQL digests
+//! `jsonb::text` while Rust `serde_json::to_string` preserves insertion
+//! order, so cross-runtime re-serialization would falsely diverge. To avoid
+//! that at root cause, `reproducibility()` and `verify()` take PRECOMPUTED
+//! digests (`recorded_*` as stored, `recomputed_*` as replayed by the
+//! caller's canonicalizer) and compare strings only; they never serialize
+//! `serde_json::Value` themselves. The SQL gate remains authoritative for
+//! byte-identity and lineage closure; this module checks the comparison
+//! logic purely.
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use crate::momentum::{Dataset, Spec};
+use crate::momentum::Spec;
 
 /// Domain separator for pinned momentum spec digests.
 pub const SPEC_DIGEST_DOMAIN: &str = "market-mate-research-spec-v1";
@@ -55,6 +59,23 @@ pub const DESK_ROLES: [&str; 6] = [
     "strategy_incubation",
     "portfolio_and_capital_efficiency",
     "economic_evaluation_and_challenge",
+];
+
+/// Authority-claim keys rejected anywhere in spec/artifact/routes. Mirrors
+/// `incubator_json_claims_authority` (0043:8-33): case-insensitive key match,
+/// recursive through objects and arrays.
+const AUTHORITY_KEYS: [&str; 11] = [
+    "authority",
+    "lifecycle_state",
+    "execution_environment",
+    "execution_authority",
+    "strategy_eligible",
+    "paper_eligible",
+    "trade_eligible",
+    "paper",
+    "live",
+    "broker",
+    "execution_edge_and_paper_trading",
 ];
 
 /// Minimal immutable assignment pins. Unknown fields are rejected so the
@@ -148,8 +169,10 @@ pub struct VerificationResult {
     pub readiness: Readiness,
 }
 
-/// Dispatch outcome as seen by the reproducibility gate. `Unknown` means no
-/// outcome row exists yet; it stays indeterminate, never failed.
+/// Dispatch outcome as seen by the reproducibility gate. `NoAttempt` means
+/// no dispatch row exists (attempt_id IS NULL) so the digest path runs
+/// directly; `Unknown` means an attempt exists but its outcome row is
+/// missing, so the result stays indeterminate, never failed.
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum DispatchState {
@@ -158,10 +181,58 @@ pub enum DispatchState {
     Cancelled,
     Indeterminate,
     Unknown,
+    NoAttempt,
 }
 
 fn non_blank(value: &str) -> bool {
     !value.trim().is_empty()
+}
+
+fn opt_non_blank(value: Option<&str>) -> bool {
+    value.is_some_and(|v| non_blank(v))
+}
+
+/// UUID shape check without new dependencies: `8-4-4-4-12` lowercase or
+/// uppercase hex, matching what Postgres `::uuid` accepts for canonical ids.
+fn is_valid_uuid_text(value: &str) -> bool {
+    let trimmed = value.trim();
+    if trimmed.len() != 36 {
+        return false;
+    }
+    let bytes = trimmed.as_bytes();
+    if bytes[8] != b'-' || bytes[13] != b'-' || bytes[18] != b'-' || bytes[23] != b'-' {
+        return false;
+    }
+    for (i, b) in bytes.iter().enumerate() {
+        if [8, 13, 18, 23].contains(&i) {
+            continue;
+        }
+        if !b.is_ascii_hexdigit() {
+            return false;
+        }
+    }
+    true
+}
+
+/// Recursive authority-key scan mirroring `incubator_json_claims_authority`
+/// (0043:8-33): any object key (case-insensitive) in the authority list, at
+/// any nesting depth through objects and arrays, claims authority.
+pub fn json_claims_authority(value: &serde_json::Value) -> bool {
+    match value {
+        serde_json::Value::Object(map) => {
+            for (key, nested) in map {
+                if AUTHORITY_KEYS.contains(&key.to_lowercase().as_str()) {
+                    return true;
+                }
+                if json_claims_authority(nested) {
+                    return true;
+                }
+            }
+            false
+        }
+        serde_json::Value::Array(items) => items.iter().any(json_claims_authority),
+        _ => false,
+    }
 }
 
 /// Validate the minimal pin set: every pin present, posture in the canonical
@@ -197,15 +268,51 @@ pub fn pins_valid(pins: &AssignmentPins) -> Result<(), String> {
     if chrono::DateTime::parse_from_rfc3339(pins.expires_at.trim()).is_err() {
         return Err("pins:expires_at_must_be_rfc3339".into());
     }
+    // B3: parent is optional, but when present it must be a valid UUID.
+    // None or blank (whitespace-only, matching SQL NULLIF(btrim,'') -> NULL)
+    // means no parent; anything else must parse as UUID, else reject.
+    if let Some(parent) = pins.parent_assignment_id.as_deref() {
+        if !parent.trim().is_empty() && !is_valid_uuid_text(parent) {
+            return Err("pins:parent_assignment_id_must_be_uuid".into());
+        }
+    }
     Ok(())
 }
 
 /// Validate the pinned momentum spec: exactly the five contract keys with
 /// the engine ranges, plus the contract quantile set {2,4,5,10}.
 pub fn spec_valid(spec: &serde_json::Value) -> Result<(), String> {
+    // Schema shape first: object with exactly the five contract keys.
+    let obj = spec
+        .as_object()
+        .ok_or_else(|| "spec_schema:exactly_five_momentum_keys".to_string())?;
+    const ALLOWED: [&str; 5] = [
+        "runner",
+        "lookback_sessions",
+        "quantile_count",
+        "one_way_cost_bps",
+        "borrow_bps_per_session",
+    ];
+    if obj.len() != ALLOWED.len() || ALLOWED.iter().any(|k| !obj.contains_key(*k)) {
+        return Err("spec_schema:exactly_five_momentum_keys".into());
+    }
+    // Types: keys are already validated, so a deserialization failure here
+    // is a type error, mapped distinctly from the shape error above.
     let parsed: Spec = serde_json::from_value(spec.clone())
-        .map_err(|_| "spec_schema:exactly_five_momentum_keys".to_string())?;
-    if !parsed.valid() {
+        .map_err(|_| "spec_schema:momentum_range".to_string())?;
+    // SQL btrim parity: trim runner whitespace before range checks.
+    let runner_trimmed = parsed.runner.trim();
+    if runner_trimmed != CONTRACT_RUNNER {
+        return Err("spec_schema:momentum_range".into());
+    }
+    let normalized = Spec {
+        runner: runner_trimmed.to_string(),
+        lookback_sessions: parsed.lookback_sessions,
+        quantile_count: parsed.quantile_count,
+        one_way_cost_bps: parsed.one_way_cost_bps,
+        borrow_bps_per_session: parsed.borrow_bps_per_session,
+    };
+    if !normalized.valid() {
         return Err("spec_schema:momentum_range".into());
     }
     if !QUANTILE_CHOICES.contains(&parsed.quantile_count) {
@@ -215,6 +322,8 @@ pub fn spec_valid(spec: &serde_json::Value) -> Result<(), String> {
 }
 
 /// Canonical content digest: `sha256(domain | canonical_json)`.
+/// Kept for callers that canonicalize with this runtime; gates below never
+/// call it implicitly (B1: digests are caller-supplied precomputed strings).
 pub fn canonical_digest(domain: &str, value: &serde_json::Value) -> String {
     let canonical = serde_json::to_string(value).expect("verification JSON serializes");
     let mut hasher = Sha256::new();
@@ -234,22 +343,63 @@ pub fn artifact_digest(artifact: &serde_json::Value) -> String {
     canonical_digest(ARTIFACT_DIGEST_DOMAIN, artifact)
 }
 
-/// Gate (a): contract validity.
-pub fn contract_validity(pins: &AssignmentPins, spec: &serde_json::Value) -> Validity {
+/// Gate (a): contract validity. `now_rfc3339` is the caller-supplied clock
+/// (pure, RFC3339); expiry at or before now is invalid, and any nested
+/// authority key in spec/artifact/routes is invalid. Mirrors SQL
+/// `research_contract_validity` (pins + spec + authority + expiry).
+pub fn contract_validity(
+    pins: &AssignmentPins,
+    spec: &serde_json::Value,
+    artifact: &serde_json::Value,
+    requested_route: &serde_json::Value,
+    actual_route: &serde_json::Value,
+    now_rfc3339: &str,
+) -> Validity {
     if let Err(reason) = pins_valid(pins) {
         return Validity::Invalid { reason };
     }
     if let Err(reason) = spec_valid(spec) {
         return Validity::Invalid { reason };
     }
+    if json_claims_authority(spec)
+        || json_claims_authority(artifact)
+        || json_claims_authority(requested_route)
+        || json_claims_authority(actual_route)
+    {
+        return Validity::Invalid {
+            reason: "authority_claim".into(),
+        };
+    }
+    let expires = chrono::DateTime::parse_from_rfc3339(pins.expires_at.trim());
+    let now = chrono::DateTime::parse_from_rfc3339(now_rfc3339.trim());
+    match (expires, now) {
+        (Ok(expires), Ok(now)) => {
+            if expires <= now {
+                return Validity::Invalid {
+                    reason: "assignment_expired".into(),
+                };
+            }
+        }
+        // Fail closed on an unparseable caller clock; pins expiry was
+        // already validated above, so only `now` can fail here.
+        _ => {
+            return Validity::Invalid {
+                reason: "invalid_now".into(),
+            };
+        }
+    }
     Validity::Valid
 }
 
-/// Gate (b): reproducibility of one recorded digest against a replayed
-/// artifact under a known dispatch outcome.
+/// Gate (b): reproducibility from PRECOMPUTED digests under a known dispatch
+/// outcome. Canonicalization is caller-owned (SQL uses `jsonb::text`); the
+/// SQL gate is authoritative for byte-identity. Equal digests reproduce;
+/// differing digests diverge with a reason naming which digest mismatched.
 pub fn reproducibility(
-    recorded_digest: &str,
-    artifact: &serde_json::Value,
+    recorded_artifact_digest: &str,
+    recomputed_artifact_digest: &str,
+    recorded_spec_digest: &str,
+    recomputed_spec_digest: &str,
     dispatch: DispatchState,
 ) -> Reproducibility {
     match dispatch {
@@ -265,29 +415,75 @@ pub fn reproducibility(
         DispatchState::Cancelled => Reproducibility::Diverged {
             reason: "dispatch_cancelled".into(),
         },
-        DispatchState::Completed => {
-            if artifact_digest(artifact) == recorded_digest {
-                Reproducibility::Reproduced
-            } else {
+        DispatchState::Completed | DispatchState::NoAttempt => {
+            if recomputed_artifact_digest != recorded_artifact_digest {
                 Reproducibility::Diverged {
                     reason: "digest_mismatch".into(),
                 }
+            } else if recomputed_spec_digest != recorded_spec_digest {
+                Reproducibility::Diverged {
+                    reason: "spec_digest_mismatch".into(),
+                }
+            } else {
+                Reproducibility::Reproduced
             }
         }
     }
 }
 
+/// Ancestry wellformedness: every element must be non-blank. Existence
+/// closure against dispatch rows is evaluated by the SQL gate, which stays
+/// authoritative; here blank elements diverge as open lineage.
+fn ancestry_wellformed(fallback_ancestry: &[String]) -> bool {
+    fallback_ancestry.iter().all(|elem| non_blank(elem))
+}
+
 /// Gate (c): methodological readiness. Different assignment plus different
 /// run with a different role suffices for critique; same-family approval
 /// holds and never counts as critique; dissent must be preserved.
+/// Reviewer and refiner are all-or-nothing with non-blank role/family:
+/// partial provenance holds as missing critique, never ready.
 pub fn methodological_readiness(manifest: &ArtifactManifest) -> Readiness {
-    let reviewer_assignment = manifest.reviewer_assignment_id.as_deref().unwrap_or("");
-    let reviewer_run = manifest.reviewer_run_key.as_deref().unwrap_or("");
-    if !non_blank(reviewer_assignment) || !non_blank(reviewer_run) {
+    // Reviewer all-or-nothing: all four present non-blank, else held.
+    let reviewer_fields = [
+        manifest.reviewer_assignment_id.as_deref().unwrap_or(""),
+        manifest.reviewer_run_key.as_deref().unwrap_or(""),
+        manifest.reviewer_role.as_deref().unwrap_or(""),
+        manifest.reviewer_family.as_deref().unwrap_or(""),
+    ];
+    let reviewer_present = reviewer_fields
+        .iter()
+        .map(|v| non_blank(v))
+        .collect::<Vec<_>>();
+    if reviewer_present.iter().all(|&present| !present) {
         return Readiness::Held {
             reason: "missing_critique".into(),
         };
     }
+    if reviewer_present.iter().any(|&present| !present) {
+        return Readiness::Held {
+            reason: "missing_critique".into(),
+        };
+    }
+    // Refiner all-or-nothing: absent is fine, partial is held.
+    let refiner_fields = [
+        manifest.refiner_assignment_id.as_deref().unwrap_or(""),
+        manifest.refiner_run_key.as_deref().unwrap_or(""),
+        manifest.refiner_role.as_deref().unwrap_or(""),
+    ];
+    let refiner_present = refiner_fields
+        .iter()
+        .map(|v| non_blank(v))
+        .collect::<Vec<_>>();
+    if refiner_present.iter().any(|&present| present)
+        && refiner_present.iter().any(|&present| !present)
+    {
+        return Readiness::Held {
+            reason: "missing_critique".into(),
+        };
+    }
+    let reviewer_assignment = manifest.reviewer_assignment_id.as_deref().unwrap_or("");
+    let reviewer_run = manifest.reviewer_run_key.as_deref().unwrap_or("");
     if reviewer_assignment.trim() == manifest.author_assignment_id.trim()
         || reviewer_run.trim() == manifest.author_run_key.trim()
     {
@@ -315,26 +511,42 @@ pub fn methodological_readiness(manifest: &ArtifactManifest) -> Readiness {
     Readiness::Ready
 }
 
-/// Run all three gates for one manifest. Lineage closure against stored
-/// dispatch rows is evaluated by the SQL gate; here `ancestry_closed`
-/// carries that checkable copy's result into the combined verdict.
+/// Run all three gates for one manifest. Digests are caller-supplied
+/// precomputed strings (B1) and `fallback_ancestry` is the authoritative
+/// copy whose wellformedness is checked here (existence closure stays with
+/// the SQL gate). `now_rfc3339` is the caller-supplied clock for expiry.
+/// Lineage closure against stored dispatch rows is evaluated by the SQL
+/// gate; here blank ancestry diverges as open lineage.
+#[allow(clippy::too_many_arguments)]
 pub fn verify(
     manifest: &ArtifactManifest,
     dispatch: DispatchState,
-    ancestry_closed: bool,
+    fallback_ancestry: &[String],
+    recorded_spec_digest: &str,
+    recomputed_spec_digest: &str,
+    recorded_artifact_digest: &str,
+    recomputed_artifact_digest: &str,
+    now_rfc3339: &str,
 ) -> VerificationResult {
-    let validity = contract_validity(&manifest.assignment, &manifest.spec);
-    let mut repro = reproducibility(&manifest.artifact_digest, &manifest.artifact, dispatch);
-    if repro == Reproducibility::Reproduced {
-        if manifest.spec_digest != spec_digest(&manifest.spec) {
-            repro = Reproducibility::Diverged {
-                reason: "spec_digest_mismatch".into(),
-            };
-        } else if !ancestry_closed {
-            repro = Reproducibility::Diverged {
-                reason: "lineage_open".into(),
-            };
-        }
+    let validity = contract_validity(
+        &manifest.assignment,
+        &manifest.spec,
+        &manifest.artifact,
+        &manifest.requested_route,
+        &manifest.actual_route,
+        now_rfc3339,
+    );
+    let mut repro = reproducibility(
+        recorded_artifact_digest,
+        recomputed_artifact_digest,
+        recorded_spec_digest,
+        recomputed_spec_digest,
+        dispatch,
+    );
+    if repro == Reproducibility::Reproduced && !ancestry_wellformed(fallback_ancestry) {
+        repro = Reproducibility::Diverged {
+            reason: "lineage_open".into(),
+        };
     }
     VerificationResult {
         artifact_key: manifest.artifact_key.clone(),
@@ -346,21 +558,16 @@ pub fn verify(
 
 /// Parse helper used by workers: unknown fields are rejected.
 pub fn parse_manifest(value: &serde_json::Value) -> Result<ArtifactManifest, String> {
-    serde_json::from_value(value.clone()).map_err(|err| format!("invalid_artifact:{err}"))
-}
-
-#[allow(dead_code)]
-fn dataset_support_present() -> bool {
-    // Compile-time proof that the momentum dataset type stays reachable for
-    // replay harnesses without granting this module any new authority.
-    fn _uses_dataset(_: &Dataset) {}
-    true
+    serde_json::from_value(value.clone()).map_err(|_| "invalid_artifact_schema".to_string())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::momentum::Dataset;
     use serde_json::json;
+
+    const TEST_NOW: &str = "2026-09-08T00:00:00Z";
 
     fn good_pins() -> AssignmentPins {
         AssignmentPins {
@@ -426,6 +633,17 @@ mod tests {
         }
     }
 
+    fn validity_of(manifest: &ArtifactManifest) -> Validity {
+        contract_validity(
+            &manifest.assignment,
+            &manifest.spec,
+            &manifest.artifact,
+            &manifest.requested_route,
+            &manifest.actual_route,
+            TEST_NOW,
+        )
+    }
+
     #[test]
     fn pins_accept_minimal_valid_set() {
         assert_eq!(pins_valid(&good_pins()), Ok(()));
@@ -475,8 +693,52 @@ mod tests {
     }
 
     #[test]
+    fn pins_parent_accepts_none_blank_or_uuid() {
+        let mut pins = good_pins();
+        pins.parent_assignment_id = None;
+        assert_eq!(pins_valid(&pins), Ok(()));
+        let mut pins = good_pins();
+        pins.parent_assignment_id = Some("   ".into());
+        assert_eq!(pins_valid(&pins), Ok(()));
+        let mut pins = good_pins();
+        pins.parent_assignment_id = Some("123e4567-e89b-12d3-a456-426614174000".into());
+        assert_eq!(pins_valid(&pins), Ok(()));
+        let mut pins = good_pins();
+        pins.parent_assignment_id = Some("not-a-uuid".into());
+        assert!(pins_valid(&pins).is_err());
+        let mut pins = good_pins();
+        pins.parent_assignment_id = Some("00000000-0000-0000-0000-00000000000".into());
+        assert!(pins_valid(&pins).is_err());
+    }
+
+    #[test]
     fn spec_accepts_exact_five_contract_keys() {
         assert_eq!(spec_valid(&good_spec()), Ok(()));
+    }
+
+    #[test]
+    fn spec_trims_runner_whitespace_for_sql_parity() {
+        let mut spec = good_spec();
+        spec["runner"] = json!("  momentum_v1  ");
+        assert_eq!(spec_valid(&spec), Ok(()));
+    }
+
+    #[test]
+    fn spec_maps_shape_vs_range_failures_distinctly() {
+        // Shape: sixth key or missing key -> exactly_five.
+        let mut spec = good_spec();
+        spec["tuning"] = json!({"grid": true});
+        assert_eq!(
+            spec_valid(&spec),
+            Err("spec_schema:exactly_five_momentum_keys".to_string())
+        );
+        // Type: string where an integer belongs -> momentum_range, not shape.
+        let mut spec = good_spec();
+        spec["lookback_sessions"] = json!("2");
+        assert_eq!(
+            spec_valid(&spec),
+            Err("spec_schema:momentum_range".to_string())
+        );
     }
 
     #[test]
@@ -499,24 +761,74 @@ mod tests {
     }
 
     #[test]
+    fn validity_rejects_expired_pins() {
+        let mut manifest = good_manifest();
+        manifest.assignment.expires_at = "2001-01-01T00:00:00Z".into();
+        assert_eq!(
+            validity_of(&manifest),
+            Validity::Invalid {
+                reason: "assignment_expired".into()
+            }
+        );
+    }
+
+    #[test]
+    fn validity_rejects_nested_authority_claim() {
+        let mut manifest = good_manifest();
+        manifest.artifact =
+            json!({"engine": "momentum_v1", "nested": {"paper": {"eligible": true}}});
+        assert_eq!(
+            validity_of(&manifest),
+            Validity::Invalid {
+                reason: "authority_claim".into()
+            }
+        );
+        let mut manifest = good_manifest();
+        manifest.requested_route = json!({"tier": "free", "broker": "x"});
+        assert_eq!(
+            validity_of(&manifest),
+            Validity::Invalid {
+                reason: "authority_claim".into()
+            }
+        );
+    }
+
+    #[test]
     fn invalid_artifacts_rejected() {
         let raw = json!({
             "artifact_key": "k",
             "assignment": good_pins(),
             "unknown_provenance": true
         });
-        assert!(parse_manifest(&raw).is_err());
+        assert_eq!(
+            parse_manifest(&raw),
+            Err("invalid_artifact_schema".to_string())
+        );
         let manifest = good_manifest();
         let mut bad_spec = manifest.clone();
         bad_spec.spec = json!({"runner": "momentum_v1"});
         assert!(matches!(
-            contract_validity(&bad_spec.assignment, &bad_spec.spec),
+            contract_validity(
+                &bad_spec.assignment,
+                &bad_spec.spec,
+                &bad_spec.artifact,
+                &bad_spec.requested_route,
+                &bad_spec.actual_route,
+                TEST_NOW
+            ),
             Validity::Invalid { .. }
         ));
         let mut bad_pins = manifest.clone();
         bad_pins.assignment.persona_cosmetic = false;
         assert!(matches!(
-            contract_validity(&bad_pins.assignment, &bad_pins.spec),
+            contract_validity(
+                &bad_pins.assignment,
+                &bad_pins.spec,
+                &bad_pins.artifact,
+                &bad_pins.requested_route,
+                &bad_pins.actual_route,
+                TEST_NOW
+            ),
             Validity::Invalid { .. }
         ));
     }
@@ -528,6 +840,50 @@ mod tests {
         manifest.reviewer_run_key = None;
         manifest.reviewer_role = None;
         manifest.reviewer_family = None;
+        assert_eq!(
+            methodological_readiness(&manifest),
+            Readiness::Held {
+                reason: "missing_critique".into()
+            }
+        );
+    }
+
+    #[test]
+    fn partial_reviewer_or_refiner_holds_as_missing_critique() {
+        // Partial reviewer: assignment present, run missing.
+        let mut manifest = good_manifest();
+        manifest.reviewer_run_key = None;
+        assert_eq!(
+            methodological_readiness(&manifest),
+            Readiness::Held {
+                reason: "missing_critique".into()
+            }
+        );
+        // Partial reviewer: role blank.
+        let mut manifest = good_manifest();
+        manifest.reviewer_role = Some("   ".into());
+        assert_eq!(
+            methodological_readiness(&manifest),
+            Readiness::Held {
+                reason: "missing_critique".into()
+            }
+        );
+        // Partial refiner: assignment present without run/role.
+        let mut manifest = good_manifest();
+        manifest.refiner_assignment_id = Some("assignment-refiner".into());
+        manifest.refiner_run_key = None;
+        manifest.refiner_role = None;
+        assert_eq!(
+            methodological_readiness(&manifest),
+            Readiness::Held {
+                reason: "missing_critique".into()
+            }
+        );
+        // Partial refiner: blank role.
+        let mut manifest = good_manifest();
+        manifest.refiner_assignment_id = Some("assignment-refiner".into());
+        manifest.refiner_run_key = Some("run-refiner-1".into());
+        manifest.refiner_role = Some("  ".into());
         assert_eq!(
             methodological_readiness(&manifest),
             Readiness::Held {
@@ -597,53 +953,92 @@ mod tests {
     }
 
     #[test]
-    fn pinned_version_replay_reproduces_byte_identical_digest() {
-        let artifact = good_artifact();
-        let recorded = artifact_digest(&artifact);
-        let replayed: serde_json::Value =
-            serde_json::from_str(&serde_json::to_string(&artifact).unwrap()).unwrap();
-        assert_eq!(artifact_digest(&replayed), recorded);
+    fn precomputed_digests_equal_reproduce() {
         assert_eq!(
-            reproducibility(&recorded, &replayed, DispatchState::Completed),
+            reproducibility("aaa", "aaa", "bbb", "bbb", DispatchState::Completed),
             Reproducibility::Reproduced
         );
     }
 
     #[test]
-    fn diverged_replay_detected() {
-        let artifact = good_artifact();
-        let recorded = artifact_digest(&artifact);
-        let mut diverged = artifact.clone();
-        diverged["mean_net_bps"] = json!(13);
-        assert_ne!(artifact_digest(&diverged), recorded);
+    fn precomputed_digests_differ_diverge_naming_which() {
         assert_eq!(
-            reproducibility(&recorded, &diverged, DispatchState::Completed),
+            reproducibility("aaa", "different", "bbb", "bbb", DispatchState::Completed),
             Reproducibility::Diverged {
                 reason: "digest_mismatch".into()
             }
         );
         assert_eq!(
-            reproducibility(&recorded, &artifact, DispatchState::Failed),
+            reproducibility("aaa", "aaa", "bbb", "different", DispatchState::Completed),
             Reproducibility::Diverged {
-                reason: "dispatch_failed".into()
+                reason: "spec_digest_mismatch".into()
             }
         );
     }
 
     #[test]
+    fn verify_never_reserializes_values() {
+        // The recorded and recomputed digests are equal arbitrary strings
+        // that do NOT match this runtime's serde serialization of the
+        // manifest values. A re-serializing implementation would diverge;
+        // the precomputed comparison reproduces, proving no re-serialization.
+        let manifest = good_manifest();
+        let ancestry = vec!["parent-attempt-1".to_string()];
+        let result = verify(
+            &manifest,
+            DispatchState::Completed,
+            &ancestry,
+            "precomputed-spec-digest",
+            "precomputed-spec-digest",
+            "precomputed-artifact-digest",
+            "precomputed-artifact-digest",
+            TEST_NOW,
+        );
+        assert_eq!(result.reproducibility, Reproducibility::Reproduced);
+    }
+
+    #[test]
     fn indeterminate_dispatch_outcomes_stay_indeterminate() {
-        let artifact = good_artifact();
-        let recorded = artifact_digest(&artifact);
         assert_eq!(
-            reproducibility(&recorded, &artifact, DispatchState::Indeterminate),
+            reproducibility("a", "a", "b", "b", DispatchState::Indeterminate),
             Reproducibility::Indeterminate {
                 reason: "dispatch_indeterminate".into()
             }
         );
         assert_eq!(
-            reproducibility(&recorded, &artifact, DispatchState::Unknown),
+            reproducibility("a", "a", "b", "b", DispatchState::Unknown),
             Reproducibility::Indeterminate {
                 reason: "dispatch_outcome_unknown".into()
+            }
+        );
+    }
+
+    #[test]
+    fn no_attempt_runs_digest_path_without_dispatch_row() {
+        assert_eq!(
+            reproducibility("a", "a", "b", "b", DispatchState::NoAttempt),
+            Reproducibility::Reproduced
+        );
+        assert_eq!(
+            reproducibility("a", "different", "b", "b", DispatchState::NoAttempt),
+            Reproducibility::Diverged {
+                reason: "digest_mismatch".into()
+            }
+        );
+    }
+
+    #[test]
+    fn diverged_dispatch_states_detected() {
+        assert_eq!(
+            reproducibility("a", "a", "b", "b", DispatchState::Failed),
+            Reproducibility::Diverged {
+                reason: "dispatch_failed".into()
+            }
+        );
+        assert_eq!(
+            reproducibility("a", "a", "b", "b", DispatchState::Cancelled),
+            Reproducibility::Diverged {
+                reason: "dispatch_cancelled".into()
             }
         );
     }
@@ -680,13 +1075,51 @@ mod tests {
     #[test]
     fn verify_combines_all_three_gates() {
         let manifest = good_manifest();
-        let result = verify(&manifest, DispatchState::Completed, true);
+        let ancestry = vec!["parent-attempt-1".to_string()];
+        let result = verify(
+            &manifest,
+            DispatchState::Completed,
+            &ancestry,
+            &manifest.spec_digest.clone(),
+            &manifest.spec_digest.clone(),
+            &manifest.artifact_digest.clone(),
+            &manifest.artifact_digest.clone(),
+            TEST_NOW,
+        );
         assert_eq!(result.validity, Validity::Valid);
         assert_eq!(result.reproducibility, Reproducibility::Reproduced);
         assert_eq!(result.readiness, Readiness::Ready);
-        let open_lineage = verify(&manifest, DispatchState::Completed, false);
+        let open_lineage = verify(
+            &manifest,
+            DispatchState::Completed,
+            &[],
+            &manifest.spec_digest.clone(),
+            &manifest.spec_digest.clone(),
+            &manifest.artifact_digest.clone(),
+            &manifest.artifact_digest.clone(),
+            TEST_NOW,
+        );
+        // Empty ancestry is wellformed, so it still reproduces; blank
+        // elements below are what diverge.
+        assert_eq!(open_lineage.reproducibility, Reproducibility::Reproduced);
+    }
+
+    #[test]
+    fn verify_blank_ancestry_diverges_lineage_open() {
+        let manifest = good_manifest();
+        let ancestry = vec!["   ".to_string()];
+        let result = verify(
+            &manifest,
+            DispatchState::Completed,
+            &ancestry,
+            &manifest.spec_digest.clone(),
+            &manifest.spec_digest.clone(),
+            &manifest.artifact_digest.clone(),
+            &manifest.artifact_digest.clone(),
+            TEST_NOW,
+        );
         assert_eq!(
-            open_lineage.reproducibility,
+            result.reproducibility,
             Reproducibility::Diverged {
                 reason: "lineage_open".into()
             }
@@ -694,11 +1127,81 @@ mod tests {
     }
 
     #[test]
+    fn verify_unknown_ancestry_element_diverges_when_blank() {
+        // An unknown (empty) ancestry element fails wellformedness and
+        // diverges as open lineage; existence closure stays with SQL.
+        let manifest = good_manifest();
+        let ancestry = vec!["".to_string()];
+        let result = verify(
+            &manifest,
+            DispatchState::Unknown,
+            &ancestry,
+            &manifest.spec_digest.clone(),
+            &manifest.spec_digest.clone(),
+            &manifest.artifact_digest.clone(),
+            &manifest.artifact_digest.clone(),
+            TEST_NOW,
+        );
+        // Dispatch unknown stays indeterminate regardless of ancestry.
+        assert_eq!(
+            result.reproducibility,
+            Reproducibility::Indeterminate {
+                reason: "dispatch_outcome_unknown".into()
+            }
+        );
+        let result = verify(
+            &manifest,
+            DispatchState::Completed,
+            &ancestry,
+            &manifest.spec_digest.clone(),
+            &manifest.spec_digest.clone(),
+            &manifest.artifact_digest.clone(),
+            &manifest.artifact_digest.clone(),
+            TEST_NOW,
+        );
+        assert_eq!(
+            result.reproducibility,
+            Reproducibility::Diverged {
+                reason: "lineage_open".into()
+            }
+        );
+    }
+
+    #[test]
+    fn verify_no_attempt_digest_path() {
+        let manifest = good_manifest();
+        let ancestry: Vec<String> = vec![];
+        let result = verify(
+            &manifest,
+            DispatchState::NoAttempt,
+            &ancestry,
+            &manifest.spec_digest.clone(),
+            &manifest.spec_digest.clone(),
+            &manifest.artifact_digest.clone(),
+            &manifest.artifact_digest.clone(),
+            TEST_NOW,
+        );
+        assert_eq!(result.reproducibility, Reproducibility::Reproduced);
+    }
+
+    #[test]
+    fn opt_blank_helper_used() {
+        assert!(!opt_non_blank(None));
+        assert!(!opt_non_blank(Some("   ")));
+        assert!(opt_non_blank(Some("x")));
+    }
+
+    #[test]
     fn cost_controls_untouched_by_this_module() {
         let source = include_str!("research_contract.rs");
-        let capacity_guard = concat!("openrouter", "_capacity");
+        let capacity_guard = concat!("open", "router_capacity");
         let tier_guard = concat!("allow", "_paid");
         let policy_guard = concat!("spend", "ing");
+        let router_guard = concat!("open", "router");
+        let driver_guard = concat!("driver", "::");
+        let http_guard = concat!("req", "west");
+        let tokio_proc_guard = concat!("tokio", "::process");
+        let std_proc_guard = concat!("std", "::process");
         assert!(
             !source.contains(capacity_guard),
             "research contracts must not reference provider cost admission"
@@ -710,6 +1213,26 @@ mod tests {
         assert!(
             !source.to_lowercase().contains(policy_guard),
             "research contracts must not touch cost policy"
+        );
+        assert!(
+            !source.contains(router_guard),
+            "research contracts must not reference provider routing"
+        );
+        assert!(
+            !source.contains(driver_guard),
+            "research contracts must not reference the agent driver"
+        );
+        assert!(
+            !source.contains(http_guard),
+            "research contracts must not perform outbound http"
+        );
+        assert!(
+            !source.contains(tokio_proc_guard),
+            "research contracts must not spawn processes via tokio"
+        );
+        assert!(
+            !source.contains(std_proc_guard),
+            "research contracts must not spawn processes"
         );
     }
 }

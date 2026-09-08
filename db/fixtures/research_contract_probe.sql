@@ -42,8 +42,10 @@ DO $$ DECLARE
   'persona_id', 'persona-scout-7',
   'persona_cosmetic', true,
   'expires_at', '2030-06-01T00:00:00Z');
- a1 research_assignment%ROWTYPE;
- a1_again research_assignment%ROWTYPE;
+  a1 research_assignment%ROWTYPE;
+  a1_again research_assignment%ROWTYPE;
+  a_child research_assignment%ROWTYPE;
+  old_tz text;
 BEGIN
  -- Pure pin validator mirrors the admission boundary.
  PERFORM pg_temp.contract_assert(research_assignment_pins_valid(base_pins), 'pure pins accept the minimal set');
@@ -58,11 +60,20 @@ BEGIN
  -- Admission pins the minimal set and is idempotent on the key.
  a1 := admit_research_assignment(base_pins || '{"assignment_key":"probe-a1","desk_role":"quantitative_research_and_experimentation"}', lineage);
  a1_again := admit_research_assignment(base_pins || '{"assignment_key":"probe-a1","desk_role":"quantitative_research_and_experimentation"}', lineage);
- PERFORM pg_temp.contract_assert(a1.assignment_id = a1_again.assignment_id, 'admit is idempotent on assignment key');
- PERFORM admit_research_assignment(base_pins || '{"assignment_key":"probe-a2"}', lineage);
- PERFORM admit_research_assignment(base_pins || '{"assignment_key":"probe-a-expired","expires_at":"2001-01-01T00:00:00Z"}', lineage);
- PERFORM admit_research_assignment(
-  base_pins || jsonb_build_object('assignment_key', 'probe-a-child', 'parent_assignment_id', a1.assignment_id::text), lineage);
+  PERFORM pg_temp.contract_assert(a1.assignment_id = a1_again.assignment_id, 'admit is idempotent on assignment key');
+  -- S3: identical instants stay idempotent across TimeZones (UTC canonical).
+  SELECT current_setting('TimeZone') INTO old_tz;
+  PERFORM set_config('TimeZone', 'America/New_York', true);
+  a1_again := admit_research_assignment(base_pins || '{"assignment_key":"probe-a1","desk_role":"quantitative_research_and_experimentation"}', lineage);
+  PERFORM pg_temp.contract_assert(a1_again.assignment_id = a1.assignment_id, 'admit stays idempotent across TimeZone');
+  PERFORM set_config('TimeZone', old_tz, true);
+  PERFORM admit_research_assignment(base_pins || '{"assignment_key":"probe-a2"}', lineage);
+  PERFORM admit_research_assignment(base_pins || '{"assignment_key":"probe-a-expired","expires_at":"2001-01-01T00:00:00Z"}', lineage);
+  -- S5: parent lineage is genuinely asserted, not self-reported.
+  a_child := admit_research_assignment(
+   base_pins || jsonb_build_object('assignment_key', 'probe-a-child', 'parent_assignment_id', a1.assignment_id::text), lineage);
+  PERFORM pg_temp.contract_assert(a_child.parent_assignment_id = a1.assignment_id, 'child parent id matches');
+  PERFORM pg_temp.contract_assert((a_child.pins->>'parent_assignment_id') = a1.assignment_id::text, 'child pins parent round-trips');
 
  -- Failure rows at the admission boundary.
  BEGIN PERFORM admit_research_assignment(base_pins || '{"posture_profile":"Reckless Gambler"}', lineage);
@@ -197,10 +208,58 @@ BEGIN
   artifact_value := '{"engine":"momentum_v1","outcome":"diagnostic_only","mean_net_bps":99}',
   dissent_preserved_value := true,
   source_lineage_value := lineage);
-  RAISE EXCEPTION 'accepted changed artifact on re-record';
- EXCEPTION WHEN SQLSTATE '22023' THEN NULL; END;
+   RAISE EXCEPTION 'accepted changed artifact on re-record';
+  EXCEPTION WHEN SQLSTATE '22023' THEN NULL; END;
+  -- S1: same key+digests with a different run_key must diverge, not return existing.
+  BEGIN m_again := record_research_artifact_manifest(
+   artifact_key_value := 'probe-m-ready',
+   assignment_id_value := a1_id,
+   run_key_value := 'run-author-changed',
+   intent_id_value := 'probe-intent-1',
+   attempt_id_value := 'probe-att-complete',
+   requested_route_value := '{"tier":"free","provider_id":"openrouter-free"}',
+   actual_route_value := '{"tier":"free","provider_id":"openrouter-free"}',
+   config_revision_value := 3,
+   fallback_ancestry_value := '["probe-parent-1"]',
+   author_assignment_id_value := a1_id,
+   author_run_key_value := 'run-author-1',
+   author_role_value := 'strategy_incubation',
+   refiner_assignment_id_value := NULL,
+   refiner_run_key_value := NULL,
+   refiner_role_value := NULL,
+   author_family_value := 'family-alpha',
+   reviewer_assignment_id_value := a2_id,
+   reviewer_run_key_value := 'run-reviewer-1',
+   reviewer_role_value := 'economic_evaluation_and_challenge',
+   reviewer_family_value := 'family-beta',
+   recipe_versions_value := '{"recipe":"recipe-v2"}',
+   lesson_versions_value := '{}',
+   spec_value := spec_good,
+   artifact_value := artifact_good,
+   dissent_preserved_value := true,
+   source_lineage_value := lineage);
+   RAISE EXCEPTION 'accepted changed run_key on re-record';
+  EXCEPTION WHEN SQLSTATE '22023' THEN NULL; END;
+  -- S2: mismatched intent/attempt linkage must fail against dispatch_attempt.
+  BEGIN PERFORM record_research_artifact_manifest(
+   artifact_key_value := 'probe-m-badlink',
+   assignment_id_value := a1_id, run_key_value := 'run-author-badlink',
+   intent_id_value := 'probe-intent-1', attempt_id_value := 'probe-att-indeterminate',
+   requested_route_value := '{"tier":"free"}', actual_route_value := '{"tier":"free"}',
+   config_revision_value := 3, fallback_ancestry_value := '[]',
+   author_assignment_id_value := a1_id, author_run_key_value := 'run-author-badlink',
+   author_role_value := 'strategy_incubation',
+   refiner_assignment_id_value := NULL, refiner_run_key_value := NULL, refiner_role_value := NULL,
+   author_family_value := 'family-alpha',
+   reviewer_assignment_id_value := NULL, reviewer_run_key_value := NULL,
+   reviewer_role_value := NULL, reviewer_family_value := NULL,
+   recipe_versions_value := '{"recipe":"recipe-v2"}', lesson_versions_value := '{}',
+   spec_value := spec_good, artifact_value := artifact_good,
+   dissent_preserved_value := true, source_lineage_value := lineage);
+   RAISE EXCEPTION 'accepted mismatched intent/attempt';
+  EXCEPTION WHEN SQLSTATE '22023' THEN NULL; END;
 
- -- Same-family approval holds and never counts as critique.
+  -- Same-family approval holds and never counts as critique.
  m := record_research_artifact_manifest(
   artifact_key_value := 'probe-m-samefam',
   assignment_id_value := a1_id, run_key_value := 'run-author-2',
@@ -543,9 +602,10 @@ END $$;
 ROLLBACK;
 SELECT jsonb_build_object('probe', 'research-contract', 'passed', true, 'checks', jsonb_build_array(
  'admit_pins', 'pure_pin_validator', 'pure_spec_validator', 'contract_quantile_set',
- 'idempotent_admit', 'parent_assignment_lineage',
+ 'idempotent_admit', 'timezone_idempotent_admit', 'parent_assignment_lineage',
  'reject_bad_pins', 'reject_changed_pins', 'reject_unknown_parent',
  'record_manifest', 'idempotent_record', 'reject_changed_artifact',
+ 'reject_changed_run_key', 'reject_mismatched_intent',
  'validity_gate', 'reproducibility_gate', 'readiness_gate',
  'reject_bad_spec', 'reject_authority_claim', 'reject_partial_reviewer', 'reject_unknown_assignment',
  'expired_assignment_invalid',

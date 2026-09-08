@@ -267,9 +267,9 @@ CREATE TABLE research_assignment (
     CHECK (persona_id = btrim(pins->>'persona_id')),
     CHECK ((pins->'persona_cosmetic') IS NOT DISTINCT FROM
         to_jsonb(persona_cosmetic)),
-    CHECK (expires_at = (pins->>'expires_at')::timestamptz),
-    CHECK ((pins->>'parent_assignment_id')::uuid IS NOT DISTINCT FROM
-        parent_assignment_id),
+    CHECK (expires_at = (NULLIF(btrim(pins->>'expires_at'), ''))::timestamptz),
+    CHECK ((NULLIF(btrim(pins->>'parent_assignment_id'), ''))::uuid
+        IS NOT DISTINCT FROM parent_assignment_id),
     CHECK (parent_assignment_id IS DISTINCT FROM assignment_id),
     CHECK (record_environment = 'local_research'),
     UNIQUE (assignment_key)
@@ -437,7 +437,11 @@ BEGIN
         'contract_runner', 'momentum_v1',
         'persona_id', persona_text,
         'persona_cosmetic', true,
-        'expires_at', expires_value::text
+        -- Canonical UTC instant so the idempotency compare does not depend
+        -- on the session TimeZone (S3): identical instants compare equal.
+        'expires_at', to_char(
+            expires_value AT TIME ZONE 'UTC',
+            'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
     );
     IF parent_value IS NOT NULL THEN
         pins_stored := pins_stored
@@ -547,6 +551,8 @@ DECLARE
     reviewer_family_text text;
     refiner_run_text text;
     refiner_role_text text;
+    intent_text text;
+    attempt_text text;
     ancestry_elem jsonb;
     spec_digest_value text;
     artifact_digest_value text;
@@ -668,6 +674,25 @@ BEGIN
             USING ERRCODE = '22023';
     END IF;
 
+    -- S2: when both linkage fields are present, they must agree with the
+    -- authoritative driver dispatch record (0088 dispatch_attempt.intent_id).
+    -- A missing attempt row stays allowed here; the reproducibility gate
+    -- reports it as indeterminate, never failed.
+    intent_text := nullif(btrim(intent_id_value), '');
+    attempt_text := nullif(btrim(attempt_id_value), '');
+    IF intent_text IS NOT NULL AND attempt_text IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1 FROM dispatch_attempt d
+            WHERE d.attempt_id = attempt_text
+              AND d.intent_id IS DISTINCT FROM intent_text
+        ) THEN
+            RAISE EXCEPTION
+                'research artifact intent % does not match authoritative intent for attempt %',
+                intent_text, attempt_text
+                USING ERRCODE = '22023';
+        END IF;
+    END IF;
+
     spec_digest_value := research_spec_digest(spec_value);
     artifact_digest_value := research_artifact_digest(artifact_value);
 
@@ -677,9 +702,35 @@ BEGIN
     FROM research_artifact_manifest
     WHERE artifact_key = key_text;
     IF FOUND THEN
+        -- S1: idempotency requires the FULL stored inputs to match, not
+        -- just key+digests. Any divergence in run/routes/ancestry/author/
+        -- refiner/reviewer/versions/dissent/intent/attempt/revision raises.
         IF existing.assignment_id IS DISTINCT FROM assignment_id_value
+           OR existing.run_key IS DISTINCT FROM run_text
+           OR existing.intent_id IS DISTINCT FROM intent_text
+           OR existing.attempt_id IS DISTINCT FROM attempt_text
+           OR existing.requested_route IS DISTINCT FROM requested_route_value
+           OR existing.actual_route IS DISTINCT FROM actual_route_value
+           OR existing.config_revision IS DISTINCT FROM config_revision_value
+           OR existing.fallback_ancestry IS DISTINCT FROM fallback_ancestry_value
+           OR existing.author_assignment_id IS DISTINCT FROM author_assignment_id_value
+           OR existing.author_run_key IS DISTINCT FROM author_run_text
+           OR existing.author_role IS DISTINCT FROM author_role_text
+           OR existing.refiner_assignment_id IS DISTINCT FROM refiner_assignment_id_value
+           OR existing.refiner_run_key IS DISTINCT FROM refiner_run_text
+           OR existing.refiner_role IS DISTINCT FROM refiner_role_text
+           OR existing.author_family IS DISTINCT FROM author_family_text
+           OR existing.reviewer_assignment_id IS DISTINCT FROM reviewer_assignment_id_value
+           OR existing.reviewer_run_key IS DISTINCT FROM reviewer_run_text
+           OR existing.reviewer_role IS DISTINCT FROM reviewer_role_text
+           OR existing.reviewer_family IS DISTINCT FROM reviewer_family_text
+           OR existing.recipe_versions IS DISTINCT FROM recipe_versions_value
+           OR existing.lesson_versions IS DISTINCT FROM lesson_versions_value
+           OR existing.spec IS DISTINCT FROM spec_value
            OR existing.spec_digest IS DISTINCT FROM spec_digest_value
-           OR existing.artifact_digest IS DISTINCT FROM artifact_digest_value THEN
+           OR existing.artifact IS DISTINCT FROM artifact_value
+           OR existing.artifact_digest IS DISTINCT FROM artifact_digest_value
+           OR existing.dissent_preserved IS DISTINCT FROM dissent_preserved_value THEN
             RAISE EXCEPTION
                 'research artifact % is already recorded with different inputs',
                 key_text
@@ -706,8 +757,8 @@ BEGIN
             source_lineage, receipt_time, record_environment
         ) VALUES (
             key_text, assignment_id_value, run_text,
-            nullif(btrim(intent_id_value), ''),
-            nullif(btrim(attempt_id_value), ''),
+            intent_text,
+            attempt_text,
             requested_route_value, actual_route_value,
             config_revision_value,
             fallback_ancestry_value,
