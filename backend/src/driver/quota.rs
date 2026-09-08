@@ -223,7 +223,7 @@ pub async fn poll_provider(db: &Client, provider: &Provider) -> Result<usize, &'
         let percent = sample.percent_used;
         match db
             .query_one(
-                "SELECT record_usage_sample($1,$2,$3::numeric,$4,$5::timestamptz)",
+                "SELECT record_usage_sample($1,$2,$3::text::numeric,$4,$5::text::timestamptz)",
                 &[
                     &provider.id,
                     &sample.window,
@@ -245,7 +245,7 @@ pub async fn poll_provider(db: &Client, provider: &Provider) -> Result<usize, &'
             }
             Err(e) => log::warn(
                 "quota.sample.rejected",
-                json!({"provider":provider.id,"window":sample.window,"error":super::dispatch::sql_reason(&e,"sample_unavailable")}),
+                json!({"provider":provider.id,"window":sample.window,"error":super::dispatch::sql_reason(&e,"sample_unavailable"),"detail":crate::logging::redact_text(&e.to_string()).chars().take(300).collect::<String>()}),
             ),
         }
     }
