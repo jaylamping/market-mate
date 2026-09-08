@@ -48,6 +48,30 @@ _Avoid_: risk desk, AI reviewer, Engine policy, manual override
 The orchestration sphere that admits and schedules assignments, allocates approved capacity, coordinates typed handoffs and lifecycle services, maintains liveness, and routes exact decisions among Incubator, Sentinel, and Principal Gateway. It may accelerate work and invoke controls but cannot alter economic evidence, override Sentinel, or manufacture spending or trading authority.
 _Avoid_: super-agent, Safety Kernel, Principal Gateway, strategy authority
 
+**Agent**:
+_Phase 1 implemented_: A provider-neutral persona with a specification, priority, hold threshold, and ordered tiered routes. It replaces the earlier “role runner” wording; it has no authority beyond its admitted dispatch envelope.
+_Avoid_: role runner, autonomous authority, manager
+
+**Provider**:
+_Phase 1 implemented_: A registry row describing a model service, protocol (`openai_chat`, `openai_responses`, or `cursor_agent`, which runs one no-repo Cursor Cloud Agent per dispatch), credential path, catalog and usage sources, and kind: `subscription`, `free`, `paid`, or `catalog_only`. Availability is not authorization.
+_Avoid_: model approval, connector, equivalent provider
+
+**Provider Window**:
+_Phase 1 implemented_: A rolling `5h`, weekly, monthly, daily, or minute quota window with a threshold and pacing slack, backed by provider or local usage samples.
+_Avoid_: budget, lifetime quota, provider fallback
+
+**Route Tier**:
+_Phase 1 implemented_: The ordered walk from `subscription` to `free` to `paid`; the first eligible route wins, and paid routes still require the applicable spending authorization.
+_Avoid_: best provider, silent failover, unrestricted fallback
+
+**Dispatch Intent / Attempt / Outcome**:
+_Phase 1 implemented_: The append-only lineage of a requested dispatch, each provider admission/send attempt, and its terminal result. Retries and fallbacks retain parent links; uncertain provider results remain `indeterminate`.
+_Avoid_: request overwrite, transparent retry, timeout means rejection
+
+**Unconstrained**:
+_Future design, phase 2_: A tag for agent output that must be quarantined and compliance-reviewed before rollup. It is not permission to bypass Incubator, Engine, Sentinel, evidence, or spending controls.
+_Avoid_: unrestricted agent, policy exception, trusted output
+
 **Brokerage Account**:
 The Principal's live account at a regulated broker, which holds real cash and securities and is the sole source of live order execution.
 _Avoid_: wallet, exchange account

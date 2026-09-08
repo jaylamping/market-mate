@@ -20,8 +20,8 @@ type ApiError = (StatusCode, Json<Value>);
 fn error(reason: &str) -> ApiError {
     (StatusCode::CONFLICT, Json(json!({"error":reason})))
 }
-pub(crate) struct Database {
-    pub(crate) client: tokio_postgres::Client,
+pub struct Database {
+    pub client: tokio_postgres::Client,
     task: JoinHandle<()>,
 }
 impl Drop for Database {
@@ -29,7 +29,7 @@ impl Drop for Database {
         self.task.abort();
     }
 }
-pub(crate) async fn database() -> Result<Database, ApiError> {
+pub async fn database() -> Result<Database, ApiError> {
     let url = std::env::var("DATABASE_URL").map_err(|_| error("database_unconfigured"))?;
     let (client, connection) =
         tokio::time::timeout(Duration::from_secs(5), tokio_postgres::connect(&url, NoTls))
@@ -112,7 +112,7 @@ pub(crate) fn select_role_model(
             .models
             .iter()
             .flat_map(|p| p.routes.first())
-            .find(|r| r.provider == "openrouter" && r.model_id == choice)
+            .find(|r| r.model_id == choice)
     }
     .ok_or_else(|| {
         error(if choice.is_empty() {
@@ -121,9 +121,6 @@ pub(crate) fn select_role_model(
             "model_not_whitelisted"
         })
     })?;
-    if route.provider != "openrouter" {
-        return Err(error("preferred_provider_execution_unavailable"));
-    }
     if !manual && !route.model_id.ends_with(":free") {
         return Err(error("zero_spend_budget_denied"));
     }
@@ -857,7 +854,6 @@ fn router_with_models(models: Arc<dyn ComparisonModels>) -> Router {
         }))
         .merge(crate::incubator_evaluation::router())
         .merge(crate::incubator_experiment::router())
-        .merge(crate::openrouter_capacity::router())
         .merge(crate::incubator_campaign::router())
 }
 #[cfg(test)]

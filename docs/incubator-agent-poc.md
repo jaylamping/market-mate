@@ -12,8 +12,8 @@ same saved policy volume immediately before recording its dispatch intent.
 It does not change the whitelist. The Incubator request modal uses the same bounded runner.
 
 ```sh
-docker compose build backend research-agent incubator-requests openrouter-connector frontend
-docker compose up -d --no-deps --wait backend incubator-requests openrouter-connector frontend
+docker compose build backend agent-driver research-agent incubator-requests frontend
+docker compose up -d --no-deps --wait backend agent-driver incubator-requests frontend
 docker compose run --rm --no-deps research-agent my-unique-run minimax/minimax-m3:free
 ```
 

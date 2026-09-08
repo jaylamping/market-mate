@@ -26,6 +26,7 @@ Verification writes normal build artifacts; it does not migrate the running data
 
 | Changed behavior | Additional acceptance script(s) |
 | --- | --- |
+| Provider registry, agents, quota routing | `bash scripts/agent_driver_test.sh` |
 | Seed (campaign)/creator/similarity/research retry | `bash scripts/research_campaign_test.sh` |
 | Provider capacity/spending/recovery | `bash scripts/openrouter_capacity_test.sh` |
 | Manual research intake | `bash scripts/incubator_manual_requests_test.sh` |

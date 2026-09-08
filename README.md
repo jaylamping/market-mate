@@ -14,4 +14,4 @@ Inspect an existing checkout without changing runtime state:
 python3 scripts/doctor.py --runtime
 ```
 
-Install frontend dependencies with `npm --prefix frontend ci` when needed, then run `bash scripts/verify.sh`. Read the verification guide before starting containers or running acceptance scripts; a configured worker can dispatch real provider requests.
+Install frontend dependencies with `npm --prefix frontend ci` when needed, then run `bash scripts/verify.sh`. Read the verification guide before starting containers or running acceptance scripts; a configured worker can dispatch real provider requests. Configure providers with `scripts/setup_openrouter.py`, `scripts/setup_zai.py`, `scripts/setup_opencode.py`, and `scripts/setup_cheaper_inference.py`.

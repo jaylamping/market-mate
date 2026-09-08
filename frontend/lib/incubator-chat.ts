@@ -23,7 +23,6 @@ export async function readChatStream(body:ReadableStream<Uint8Array>,onEvent:(ev
 export function chatError(reason:string) {
   const labels:Record<string,string>={
     model_capabilities_unavailable:"OpenRouter did not provide model capabilities. Refresh the catalog and try again.", model_text_research_unsupported:"This model does not support text research.", model_output_limit_unsupported:"This model does not advertise an output token limit, so a bounded research request cannot be sent.", model_not_whitelisted:"Approve this run’s model in Models before chatting.",
-    preferred_provider_execution_unavailable:"This model’s preferred provider cannot execute yet. Choose OpenRouter first in Models.",
     zero_spend_budget_denied:"Chat currently requires an approved free model.",
     provider_rejected_request:"The provider rejected this message. Your question is saved.",
     invalid_or_incomplete_reply:"The reply did not match the response contract. Your question is saved.",

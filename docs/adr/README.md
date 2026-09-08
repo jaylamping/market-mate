@@ -16,5 +16,6 @@ ADRs explain consequential choices that are not obvious from the code. Read only
 | [0010](0010-research-retry-campaign-paid.md) | Retry unusable Research Scout replies; campaign paid creator is Ticket Creator only |
 | [0011](0011-campaign-exact-case-check.md) | Deterministic campaign exact-case checks; drain the Created queue |
 | [0012](0012-creator-near-duplicate-intake.md) | Deterministic diversity controls on Ticket Creator intake: lens rotation, 10 bps near-duplicate bucket, literature anchors |
+| [0013](0013-agent-driver-and-generic-providers.md) | One agent driver for every model provider |
 
 Use [TEMPLATE.md](TEMPLATE.md). Record status, evidence, consequences, rejected alternatives, and conditions for reconsideration. An accepted design can still be unimplemented: record implementation status separately. Link a superseded record to its replacement. Update this index and affected instructions in the same PR as a decision change.

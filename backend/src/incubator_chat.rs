@@ -252,6 +252,7 @@ async fn send_message(
             crate::incubator::prepare_model_with_spend(model, !model.ends_with(":free"))
                 .await
                 .map_err(|e| error(StatusCode::CONFLICT, e))?;
+        let provider = provider.with_agent("owner_chat");
         let mut request = provider
             .adapt_request(&request)
             .map_err(|e| error(StatusCode::CONFLICT, e))?;
@@ -654,10 +655,7 @@ async fn stream_reply(
             detail[key] = value.clone();
         }
     }
-    if crate::openrouter_capacity::finish(&permit, state, &mut detail)
-        .await
-        .is_err()
-    {
+    if provider.finish(&permit, state, &mut detail).await.is_err() {
         state = "indeterminate";
         detail["reason"] = json!("capacity_result_unavailable");
     }

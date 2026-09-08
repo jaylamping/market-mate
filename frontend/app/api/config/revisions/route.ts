@@ -1,0 +1,2 @@
+export const dynamic = "force-dynamic";
+export async function GET(){const headers={"Cache-Control":"no-store"},base=process.env.AGENT_DRIVER_URL;if(!base)return Response.json({error:"Agent driver unavailable"},{status:503,headers});try{const response=await fetch(`${base}/config/revisions?limit=50`,{cache:"no-store",signal:AbortSignal.timeout(12_000)});return Response.json(await response.json(),{status:response.status,headers})}catch{return Response.json({error:"Agent driver unavailable"},{status:503,headers})}}

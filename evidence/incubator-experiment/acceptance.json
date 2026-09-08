@@ -24,8 +24,15 @@
     "model_intent_no_replay",
     "local_execution_restart",
     "post_handoff_owner_answer_resumes_same_package",
-    "evaluation_owner_constraint_preserved"
+    "evaluation_owner_constraint_preserved",
+    "experiment_dispatch_retry"
   ],
   "passed": true,
-  "migration_sha256": "9bb5c69d60ed7b97a319cdb1cb1ecee1c7b471527473001fd60f9a2ed7943b53"
+  "migration_sha256": "9bb5c69d60ed7b97a319cdb1cb1ecee1c7b471527473001fd60f9a2ed7943b53",
+  "sha256": {
+    "db/migrations/0081_campaign_experiment_throughput.sql": "505761d5ff4271d1509e2932e87eeb80ee881cd95a4b077755e7d022f9a05abc",
+    "db/fixtures/experiment_dispatch_retry_probe.sql": "bcd0f50811005f6ccae668de07cd98663b8dee064de3c3835e75a0d41962a525",
+    "backend/src/incubator_experiment.rs": "11ff5eeb4a2f1393dbd795438625a63546a19d4db2778d0f36075844fb643b6d",
+    "backend/src/incubator_output.rs": "79c9fb8d4b94be01442a6925acfbcbfb7e7d226a78316997b1d66eef39c66e30"
+  }
 }

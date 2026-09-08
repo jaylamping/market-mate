@@ -138,8 +138,8 @@ test("save preserves revision and units, and exposes conflict instead of overwri
   } finally {globalThis.fetch=original;}
 });
 test("capacity proxy preserves method and conflict; rejects foreign origins and oversized bodies",async()=>{
-  const previous=process.env.INCUBATOR_REQUESTS_URL,original=globalThis.fetch;
-  process.env.INCUBATOR_REQUESTS_URL="http://internal:8086";
+  const previous=process.env.AGENT_DRIVER_URL,original=globalThis.fetch;
+  process.env.AGENT_DRIVER_URL="http://internal:8086";
   const sent:{url:string;method?:string}[]=[];
   globalThis.fetch=async(input,init)=>{sent.push({url:String(input),method:init?.method});return Response.json({error:"revision"},{status:409});};
   const request=(origin="http://localhost",body="{}")=>new Request("http://localhost/api/incubator/capacity",{method:"PUT",headers:{host:"localhost",origin},body});
@@ -158,7 +158,7 @@ test("capacity proxy preserves method and conflict; rejects foreign origins and 
     assert.equal((await capacityProxy(normalized("http://localhost:3000"),"PUT")).status,403);
     assert.equal((await capacityProxy(normalized("https://127.0.0.1:3000"),"PUT")).status,403);
     assert.equal(sent.length,3);
-    delete process.env.INCUBATOR_REQUESTS_URL;
+    delete process.env.AGENT_DRIVER_URL;
     assert.equal((await capacityProxy(new Request("http://localhost/api/incubator/capacity"),"GET")).status,503);
-  } finally {globalThis.fetch=original;if(previous===undefined)delete process.env.INCUBATOR_REQUESTS_URL;else process.env.INCUBATOR_REQUESTS_URL=previous;}
+  } finally {globalThis.fetch=original;if(previous===undefined)delete process.env.AGENT_DRIVER_URL;else process.env.AGENT_DRIVER_URL=previous;}
 });

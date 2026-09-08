@@ -84,11 +84,11 @@
     "backend/src/incubator_output.rs": "79c9fb8d4b94be01442a6925acfbcbfb7e7d226a78316997b1d66eef39c66e30",
     "backend/src/openrouter_request.rs": "bb9a3d8bd1cff418e8aa9e6b52c8ca3eb83054f25b080099ee8ba695f436b2db",
     "db/fixtures/research_campaign_probe.sql": "0d7fa40b4db26854e551da27f9666d267e554554eb938ce9d112466ce088be89",
-    "backend/src/incubator.rs": "491647ecf8dc30df6900686711e710c0d87730c89db42fec6c6945bea036687f",
+    "backend/src/incubator.rs": "38d972c19f31b4fe2bfac7c871b377662a06dfa7d9687596ef772b6d490cd125",
     "backend/src/incubator_campaign.rs": "c8473fa50485c086ed54d260adca32c7784df8d030dc1b2c3dd534d4c1f0614b",
-    "backend/src/incubator_ticket_creator.rs": "eeb59357b99528f90e759fb2887960572a51716459dcb6967247df4a76e94ba0",
-    "backend/src/incubator_requests.rs": "98875a6790d3181cb00ba938a298c5c76c89117c6b76cdbd65695a8409ed7c45",
-    "backend/src/openrouter_capacity.rs": "84fbba679f513d1048dc68546aabddced46689bfcd6339f077758e05f6bd17ac",
+    "backend/src/incubator_ticket_creator.rs": "53fad4ab128143c0e940bb02ba7b736b5f07d36ba5fd79c7d8caee5f2da98ac9",
+    "backend/src/incubator_requests.rs": "9f9da905f1fa6b2c674962dffdf07ff33b709c4216ac7af13e8b08c2b3a83e09",
+    "backend/src/openrouter_capacity.rs": "21e644b1254cf3962691a4dd8bd126881584dcdf11cefe0ed4dc9e83a0fae6ba",
     "scripts/research_campaign_test.sh": "f52a70485f2ff54bd4de3f425f97359eded8c0b2fcf8a18578a43ff4772b258c"
   }
 }

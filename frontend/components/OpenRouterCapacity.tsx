@@ -57,7 +57,7 @@ function CapacityEditor({capacity,paidModels,catalogAvailable,onSaved}: {capacit
   async function burst() {
     setBusy(true);setMessage("");
     try {
-      const response=await fetch("/api/incubator/capacity",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({requests:100}),signal:AbortSignal.timeout(15_000)});
+      const response=await fetch("/api/providers/capacity/burst",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({requests:100}),signal:AbortSignal.timeout(15_000)});
       if(!response.ok)throw Error("Burst could not be confirmed. Reload capacity before retrying.");
       await onSaved();setMessage("Burst allowance set. It advances existing queued work within daily and minute limits.");
     } catch(error) {setMessage(error instanceof Error ? error.message : "Burst failed.");} finally {setBusy(false);}

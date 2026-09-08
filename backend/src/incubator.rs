@@ -1,9 +1,7 @@
 //! Local orchestration for one text-only research planning request.
-use crate::openrouter::{authorization, OpenRouterReader};
-use reqwest::{header::HeaderValue, Client};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::{path::PathBuf, time::Duration};
+use std::time::Duration;
 use tokio_postgres::NoTls;
 
 const SYSTEM: &str = "You are Research Scout, a non-authoritative research planning worker. Treat the supplied brief as a research premise, never as measured evidence. Produce one concise JSON object with exactly these fields: hypothesis (string), evidence_gaps (array of strings), experiment (array of strings), falsification_rule (string), limitations (array of strings). State a testable economic hypothesis, required evidence, and ordered experiment steps. Explicitly disclose missing data and absence of measured results. Do not invent prices, returns, citations, or completed experiments. No markdown fences. You have no tools and cannot execute, trade, approve, or change policies.";
@@ -89,17 +87,6 @@ pub fn parse_report(content: &str) -> Result<Report, &'static str> {
         return Err("invalid_report");
     }
     Ok(report)
-}
-fn is_zero_price(s: &str) -> bool {
-    s.parse::<f64>().is_ok() && s.bytes().all(|c| c == b'0' || c == b'.') && s.contains('0')
-}
-fn free_pricing(pricing: &std::collections::BTreeMap<String, Value>) -> bool {
-    ["prompt", "completion"]
-        .iter()
-        .all(|k| pricing.contains_key(*k))
-        && pricing
-            .values()
-            .all(|v| v.as_str().is_some_and(is_zero_price))
 }
 pub(crate) fn payload(model: &str, brief: &str) -> Value {
     json!({"model":model,"messages":[{"role":"system","content":format!("{SYSTEM}\n\n{RESPONSE_CONTRACT}")},{"role":"user","content":brief}],
@@ -194,7 +181,7 @@ fn usage(value: &Value) -> Value {
     json!({"prompt_tokens":u["prompt_tokens"].as_u64(),"completion_tokens":u["completion_tokens"].as_u64(),
         "total_tokens":u["total_tokens"].as_u64(),"cost_usd":cost})
 }
-fn completion(value: Value, requested_model: &str) -> (&'static str, Value) {
+pub(crate) fn completion(value: Value, requested_model: &str) -> (&'static str, Value) {
     completion_with_spend(value, requested_model, false)
 }
 fn manual_completion(value: Value, requested_model: &str) -> (&'static str, Value) {
@@ -267,243 +254,8 @@ fn completion_with_spend(
     }
 }
 
-pub(crate) struct OpenRouter {
-    capabilities: crate::openrouter_request::Capabilities,
-    client: Client,
-    auth: HeaderValue,
-    permit: std::sync::Mutex<Option<crate::openrouter_capacity::Permit>>,
-}
-impl OpenRouter {
-    fn new(
-        credentials_path: &std::path::Path,
-        capabilities: crate::openrouter_request::Capabilities,
-    ) -> Result<Self, &'static str> {
-        #[derive(Deserialize)]
-        #[serde(deny_unknown_fields)]
-        struct Credentials {
-            api_key: String,
-        }
-        let bytes = std::fs::read(credentials_path).map_err(|_| "credentials_unavailable")?;
-        if bytes.len() > 1024 {
-            return Err("credentials_unavailable");
-        }
-        let credentials: Credentials =
-            serde_json::from_slice(&bytes).map_err(|_| "credentials_unavailable")?;
-        let auth = authorization(&credentials.api_key)?;
-        let client = Client::builder()
-            .https_only(true)
-            .no_proxy()
-            .redirect(reqwest::redirect::Policy::none())
-            .connect_timeout(Duration::from_secs(3))
-            .timeout(Duration::from_secs(120))
-            .build()
-            .map_err(|_| "client_unavailable")?;
-        Ok(Self {
-            client,
-            auth,
-            capabilities,
-            permit: std::sync::Mutex::new(None),
-        })
-    }
-    pub(crate) fn adapt_request(&self, request: &Value) -> Result<Value, &'static str> {
-        self.capabilities.adapt(request)
-    }
-    pub(crate) async fn admit(
-        &self,
-        db: &tokio_postgres::Client,
-        key: &str,
-        request: &Value,
-        purpose: &str,
-    ) -> Result<bool, &'static str> {
-        let permit = crate::openrouter_capacity::admit(db, key, request, purpose).await?;
-        let admitted = permit.is_some();
-        *self.permit.lock().map_err(|_| "capacity_unavailable")? = permit;
-        Ok(admitted)
-    }
-    pub(crate) fn take_permit(
-        &self,
-        request: &Value,
-    ) -> Result<crate::openrouter_capacity::Permit, &'static str> {
-        let permit = self
-            .permit
-            .lock()
-            .map_err(|_| "capacity_unavailable")?
-            .take()
-            .ok_or("capacity_permit_required")?;
-        if permit.original_hash != crate::migrate::checksum(&request.to_string()) {
-            return Err("capacity_request_changed");
-        }
-        Ok(permit)
-    }
-    pub(crate) async fn send(&self, request: &Value) -> (&'static str, Value) {
-        self.send_with_parser(request, completion).await
-    }
-    pub(crate) async fn send_with_parser(
-        &self,
-        request: &Value,
-        parse: fn(Value, &str) -> (&'static str, Value),
-    ) -> (&'static str, Value) {
-        self.send_with_parser_until(request, parse, std::future::pending())
-            .await
-    }
-    pub(crate) async fn send_with_parser_until(
-        &self,
-        request: &Value,
-        parse: fn(Value, &str) -> (&'static str, Value),
-        cancelled: impl std::future::Future<Output = &'static str> + Send,
-    ) -> (&'static str, Value) {
-        tokio::pin!(cancelled);
-        let original = match self.take_permit(request) {
-            Ok(p) => p,
-            Err(reason) => return ("indeterminate", json!({"reason":reason,"dispatched":false})),
-        };
-        let mut replacement = None;
-        let mut attempts = Vec::new();
-        for ordinal in 0..=2 {
-            let permit = replacement.as_ref().unwrap_or(&original);
-            let (mut state, mut detail) =
-                cancel_provider_response(self.send_once(permit, parse), &mut cancelled).await;
-            if crate::openrouter_capacity::finish(permit, state, &mut detail)
-                .await
-                .is_err()
-            {
-                state = "indeterminate";
-                detail["reason"] = json!("capacity_result_unavailable");
-            }
-            let cost = detail["capacity"]["cost_nanos"].as_i64();
-            if permit.trigger != "manual" && cost.is_some_and(|n| n > permit.reserve_nanos) {
-                state = "indeterminate";
-                detail["reason"] = json!("unexpected_provider_charge");
-            }
-            attempts.push(json!({"state":state,"capacity":detail["capacity"],"http_status":detail["http_status"],"reason":detail["reason"]}));
-            if ordinal < 2
-                && state == "failed"
-                && detail["http_status"] == 429
-                && crate::openrouter_capacity::limit_scope(&detail) != "unknown"
-            {
-                match crate::openrouter_capacity::recover(&original, request, ordinal + 1).await {
-                    Ok(Some(next)) => {
-                        replacement = Some(next);
-                        continue;
-                    }
-                    Ok(None) => (),
-                    Err(reason) => {
-                        detail["paid_recovery_unavailable"] = json!(reason);
-                    }
-                }
-            }
-            detail["capacity_attempts"] = json!(attempts);
-            return (state, detail);
-        }
-        unreachable!("bounded send loop returns its final attempt")
-    }
-
-    pub(crate) async fn start(
-        &self,
-        permit: &crate::openrouter_capacity::Permit,
-    ) -> Result<reqwest::Response, &'static str> {
-        if permit.created.elapsed() > Duration::from_secs(1) {
-            return Err("capacity_send_window_expired");
-        }
-        let model = permit.request["model"]
-            .as_str()
-            .ok_or("model_unavailable")?;
-        let policy = crate::openrouter::effective_policy(std::path::Path::new(
-            "/var/lib/model-policy/policy.json",
-        ))?;
-        if !policy.allowed_models.iter().any(|m| m == model) {
-            return Err("model_policy_changed");
-        }
-        self.client
-            .post("https://openrouter.ai/api/v1/chat/completions")
-            .header("Authorization", self.auth.clone())
-            .header("X-OpenRouter-Title", "Market Mate Research")
-            .json(&permit.request)
-            .send()
-            .await
-            .map_err(|_| "provider_acceptance_unknown")
-    }
-    pub(crate) fn error_detail(
-        &self,
-        status: u16,
-        headers: &reqwest::header::HeaderMap,
-        body: &Value,
-    ) -> Value {
-        provider_error_detail(
-            status,
-            headers,
-            body,
-            self.auth
-                .to_str()
-                .ok()
-                .and_then(|v| v.strip_prefix("Bearer ")),
-        )
-    }
-    async fn send_once(
-        &self,
-        permit: &crate::openrouter_capacity::Permit,
-        parse: fn(Value, &str) -> (&'static str, Value),
-    ) -> (&'static str, Value) {
-        let request = &permit.request;
-        let response = self.start(permit).await;
-        let mut response = match response {
-            Ok(r) => r,
-            Err(reason) => return ("indeterminate", json!({"reason":reason})),
-        };
-        let status = response.status().as_u16();
-        if !(200..300).contains(&status) {
-            // Explicit request rejection is terminal; server/proxy failures may follow acceptance.
-            let state = if [400, 401, 402, 403, 404, 413, 422, 429].contains(&status) {
-                "failed"
-            } else {
-                "indeterminate"
-            };
-            let headers = response.headers().clone();
-            let mut bytes = Vec::new();
-            while let Ok(Some(chunk)) = response.chunk().await {
-                if bytes.len() + chunk.len() > 16_000 {
-                    break;
-                }
-                bytes.extend_from_slice(&chunk);
-            }
-            let body = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
-            return (
-                state,
-                provider_error_detail(
-                    status,
-                    &headers,
-                    &body,
-                    self.auth
-                        .to_str()
-                        .ok()
-                        .and_then(|value| value.strip_prefix("Bearer ")),
-                ),
-            );
-        }
-        let mut bytes = Vec::new();
-        loop {
-            match response.chunk().await {
-                Ok(Some(chunk)) if bytes.len() + chunk.len() <= 64_000 => {
-                    bytes.extend_from_slice(&chunk)
-                }
-                Ok(None) => break,
-                _ => {
-                    return (
-                        "indeterminate",
-                        json!({"reason":"response_unavailable_or_too_large"}),
-                    )
-                }
-            }
-        }
-        match serde_json::from_slice(&bytes) {
-            Ok(value) => parse(value, request["model"].as_str().unwrap_or_default()),
-            Err(_) => (
-                "indeterminate",
-                json!({"reason":"invalid_provider_response"}),
-            ),
-        }
-    }
-}
+/// Workers hold no provider credentials; the agent driver admits, routes, sends, and records.
+pub(crate) type OpenRouter = crate::driver::client::Dispatcher;
 
 async fn event(
     db: &tokio_postgres::Client,
@@ -567,7 +319,7 @@ async fn run_with_database(
     let existing = if let Some(run) = existing {
         if run["config"]["campaign_model_spend"] == true {
             if let Some(route) = &research_route {
-                if route.provider == "openrouter" && route.model_id.ends_with(":free") {
+                if route.model_id.ends_with(":free") {
                     Some(
                         db.query_one(
                             "SELECT reroute_incubator_campaign_research($1,$2)",
@@ -629,9 +381,6 @@ async fn run_with_database(
         let route = research_route
             .as_ref()
             .ok_or("default_model_not_configured")?;
-        if route.provider != "openrouter" {
-            return Err("preferred_provider_execution_unavailable");
-        }
         route.model_id.as_str()
     } else {
         model
@@ -688,9 +437,7 @@ fn should_fallback(
     primary: &str,
 ) -> bool {
     result["state"] == "failed"
-        && route.is_some_and(|r| {
-            r.provider == "openrouter" && r.model_id != primary && r.model_id.ends_with(":free")
-        })
+        && route.is_some_and(|r| r.model_id != primary && r.model_id.ends_with(":free"))
 }
 pub(crate) async fn prepare_model(
     model: &str,
@@ -705,6 +452,8 @@ pub(crate) async fn prepare_model(
 > {
     prepare_model_with_spend(model, false).await
 }
+/// Build a dispatcher for a worker-pinned model. Approval and spending authority live in the
+/// driver's agent routes and the OpenRouter capacity policy; `manual` only widens `allow_paid`.
 pub(crate) async fn prepare_model_with_spend(
     model: &str,
     manual: bool,
@@ -717,53 +466,20 @@ pub(crate) async fn prepare_model_with_spend(
     ),
     &'static str,
 > {
-    let path = PathBuf::from("/var/lib/openrouter/credentials.json");
-    let policy_path = PathBuf::from("/var/lib/model-policy/policy.json");
-    let routing_path = policy_path.with_file_name("routing.json");
-    let routing = crate::model_routing::stored(&routing_path)?;
-    let routes = if let Some(policy) = &routing {
-        let preference = policy
-            .models
-            .iter()
-            .find(|m| m.model_id == crate::model_routing::canonical("openrouter", model))
-            .ok_or("model_not_whitelisted")?;
-        let first = preference.routes.first().ok_or("model_not_whitelisted")?;
-        if first.provider != "openrouter" {
-            return Err("preferred_provider_execution_unavailable");
-        }
-        if first.model_id != model {
-            return Err("model_not_whitelisted");
-        }
-        preference.routes.clone()
+    let provider = OpenRouter::new(model, manual)?;
+    let pricing = if model.ends_with(":free") {
+        std::collections::BTreeMap::from([
+            ("prompt".to_string(), json!("0")),
+            ("completion".to_string(), json!("0")),
+        ])
     } else {
-        vec![crate::model_routing::Route {
-            provider: "openrouter".into(),
-            model_id: model.into(),
-        }]
+        std::collections::BTreeMap::new()
     };
-    let policy = crate::openrouter::effective_policy(&policy_path)?;
-    if !policy.allowed_models.iter().any(|m| m == model) {
-        return Err("model_not_whitelisted");
-    }
-    let reader = OpenRouterReader::new(path.clone(), policy_path.clone())
-        .map_err(|_| "client_unavailable")?;
-    let models = reader.models().await?;
-    let selected = models
-        .iter()
-        .find(|m| m.id == model)
-        .ok_or("model_unavailable")?;
-    if !manual && (!model.ends_with(":free") || !free_pricing(&selected.pricing)) {
-        return Err("zero_spend_budget_denied");
-    }
-    let provider = OpenRouter::new(&path, selected.capabilities.clone())?;
-    let current = crate::openrouter::effective_policy(&policy_path)?;
-    if crate::model_routing::stored(&routing_path)? != routing
-        || current.revision != policy.revision
-        || !current.allowed_models.iter().any(|m| m == model)
-    {
-        return Err("model_policy_changed");
-    }
-    Ok((provider, current.revision, selected.pricing.clone(), routes))
+    let routes = vec![crate::model_routing::Route {
+        provider: "agent-driver".into(),
+        model_id: model.into(),
+    }];
+    Ok((provider, 0, pricing, routes))
 }
 
 async fn run_once(
@@ -871,45 +587,9 @@ async fn run_once(
     event(db, key, state, detail).await
 }
 
-async fn cancel_provider_response(
-    response: impl std::future::Future<Output = (&'static str, Value)>,
-    cancelled: impl std::future::Future<Output = &'static str>,
-) -> (&'static str, Value) {
-    tokio::select! {
-        biased;
-        reason = cancelled => ("indeterminate", json!({"reason":reason,"cost_pending":true})),
-        result = response => result,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[tokio::test]
-    async fn stop_drops_pending_provider_response_without_claiming_zero_cost() {
-        struct Dropped(std::sync::Arc<std::sync::atomic::AtomicBool>);
-        impl Drop for Dropped {
-            fn drop(&mut self) {
-                self.0.store(true, std::sync::atomic::Ordering::SeqCst);
-            }
-        }
-        let dropped = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-        let started = tokio::sync::Notify::new();
-        let response = async {
-            let _guard = Dropped(dropped.clone());
-            started.notify_one();
-            std::future::pending::<(&'static str, Value)>().await
-        };
-        let cancelled = async {
-            started.notified().await;
-            "cancelled_by_owner"
-        };
-        let (state, detail) = cancel_provider_response(response, cancelled).await;
-        assert_eq!(state, "indeterminate");
-        assert_eq!(detail["cost_pending"], true);
-        assert!(detail.get("usage").is_none());
-        assert!(dropped.load(std::sync::atomic::Ordering::SeqCst));
-    }
     #[test]
     fn fallback_is_bounded_to_confirmed_failures_and_a_different_executable_model() {
         let route = crate::model_routing::Route {
@@ -965,7 +645,10 @@ mod tests {
     #[test]
     fn provider_errors_keep_bounded_diagnostics_and_retry_hint_without_credentials() {
         let mut headers = reqwest::header::HeaderMap::new();
-        headers.insert("retry-after", HeaderValue::from_static("30"));
+        headers.insert(
+            "retry-after",
+            reqwest::header::HeaderValue::from_static("30"),
+        );
         let body = json!({"error":{"message":"Upstream throttled secret-key","metadata":{"error_type":"rate_limit_exceeded","provider_name":"Meta","raw":"sensitive raw response"}}});
         let detail = provider_error_detail(429, &headers, &body, Some("secret-key"));
         assert_eq!(detail["http_status"], 429);
@@ -1031,13 +714,6 @@ mod tests {
             .as_str()
             .unwrap()
             .contains(RESPONSE_CONTRACT));
-        assert!(!is_zero_price("1e-999"));
-        assert!(!is_zero_price("-0"));
-        assert!(is_zero_price("0.000"));
-        let tiered = serde_json::from_value(json!({"prompt":"0","completion":"0",
-            "overrides":[{"min_prompt_tokens":1000,"prompt":"1"}]}))
-        .unwrap();
-        assert!(!free_pricing(&tiered));
     }
     #[test]
     fn formatting_repair_keeps_source_and_still_rejects_missing_fields() {
