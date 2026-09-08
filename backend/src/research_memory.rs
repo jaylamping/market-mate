@@ -28,7 +28,9 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use crate::research_contract::{AssignmentPins, CONTRACT_RUNNER, DESK_ROLES, POSTURE_PROFILES};
+use crate::research_contract::{
+    AssignmentPins, AUTHORITY_KEYS, CONTRACT_RUNNER, DESK_ROLES, POSTURE_PROFILES,
+};
 
 /// Domain separator for lesson content digests computed with this runtime.
 pub const LESSON_DIGEST_DOMAIN: &str = "market-mate-research-lesson-v1";
@@ -52,19 +54,21 @@ pub const LESSON_STATUSES: [&str; 6] = [
 /// recipe/acceptance keywords that mark the memory-admission boundary.
 /// Guidance carrying any of these words is methods-inadmissible; recipe and
 /// acceptance-check changes require a reviewed PR and can never be promoted
-/// through memory admission.
+/// through memory admission. B3: built from AUTHORITY_KEYS (no duplication);
+/// the first eleven entries are AUTHORITY_KEYS verbatim (cross-checked by
+/// test), plus recipe/acceptance.
 pub const GATE_CHANGE_KEYS: [&str; 13] = [
-    "authority",
-    "lifecycle_state",
-    "execution_environment",
-    "execution_authority",
-    "strategy_eligible",
-    "paper_eligible",
-    "trade_eligible",
-    "paper",
-    "live",
-    "broker",
-    "execution_edge_and_paper_trading",
+    AUTHORITY_KEYS[0],
+    AUTHORITY_KEYS[1],
+    AUTHORITY_KEYS[2],
+    AUTHORITY_KEYS[3],
+    AUTHORITY_KEYS[4],
+    AUTHORITY_KEYS[5],
+    AUTHORITY_KEYS[6],
+    AUTHORITY_KEYS[7],
+    AUTHORITY_KEYS[8],
+    AUTHORITY_KEYS[9],
+    AUTHORITY_KEYS[10],
     "recipe",
     "acceptance",
 ];
@@ -93,8 +97,10 @@ pub enum LessonStatus {
 
 /// Full lineage for one lesson: proposing + critiquing assignment/run, the
 /// actual provider session and model (opaque, never a hardcoded identity) +
-/// config revision, recipe/contract versions, canonical source artifact IDs,
-/// and declared shared dependencies. Unknown fields are rejected.
+/// critiquing session/model + config revision, recipe/contract versions,
+/// canonical source artifact IDs, and declared shared dependencies. Unknown
+/// fields are rejected. S2: critiquing session/model are required so support
+/// disjointness checks all four coordinates against BOTH lineages.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct LessonProvenance {
@@ -105,6 +111,8 @@ pub struct LessonProvenance {
     pub provider_id: String,
     pub provider_session: String,
     pub model_id: String,
+    pub critiquing_provider_session: String,
+    pub critiquing_model_id: String,
     pub config_revision: i64,
     pub recipe_version: String,
     pub contract_runner: String,
@@ -252,6 +260,13 @@ pub fn lineage_complete(lesson: &Lesson) -> Result<(), String> {
     if !non_blank(&provenance.model_id) {
         return Err("lineage:model_required".into());
     }
+    // S2: critiquing session/model required; support must differ from both.
+    if !non_blank(&provenance.critiquing_provider_session) {
+        return Err("lineage:critiquing_provider_session_required".into());
+    }
+    if !non_blank(&provenance.critiquing_model_id) {
+        return Err("lineage:critiquing_model_required".into());
+    }
     if provenance.config_revision < 0 {
         return Err("lineage:config_revision_must_be_nonnegative".into());
     }
@@ -342,6 +357,9 @@ pub fn support_disjoint(lesson: &Lesson) -> Result<(), String> {
     let critiquing_run = provenance.critiquing_run_key.trim();
     let proposing_session = provenance.provider_session.trim();
     let proposing_model = provenance.model_id.trim();
+    // S2: critiquing session/model; each attestation must differ from BOTH.
+    let critiquing_session = provenance.critiquing_provider_session.trim();
+    let critiquing_model = provenance.critiquing_model_id.trim();
     for attestation in &lesson.support {
         let assignment = attestation.assignment_id.trim().to_lowercase();
         if assignment == proposing_assignment || assignment == critiquing_assignment {
@@ -351,10 +369,12 @@ pub fn support_disjoint(lesson: &Lesson) -> Result<(), String> {
         if run == proposing_run || run == critiquing_run {
             return Err("support:repeated_run".into());
         }
-        if attestation.provider_session.trim() == proposing_session {
+        let session = attestation.provider_session.trim();
+        if session == proposing_session || session == critiquing_session {
             return Err("support:shared_session".into());
         }
-        if attestation.model_id.trim() == proposing_model {
+        let model = attestation.model_id.trim();
+        if model == proposing_model || model == critiquing_model {
             return Err("support:shared_model".into());
         }
     }
@@ -382,9 +402,14 @@ pub fn support_disjoint(lesson: &Lesson) -> Result<(), String> {
 /// Decision #173.3: scope shape. Global carries an empty object;
 /// role_posture carries exactly desk_role + posture_profile from the
 /// canonical contract sets; method_data carries exactly contract_runner +
-/// recipe_version.
+/// recipe_version. B2: LESSON_SCOPE_TYPES is the closed set (referenced
+/// below so the constant cannot drift dead).
 pub fn scope_wellformed(scope: &LessonScope) -> Result<(), String> {
     let scope_type = scope.scope_type.trim().to_lowercase();
+    // B2: reference the closed scope-type set so dead constants fail loudly.
+    if !LESSON_SCOPE_TYPES.contains(&scope_type.as_str()) {
+        return Err("scope:unknown_scope_type".into());
+    }
     let key = scope
         .scope_key
         .as_object()
@@ -484,24 +509,71 @@ pub fn freshness_ok(expires_at_rfc3339: &str, now_rfc3339: &str) -> Result<(), S
 /// Decision #173.6: gate-change detection over free-text guidance. Any
 /// deny-list word (authority keys plus recipe/acceptance) at a word boundary
 /// marks guidance that touches recipe, acceptance-check, or authority
-/// semantics. Tokenization keeps underscores inside tokens so multi-word
-/// keys match exactly and substrings such as "deliver" never trip.
+/// semantics. S3: multi-word keys match across space/hyphen/underscore
+/// separators and single-word keys match plurals (see the SQL alternates);
+/// word-boundary semantics keep substrings such as "deliver" and "paperwork"
+/// from tripping. Mirrors the SQL `research_lesson_guidance_is_admissible`
+/// alternates: separators normalize to word splits and a trailing `s` is
+/// stripped before comparing; single-word boundary behavior is preserved
+/// (no substring hits).
 pub fn gate_change_detected(guidance: &str) -> bool {
-    let lowered = guidance.to_lowercase();
-    let mut token = String::new();
-    let flush = |token: &mut String| {
-        let hit = GATE_CHANGE_KEYS.contains(&token.as_str());
-        token.clear();
-        hit
-    };
-    for ch in lowered.chars() {
-        if ch.is_ascii_alphanumeric() || ch == '_' {
-            token.push(ch);
-        } else if !token.is_empty() && flush(&mut token) {
+    // Split on any non-alphanumeric (including underscore, space, hyphen)
+    // into lowercase words, strip one trailing `s` (SQL plural alternate),
+    // then match single words and adjacent phrases.
+    let mut words: Vec<String> = Vec::new();
+    let mut cur = String::new();
+    for ch in guidance.to_lowercase().chars() {
+        if ch.is_ascii_alphanumeric() {
+            cur.push(ch);
+        } else if !cur.is_empty() {
+            // Strip a single trailing `s` to mirror SQL plurals. Words of
+            // length <= 2 are left alone to avoid turning "is"/"as" into
+            // empty hits (harmless either way since they never match keys).
+            if cur.len() > 2 && cur.ends_with('s') {
+                cur.pop();
+            }
+            words.push(std::mem::take(&mut cur));
+        }
+    }
+    if !cur.is_empty() {
+        if cur.len() > 2 && cur.ends_with('s') {
+            cur.pop();
+        }
+        words.push(cur);
+    }
+    // Single-word deny keys (after singularization, see GATE_CHANGE_KEYS).
+    // Multi-word keys are checked as phrases below.
+    for w in &words {
+        if GATE_CHANGE_KEYS.contains(&w.as_str()) {
             return true;
         }
     }
-    !token.is_empty() && flush(&mut token)
+    // Multi-word phrases (each element already singularized): lifecycle+state,
+    // execution+environment, execution+authority, strategy/paper/trade
+    // +eligible, acceptance+check, and the 5-word execution edge phrase.
+    for pair in words.windows(2) {
+        match (pair[0].as_str(), pair[1].as_str()) {
+            ("lifecycle", "state")
+            | ("execution", "environment")
+            | ("execution", "authority")
+            | ("strategy", "eligible")
+            | ("paper", "eligible")
+            | ("trade", "eligible")
+            | ("acceptance", "check") => return true,
+            _ => {}
+        }
+    }
+    for win in words.windows(5) {
+        if win[0] == "execution"
+            && win[1] == "edge"
+            && win[2] == "and"
+            && win[3] == "paper"
+            && win[4] == "trading"
+        {
+            return true;
+        }
+    }
+    false
 }
 
 /// Decision #173.4: a duplicate must never count its canonical lesson's
@@ -525,8 +597,25 @@ pub fn duplicate_support_ok(
 
 /// Decision #173.5: retrieval effect of one row. Duplicates always resolve to
 /// their canonical key; superseded lessons resolve to their successor (a
-/// missing successor blocks); only admitted lessons are retrievable.
+/// missing successor blocks); only admitted lessons are retrievable. B2:
+/// LESSON_STATUSES is the closed status set (referenced below so the constant
+/// cannot drift dead).
 pub fn containment_effect(lesson: &Lesson) -> Containment {
+    // B2: reference the closed status set; unknown statuses fail closed.
+    let status_str = match lesson.status {
+        LessonStatus::Proposed => "proposed",
+        LessonStatus::Admitted => "admitted",
+        LessonStatus::Suspended => "suspended",
+        LessonStatus::Superseded => "superseded",
+        LessonStatus::Expired => "expired",
+        LessonStatus::Contaminated => "contaminated",
+    };
+    debug_assert!(LESSON_STATUSES.contains(&status_str));
+    if !LESSON_STATUSES.contains(&status_str) {
+        return Containment::Blocked {
+            reason: "unknown_status".into(),
+        };
+    }
     if let Some(canonical) = lesson.canonical_lesson_key.as_deref() {
         if non_blank(canonical) {
             return Containment::CanonicalLink {
@@ -563,6 +652,7 @@ pub fn containment_effect(lesson: &Lesson) -> Containment {
 /// scope, admissible guidance, freshness, and (for duplicates) no reused
 /// canonical support. Dissent passes through untouched: admission preserves
 /// it, never drops it. Status edges stay with the SQL transition functions.
+/// B1: empty/blank guidance is inadmissible (mirrors SQL btrim <> '').
 pub fn admissible(
     lesson: &Lesson,
     canonical: Option<&Lesson>,
@@ -571,6 +661,10 @@ pub fn admissible(
     lineage_complete(lesson)?;
     support_disjoint(lesson)?;
     scope_wellformed(&lesson.scope)?;
+    // B1: non-blank guidance check (SQL CHECK btrim(guidance) <> '').
+    if !non_blank(&lesson.guidance) {
+        return Err("admission:guidance_required".into());
+    }
     if gate_change_detected(&lesson.guidance) {
         return Err("admission:gate_change".into());
     }
@@ -626,7 +720,9 @@ pub fn retrievable_keys(
                     if !visited.insert(current.lesson_key.trim()) {
                         break None;
                     }
-                    if visited.len() > lessons.len() {
+                    // B6: hop cap mirrors SQL hop_count > 16 (read path caps
+                    // at 16; min with len keeps small sets tight).
+                    if visited.len() > lessons.len().min(16) {
                         break None;
                     }
                     match by_key.get(lesson_key.as_str()) {
@@ -661,12 +757,18 @@ pub fn needs_pinned_review(status: &LessonStatus) -> bool {
 }
 
 /// Decision #173.5: flag every pinned key whose status is not admitted.
+/// B5: callers must treat keys absent from the DB as review (SQL
+/// `research_lesson_pinned_review` flags unknown keys); this pure helper only
+/// sees caller-supplied statuses, so absent keys must be flagged by the
+/// caller, never silently re-pinned. No signature change.
+/// B4: deduplicated via HashSet (like retrievable_keys).
 pub fn pinned_review(pinned: &[(&str, LessonStatus)]) -> Vec<String> {
-    let mut flagged: Vec<String> = pinned
+    let flagged_set: HashSet<String> = pinned
         .iter()
         .filter(|(_, status)| needs_pinned_review(status))
         .map(|(key, _)| key.trim().to_string())
         .collect();
+    let mut flagged: Vec<String> = flagged_set.into_iter().collect();
     flagged.sort();
     flagged
 }
@@ -714,6 +816,9 @@ mod tests {
             provider_id: "probe-provider".into(),
             provider_session: "sess-proposer-1".into(),
             model_id: "probe-model-a".into(),
+            // S2: critiquing session/model (must differ from support).
+            critiquing_provider_session: "sess-critic-1".into(),
+            critiquing_model_id: "probe-model-critic".into(),
             config_revision: 3,
             recipe_version: "recipe-v2".into(),
             contract_runner: "momentum_v1".into(),
@@ -1287,6 +1392,148 @@ mod tests {
             );
         }
         assert_eq!(GATE_CHANGE_KEYS.len(), 13);
+    }
+
+    #[test]
+    fn gate_keys_match_authority_keys_plus_boundary() {
+        // B3: GATE_CHANGE_KEYS must not drift from AUTHORITY_KEYS; the first
+        // eleven entries are AUTHORITY_KEYS verbatim, plus recipe/acceptance.
+        for (i, key) in AUTHORITY_KEYS.iter().enumerate() {
+            assert_eq!(
+                GATE_CHANGE_KEYS[i], *key,
+                "GATE_CHANGE_KEYS[{i}] must equal AUTHORITY_KEYS[{i}]"
+            );
+        }
+        assert_eq!(GATE_CHANGE_KEYS[11], "recipe");
+        assert_eq!(GATE_CHANGE_KEYS[12], "acceptance");
+        assert_eq!(GATE_CHANGE_KEYS.len(), AUTHORITY_KEYS.len() + 2);
+    }
+
+    #[test]
+    fn gate_change_detects_spaced_and_plural_forms() {
+        // S3: spaced multi-word keys and plurals must be detected, mirroring
+        // the SQL alternates (space/hyphen/underscore + recipes?/papers?/
+        // brokers?/acceptances?).
+        assert!(gate_change_detected(
+            "Change execution environment to production."
+        ));
+        assert!(gate_change_detected("Use updated recipes for momentum."));
+        assert!(gate_change_detected("Change execution-environment now."));
+        assert!(gate_change_detected("Change execution_environment now."));
+        assert!(gate_change_detected("Review lifecycle state transitions."));
+        assert!(gate_change_detected("Check strategy eligible flags."));
+        assert!(gate_change_detected("Use updated papers for review."));
+        assert!(gate_change_detected("Hand orders to brokers daily."));
+        assert!(gate_change_detected("Update acceptances checklist."));
+        // Word-boundary safety stays: deliver/paperwork never trip.
+        assert!(!gate_change_detected(
+            "Lessons deliver methods guidance only."
+        ));
+        assert!(!gate_change_detected("Review the paperwork carefully."));
+    }
+
+    #[test]
+    fn admissible_rejects_blank_guidance() {
+        // B1: empty/blank guidance is inadmissible (mirrors SQL btrim<>'').
+        let mut lesson = good_lesson("lesson-blank-guidance");
+        lesson.guidance = String::new();
+        assert_eq!(
+            admissible(&lesson, None, TEST_NOW),
+            Err("admission:guidance_required".to_string())
+        );
+        let mut lesson = good_lesson("lesson-blank-guidance");
+        lesson.guidance = "   ".into();
+        assert_eq!(
+            admissible(&lesson, None, TEST_NOW),
+            Err("admission:guidance_required".to_string())
+        );
+    }
+
+    #[test]
+    fn support_rejects_critic_session_and_model_reuse() {
+        // S2 (Rust parity): supporter reusing the critic session/model with a
+        // fresh assignment/run must fail (mirrors the SQL 22023 probe).
+        let mut lesson = good_lesson("lesson-critic-reuse");
+        lesson.support = vec![support(
+            OUTSIDER,
+            "run-fresh-critic-1",
+            "sess-critic-1",
+            "probe-model-z",
+        )];
+        assert_eq!(
+            support_disjoint(&lesson),
+            Err("support:shared_session".into())
+        );
+        let mut lesson = good_lesson("lesson-critic-reuse");
+        lesson.support = vec![support(
+            OUTSIDER,
+            "run-fresh-critic-2",
+            "sess-fresh-critic-2",
+            "probe-model-critic",
+        )];
+        assert_eq!(
+            support_disjoint(&lesson),
+            Err("support:shared_model".into())
+        );
+    }
+
+    #[test]
+    fn pinned_review_dedupes_repeated_keys() {
+        // B4: duplicate pinned entries dedupe (HashSet like retrievable_keys).
+        assert_eq!(
+            pinned_review(&[
+                ("lesson-b", LessonStatus::Suspended),
+                ("lesson-b", LessonStatus::Suspended),
+                ("lesson-c", LessonStatus::Contaminated),
+                ("lesson-c", LessonStatus::Contaminated),
+            ]),
+            vec!["lesson-b".to_string(), "lesson-c".to_string()]
+        );
+    }
+
+    #[test]
+    fn unknown_fields_rejected_for_all_types() {
+        // B7: LessonProvenance, LessonSupport, DissentEntry, LessonDissent
+        // must all reject extra fields (deny_unknown_fields parity with SQL).
+        let raw_prov = json!({
+            "proposing_assignment_id": PROPOSER,
+            "proposing_run_key": "run-p1",
+            "critiquing_assignment_id": CRITIC,
+            "critiquing_run_key": "run-c1",
+            "provider_id": "p",
+            "provider_session": "s",
+            "model_id": "m",
+            "critiquing_provider_session": "cs",
+            "critiquing_model_id": "cm",
+            "config_revision": 3,
+            "recipe_version": "recipe-v2",
+            "contract_runner": "momentum_v1",
+            "source_artifact_ids": [SOURCE_ARTIFACT],
+            "shared_dependencies": [],
+            "backdoor": true
+        });
+        assert!(serde_json::from_value::<LessonProvenance>(raw_prov).is_err());
+        let raw_sup = json!({
+            "assignment_id": SUPPORTER_A,
+            "run_key": "run-s1",
+            "provider_session": "sess-a",
+            "model_id": "probe-model-b",
+            "backdoor": true
+        });
+        assert!(serde_json::from_value::<LessonSupport>(raw_sup).is_err());
+        let raw_entry = json!({
+            "assignment_id": CRITIC,
+            "run_key": "run-c1",
+            "note": "n",
+            "backdoor": true
+        });
+        assert!(serde_json::from_value::<DissentEntry>(raw_entry).is_err());
+        let raw_dissent = json!({
+            "version": 1,
+            "entries": [],
+            "backdoor": true
+        });
+        assert!(serde_json::from_value::<LessonDissent>(raw_dissent).is_err());
     }
 
     #[test]

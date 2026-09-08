@@ -1,15 +1,15 @@
 {
   "status": "passed",
   "pr": "PR2 memory admission + containment (map #171, decision #173)",
-  "tested_commit": "3455b072fc029eac6af90274d59a6ecf867b811c",
-  "tested_tree": "3c78a8d05a9a057250fd35ddc60c7d4f6c4cd373",
+  "tested_commit": "ca4a0059f955b2caf759689edf8a56696f1e1970",
+  "tested_tree": "9f5b126693215f5001f02a157374f38910f0c675",
   "base": "3455b072fc029eac6af90274d59a6ecf867b811c",
   "project": "market-mate-research-memory-test",
   "postgres_port": 15443,
   "runtime": "isolated Compose postgres; no credentials or outbound model calls",
   "migrations": "1 through 97 applied to a fresh isolated database using the repository migrator",
-  "module_tests": "cargo test --locked research_memory: 22 passed",
-  "probe": {"probe": "research-memory", "checks": ["pure_provenance_accepts_full_lineage", "pure_provenance_rejects_missing_lineage", "pure_support_accepts_disjoint", "pure_support_rejects_self_review", "pure_support_rejects_shared_session", "pure_support_rejects_repeated_assignment", "pure_scope_accepts_all_types", "pure_scope_rejects_malformed", "pure_dissent_accepts_versioned", "pure_guidance_admits_methods", "pure_guidance_rejects_gate_change", "propose_lesson", "propose_idempotent", "propose_timezone_idempotent", "reject_changed_inputs", "reject_missing_lineage", "reject_nondisjoint_support", "reject_self_review_support", "reject_shared_session_support", "reject_gate_change_guidance", "reject_unknown_provenance_assignment", "reject_unknown_source_artifact", "reject_own_lineage_support", "admit_lesson", "admit_idempotent", "reject_admit_unknown", "reject_admit_after_expiry", "retrieve_admitted_global", "retrieve_role_posture_scoped", "retrieve_method_data_scoped", "retrieve_blocks_expired_at", "suspend_blocks_retrieval", "supersede_resolves_to_successor", "contaminate_blocks_retrieval", "reject_contaminate_without_reason", "expire_blocks_retrieval", "reject_illegal_transition", "reject_unknown_successor", "duplicate_links_canonical", "reject_duplicate_reused_support", "pinned_review_flags", "dissent_versioned_preserved", "append_only", "insert_guard", "no_worker_grants"], "passed": true},
+  "module_tests": "cargo test --locked research_memory: 28 passed",
+  "probe": {"probe": "research-memory", "checks": ["pure_provenance_accepts_full_lineage", "pure_provenance_rejects_missing_lineage", "pure_support_accepts_disjoint", "pure_support_rejects_self_review", "pure_support_rejects_shared_session", "pure_support_rejects_repeated_assignment", "reject_critic_session_model_reuse", "pure_scope_accepts_all_types", "pure_scope_rejects_malformed", "pure_dissent_accepts_versioned", "pure_guidance_admits_methods", "pure_guidance_rejects_gate_change", "pure_guidance_rejects_spaced_keys", "pure_guidance_rejects_plural", "propose_lesson", "propose_idempotent", "propose_timezone_idempotent", "reject_changed_inputs", "reject_changed_source_lineage", "reject_missing_lineage", "reject_nondisjoint_support", "reject_self_review_support", "reject_shared_session_support", "reject_gate_change_guidance", "reject_unknown_provenance_assignment", "reject_unknown_source_artifact", "reject_own_lineage_support", "admit_lesson", "admit_idempotent", "reject_admit_unknown", "reject_admit_after_expiry", "contain_proposed_suspend", "contain_proposed_contaminate", "contain_proposed_expire", "retrieve_admitted_global", "retrieve_role_posture_scoped", "retrieve_method_data_scoped", "retrieve_blocks_expired_at", "suspend_blocks_retrieval", "supersede_resolves_to_successor", "reject_supersede_proposed_successor", "reject_supersede_cycle", "contaminate_blocks_retrieval", "reject_contaminate_without_reason", "expire_blocks_retrieval", "reject_illegal_transition", "reject_illegal_transition_with_flag", "reject_direct_write_with_flag", "reject_unknown_successor", "duplicate_links_canonical", "reject_duplicate_reused_support", "reject_duplicate_suspended_canonical", "pinned_review_flags", "pinned_review_flags_stale_version", "pinned_review_flags_malformed", "dissent_versioned_preserved", "append_only", "insert_guard", "no_worker_grants"], "passed": true, "asserts_run": 89},
   "map_notes": {
     "unsupported_lessons": "missing lineage, non-disjoint support, self-review, and own-lineage support rejected",
     "suspended_expired_memory": "suspended, expired, and contaminated lessons leave future retrieval; superseded resolves to successor",
@@ -19,10 +19,11 @@
     "cost_controls_unchanged": "no provider cost admission or tier-cost references in PR2 behavior files"
   },
   "sha256": {
-    "db/migrations/0097_memory_admission.sql": "872127244935d5b2d4e550eadb0c9057d311b1d40c2cac35c85381cdeca3f238",
-    "backend/src/research_memory.rs": "559da1280ea34a951a33a733c31a803bab809509e66e70fec02fb3ad2c339dbd",
+    "db/migrations/0097_memory_admission.sql": "d0698de82415f558fb6cad9c9f0bce513c4c6a24e073f47e69a40ffbdefb4cab",
+    "backend/src/research_memory.rs": "032fe7030e3065cf8a186bb2b3703be60ae1a6017228b4f565dec995ffe63343",
+    "backend/src/research_contract.rs": "f3d349ec668e1b47b444302656497a162f1dc967b71e39d390860523a0883b8b",
     "backend/src/lib.rs": "0d995a36509cb2f5fcf7807028b04d2f74cf39718da4122039d721d2c8b7ea76",
-    "db/fixtures/research_memory_probe.sql": "67d3300e03b93a2d0389b3a135c2bb5a755c0ee3a382ad359e8f0f9242a4ea5b",
-    "scripts/research_memory_test.sh": "ea4e241124c17743332bf059c4d4ae5c2301f2c1676257b2dc02c851f001e714"
+    "db/fixtures/research_memory_probe.sql": "d33453c21be4826a7f1d1dbb294f3ecf695eccba2db4d77a405e93e2553539d3",
+    "scripts/research_memory_test.sh": "c9990b466644d0a208a22039fcbc857450e04992292cc82bb7aef9db59a9b9a7"
   }
 }

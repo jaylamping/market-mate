@@ -57,9 +57,11 @@ $$;
 -- Decision #173.1: full lineage required. Shape only (no table access, so
 -- this stays IMMUTABLE and CHECK-safe); the propose/admit functions verify
 -- existence against the authoritative rows with intent-style linkage checks.
--- Exactly the twelve lineage keys: proposing + critiquing assignment/run,
--- actual provider/session/model + config revision, recipe/contract versions,
--- canonical source artifact IDs, declared shared dependencies.
+-- Exactly the fourteen lineage keys: proposing + critiquing assignment/run,
+-- actual provider/session/model + critiquing session/model + config revision,
+-- recipe/contract versions, canonical source artifact IDs, declared shared
+-- dependencies. S2: critiquing session/model are required so support-vs-critic
+-- disjointness can check all four coordinates against BOTH lineages.
 CREATE FUNCTION research_lesson_provenance_is_complete(node jsonb)
 RETURNS boolean
 LANGUAGE plpgsql
@@ -70,7 +72,9 @@ DECLARE
     allowed text[] := ARRAY[
         'proposing_assignment_id', 'proposing_run_key',
         'critiquing_assignment_id', 'critiquing_run_key',
-        'provider_id', 'provider_session', 'model_id', 'config_revision',
+        'provider_id', 'provider_session', 'model_id',
+        'critiquing_provider_session', 'critiquing_model_id',
+        'config_revision',
         'recipe_version', 'contract_runner',
         'source_artifact_ids', 'shared_dependencies'
     ];
@@ -80,7 +84,7 @@ BEGIN
     IF jsonb_typeof(node) IS DISTINCT FROM 'object' THEN
         RETURN false;
     END IF;
-    IF (SELECT count(*) FROM jsonb_object_keys(node)) <> 12 THEN
+    IF (SELECT count(*) FROM jsonb_object_keys(node)) <> 14 THEN
         RETURN false;
     END IF;
     IF EXISTS (
@@ -120,6 +124,13 @@ BEGIN
         RETURN false;
     END IF;
     IF coalesce(btrim(node->>'model_id'), '') = '' THEN
+        RETURN false;
+    END IF;
+    -- S2: critiquing session/model required; support must differ from both.
+    IF coalesce(btrim(node->>'critiquing_provider_session'), '') = '' THEN
+        RETURN false;
+    END IF;
+    IF coalesce(btrim(node->>'critiquing_model_id'), '') = '' THEN
         RETURN false;
     END IF;
     revision_value := strategy_sandbox_integer(node->'config_revision');
@@ -253,6 +264,11 @@ DECLARE
     critiquing_run text := btrim(provenance_value->>'critiquing_run_key');
     proposing_session text := btrim(provenance_value->>'provider_session');
     proposing_model text := btrim(provenance_value->>'model_id');
+    -- S2: critiquing session/model coordinates; each attestation must differ
+    -- from BOTH proposing and critiquing on session and model.
+    critiquing_session text :=
+        btrim(provenance_value->>'critiquing_provider_session');
+    critiquing_model text := btrim(provenance_value->>'critiquing_model_id');
 BEGIN
     IF NOT research_lesson_provenance_is_complete(provenance_value) THEN
         RETURN false;
@@ -264,7 +280,7 @@ BEGIN
     FOR first_index IN 0..support_count - 1 LOOP
         first_elem := support_value->first_index;
         -- Evaluator never reviews its own lineage: disjoint from both the
-        -- proposing and the critiquing coordinates.
+        -- proposing and the critiquing coordinates on all four axes.
         IF lower(btrim(first_elem->>'assignment_id'))
             IN (proposing_assignment, critiquing_assignment) THEN
             RETURN false;
@@ -273,11 +289,15 @@ BEGIN
             RETURN false;
         END IF;
         IF btrim(first_elem->>'provider_session')
-            IS NOT DISTINCT FROM proposing_session THEN
+            IS NOT DISTINCT FROM proposing_session
+           OR btrim(first_elem->>'provider_session')
+            IS NOT DISTINCT FROM critiquing_session THEN
             RETURN false;
         END IF;
         IF btrim(first_elem->>'model_id')
-            IS NOT DISTINCT FROM proposing_model THEN
+            IS NOT DISTINCT FROM proposing_model
+           OR btrim(first_elem->>'model_id')
+            IS NOT DISTINCT FROM critiquing_model THEN
             RETURN false;
         END IF;
         FOR second_index IN first_index + 1..support_count - 1 LOOP
@@ -439,6 +459,11 @@ $$;
 -- (0043 authority keys) plus recipe/acceptance keywords. Word-boundary
 -- matching (\y treats underscore as a word character) so "deliver" does not
 -- trip on "live", while "live trading" and "paper eligible" are rejected.
+-- S3: multi-word keys accept space/hyphen/underscore separators
+-- (execution[ _-]environment matches "execution environment",
+-- "execution-environment", "execution_environment") and single-word keys
+-- accept plurals (see the s? alternates in the regex below); single-word
+-- paper/live keep word-boundary behavior (paperwork/deliver never trip).
 CREATE FUNCTION research_lesson_guidance_is_admissible(guidance_value text)
 RETURNS boolean
 LANGUAGE sql
@@ -447,7 +472,7 @@ SET search_path = pg_catalog, public
 AS $$
     SELECT coalesce(btrim(guidance_value), '') <> ''
        AND NOT (btrim(guidance_value) ~*
-            '\y(authority|lifecycle_state|execution_environment|execution_authority|strategy_eligible|paper_eligible|trade_eligible|paper|live|broker|execution_edge_and_paper_trading|recipe|acceptance)\y');
+            '\y(authority|lifecycles?[ _-]states?|execution[ _-]environment|execution[ _-]authority|strategy[ _-]eligible|paper[ _-]eligible|trade[ _-]eligible|execution[ _-]edge[ _-]and[ _-]paper[ _-]trading|acceptance[ _-]check|papers?|live|brokers?|recipes?|acceptances?)\y');
 $$;
 
 -- Decision #173.5: legal status edges. Containment is sticky: suspended,
@@ -491,6 +516,12 @@ CREATE TABLE research_lesson (
     successor_lesson_key text,
     canonical_lesson_key text,
     admitted_at timestamptz,
+    -- S1: ever_admitted tracks whether the lesson was ever admitted, set true
+    -- ONLY by admit_research_lesson. Containment from proposed (suspend /
+    -- contaminate / expire directly) keeps ever_admitted=false and
+    -- admitted_at=NULL truthfully, so the proposed=>suspended/contaminated/
+    -- expired edges are no longer dead via a CHECK contradiction.
+    ever_admitted boolean NOT NULL DEFAULT false,
     expires_at timestamptz NOT NULL,
     source_lineage jsonb NOT NULL,
     receipt_time timestamptz NOT NULL,
@@ -513,7 +544,16 @@ CREATE TABLE research_lesson (
     CHECK (canonical_lesson_key IS DISTINCT FROM lesson_key),
     CHECK (status <> 'superseded' OR successor_lesson_key IS NOT NULL),
     CHECK (status = 'superseded' OR successor_lesson_key IS NULL),
-    CHECK ((status = 'proposed') = (admitted_at IS NULL)),
+    -- S1: proposed => NOT ever_admitted AND admitted_at NULL; admitted /
+    -- superseded => ever_admitted AND admitted_at NOT NULL; suspended /
+    -- contaminated / expired => ever_admitted = (admitted_at NOT NULL)
+    -- consistency (contained-from-proposed keeps both false/NULL truthfully).
+    CHECK (status <> 'proposed'
+        OR (NOT ever_admitted AND admitted_at IS NULL)),
+    CHECK (status NOT IN ('admitted', 'superseded')
+        OR (ever_admitted AND admitted_at IS NOT NULL)),
+    CHECK (status NOT IN ('suspended', 'contaminated', 'expired')
+        OR (ever_admitted = (admitted_at IS NOT NULL))),
     CHECK (record_environment = 'local_research'),
     FOREIGN KEY (successor_lesson_key)
         REFERENCES research_lesson(lesson_key),
@@ -574,6 +614,8 @@ $$;
 
 -- Row-level transition discipline: lifecycle columns only, legal edges only,
 -- linkage coherence on every write, admitted_at pinned after admission.
+-- S1: ever_admitted may only transition false->true on proposed->admitted
+-- (set ONLY by admit_research_lesson); all other writes must leave it pinned.
 CREATE FUNCTION guard_research_lesson_transition() RETURNS trigger
 LANGUAGE plpgsql
 SET search_path = pg_catalog, public
@@ -618,6 +660,21 @@ BEGIN
        AND NEW.admitted_at IS NULL THEN
         RAISE EXCEPTION
             'research_lesson admission requires admitted_at'
+            USING ERRCODE = '55000';
+    END IF;
+    -- S1: ever_admitted discipline: only false->true on proposed->admitted.
+    IF NEW.ever_admitted IS DISTINCT FROM OLD.ever_admitted THEN
+        IF NOT (NOT OLD.ever_admitted AND NEW.ever_admitted
+                AND OLD.status = 'proposed' AND NEW.status = 'admitted') THEN
+            RAISE EXCEPTION
+                'research_lesson ever_admitted is set only by admission'
+                USING ERRCODE = '55000';
+        END IF;
+    END IF;
+    IF OLD.status = 'proposed' AND NEW.status = 'admitted'
+       AND NOT NEW.ever_admitted THEN
+        RAISE EXCEPTION
+            'research_lesson admission requires ever_admitted'
             USING ERRCODE = '55000';
     END IF;
     IF OLD.admitted_at IS NOT NULL
@@ -773,6 +830,11 @@ BEGIN
         'provider_id', btrim(provenance_value->>'provider_id'),
         'provider_session', btrim(provenance_value->>'provider_session'),
         'model_id', btrim(provenance_value->>'model_id'),
+        -- S2: critiquing session/model canonicalized alongside proposing.
+        'critiquing_provider_session',
+            btrim(provenance_value->>'critiquing_provider_session'),
+        'critiquing_model_id',
+            btrim(provenance_value->>'critiquing_model_id'),
         'config_revision',
             strategy_sandbox_integer(provenance_value->'config_revision'),
         'recipe_version', btrim(provenance_value->>'recipe_version'),
@@ -901,8 +963,10 @@ BEGIN
 
     -- Duplicates link to the canonical lesson and never manufacture
     -- corroboration: the canonical lesson must exist, must itself be
-    -- canonical (no chains), and the duplicate must not reuse any of the
-    -- canonical lesson's supporting assignments as separate support.
+    -- canonical (no chains), must be admitted at write time (S4: read fails
+    -- closed, write must not orphan onto suspended/contaminated/expired), and
+    -- the duplicate must not reuse any of the canonical lesson's supporting
+    -- assignments as separate support.
     IF canonical_stored IS NOT NULL THEN
         SELECT * INTO canonical_row
         FROM research_lesson
@@ -917,6 +981,14 @@ BEGIN
             RAISE EXCEPTION
                 'research lesson canonical lesson % is itself a duplicate',
                 canonical_stored
+                USING ERRCODE = '22023';
+        END IF;
+        -- S4: canonical target must be admitted; duplicates onto
+        -- suspended/contaminated/expired/proposed orphans are rejected.
+        IF canonical_row.status IS DISTINCT FROM 'admitted' THEN
+            RAISE EXCEPTION
+                'research lesson canonical lesson % must be admitted (found %)',
+                canonical_stored, canonical_row.status
                 USING ERRCODE = '22023';
         END IF;
         IF EXISTS (
@@ -940,7 +1012,8 @@ BEGIN
     WHERE lesson_key = key_text;
     IF FOUND THEN
         -- Full-input idempotency: the whole stored inputs must match, not
-        -- just the key.
+        -- just the key. S7: source_lineage is part of the inputs and must
+        -- match, otherwise the :942 comment overclaims full-input coverage.
         IF existing.scope_type IS DISTINCT FROM scope_stored
            OR existing.scope_key IS DISTINCT FROM scope_key_stored
            OR existing.guidance IS DISTINCT FROM guidance_stored
@@ -948,7 +1021,8 @@ BEGIN
            OR existing.support IS DISTINCT FROM support_stored
            OR existing.dissent IS DISTINCT FROM dissent_stored
            OR existing.expires_at IS DISTINCT FROM expires_at_value
-           OR existing.canonical_lesson_key IS DISTINCT FROM canonical_stored THEN
+           OR existing.canonical_lesson_key IS DISTINCT FROM canonical_stored
+           OR existing.source_lineage IS DISTINCT FROM source_lineage_value THEN
             RAISE EXCEPTION
                 'research lesson % is already proposed with different inputs',
                 key_text
@@ -963,13 +1037,13 @@ BEGIN
             lesson_key, scope_type, scope_key, guidance,
             provenance, support, dissent,
             status, successor_lesson_key, canonical_lesson_key,
-            admitted_at, expires_at,
+            admitted_at, ever_admitted, expires_at,
             source_lineage, receipt_time, record_environment
         ) VALUES (
             key_text, scope_stored, scope_key_stored, guidance_stored,
             provenance_stored, support_stored, dissent_stored,
             'proposed', NULL, canonical_stored,
-            NULL, expires_at_value,
+            NULL, false, expires_at_value,
             source_lineage_value, clock_timestamp(), 'local_research'
         )
         RETURNING * INTO created;
@@ -1119,7 +1193,8 @@ BEGIN
     BEGIN
         UPDATE research_lesson
         SET status = 'admitted',
-            admitted_at = clock_timestamp()
+            admitted_at = clock_timestamp(),
+            ever_admitted = true
         WHERE lesson_key = key_text
         RETURNING * INTO lesson_row;
 
@@ -1277,6 +1352,9 @@ $$;
 
 -- Supersede: the lesson leaves future retrieval directly; retrieval resolves
 -- to the successor instead. The successor must already be registered.
+-- S4: write-time successor checks (read fails closed, write must not orphan):
+-- successor must be admitted AND canonical-free, and must not transitively
+-- resolve back to the key (cycle-safe, hop-capped; reject 55000 on cycle).
 CREATE FUNCTION supersede_research_lesson(
     lesson_key_value text,
     successor_lesson_key_value text,
@@ -1290,10 +1368,18 @@ SET search_path = pg_catalog, public
 AS $$
 DECLARE
     lesson_row research_lesson%ROWTYPE;
+    successor_row research_lesson%ROWTYPE;
     key_text text;
     successor_text text;
     actor_run_text text;
     from_text text;
+    -- S4 cycle-walk state (mirrors retrieve_lessons_for_assignment).
+    walk_row research_lesson%ROWTYPE;
+    next_row research_lesson%ROWTYPE;
+    next_key text;
+    visited text[] := ARRAY[]::text[];
+    hop_count integer := 0;
+    walk_missing boolean := false;
 BEGIN
     IF NOT source_lineage_is_valid(source_lineage_value) THEN
         RAISE EXCEPTION 'research lesson arguments are invalid'
@@ -1336,6 +1422,66 @@ BEGIN
             'research lesson successor % is not registered',
             successor_text
             USING ERRCODE = '22023';
+    END IF;
+    -- S4: successor must be admitted and canonical-free at write time.
+    SELECT * INTO successor_row
+    FROM research_lesson
+    WHERE lesson_key = successor_text;
+    IF successor_row.status IS DISTINCT FROM 'admitted' THEN
+        RAISE EXCEPTION
+            'research lesson successor % must be admitted (found %)',
+            successor_text, successor_row.status
+            USING ERRCODE = '55000';
+    END IF;
+    IF successor_row.canonical_lesson_key IS NOT NULL THEN
+        RAISE EXCEPTION
+            'research lesson successor % must not be a duplicate',
+            successor_text
+            USING ERRCODE = '55000';
+    END IF;
+    -- S4: successor must not transitively resolve back to the key (cycle).
+    -- Reuses the retrieve visited-resolve logic over both canonical and
+    -- successor links, hop-capped at 16 like the read path.
+    walk_row := successor_row;
+    visited := ARRAY[]::text[];
+    hop_count := 0;
+    walk_missing := false;
+    LOOP
+        IF walk_row.lesson_key = key_text THEN
+            RAISE EXCEPTION
+                'research lesson supersession % -> % would create a cycle',
+                key_text, successor_text
+                USING ERRCODE = '55000';
+        END IF;
+        IF walk_row.canonical_lesson_key IS NOT NULL THEN
+            next_key := btrim(walk_row.canonical_lesson_key);
+        ELSIF walk_row.status = 'superseded' THEN
+            next_key := btrim(walk_row.successor_lesson_key);
+        ELSE
+            EXIT;
+        END IF;
+        IF next_key = ANY (visited) OR hop_count > 16 THEN
+            RAISE EXCEPTION
+                'research lesson successor % chain is cyclic',
+                successor_text
+                USING ERRCODE = '55000';
+        END IF;
+        visited := visited || walk_row.lesson_key;
+        SELECT * INTO next_row
+        FROM research_lesson
+        WHERE lesson_key = next_key;
+        IF NOT FOUND THEN
+            walk_missing := true;
+            EXIT;
+        END IF;
+        walk_row := next_row;
+        hop_count := hop_count + 1;
+    END LOOP;
+    IF walk_missing THEN
+        RAISE EXCEPTION
+            'research lesson successor % resolves to a missing lesson',
+            successor_text
+            USING ERRCODE = '55000';
     END IF;
 
     PERFORM pg_advisory_xact_lock(hashtextextended(key_text, 96003));
@@ -1765,7 +1911,12 @@ $$;
 -- lesson-versions object ({lesson_key: <exact version>}, as carried on
 -- artifact manifests), report each pinned key with its current status; any
 -- key whose status is not admitted -- including unknown keys -- needs
--- review.
+-- review. S6: each pinned value must be a JSON number integer >= 1
+-- (strategy_sandbox_integer-style; malformed => needs_review with reason
+-- pinned_version_malformed); the pinned version is compared against the
+-- lesson's current version -- the dissent version counter when present,
+-- else the count of status events -- and stale (pinned < current, or any
+-- mismatch) => needs_review. Callers must treat malformed/stale as review.
 CREATE FUNCTION research_lesson_pinned_review(
     lesson_versions_value jsonb
 )
@@ -1782,6 +1933,11 @@ AS $$
 DECLARE
     version_key text;
     known_status text;
+    known_dissent jsonb;
+    pinned_raw jsonb;
+    pinned_version bigint;
+    current_version bigint;
+    event_count bigint;
 BEGIN
     IF jsonb_typeof(lesson_versions_value) IS DISTINCT FROM 'object' THEN
         RAISE EXCEPTION 'research pinned lesson versions must be an object'
@@ -1794,18 +1950,54 @@ BEGIN
             RAISE EXCEPTION 'research pinned lesson key must not be blank'
                 USING ERRCODE = '22023';
         END IF;
-        SELECT status INTO known_status
+        -- S6: pinned value must be an integer >= 1. Accept both the numeric
+        -- form ({key: 1}) and the object form ({key: {"version": 1}}) for
+        -- backward compatibility with existing manifests; anything else is
+        -- malformed and fails closed to review.
+        pinned_raw := lesson_versions_value -> version_key;
+        IF jsonb_typeof(pinned_raw) = 'number' THEN
+            pinned_version := strategy_sandbox_integer(pinned_raw);
+        ELSIF jsonb_typeof(pinned_raw) = 'object'
+              AND (pinned_raw ? 'version') THEN
+            pinned_version := strategy_sandbox_integer(pinned_raw->'version');
+        ELSE
+            pinned_version := NULL;
+        END IF;
+        SELECT status, dissent INTO known_status, known_dissent
         FROM research_lesson
         WHERE lesson_key = btrim(version_key);
         IF NOT FOUND THEN
             pinned_lesson_key := btrim(version_key);
             current_status := NULL;
+            -- Unknown keys always need review, including malformed versions.
             needs_review := true;
             RETURN NEXT;
         ELSE
             pinned_lesson_key := btrim(version_key);
             current_status := known_status;
-            needs_review := (known_status IS DISTINCT FROM 'admitted');
+            -- Malformed pinned versions fail closed to review.
+            IF pinned_version IS NULL OR pinned_version < 1 THEN
+                needs_review := true;
+                RETURN NEXT;
+            END IF;
+            -- Current version: dissent version counter when present, else
+            -- the count of status events for the lesson.
+            current_version :=
+                strategy_sandbox_integer(known_dissent->'version');
+            IF current_version IS NULL THEN
+                SELECT count(*) INTO event_count
+                FROM research_lesson_status_event
+                WHERE lesson_key = btrim(version_key);
+                current_version := event_count;
+            END IF;
+            -- Stale (or any mismatch) plus non-admitted both need review.
+            IF known_status IS DISTINCT FROM 'admitted' THEN
+                needs_review := true;
+            ELSIF pinned_version IS DISTINCT FROM current_version THEN
+                needs_review := true;
+            ELSE
+                needs_review := false;
+            END IF;
             RETURN NEXT;
         END IF;
     END LOOP;
