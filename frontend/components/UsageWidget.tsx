@@ -1,6 +1,103 @@
 "use client";
-import Link from "next/link";
-import {useQuery} from "@tanstack/react-query";
-import {formatReset, usageSummaryQuery, windowLabel} from "@/lib/agents";
-const stateClass=(w:{status:string;over_pace:boolean;over_threshold:boolean})=>w.status==="rate_limited"?"bg-destructive":w.status==="unknown"?"bg-muted-foreground":w.over_threshold?"bg-destructive":w.over_pace?"bg-[var(--warning)]":"bg-[var(--good)]";
-export function UsageWidget(){const query=useQuery(usageSummaryQuery);if(query.isError)return <div className="fixed bottom-3 right-3 z-20 rounded-full border bg-background px-3 py-1 text-xs text-muted-foreground shadow-sm">Usage unavailable</div>;if(!query.data)return null;const providers=query.data.providers.filter(p=>p.kind!=="catalog_only");return <aside className="fixed bottom-3 left-[calc(206px+1rem)] right-3 z-20 rounded-lg border bg-background/95 px-3 py-2 text-xs shadow-sm backdrop-blur" aria-label="Provider usage"><div className="flex flex-wrap items-center gap-x-4 gap-y-2"><div className="flex items-center gap-3">{providers.map(p=><div key={p.id} className="flex items-center gap-2"><span className="font-medium">{p.display_name}</span><div className="flex gap-1">{p.windows.map(w=><span key={w.window} title={`${windowLabel(w.window)} · ${formatReset(w.resets_at)}`} className={`h-2 w-10 overflow-hidden rounded-full bg-muted`}><span className={`block h-full ${stateClass(w)}`} style={{width:`${Math.min(100,Math.max(3,w.percent_used))}%`}}/></span>)}</div></div>)}</div><Link href="/agents" className="ml-auto whitespace-nowrap text-primary hover:underline">Holds {query.data.holds} · In flight {query.data.in_flight}</Link></div></aside>}
+import { useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  usageSummaryQuery,
+  windowLabel,
+  type ProviderWindow,
+} from "@/lib/agents";
+import { useWorkspaceState } from "./WorkspaceState";
+import { ProviderInspection } from "./ProviderInspection";
+export function remainingLabel(w: ProviderWindow, now = Date.now()) {
+  if (w.status === "unknown" || !w.observed_at) return "Unknown";
+  if (w.source === "api" && now - Date.parse(w.observed_at) > 1800000)
+    return "Stale";
+  return `${Math.max(0, Math.min(100, 100 - w.percent_used)).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
+}
+export function UsageWidget({ preview = false }: { preview?: boolean }) {
+  const query = useQuery({ ...usageSummaryQuery, staleTime: 30_000 });
+  const open = useWorkspaceState((s) => s.open),
+    ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const observer = new ResizeObserver(() =>
+      document.documentElement.style.setProperty(
+        "--provider-rail-height",
+        `${element.getBoundingClientRect().height}px`,
+      ),
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <>
+      <aside
+        ref={ref}
+        className="provider-capacity-rail"
+        aria-label="Provider capacity"
+      >
+        <div className="flex justify-between gap-3 px-4 pt-2 text-xs text-muted-foreground">
+          <span>
+            {preview
+              ? "Isolated POC · demo catalog · remaining allowance"
+              : "Remaining allowance"}
+          </span>
+          <a href="/integrations">Integrations</a>
+        </div>
+        {query.isError ? (
+          <p role="alert" className="p-3 text-sm">
+            Usage unavailable.{" "}
+            <button onClick={() => query.refetch()} className="underline">
+              Retry
+            </button>
+          </p>
+        ) : !query.data ? (
+          <p role="status" className="p-3 text-sm">
+            Loading capacity…
+          </p>
+        ) : (
+          <div className="grid grid-cols-3 xl:grid-cols-6">
+            {query.data.providers.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => open({ kind: "provider", id: p.id })}
+                className="min-w-0 border-r px-4 py-3 text-left hover:bg-muted"
+              >
+                <span className="block truncate text-xs font-medium">
+                  {p.display_name}
+                </span>
+                <span className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs tabular-nums">
+                  {p.windows.length ? (
+                    p.windows.map((w) => (
+                      <span
+                        key={w.window}
+                        className={
+                          w.over_threshold
+                            ? "text-destructive"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {windowLabel(w.window)}
+                        {w.source === "local" ? " local" : ""}{" "}
+                        <strong className="font-medium">
+                          {remainingLabel(w)}
+                        </strong>
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground">
+                      Usage not reported
+                    </span>
+                  )}
+                </span>
+                {!p.enabled && <span className="text-xs">Disabled</span>}
+              </button>
+            ))}
+          </div>
+        )}
+      </aside>
+      <ProviderInspection />
+    </>
+  );
+}

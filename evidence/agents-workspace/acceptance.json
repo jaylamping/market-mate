@@ -1,0 +1,52 @@
+{
+  "status": "passed",
+  "base_commit": "bc4ea51668a7c25f1ba2585b19475cb93161988d",
+  "tree": "Agents workspace POC; exact source hashes below, committed head recorded in PR verification",
+  "runtime": "isolated local PostgreSQL 14; no credentials or outbound model calls",
+  "checks": {
+    "standard_verify": "passed; 145 library tests plus binary tests; 10 unrelated database tests ignored; 67 frontend tests; production build",
+    "fresh_migrations": "1 through 95 applied to a fresh isolated PostgreSQL 14 cluster using the repository migrator",
+    "sql_probes": [
+      "agent_driver_probe.sql passed",
+      "agents_workspace_probe.sql passed"
+    ],
+    "browser": [
+      "model save and four drawer tabs",
+      "persona assignment and save",
+      "provider account modal and reserve save",
+      "global fallback save",
+      "conflict retains draft",
+      "search and page 2 change rows",
+      "390px document containment and drawer aligned below sticky rail",
+      "dedicated Integrations page"
+    ],
+    "regressions": [
+      "Existing legacy offering configuration survives catalog availability and unrelated saves",
+      "Paid legacy authorization is not imported or changed by model-policy saves",
+      "Failed background refresh retains cached configuration forms",
+      "Expired delegation reservations release capacity and reject late replay or recording"
+    ]
+  },
+  "not_run": [
+    "Docker acceptance wrappers: local Docker daemon unavailable",
+    "Live provider calls and deployment",
+    "Incubator persona-selection workflow"
+  ],
+  "sha256": {
+    "backend/src/driver/api.rs": "d5a2dd7643e461a93a435eb7a113fdac4fdbe60b4f046003f78f36289c63a173",
+    "frontend/app/agents/AgentDriver.tsx": "4c8aec4ca1578bc22be8c48096a5c886567cad406120661ff740dbfcc29735ad",
+    "frontend/app/agents/ModelSheet.tsx": "0ae13dd423dd5b2a21c446f57626b4260a0df2eb43d04841f332069593fb6601",
+    "frontend/app/agents/PersonaEditor.tsx": "7deee6d3840a47dd9206da67a93066f40fe4928fe45178e47314537a9f39217a",
+    "frontend/components/ProviderInspection.tsx": "cb8c668bc761aa726a9a1df8375d80c7b7fd90b46c36fa60c49df28cb0dbec1a",
+    "frontend/components/UsageWidget.tsx": "76ed2819f1c2022fd8c361fdadc0490d531fbf2f1b8d3d8c9952e275800753a6",
+    "frontend/lib/model-workspace.ts": "435e515f2f306735df074dc31d1890776b148b6cbb4486e1c6a6363f0f0719d3",
+    "frontend/components/WorkspaceState.tsx": "ac4f8685994bd618ea9f28b533f967700b32a780ef8238bb0e9805b82ca3a106",
+    "frontend/tests/model-workspace.test.tsx": "1d6c7f1822057e0ecbdaef9b007017059f6f9309605418f0de7c405f023084d2",
+    "db/fixtures/agents_workspace_probe.sql": "301d993642dc8c3725a5d0b3bef77a4b7ab06c1b76359ccd625ff1a2d17db717",
+    "db/migrations/0091_agents_workspace.sql": "be99f654e3aa2e3cbee13bc1b2e229936ce5c03c4e7e517b850ccf260286958e",
+    "db/migrations/0092_workspace_admission.sql": "5a9abd2d45350df29346fdcc93bb6fc06a19d38187db282f537d9ce7a79bdc6f",
+    "db/migrations/0093_workspace_policy_validation.sql": "e7fe14e9416f9a02b6d3dd66c642efdc114b14086080d8a649bfc6cfb6ec8a36",
+    "db/migrations/0094_workspace_response_contracts.sql": "a33f130b2c8f60e4b5da818f4096aefdca7377d6367ce33a191ec019e97477a6",
+    "db/migrations/0095_workspace_delegation_reservations.sql": "8f267d09cd9ffaf713b64cbf90c91e88d5892ca67c42fc276cc04b430c460f10"
+  }
+}

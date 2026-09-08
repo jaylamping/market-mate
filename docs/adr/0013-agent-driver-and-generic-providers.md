@@ -66,3 +66,21 @@ Duplicating the OpenRouter struct per provider would have preserved today's shap
 ## Reconsider when
 
 A provider publishes a documented usage API that replaces an undocumented one, Cursor ships a chat-completions endpoint or a plan-quota API, or the Principal changes the accepted terms for Z.ai or Contributor-tier data use.
+
+## Agents workspace POC (2026-09-08)
+
+Principal-approved UI direction: colocate persona curation and one canonical-model Data Table on `/agents`; open model-specific controls in a four-tab side drawer. Keep shared provider capacity visible in a sticky rail and open account settings in a separate provider modal. `/integrations` owns connection setup, while `/system` retains system evidence.
+
+- Model identities and offerings are explicit, revisioned `model_policy` records. Discovery grants no routing authority. Exact matching catalog IDs share a proposed row; differing IDs are only linked by an explicit saved mapping. Display names never establish identity.
+- `agent.spec.model_order` opts into canonical model ordering. `use_global_fallbacks` appends the global list, deduplicating while preserving the earliest position. Existing agents without `model_order` retain their legacy tiered routes. Model offering switches and allocations also apply to matching legacy routes once a policy is saved.
+- Within a model, lower provider priority wins; equal priorities use recent request-count/weight ratios. Provider account thresholds, pacing, cooldowns, and the persona hold threshold still apply. Rolling 24-hour model/provider request caps count admitted attempts plus outstanding queued delegations. Repeated queued admissions retain their existing route and reservation. This is request-count balancing, not token- or latency-based balancing.
+- New model policies keep paid offerings disabled. A dollar limit alone cannot bound the next request without a maximum-cost reservation. Existing paid workflows retain their existing authorization when left on legacy routes. Do not describe this POC as supporting paid overage.
+- Provider capacity distinguishes provider-reported account usage from local request accounting. Unknown usage is not zero; API observations older than 30 minutes are marked stale in the rail. Z.ai MCP quota is not repurposed as a monthly inference quota.
+- Model usage/history exposes the latest 200 recorded driver attempts for current explicit offerings, including request/attempt lineage and nullable reported cost. It is not complete account history, and does not reconstruct historical alias changes or older worker receipts.
+- Persona instructions are stored but existing workflow workers retain their own prompts, contracts, and exact model pins. Persona selection in Incubator and autonomous persona curation are follow-up work. Disabling a persona preserves its history; hard deletion is not exposed.
+
+New driver endpoints: `GET/PUT /models?id=...`, `PUT /models/fallbacks`, and `GET /models/requests?id=...`. Writes carry `expected_revision`; stale revisions return 409 without discarding browser drafts. See migrations 0091–0094 and `db/fixtures/agents_workspace_probe.sql`. Corrections are additive because earlier migrations were already exercised in an isolated database.
+
+Frontend state has one owner per concern: TanStack Query 5 for API data, mutation results and cache invalidation; Zustand 5 for shared workspace selection/overlay/search state; local React state for unsaved form drafts; TanStack Table 9 for table behavior. Query invalidation refreshes configuration on both confirmed and uncertain saves, without unnecessarily refetching catalogs.
+
+Queued delegation reservations expire after 150 seconds before an attempt is recorded. Expiry cancels the request, releases its model allocation, and rejects late attempt recording or replay. Recorded attempts retain the existing indeterminate-outcome reconciliation.
