@@ -63,6 +63,10 @@ Prerequisites on the Windows machine: Docker Desktop (WSL 2 backend, Linux conta
 6. Configure agent routes in `/agents` (they start empty by design; `routing.json` import is only used when that file exists).
 7. Expose over Tailscale only after validation: either `tailscale serve --bg 3000` on the Windows host (HTTPS on the tailnet) or an SSH port-forward from the Mac (`ssh -L 3000:127.0.0.1:3000 ...`). Compose binds all ports to `127.0.0.1`; keep that and let Tailscale/SSH do the exposure.
 
+### B. status (2026-09-08T00:20Z): cutover done
+
+`joey-pc` (Tailscale, SSH user `joeyl`) runs the stack from `C:\code\market-mate` at `c2c6a88`. All six providers probe `connected`; live quota samples record; both acceptance scripts pass there. Frontend is on `127.0.0.1:3100` (local `.env` sets `MARKET_MATE_FRONTEND_PORT=3100`; 3000 belongs to another project). Docker over SSH cannot use the Windows credential helper, so Docker work runs via scheduled tasks in the console session: `schtasks /run /tn mm-up|mm-rebuild|mm-validate` (logs in `C:\code\market-mate-*.log`). `C:\code\shims\python3` maps `python3` to `python` for Git Bash. Ports stay bound to localhost; reach it with `ssh -L 3100:127.0.0.1:3100 joey-pc` or `tailscale serve`. Agent routes are still empty and need configuring in `/agents`.
+
 ## Runtime snapshot to refresh
 
 Snapshot at 2026-09-07T23:25Z on the Mac; verify before relying on it.
