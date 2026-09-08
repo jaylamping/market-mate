@@ -38,4 +38,6 @@ pub mod incubator_ticket_creator;
 
 pub(crate) mod research_contract;
 
+pub(crate) mod research_memory;
+
 pub(crate) mod incubator_output;

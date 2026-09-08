@@ -63,8 +63,9 @@ pub const DESK_ROLES: [&str; 6] = [
 
 /// Authority-claim keys rejected anywhere in spec/artifact/routes. Mirrors
 /// `incubator_json_claims_authority` (0043:8-33): case-insensitive key match,
-/// recursive through objects and arrays.
-const AUTHORITY_KEYS: [&str; 11] = [
+/// recursive through objects and arrays. B3: pub(crate) so research_memory
+/// GATE_CHANGE_KEYS cannot drift (cross-checked by test).
+pub(crate) const AUTHORITY_KEYS: [&str; 11] = [
     "authority",
     "lifecycle_state",
     "execution_environment",
