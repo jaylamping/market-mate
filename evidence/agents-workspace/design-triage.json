@@ -1,0 +1,146 @@
+{
+  "file": "frontend/app/command-ledger.css",
+  "changed": false,
+  "findings": [
+    {
+      "finding": "design-system-font-size:32:13px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:33:9px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-radius:42:4px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-color:43:#aeb5bf",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-color:51:#17243a",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-color:51:#9bc1ff",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:52:10px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:55:10px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-radius:62:4px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:66:10px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-radius:77:4px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:80:13px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:81:9px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:83:10px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:84:9px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:90:9px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-radius:111:4px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:119:8.5px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:122:8.25px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-radius:135:4px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:152:8.5px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:153:13px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:154:9px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:160:7px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:170:7px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:179:8.5px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:184:8.25px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:194:8.75px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:195:8.25px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-radius:201:4px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:204:8.75px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:205:7px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:209:8.5px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:212:7px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    },
+    {
+      "finding": "design-system-font-size:219:10px",
+      "disposition": "standing pre-existing compatibility/legibility debt; DESIGN.md lines 247-249; no suppression added"
+    }
+  ]
+}

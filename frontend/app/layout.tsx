@@ -6,6 +6,8 @@ import "./supervisory-overview.css";
 import { QueryProvider } from "./QueryProvider";
 import { ThemeProvider } from "./ThemeProvider";
 import { UsageWidget } from "@/components/UsageWidget";
+import { WorkspaceStateProvider } from "@/components/WorkspaceState";
+import "./agents-workspace.css";
 
 const overviewFont = Geist({
   display: "swap",
@@ -26,7 +28,7 @@ export const metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${overviewFont.variable} ${overviewMono.variable}`}><ThemeProvider><QueryProvider>{children}<UsageWidget /></QueryProvider></ThemeProvider></body>
+      <body className={`${overviewFont.variable} ${overviewMono.variable}`}><ThemeProvider><QueryProvider><WorkspaceStateProvider><UsageWidget preview={process.env.MM_POC_PREVIEW === "1"} />{children}</WorkspaceStateProvider></QueryProvider></ThemeProvider></body>
     </html>
   );
 }

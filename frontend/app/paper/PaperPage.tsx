@@ -29,8 +29,8 @@ export function PaperPage() {
     <a className="skip-link" href="#paper-main">Skip to paper</a><AppSidebar activePage="/paper" />
     <main className="overview-main" id="paper-main" tabIndex={-1}>
       <header className="page-header"><div><h1>Paper</h1><p>Your simulated account, positions, and activity.</p></div><div className="page-actions">{data && <span className="loaded-at">Fetched {timestamp(new Date(data.fetched_at_ms).toISOString())}</span>}<RefreshQueries label="Refresh account" queryKeys={[paperQuery.queryKey]} /></div></header>
-      <div className="authority-strip"><span>Alpaca Paper</span><Badge variant="outline">{data ? "Connected" : state.state === "not_configured" ? "Not connected" : "Connection unavailable"}</Badge><span>Read-only · No real money</span><a className="text-link" href="/system#integrations">Manage integration</a></div>
-      {data ? <PaperWorkspace data={data} /> : <section className="workspace-panel mt-6"><div className="chart-empty"><h2>{state.state === "not_configured" ? "Connect Alpaca Paper" : "Account data unavailable"}</h2><p>{messages[state.state] ?? messages.invalid_response}</p><a className="text-link" href="/system#integrations">Open integration settings</a></div></section>}
+      <div className="authority-strip"><span>Alpaca Paper</span><Badge variant="outline">{data ? "Connected" : state.state === "not_configured" ? "Not connected" : "Connection unavailable"}</Badge><span>Read-only · No real money</span><a className="text-link" href="/integrations">Manage integration</a></div>
+      {data ? <PaperWorkspace data={data} /> : <section className="workspace-panel mt-6"><div className="chart-empty"><h2>{state.state === "not_configured" ? "Connect Alpaca Paper" : "Account data unavailable"}</h2><p>{messages[state.state] ?? messages.invalid_response}</p><a className="text-link" href="/integrations">Open integration settings</a></div></section>}
       <footer className="overview-footer">Paper POC · Observations are fetched separately, not a reconciled ledger.<span>No order submission from Market Mate</span></footer>
     </main>
   </div>;

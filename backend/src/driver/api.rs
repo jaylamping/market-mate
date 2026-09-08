@@ -28,6 +28,10 @@ fn bad_request(reason: &str) -> ApiError {
     error(StatusCode::BAD_REQUEST, reason)
 }
 fn from_sql(e: tokio_postgres::Error) -> ApiError {
+    if matches!(e.code(), Some(code) if code == &tokio_postgres::error::SqlState::INVALID_PARAMETER_VALUE || code == &tokio_postgres::error::SqlState::CHECK_VIOLATION)
+    {
+        return bad_request("invalid_configuration");
+    }
     let reason = sql_reason(&e, "database_unavailable");
     if reason == "database_unavailable" {
         unavailable(reason)
@@ -340,6 +344,51 @@ async fn usage_summary() -> Result<Json<Value>, ApiError> {
         .await
         .map(Json)
 }
+async fn model_workspace() -> Result<Json<Value>, ApiError> {
+    json_call("SELECT read_model_workspace()", &[])
+        .await
+        .map(Json)
+}
+async fn save_model(
+    Query(q): Query<HashMap<String, String>>,
+    Json(input): Json<Revisioned>,
+) -> Result<Json<Value>, ApiError> {
+    let id = q
+        .get("id")
+        .ok_or_else(|| bad_request("model_id_required"))?;
+    let value = json_call(
+        "SELECT save_model_policy($1,$2,$3)",
+        &[id, &input.expected_revision, &Value::Object(input.patch)],
+    )
+    .await?;
+    if value["status"] == "conflict" {
+        return Err(conflict("model_revision_conflict"));
+    }
+    Ok(Json(value))
+}
+async fn save_fallbacks(Json(input): Json<Revisioned>) -> Result<Json<Value>, ApiError> {
+    let models = input
+        .patch
+        .get("models")
+        .ok_or_else(|| bad_request("models_required"))?;
+    let value = json_call(
+        "SELECT save_model_fallbacks($1,$2)",
+        &[&input.expected_revision, models],
+    )
+    .await?;
+    if value["status"] == "conflict" {
+        return Err(conflict("fallback_revision_conflict"));
+    }
+    Ok(Json(value))
+}
+async fn model_requests(Query(q): Query<HashMap<String, String>>) -> Result<Json<Value>, ApiError> {
+    let id = q
+        .get("id")
+        .ok_or_else(|| bad_request("model_id_required"))?;
+    json_call("SELECT read_model_requests($1)", &[id])
+        .await
+        .map(Json)
+}
 async fn revisions(Query(q): Query<HashMap<String, String>>) -> Result<Json<Value>, ApiError> {
     let limit: i32 = q.get("limit").and_then(|l| l.parse().ok()).unwrap_or(50);
     let value = json_call("SELECT read_config_revisions($1)", &[&limit]).await?;
@@ -380,6 +429,9 @@ pub fn router(driver: Arc<Driver>) -> Router {
         .route("/providers/{id}/status", get(provider_status))
         .route("/providers/{id}/usage", get(provider_usage))
         .route("/agents", get(agents))
+        .route("/models", get(model_workspace).put(save_model))
+        .route("/models/fallbacks", axum::routing::put(save_fallbacks))
+        .route("/models/requests", get(model_requests))
         .route("/agents/{id}", get(agent).put(save_agent))
         .route("/usage/summary", get(usage_summary))
         .route("/config/revisions", get(revisions))
